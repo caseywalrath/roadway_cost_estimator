@@ -1,0 +1,10 @@
+agency_item_id,state,agency,item_code,official_description,official_unit,canonical_item_id
+co_cdot_304-06007,CO,CDOT,304-06007,AGGREGATE BASE COURSE (CLASS 6),CY,roadway_aggregate_base_course_class6
+co_cdot_403-09221,CO,CDOT,403-09221,HOT MIX ASPHALT (GRADING SX) (75) (PG 64-22),TON,roadway_hma_pavement
+co_cdot_412-00600,CO,CDOT,412-00600,CONCRETE PAVEMENT 6 INCH,SY,roadway_concrete_pavement
+co_cdot_609-21020,CO,CDOT,609-21020,CURB AND GUTTER TYPE 2,LF,roadway_curb_gutter
+co_cdot_608-00005,CO,CDOT,608-00005,CONCRETE SIDEWALK,SY,roadway_sidewalk
+co_cdot_608-00010,CO,CDOT,608-00010,CURB RAMP,EA,roadway_curb_ramp
+co_cdot_202-00220,CO,CDOT,202-00220,REMOVAL OF ASPHALT MAT,SY,roadway_pavement_removal
+co_cdot_606-00301,CO,CDOT,606-00301,GUARDRAIL TYPE 3,LF,roadway_guardrail
+

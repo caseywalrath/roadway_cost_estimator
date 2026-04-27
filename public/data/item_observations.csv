@@ -1,0 +1,30 @@
+observation_id,project_id,source_id,agency_item_code,description_raw,description_normalized,unit_raw,unit_normalized,quantity,unit_price,extended_price,discipline,price_type,date_basis
+obs_000001,demo_parker_e470_2026,demo_fhu_estimates_2026,304-06007,AGGREGATE BASE COURSE (CLASS 6),aggregate base course class 6,CY,CY,1777,150,266550,Roadway,engineers_estimate,2026-02-18
+obs_000002,demo_douglas_widening_2025,demo_cdot_costbook_2025,304-06007,AGGREGATE BASE COURSE (CLASS 6),aggregate base course class 6,CY,CY,2100,142,298200,Roadway,bid_tab_demo,2025-07-11
+obs_000003,demo_adams_intersection_2025,demo_cdot_costbook_2025,304-06007,AGGREGATE BASE COURSE (CLASS 6),aggregate base course class 6,CY,CY,930,162,150660,Roadway,bid_tab_demo,2025-04-22
+obs_000004,demo_larimer_widening_2023,demo_cdot_costbook_2025,304-06007,AGGREGATE BASE COURSE (CLASS 6),aggregate base course class 6,CY,CY,4800,128,614400,Roadway,bid_tab_demo,2023-08-03
+obs_000005,demo_jefferson_safety_2022,demo_cdot_costbook_2025,304-06007,AGGREGATE BASE COURSE (CLASS 6),aggregate base course class 6,CY,CY,620,171,106020,Roadway,bid_tab_demo,2022-05-19
+obs_000006,demo_boulder_ada_2024,demo_cdot_costbook_2025,304-06007,AGGREGATE BASE COURSE (CLASS 6),aggregate base course class 6,TON,TON,760,58,44080,Roadway,bid_tab_demo,2024-09-16
+obs_000007,demo_parker_e470_2026,demo_fhu_estimates_2026,403-09221,HOT MIX ASPHALT (GRADING SX) (75) (PG 64-22),hot mix asphalt grading sx 75 pg 64 22,TON,TON,3850,118,454300,Roadway,engineers_estimate,2026-02-18
+obs_000008,demo_douglas_widening_2025,demo_cdot_costbook_2025,403-09221,HMA GRADING SX 75 PG 64-22,hma grading sx 75 pg 64 22,TON,TON,4200,112,470400,Roadway,bid_tab_demo,2025-07-11
+obs_000009,demo_larimer_widening_2023,demo_cdot_costbook_2025,403-09221,HOT MIX ASPHALT GRADING SX,hot mix asphalt grading sx,TON,TON,6800,104,707200,Roadway,bid_tab_demo,2023-08-03
+obs_000010,demo_adams_intersection_2025,demo_cdot_costbook_2025,403-09221,HMA PAVEMENT,hma pavement,TON,TON,1500,126,189000,Roadway,bid_tab_demo,2025-04-22
+obs_000011,demo_parker_e470_2026,demo_fhu_estimates_2026,412-00600,CONCRETE PAVEMENT 6 INCH,concrete pavement 6 inch,SY,SY,5800,92,533600,Roadway,engineers_estimate,2026-02-18
+obs_000012,demo_adams_intersection_2025,demo_cdot_costbook_2025,412-00600,CONCRETE PAVEMENT 6 INCH,concrete pavement 6 inch,SY,SY,2200,101,222200,Roadway,bid_tab_demo,2025-04-22
+obs_000013,demo_larimer_widening_2023,demo_cdot_costbook_2025,412-00600,PCCP 6 INCH,pccp 6 inch,SY,SY,7600,88,668800,Roadway,bid_tab_demo,2023-08-03
+obs_000014,demo_parker_e470_2026,demo_fhu_estimates_2026,609-21020,CURB AND GUTTER TYPE 2,curb and gutter type 2,LF,LF,3100,46,142600,Roadway,engineers_estimate,2026-02-18
+obs_000015,demo_boulder_ada_2024,demo_cdot_costbook_2025,609-21020,CURB AND GUTTER TYPE 2,curb and gutter type 2,LF,LF,1900,54,102600,Roadway,bid_tab_demo,2024-09-16
+obs_000016,demo_adams_intersection_2025,demo_cdot_costbook_2025,609-21020,CURB AND GUTTER TYPE 2,curb and gutter type 2,LF,LF,2600,49,127400,Roadway,bid_tab_demo,2025-04-22
+obs_000017,demo_parker_e470_2026,demo_fhu_estimates_2026,608-00005,CONCRETE SIDEWALK,concrete sidewalk,SY,SY,1450,82,118900,Roadway,engineers_estimate,2026-02-18
+obs_000018,demo_boulder_ada_2024,demo_cdot_costbook_2025,608-00005,CONCRETE SIDEWALK,concrete sidewalk,SY,SY,960,88,84480,Roadway,bid_tab_demo,2024-09-16
+obs_000019,demo_jefferson_safety_2022,demo_cdot_costbook_2025,608-00005,SIDEWALK,simple sidewalk,SY,SY,520,95,49400,Roadway,bid_tab_demo,2022-05-19
+obs_000020,demo_parker_e470_2026,demo_fhu_estimates_2026,608-00010,CURB RAMP,curb ramp,EA,EA,28,4200,117600,Roadway,engineers_estimate,2026-02-18
+obs_000021,demo_boulder_ada_2024,demo_cdot_costbook_2025,608-00010,ADA CURB RAMP,ada curb ramp,EA,EA,34,5100,173400,Roadway,bid_tab_demo,2024-09-16
+obs_000022,demo_adams_intersection_2025,demo_cdot_costbook_2025,608-00010,CURB RAMP,curb ramp,EA,EA,18,4700,84600,Roadway,bid_tab_demo,2025-04-22
+obs_000023,demo_parker_e470_2026,demo_fhu_estimates_2026,202-00220,REMOVAL OF ASPHALT MAT,removal of asphalt mat,SY,SY,9600,12,115200,Roadway,engineers_estimate,2026-02-18
+obs_000024,demo_douglas_widening_2025,demo_cdot_costbook_2025,202-00220,REMOVAL OF ASPHALT MAT,removal of asphalt mat,SY,SY,12400,9.75,120900,Roadway,bid_tab_demo,2025-07-11
+obs_000025,demo_adams_intersection_2025,demo_cdot_costbook_2025,202-00220,REMOVE ASPHALT PAVEMENT,remove asphalt pavement,SY,SY,4200,14.5,60900,Roadway,bid_tab_demo,2025-04-22
+obs_000026,demo_jefferson_safety_2022,demo_cdot_costbook_2025,606-00301,GUARDRAIL TYPE 3,guardrail type 3,LF,LF,1180,72,84960,Roadway,bid_tab_demo,2022-05-19
+obs_000027,demo_larimer_widening_2023,demo_cdot_costbook_2025,606-00301,GUARDRAIL TYPE 3,guardrail type 3,LF,LF,2200,67,147400,Roadway,bid_tab_demo,2023-08-03
+obs_000028,demo_parker_e470_2026,demo_fhu_estimates_2026,606-00301,GUARDRAIL TYPE 3,guardrail type 3,LF,LF,760,75,57000,Roadway,engineers_estimate,2026-02-18
+

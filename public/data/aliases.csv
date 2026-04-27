@@ -1,0 +1,10 @@
+alias_id,state,agency,raw_description_pattern,canonical_item_id,match_type,confidence,notes
+alias_aggregate_class6,CO,CDOT,aggregate base course class 6,roadway_aggregate_base_course_class6,approved_alias,high,Use only for compatible aggregate base units
+alias_hma_grading,CO,CDOT,hma,roadway_hma_pavement,approved_alias,medium,Prototype alias for asphalt pavement records
+alias_concrete_pavement,CO,CDOT,concrete pavement,roadway_concrete_pavement,approved_alias,medium,Prototype alias for concrete pavement records
+alias_curb_gutter,CO,CDOT,curb and gutter,roadway_curb_gutter,approved_alias,high,Use only for LF curb and gutter records
+alias_sidewalk,CO,CDOT,sidewalk,roadway_sidewalk,approved_alias,medium,Use only for compatible sidewalk units
+alias_curb_ramp,CO,CDOT,curb ramp,roadway_curb_ramp,approved_alias,medium,Use only for EA curb ramp records
+alias_asphalt_removal,CO,CDOT,remove asphalt,roadway_pavement_removal,approved_alias,medium,Use only for pavement removal records
+alias_guardrail,CO,CDOT,guardrail,roadway_guardrail,approved_alias,medium,Use only for LF guardrail records
+
