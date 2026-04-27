@@ -83,6 +83,70 @@ Please run the command yourself from the workspace.
 If you cannot, explain the blocker in plain English and ask for the specific approval or manual action needed.
 ```
 
+## Known Local Environment Lessons
+
+This project is stored inside a OneDrive-synced folder.
+
+OneDrive and Windows file permissions can interfere with Git metadata writes inside the `.git` folder.
+
+Symptoms may include errors involving:
+
+```text
+.git/config.lock
+.git/index.lock
+.git/refs/heads/[branch-name].lock
+Permission denied
+could not lock config file
+Unable to create index.lock
+```
+
+These errors do not necessarily mean the project files are broken.
+
+They usually mean Git could not write temporary lock files inside `.git`.
+
+Codex should handle this as follows:
+
+1. Explain that the blocker is local Git metadata permissions.
+2. Retry the same Git operation with the proper Codex approval request when appropriate.
+3. Avoid asking the user to run the command manually unless approval-based retry fails.
+4. Inspect the Git state after the retry.
+5. Avoid broad process-kill or destructive cleanup commands.
+
+If a stale Git lock file exists after a failed Git command, Codex may remove only the specific stale lock file after confirming it is safe.
+
+Codex must not remove the full `.git` folder unless the user explicitly requests a full Git reinitialization and understands the consequence.
+
+## First Push And Existing Remote History
+
+When pushing to GitHub for the first time, the remote repository may already contain files.
+
+Common examples:
+
+```text
+README.md
+.gitignore
+LICENSE
+test files created through the GitHub web interface
+```
+
+If `git push` is rejected with a message such as `fetch first`, Codex should not force push.
+
+Codex should:
+
+1. Fetch the remote history.
+2. Inspect the remote files and commit history.
+3. Explain that GitHub already contains work that is not local.
+4. Merge the remote history into the local branch when appropriate.
+5. Push the combined result.
+
+If the local and remote repositories were initialized separately, Git may report unrelated histories.
+
+In that case, Codex may use an unrelated-history merge only after confirming the remote contents are understood and nothing will be overwritten.
+
+Codex should prefer preserving both local and remote files.
+
+Force push should not be used for this project unless the user explicitly requests overwriting GitHub history.
+
 ## Session Workflow
 
 Each chat session should correspond to one major change, one bug-fix round, or one revision round.
