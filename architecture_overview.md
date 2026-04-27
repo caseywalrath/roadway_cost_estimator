@@ -26,6 +26,7 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 5. `src/matching/priceSummary.ts` calculates low, percentile, median, high, and suggested unit price values.
 6. `src/matching/confidence.ts` converts match quality into High, Medium, Low, or Not supportable.
 7. `src/ui` renders the project context, item explorer, recommendation summary, comparable table, warnings, and improve-confidence guidance.
+8. `src/ui/helpTip.ts` renders prototype-only explanatory markers for fields, metrics, and table columns.
 
 ## Data Governance
 
@@ -46,6 +47,10 @@ The MVP matching rules are intentionally visible and simple:
 - Score quantity similarity, project recency, geography, work type, and Colorado source provenance.
 
 Unit mismatches are shown as warnings and excluded from the price summary.
+
+## Prototype Annotations
+
+The UI includes small information markers that explain what each input, metric, and table column means, why it affects matching, and where real data should come from. These annotations are intended for early review with non-roadway users and roadway subject-matter experts. They are not part of the long-term estimating workflow unless reviewers find them useful.
 
 ## Near-Term Extension Points
 
