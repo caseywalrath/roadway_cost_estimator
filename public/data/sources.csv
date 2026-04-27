@@ -1,0 +1,4 @@
+source_id,source_type,agency,state,source_label,data_year,notes
+demo_cdot_costbook_2025,public_demo,CDOT,CO,DEMO CDOT public cost book sample,2025,Synthetic public-style demo data for prototype workflow only
+demo_fhu_estimates_2026,internal_demo,FHU,CO,DEMO FHU historical estimate sample,2026,Synthetic internal-style demo data for prototype workflow only
+

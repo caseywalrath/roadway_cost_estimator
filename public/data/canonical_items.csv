@@ -1,0 +1,10 @@
+canonical_item_id,item_family,canonical_description,discipline,typical_units,keywords_include,keywords_exclude
+roadway_aggregate_base_course_class6,aggregate_base,Aggregate base course class 6,Roadway,CY;TON,aggregate base;class 6;base course,tracking pad;temporary
+roadway_hma_pavement,hma,HMA asphalt pavement,Roadway,TON,hma;asphalt;pavement,patching;temporary
+roadway_concrete_pavement,concrete_pavement,Concrete pavement,Roadway,SY,concrete pavement;pccp;concrete roadway,sidewalk;curb
+roadway_curb_gutter,curb_gutter,Curb and gutter,Roadway,LF,curb and gutter;curb gutter,remove;removal
+roadway_sidewalk,sidewalk,Concrete sidewalk,Roadway,SY,sidewalk;concrete walk,remove;removal
+roadway_curb_ramp,curb_ramp,Curb ramp,Roadway,EA,curb ramp;ada ramp,remove;removal
+roadway_pavement_removal,pavement_removal,Pavement removal,Roadway,SY,remove asphalt;removal asphalt;remove concrete;removal concrete,temporary
+roadway_guardrail,guardrail,Guardrail,Roadway,LF,guardrail;guard rail,remove;removal
+
