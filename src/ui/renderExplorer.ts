@@ -96,7 +96,10 @@ export function renderExplorer(query: SearchQuery): string {
       </label>
 
       <button type="submit" class="primary-button">Search comparables</button>
-      <button type="button" id="reset-example" class="secondary-button">Reset example</button>
+      <div class="form-action-grid">
+        <button type="button" id="clear-query" class="secondary-button">Clear</button>
+        <button type="button" id="reset-example" class="secondary-button">Reset example</button>
+      </div>
     </form>
   `;
 }

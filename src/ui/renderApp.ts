@@ -16,6 +16,18 @@ const exampleQuery: SearchQuery = {
   quantity: 1800
 };
 
+const emptyQuery: SearchQuery = {
+  state: "CO",
+  countyRegion: "",
+  workType: "Roadway",
+  estimateYear: new Date().getFullYear(),
+  sourceScope: "both",
+  itemCode: "",
+  description: "",
+  unit: "",
+  quantity: null
+};
+
 export function renderApp(root: HTMLElement, data: AppData): void {
   let query = { ...exampleQuery };
 
@@ -67,6 +79,11 @@ export function renderApp(root: HTMLElement, data: AppData): void {
 
     root.querySelector<HTMLButtonElement>("#reset-example")?.addEventListener("click", () => {
       query = { ...exampleQuery };
+      render();
+    });
+
+    root.querySelector<HTMLButtonElement>("#clear-query")?.addEventListener("click", () => {
+      query = { ...emptyQuery };
       render();
     });
   }
