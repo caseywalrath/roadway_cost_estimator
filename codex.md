@@ -361,5 +361,6 @@ Current product documentation also includes:
 ```text
 docs/data_schema.md
 docs/implementation_notes.md
+project_roadmap.md
 user_workflow.md
 ```
