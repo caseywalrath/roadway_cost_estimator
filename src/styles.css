@@ -296,6 +296,12 @@ select:focus {
   gap: 12px;
 }
 
+.form-action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .primary-button,
 .secondary-button {
   min-height: 42px;
@@ -521,6 +527,7 @@ tbody tr:last-child td {
   }
 
   .field-grid,
+  .form-action-grid,
   .metric-grid,
   .distribution-grid {
     grid-template-columns: 1fr;
