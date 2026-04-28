@@ -166,8 +166,14 @@ select {
   cursor: help;
 }
 
-.info-tip::after {
-  content: attr(data-tip);
+.info-tip-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.info-popover {
   position: absolute;
   z-index: 20;
   top: calc(100% + 8px);
@@ -191,11 +197,10 @@ select {
   visibility: hidden;
 }
 
-.info-tip::before {
+.info-popover::before {
   content: "";
   position: absolute;
-  z-index: 21;
-  top: calc(100% + 3px);
+  top: -6px;
   left: 50%;
   width: 10px;
   height: 10px;
@@ -204,14 +209,10 @@ select {
   border-top: 1px solid #b7c7d6;
   background: #ffffff;
   pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
 }
 
-.info-tip:hover::after,
-.info-tip:hover::before,
-.info-tip:focus-visible::after,
-.info-tip:focus-visible::before {
+.info-tip:hover + .info-popover,
+.info-tip:focus-visible + .info-popover {
   opacity: 1;
   visibility: visible;
 }
@@ -464,7 +465,7 @@ th .info-tip {
   vertical-align: middle;
 }
 
-th .info-tip::after {
+th .info-popover {
   text-transform: none;
 }
 
