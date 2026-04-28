@@ -6,9 +6,9 @@ export function helpTip(label: string, text: string): string {
 
   return `
     <span class="info-tip-wrap">
-      <button class="info-tip" type="button" aria-label="${escapeHtml(label)}" aria-describedby="${tooltipId}">
+      <span class="info-tip" tabindex="0" aria-label="${escapeHtml(label)}" aria-describedby="${tooltipId}">
         i
-      </button>
+      </span>
       <span id="${tooltipId}" class="info-popover" role="tooltip">${escapeHtml(text)}</span>
     </span>
   `;
