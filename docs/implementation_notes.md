@@ -45,6 +45,13 @@ If Node.js is installed as a portable ZIP, run npm through the extracted folder:
 C:\Users\Casey.Walrath\Tools\node\npm.cmd run dev
 ```
 
+If an npm script resolves to the Codex desktop bundled Node instead of the portable Node install, prefix `PATH` before running the command:
+
+```text
+$env:PATH='C:\Users\Casey.Walrath\Tools\node;' + $env:PATH
+C:\Users\Casey.Walrath\Tools\node\npm.cmd run dev
+```
+
 Build the static site:
 
 ```text
@@ -57,10 +64,24 @@ If using portable Node:
 C:\Users\Casey.Walrath\Tools\node\npm.cmd run build
 ```
 
+Local builds may fail if OneDrive locks existing files in `dist`. If that happens, use a temporary output folder to verify the TypeScript and Vite bundle:
+
+```text
+C:\Users\Casey.Walrath\Tools\node\node.exe .\node_modules\vite\bin\vite.js build --outDir dist-check
+```
+
+Delete the temporary output folder after verification. Do not commit `dist`, `dist-check`, or other generated build folders.
+
 Preview the production build:
 
 ```text
 npm run preview
+```
+
+Known current local test URL:
+
+```text
+http://127.0.0.1:5173/
 ```
 
 ## GitHub Pages

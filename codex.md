@@ -116,6 +116,61 @@ If a stale Git lock file exists after a failed Git command, Codex may remove onl
 
 Codex must not remove the full `.git` folder unless the user explicitly requests a full Git reinitialization and understands the consequence.
 
+Node.js is available through a portable ZIP install, not a standard system install.
+
+Known working path:
+
+```text
+C:\Users\Casey.Walrath\Tools\node
+```
+
+Known working commands should call Node or npm from that folder:
+
+```text
+C:\Users\Casey.Walrath\Tools\node\node.exe
+C:\Users\Casey.Walrath\Tools\node\npm.cmd
+```
+
+When running npm scripts, Codex may need to prefix `PATH` so scripts resolve to portable Node instead of the Codex desktop bundled Node:
+
+```text
+$env:PATH='C:\Users\Casey.Walrath\Tools\node;' + $env:PATH
+```
+
+If this is not done, symptoms may include:
+
+```text
+Access is denied
+spawn EPERM
+```
+
+Vite builds may fail locally when OneDrive locks existing output files in `dist`.
+
+Symptoms may include:
+
+```text
+EPERM, Permission denied: ...\dist\data
+EBUSY: resource busy or locked
+```
+
+For verification, Codex may build to a temporary output folder instead of `dist`:
+
+```text
+C:\Users\Casey.Walrath\Tools\node\node.exe .\node_modules\vite\bin\vite.js build --outDir dist-check
+```
+
+After verification, remove only the specific temporary build folder after checking that the resolved path is inside the workspace.
+
+The GitHub CLI may not be installed or may not respond in this environment.
+
+If `gh` is unavailable, Codex should still use local Git for branch, commit, and push operations when possible, then provide the direct GitHub pull request URL:
+
+```text
+https://github.com/caseywalrath/roadway_cost_estimator/pull/new/[branch-name]
+```
+
+Browser automation through the in-app browser may fail because the Node REPL reports local Node access errors. If that happens, Codex should use source inspection, local HTTP checks, and user visual confirmation rather than claiming browser automation verification occurred.
+
 ## First Push And Existing Remote History
 
 When pushing to GitHub for the first time, the remote repository may already contain files.
@@ -295,9 +350,17 @@ Before closing a session, Codex should:
 
 ## Current Documentation State
 
-As of this file's creation, this repository does not yet contain an `architecture_overview.md` file.
+This repository contains `architecture_overview.md`.
 
-When the application structure is first created, Codex should either:
+Codex must review `architecture_overview.md` before new session plans or code changes.
 
-1. Create `architecture_overview.md` for app architecture, or
-2. Add an architecture section to this file if the user prefers a single documentation file.
+Codex should update `architecture_overview.md` when architecture, file structure, deployment behavior, data flow, or major app behavior changes.
+
+Current product documentation also includes:
+
+```text
+docs/data_schema.md
+docs/implementation_notes.md
+project_roadmap.md
+user_workflow.md
+```
