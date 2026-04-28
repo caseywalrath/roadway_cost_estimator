@@ -52,6 +52,10 @@ Unit mismatches are shown as warnings and excluded from the price summary.
 
 The UI includes small information markers that explain what each input, metric, and table column means, why it affects matching, and where real data should come from. These annotations are intended for early review with non-roadway users and roadway subject-matter experts. They are not part of the long-term estimating workflow unless reviewers find them useful.
 
+The information markers should open only when the marker itself is hovered or keyboard-focused. They should not appear when the user hovers over or types in the associated form field.
+
+The Item Explorer also includes a clear action for removing the current query values and a reset action for restoring the demo example query.
+
 ## Near-Term Extension Points
 
 - Replace demo CSVs with validated public CDOT source data.
