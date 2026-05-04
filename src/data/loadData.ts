@@ -5,7 +5,8 @@ import type {
   CanonicalItemRecord,
   ItemObservationRecord,
   ProjectRecord,
-  SourceRecord
+  SourceRecord,
+  SpecSectionRecord
 } from "./schema";
 import { normalizeDescription, normalizeUnit } from "../matching/normalizeDescription";
 
@@ -17,17 +18,19 @@ const dataFiles = {
   observations: "item_observations.csv",
   canonicalItems: "canonical_items.csv",
   agencyItems: "agency_items.csv",
+  specSections: "spec_sections.csv",
   aliases: "aliases.csv"
 } as const;
 
 export async function loadData(): Promise<AppData> {
-  const [sources, projects, observations, canonicalItems, agencyItems, aliases] =
+  const [sources, projects, observations, canonicalItems, agencyItems, specSections, aliases] =
     await Promise.all([
       loadCsv(dataFiles.sources, mapSource),
       loadCsv(dataFiles.projects, mapProject),
       loadCsv(dataFiles.observations, mapObservation),
       loadCsv(dataFiles.canonicalItems, mapCanonicalItem),
       loadCsv(dataFiles.agencyItems, mapAgencyItem),
+      loadCsv(dataFiles.specSections, mapSpecSection),
       loadCsv(dataFiles.aliases, mapAlias)
     ]);
 
@@ -37,6 +40,8 @@ export async function loadData(): Promise<AppData> {
     canonicalItems.map((canonicalItem) => [canonicalItem.canonicalItemId, canonicalItem])
   );
   const agencyByCode = new Map<string, AgencyItemRecord[]>();
+  const specSectionByPrefix = new Map<string, SpecSectionRecord>();
+  const specSectionsByDivision = new Map<string, SpecSectionRecord[]>();
 
   for (const agencyItem of agencyItems) {
     const key = agencyItem.itemCode.toUpperCase();
@@ -45,17 +50,30 @@ export async function loadData(): Promise<AppData> {
     agencyByCode.set(key, existing);
   }
 
+  for (const specSection of specSections) {
+    const sectionKey = specSection.sectionPrefix;
+    const divisionKey = specSection.divisionPrefix;
+    specSectionByPrefix.set(sectionKey, specSection);
+
+    const existing = specSectionsByDivision.get(divisionKey) ?? [];
+    existing.push(specSection);
+    specSectionsByDivision.set(divisionKey, existing);
+  }
+
   return {
     sources,
     projects,
     observations,
     canonicalItems,
     agencyItems,
+    specSections,
     aliases,
     sourceById,
     projectById,
     canonicalById,
-    agencyByCode
+    agencyByCode,
+    specSectionByPrefix,
+    specSectionsByDivision
   };
 }
 
@@ -195,6 +213,17 @@ function mapAgencyItem(row: CsvRow): AgencyItemRecord {
     officialDescription: row.official_description,
     officialUnit: normalizeUnit(row.official_unit),
     canonicalItemId: row.canonical_item_id
+  };
+}
+
+function mapSpecSection(row: CsvRow): SpecSectionRecord {
+  return {
+    sectionPrefix: row.section_prefix,
+    divisionPrefix: row.division_prefix,
+    divisionTitle: row.division_title,
+    sectionTitle: row.section_title,
+    sourceYear: parseOptionalNumber(row.source_year),
+    sourceUrl: row.source_url
   };
 }
 

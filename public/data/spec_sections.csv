@@ -1,0 +1,71 @@
+section_prefix,division_prefix,division_title,section_title,source_year,source_url
+201,200,Earthwork,Clearing and Grubbing,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+202,200,Earthwork,Removal of Structures and Obstructions,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+203,200,Earthwork,Excavation and Embankment,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+206,200,Earthwork,Excavation and Backfill for Structures,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+207,200,Earthwork,Topsoil,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+208,200,Earthwork,Erosion Control,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+209,200,Earthwork,Watering and Dust Palliative,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+210,200,Earthwork,Reset Structures,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+212,200,Earthwork,"Seeding, Fertilizing, Soil Conditioner and Sodding",2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+213,200,Earthwork,Mulching,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+214,200,Earthwork,Planting,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+215,200,Earthwork,Transplanting,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+216,200,Earthwork,Soil Retention Covering,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+217,200,Earthwork,Herbicide Treatment,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+250,200,Earthwork,"Environmental, Health and Safety Management",2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+304,300,Bases,Aggregate Base Course,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+306,300,Bases,Reconditioning,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+307,300,Bases,Lime Treated Subgrade,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+403,400,Pavements,Hot Mix Asphalt,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+405,400,Pavements,Heating and Scarifying Treatment,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+406,400,Pavements,Cold Asphalt Pavement (Recycle),2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+407,400,Pavements,"Prime Coat, Tack Coat and Rejuvenating Agent",2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+408,400,Pavements,Joint and Crack Sealer,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+409,400,Pavements,Chip Seal,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+411,400,Pavements,Asphalt Materials,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+412,400,Pavements,Portland Cement Concrete Pavement,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+420,400,Pavements,Geosynthetics,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+501,500,Structures,Steel Sheet Piling,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+502,500,Structures,Piling,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+503,500,Structures,Drilled Shafts,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+504,500,Structures,Walls,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+506,500,Structures,Riprap,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+507,500,Structures,Slope and Ditch Paving,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+508,500,Structures,Timber Structures,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+509,500,Structures,Steel Structures,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+510,500,Structures,Structural Plate Structures,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+512,500,Structures,Bearing Device,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+514,500,Structures,Pedestrian and Bikeway Railing,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+515,500,Structures,Waterproofing Membrane,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+516,500,Structures,Dampproofing,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+517,500,Structures,Waterproofing,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+518,500,Structures,Waterstops and Expansion Joints,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+601,600,Miscellaneous Construction,Structural Concrete,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+602,600,Miscellaneous Construction,Reinforcing Steel,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+603,600,Miscellaneous Construction,Culverts and Sewers,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+604,600,Miscellaneous Construction,"Manholes, Inlets and Meter Vaults",2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+605,600,Miscellaneous Construction,Subsurface Drains,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+606,600,Miscellaneous Construction,Guardrail,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+607,600,Miscellaneous Construction,Fences,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+608,600,Miscellaneous Construction,Sidewalks and Bikeways,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+609,600,Miscellaneous Construction,Curb and Gutter,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+610,600,Miscellaneous Construction,Median Cover Material,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+611,600,Miscellaneous Construction,Cattle Guards,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+612,600,Miscellaneous Construction,Delineators and Reflectors,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+613,600,Miscellaneous Construction,Lighting,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+614,600,Miscellaneous Construction,Traffic Control Devices,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+615,600,Miscellaneous Construction,Water Control Devices,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+616,600,Miscellaneous Construction,Siphons,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+618,600,Miscellaneous Construction,Prestressed Concrete,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+619,600,Miscellaneous Construction,Water Lines,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+620,600,Miscellaneous Construction,Field Facilities,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+622,600,Miscellaneous Construction,Rest Areas and Buildings,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+623,600,Miscellaneous Construction,Irrigation System,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+624,600,Miscellaneous Construction,Drainage Pipe,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+625,600,Miscellaneous Construction,Construction Surveying,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+626,600,Miscellaneous Construction,Mobilization,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+627,600,Miscellaneous Construction,Pavement Marking,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+629,600,Miscellaneous Construction,Survey Monumentation,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+630,600,Miscellaneous Construction,Construction Zone Traffic Control,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book
+641,600,Miscellaneous Construction,Shotcrete,2025,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2025-construction-specifications/specs-book

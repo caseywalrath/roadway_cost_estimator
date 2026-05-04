@@ -292,6 +292,104 @@ select:focus {
   border-color: var(--accent);
 }
 
+input[readonly] {
+  background: #f3f6f8;
+  color: #425161;
+}
+
+.item-picker {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #d6e1ea;
+  border-radius: 6px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.selected-item-summary {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #d6e1ea;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 8px 10px;
+  color: #405061;
+  font-size: 0.86rem;
+}
+
+.selected-item-summary p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.selected-item-summary strong {
+  color: var(--heading);
+}
+
+.item-result-list {
+  display: grid;
+  gap: 8px;
+  min-height: 48px;
+}
+
+.item-result-count,
+.item-result-message {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.item-result-buttons {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.item-result-button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  border: 1px solid #cad6e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #223140;
+  padding: 8px 9px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.item-result-button:hover,
+.item-result-button:focus-visible {
+  border-color: var(--accent);
+  outline: 3px solid rgba(39, 95, 143, 0.16);
+}
+
+.item-result-button--selected {
+  border-color: var(--accent);
+  background: #eef6fb;
+}
+
+.item-result-button strong,
+.item-result-button small {
+  white-space: nowrap;
+}
+
+.item-result-button span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.item-result-button small {
+  color: var(--text-muted);
+  font-weight: 800;
+}
+
 .field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -530,8 +628,14 @@ tbody tr:last-child td {
 
   .field-grid,
   .form-action-grid,
+  .item-result-button,
   .metric-grid,
   .distribution-grid {
     grid-template-columns: 1fr;
+  }
+
+  .item-result-button strong,
+  .item-result-button small {
+    white-space: normal;
   }
 }

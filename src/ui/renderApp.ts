@@ -1,7 +1,7 @@
 import type { AppData, SearchQuery } from "../data/schema";
 import { scoreComparableItems } from "../matching/scoreComparableItems";
 import { helpTip } from "./helpTip";
-import { readQueryFromForm, renderExplorer } from "./renderExplorer";
+import { bindItemPicker, readQueryFromForm, renderExplorer } from "./renderExplorer";
 import { renderResults } from "./renderResults";
 
 const exampleQuery: SearchQuery = {
@@ -11,7 +11,7 @@ const exampleQuery: SearchQuery = {
   estimateYear: 2026,
   sourceScope: "both",
   itemCode: "304-06007",
-  description: "Aggregate Base Course Class 6",
+  description: "AGGREGATE BASE COURSE (CLASS 6)",
   unit: "CY",
   quantity: 1800
 };
@@ -64,13 +64,17 @@ export function renderApp(root: HTMLElement, data: AppData): void {
         </section>
 
         <section class="workspace-grid">
-          ${renderExplorer(query)}
+          ${renderExplorer(query, data.agencyItems, data.specSections)}
           ${renderResults(result)}
         </section>
       </main>
     `;
 
     const form = root.querySelector<HTMLFormElement>("#explorer-form");
+    if (form) {
+      bindItemPicker(form, data.agencyItems, data.specSections);
+    }
+
     form?.addEventListener("submit", (event) => {
       event.preventDefault();
       query = readQueryFromForm(form);
