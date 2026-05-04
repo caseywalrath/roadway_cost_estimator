@@ -62,6 +62,15 @@ export interface AgencyItemRecord {
   canonicalItemId: string;
 }
 
+export interface SpecSectionRecord {
+  sectionPrefix: string;
+  divisionPrefix: string;
+  divisionTitle: string;
+  sectionTitle: string;
+  sourceYear: number | null;
+  sourceUrl: string;
+}
+
 export interface AliasRecord {
   aliasId: string;
   state: string;
@@ -79,11 +88,14 @@ export interface AppData {
   observations: ItemObservationRecord[];
   canonicalItems: CanonicalItemRecord[];
   agencyItems: AgencyItemRecord[];
+  specSections: SpecSectionRecord[];
   aliases: AliasRecord[];
   sourceById: Map<string, SourceRecord>;
   projectById: Map<string, ProjectRecord>;
   canonicalById: Map<string, CanonicalItemRecord>;
   agencyByCode: Map<string, AgencyItemRecord[]>;
+  specSectionByPrefix: Map<string, SpecSectionRecord>;
+  specSectionsByDivision: Map<string, SpecSectionRecord[]>;
 }
 
 export interface SearchQuery {

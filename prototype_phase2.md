@@ -31,13 +31,15 @@ Current strengths:
 
 - One-item roadway bid item lookup exists.
 - Exact agency item-code matches are already scored above description matches.
+- The item-code entry path now uses a CDOT division, section/prefix, and item-result funnel instead of a single long dropdown.
+- The item picker now has a 200-row official CDOT item-code sample across 70 loaded specification sections for scale testing.
 - Same-unit records are required for price recommendations.
 - The UI already shows recommendation, price distribution, comparable records, warnings, and improve-confidence actions.
 - Synthetic demo data is labeled as demo data.
 
 Current gaps identified by roadmap and engineer feedback:
 
-- Search still feels like a free-text funnel, even though item code is the most reliable key.
+- Search still needs full cost-book data to validate the section-based item picker at full CDOT scale.
 - Unit and county/region are free text, which allows avoidable spelling and wording errors.
 - A conflicting description can be entered with a valid item code and still produce high confidence.
 - Source labels do not clearly distinguish FHU estimates, contractor bid tabs, public data, submittal level, and source reliability.
@@ -69,22 +71,31 @@ Make item code the primary path to pricing.
 
 Recommended changes:
 
-- Replace or supplement the free-text item-code input with a controlled item-code selector sourced from `agency_items.csv`.
-- When the user selects an item code, auto-populate the official description and official unit.
+- Replace the single item-code selector with a controlled CDOT division, section/prefix, and item search funnel.
+- Source item-level options from `agency_items.csv`.
+- Source division and section labels from `spec_sections.csv`.
+- Search loaded agency items by full item code, suffix after the hyphen, or official description.
+- Let Search work directly across all loaded items when Division and Section are blank; use Division and Section as narrowing filters when selected.
+- When the user selects an item result, auto-populate the official item code, description, and unit.
 - Treat description as supporting context, not the primary pricing path when item code is known.
 - Make quantity the main user-entered field after item code selection.
 - Keep state and work type controlled.
 
 Expected behavior:
 
+- The default example loads Division `300`, Section `304`, item `304-06007`, `AGGREGATE BASE COURSE (CLASS 6)`, and `CY`.
+- With no Division or Section selected, searching an exact item code such as `403-09221` can find that item directly.
+- Selecting Division `400`, Section `403`, then searching `HMA` can select `403-09221`.
+- The loaded sample includes about 200 item-code rows across 70 CDOT section prefixes, while only existing mapped demo rows have comparable pricing records.
 - Selecting `304-06007` fills `AGGREGATE BASE COURSE (CLASS 6)` and `CY`.
 - User can still clear the query and reset the demo example.
 - Pricing runs against the selected item code and same-unit records.
 
 Documentation impact:
 
+- Add `spec_sections.csv` to `docs/data_schema.md`.
 - Update `user_workflow.md` preferred input order.
-- Update `architecture_overview.md` only if the matching/data flow changes.
+- Update `architecture_overview.md` to describe the section-based item picker.
 
 ### Increment 2: Description Helper Before Pricing
 
@@ -529,4 +540,3 @@ Phase 2 is complete when:
 - Price distribution includes quantity context.
 - Smoke tests cover the main validated scenarios.
 - Relevant documentation is current.
-

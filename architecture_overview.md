@@ -11,7 +11,7 @@ The first product is not a chatbot and not a full project estimator. It is a str
 - Hosting target: GitHub Pages.
 - Frontend stack: Vite + TypeScript.
 - Runtime model: static files only; no server and no database.
-- Data model: browser-loaded CSV files in `public/data`.
+- Data model: browser-loaded CSV files in `public/data`, including item observations, agency item mappings, and CDOT section metadata.
 - Matching model: deterministic TypeScript scoring rules in `src/matching`.
 - Deployment path: GitHub Actions builds the Vite app and publishes `dist` to GitHub Pages from `main`.
 
@@ -21,7 +21,7 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 
 1. `src/main.ts` starts the app.
 2. `src/data/loadData.ts` loads CSV files from `public/data`.
-3. `src/data/schema.ts` defines app-facing data structures.
+3. `src/data/schema.ts` defines app-facing data structures, including `SpecSectionRecord` for CDOT section/prefix labels.
 4. `src/matching/scoreComparableItems.ts` ranks comparable records.
 5. `src/matching/priceSummary.ts` calculates low, percentile, median, high, and suggested unit price values.
 6. `src/matching/confidence.ts` converts match quality into High, Medium, Low, or Not supportable.
@@ -55,6 +55,25 @@ The UI includes small information markers that explain what each input, metric, 
 The information markers should open only when the marker itself is hovered or keyboard-focused. They should not appear when the user hovers over or types in the associated form field.
 
 The Item Explorer also includes a clear action for removing the current query values and a reset action for restoring the demo example query.
+
+## Item Code Search Funnel
+
+The Item Explorer uses a CDOT section-based item picker instead of a single long item-code dropdown.
+
+The picker flow is:
+
+1. Select a CDOT specification division when it helps narrow the search.
+2. Select a section/prefix within that division when it helps narrow the search.
+3. Use Search to filter loaded agency items by full item code, suffix after the hyphen, or official description.
+4. Select one item result to populate the submitted item code, official description, and official unit.
+
+Search works across all loaded agency items when no division or section is selected. Division and section selections narrow the visible search results when selected.
+
+Section labels come from `public/data/spec_sections.csv`. Item-level options continue to come from `public/data/agency_items.csv`.
+
+The current item picker data is a 200-row sample generated from the public CDOT 2025 Item Code Book Excel file and spread across loaded CDOT Standard Specification sections. Existing synthetic demo rows with comparable observations are preserved so the pricing demo still works.
+
+The submitted `SearchQuery` shape did not change. The picker only controls the existing `itemCode`, `description`, and `unit` form values before the matching engine runs.
 
 ## Near-Term Extension Points
 

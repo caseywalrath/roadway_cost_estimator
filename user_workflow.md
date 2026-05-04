@@ -66,9 +66,14 @@ The context can be partial. Missing context should reduce confidence or produce 
 
 The user enters one item at a time in the Item Explorer.
 
+The current picker includes a 200-row CDOT item-code sample for testing navigation across divisions and sections. Only the existing mapped demo items have comparable price records in the synthetic observation dataset.
+
 Primary inputs:
 
-- Item code
+- Division
+- Section / prefix
+- Search
+- Selected item code
 - Auto-filled description
 - Auto-filled unit
 - Quantity
@@ -80,17 +85,22 @@ Primary inputs:
 
 Preferred input order:
 
-1. Select the item code.
-2. Confirm the auto-filled description and unit.
-3. Enter the quantity.
-4. Confirm county or region.
-5. Confirm estimate year.
-6. Search comparables.
+1. Select the CDOT specification division if it helps narrow the item list.
+2. Select the section / three-digit item-code prefix if it helps narrow the item list.
+3. Search by full item code, suffix, or official item description if helpful.
+4. Select the item result.
+5. Confirm the auto-filled description and unit.
+6. Enter the quantity.
+7. Confirm county or region.
+8. Confirm estimate year.
+9. Search comparables.
 
 Best current example:
 
 ```text
 Item code: 304-06007
+Division: 300 - Bases
+Section / prefix: 304 - Aggregate Base Course
 Description: AGGREGATE BASE COURSE (CLASS 6)
 Unit: CY
 Quantity: 1800

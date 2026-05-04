@@ -1,7 +1,7 @@
 import type { AppData, SearchQuery } from "../data/schema";
 import { scoreComparableItems } from "../matching/scoreComparableItems";
 import { helpTip } from "./helpTip";
-import { readQueryFromForm, renderExplorer } from "./renderExplorer";
+import { bindItemPicker, readQueryFromForm, renderExplorer } from "./renderExplorer";
 import { renderResults } from "./renderResults";
 
 const exampleQuery: SearchQuery = {
@@ -11,7 +11,7 @@ const exampleQuery: SearchQuery = {
   estimateYear: 2026,
   sourceScope: "both",
   itemCode: "304-06007",
-  description: "Aggregate Base Course Class 6",
+  description: "AGGREGATE BASE COURSE (CLASS 6)",
   unit: "CY",
   quantity: 1800
 };
@@ -64,36 +64,16 @@ export function renderApp(root: HTMLElement, data: AppData): void {
         </section>
 
         <section class="workspace-grid">
-          ${renderExplorer(query, data.agencyItems)}
+          ${renderExplorer(query, data.agencyItems, data.specSections)}
           ${renderResults(result)}
         </section>
       </main>
     `;
 
     const form = root.querySelector<HTMLFormElement>("#explorer-form");
-    const itemCodeSelect = form?.elements.namedItem("itemCode") as HTMLSelectElement | null;
-    const descriptionInput = form?.elements.namedItem("description") as HTMLInputElement | null;
-    const unitInput = form?.elements.namedItem("unit") as HTMLInputElement | null;
-
-    itemCodeSelect?.addEventListener("change", () => {
-      const selectedOption = itemCodeSelect.selectedOptions[0];
-      if (!selectedOption?.value) {
-        if (descriptionInput) {
-          descriptionInput.value = "";
-        }
-        if (unitInput) {
-          unitInput.value = "";
-        }
-        return;
-      }
-
-      if (descriptionInput) {
-        descriptionInput.value = selectedOption.dataset.description ?? "";
-      }
-      if (unitInput) {
-        unitInput.value = selectedOption.dataset.unit ?? "";
-      }
-    });
+    if (form) {
+      bindItemPicker(form, data.agencyItems, data.specSections);
+    }
 
     form?.addEventListener("submit", (event) => {
       event.preventDefault();
