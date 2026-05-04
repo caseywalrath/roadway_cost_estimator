@@ -64,13 +64,37 @@ export function renderApp(root: HTMLElement, data: AppData): void {
         </section>
 
         <section class="workspace-grid">
-          ${renderExplorer(query)}
+          ${renderExplorer(query, data.agencyItems)}
           ${renderResults(result)}
         </section>
       </main>
     `;
 
     const form = root.querySelector<HTMLFormElement>("#explorer-form");
+    const itemCodeSelect = form?.elements.namedItem("itemCode") as HTMLSelectElement | null;
+    const descriptionInput = form?.elements.namedItem("description") as HTMLInputElement | null;
+    const unitInput = form?.elements.namedItem("unit") as HTMLInputElement | null;
+
+    itemCodeSelect?.addEventListener("change", () => {
+      const selectedOption = itemCodeSelect.selectedOptions[0];
+      if (!selectedOption?.value) {
+        if (descriptionInput) {
+          descriptionInput.value = "";
+        }
+        if (unitInput) {
+          unitInput.value = "";
+        }
+        return;
+      }
+
+      if (descriptionInput) {
+        descriptionInput.value = selectedOption.dataset.description ?? "";
+      }
+      if (unitInput) {
+        unitInput.value = selectedOption.dataset.unit ?? "";
+      }
+    });
+
     form?.addEventListener("submit", (event) => {
       event.preventDefault();
       query = readQueryFromForm(form);

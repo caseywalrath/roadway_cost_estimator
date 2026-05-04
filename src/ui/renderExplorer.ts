@@ -1,7 +1,7 @@
-import type { SearchQuery, SourceScope } from "../data/schema";
+import type { AgencyItemRecord, SearchQuery, SourceScope } from "../data/schema";
 import { helpTip } from "./helpTip";
 
-export function renderExplorer(query: SearchQuery): string {
+export function renderExplorer(query: SearchQuery, agencyItems: AgencyItemRecord[]): string {
   return `
     <form id="explorer-form" class="search-panel">
       <div class="panel-heading">
@@ -17,24 +17,27 @@ export function renderExplorer(query: SearchQuery): string {
           Item code
           ${helpTip("About item code", "Agency bid item number. For Colorado roadway work this may be a CDOT item code. It is chosen as the strongest match key because it is more reliable than description text alone. Source: agency item code books or historical estimate line items.")}
         </span>
-        <input name="itemCode" value="${escapeHtml(query.itemCode)}" placeholder="304-06007" />
+        <select name="itemCode">
+          <option value="" ${query.itemCode ? "" : "selected"}>Select item code</option>
+          ${renderAgencyItemOptions(query, agencyItems)}
+        </select>
       </label>
 
       <label>
         <span class="label-row">
           Description
-          ${helpTip("About item description", "Human-readable bid item name. The app normalizes this text and compares it to approved aliases and keywords when the item code is missing or incomplete. Source: estimate rows, bid tabs, or agency item catalogs.")}
+          ${helpTip("About item description", "Official item description filled from the selected agency item code. Description search suggestions are planned for a later increment; this increment keeps pricing centered on item code.")}
         </span>
-        <input name="description" value="${escapeHtml(query.description)}" placeholder="Aggregate Base Course Class 6" />
+        <input name="description" value="${escapeHtml(query.description)}" placeholder="Auto-filled from item code" readonly />
       </label>
 
       <div class="field-grid">
         <label>
           <span class="label-row">
             Unit
-            ${helpTip("About unit", "Measurement basis such as CY, TON, SY, LF, or EA. The prototype requires same-unit records for price recommendations because unit conversions can change the meaning of a cost comparison. Source: estimate rows and bid tabs.")}
+            ${helpTip("About unit", "Official measurement basis filled from the selected agency item code. The prototype requires same-unit records for price recommendations because unit conversions can change the meaning of a cost comparison.")}
           </span>
-          <input name="unit" value="${escapeHtml(query.unit)}" placeholder="CY" />
+          <input name="unit" value="${escapeHtml(query.unit)}" placeholder="Auto-filled" readonly />
         </label>
         <label>
           <span class="label-row">
@@ -102,6 +105,17 @@ export function renderExplorer(query: SearchQuery): string {
       </div>
     </form>
   `;
+}
+
+function renderAgencyItemOptions(query: SearchQuery, agencyItems: AgencyItemRecord[]): string {
+  return agencyItems
+    .filter((agencyItem) => agencyItem.state === query.state)
+    .map((agencyItem) => {
+      const selected = agencyItem.itemCode === query.itemCode ? "selected" : "";
+      const label = `${agencyItem.itemCode} - ${agencyItem.officialDescription} (${agencyItem.officialUnit})`;
+      return `<option value="${escapeHtml(agencyItem.itemCode)}" data-description="${escapeHtml(agencyItem.officialDescription)}" data-unit="${escapeHtml(agencyItem.officialUnit)}" ${selected}>${escapeHtml(label)}</option>`;
+    })
+    .join("");
 }
 
 export function readQueryFromForm(form: HTMLFormElement): SearchQuery {

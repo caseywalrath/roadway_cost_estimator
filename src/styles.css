@@ -292,6 +292,11 @@ select:focus {
   border-color: var(--accent);
 }
 
+input[readonly] {
+  background: #f3f6f8;
+  color: #425161;
+}
+
 .field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

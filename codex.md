@@ -171,6 +171,24 @@ https://github.com/caseywalrath/roadway_cost_estimator/pull/new/[branch-name]
 
 Browser automation through the in-app browser may fail because the Node REPL reports local Node access errors. If that happens, Codex should use source inspection, local HTTP checks, and user visual confirmation rather than claiming browser automation verification occurred.
 
+Local remote-tracking refs can be stale even when GitHub web already shows newer files on `main`.
+
+Symptoms may include:
+
+```text
+GitHub web shows a file on main.
+Local `git ls-tree origin/main` does not show the file.
+Local `git status` reports the branch is behind or appears inconsistent with GitHub web.
+```
+
+Codex should handle this as follows:
+
+1. Run `git fetch --all --prune` before concluding that a file is missing from GitHub.
+2. Compare the local `origin/main` commit with the GitHub web commit shown in the browser when the user provides a screenshot or commit reference.
+3. If a feature branch was created from stale `origin/main`, fast-forward or recreate it from current `origin/main` before making source changes.
+4. If an untracked local copy of a file duplicates a newly fetched tracked file, verify matching content before deleting the duplicate.
+5. Explain the stale-ref issue plainly so the user does not mistake it for conflicting project versions.
+
 ## First Push And Existing Remote History
 
 When pushing to GitHub for the first time, the remote repository may already contain files.

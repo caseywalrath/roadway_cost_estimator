@@ -69,8 +69,8 @@ The user enters one item at a time in the Item Explorer.
 Primary inputs:
 
 - Item code
-- Description
-- Unit
+- Auto-filled description
+- Auto-filled unit
 - Quantity
 - County / region
 - Estimate year
@@ -80,19 +80,18 @@ Primary inputs:
 
 Preferred input order:
 
-1. Enter the item code if known.
-2. Enter the description.
-3. Enter the unit.
-4. Enter the quantity.
-5. Confirm county or region.
-6. Confirm estimate year.
-7. Search comparables.
+1. Select the item code.
+2. Confirm the auto-filled description and unit.
+3. Enter the quantity.
+4. Confirm county or region.
+5. Confirm estimate year.
+6. Search comparables.
 
 Best current example:
 
 ```text
 Item code: 304-06007
-Description: Aggregate Base Course Class 6
+Description: AGGREGATE BASE COURSE (CLASS 6)
 Unit: CY
 Quantity: 1800
 County / region: Douglas
