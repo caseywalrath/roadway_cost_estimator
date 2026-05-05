@@ -1,4 +1,4 @@
-import type { ComparableMatch, MatchResult, PriceSummary } from "../data/schema";
+import type { ComparableMatch, MatchResult, PriceSummary, SearchQuery } from "../data/schema";
 import { helpTip } from "./helpTip";
 
 export function renderResults(result: MatchResult): string {
@@ -6,7 +6,7 @@ export function renderResults(result: MatchResult): string {
     <section class="results-panel">
       ${renderRecommendation(result)}
       ${renderDistribution(result.priceSummary)}
-      ${renderComparableTable(result.comparableMatches)}
+      ${renderComparableProjects(result)}
       ${renderWarnings(result)}
     </section>
   `;
@@ -24,15 +24,15 @@ function renderRecommendation(result: MatchResult): string {
   return `
     <section class="decision-card">
       <div>
-        <p class="eyebrow">Recommendation Summary</p>
+        <p class="eyebrow">Item I am looking for</p>
         <h2>
           ${escapeHtml(result.interpretedDescription)}
           ${helpTip("About interpreted item", "The item name the tool thinks it is evaluating. It comes from the agency item table when an item code is recognized, otherwise from canonical aliases or the entered description.")}
         </h2>
         <p class="query-line">
+          Item code: ${escapeHtml(result.query.itemCode || "Not entered")} |
           Unit: ${escapeHtml(result.query.unit || "Not entered")} |
-          Quantity: ${result.query.quantity ? formatNumber(result.query.quantity) : "Not entered"} |
-          State: ${escapeHtml(result.query.state)}
+          Quantity: ${result.query.quantity ? formatNumber(result.query.quantity) : "Not entered"}
         </p>
       </div>
       <div class="metric-grid">
@@ -118,17 +118,20 @@ function renderDistributionMetric(label: string, value: number, unit: string): s
   `;
 }
 
-function renderComparableTable(matches: ComparableMatch[]): string {
+function renderComparableProjects(result: MatchResult): string {
+  const matches = result.comparableMatches;
+
   if (matches.length === 0) {
     return `
       <section class="panel-block">
         <div class="panel-heading">
-          <p class="eyebrow">Comparable Projects</p>
+          <p class="eyebrow">Projects this item appears in</p>
           <h3>
             No comparable records found
             ${helpTip("About no comparable records", "No candidate in the demo data met the state and item matching rules. In real review this is a cue to provide more source data or ask a roadway reviewer to approve a mapping.")}
           </h3>
         </div>
+        ${renderProjectRelevanceControls(result.query)}
         <p class="muted">The demo dataset does not contain a same-state candidate for this search.</p>
       </section>
     `;
@@ -137,12 +140,13 @@ function renderComparableTable(matches: ComparableMatch[]): string {
   return `
     <section class="panel-block panel-block--table">
       <div class="panel-heading">
-        <p class="eyebrow">Comparable Projects</p>
+        <p class="eyebrow">Projects this item appears in</p>
         <h3>
           Top ${matches.length} ranked records
           ${helpTip("About ranked records", "The table shows the strongest historical item observations found by the scoring rules. It is intended to support reviewer judgment, not replace it.")}
         </h3>
       </div>
+      ${renderProjectRelevanceControls(result.query)}
       <div class="table-scroll">
         <table>
           <thead>
@@ -167,6 +171,52 @@ function renderComparableTable(matches: ComparableMatch[]): string {
       </div>
     </section>
   `;
+}
+
+function renderProjectRelevanceControls(query: SearchQuery): string {
+  return `
+    <form id="project-filters-form" class="project-filter-form">
+      <label>
+        <span class="label-row">
+          County / region
+          ${helpTip("About project region control", "Geographic context for ranking comparable projects. It is not part of item identification.")}
+        </span>
+        <input name="countyRegion" value="${escapeHtml(query.countyRegion)}" placeholder="Douglas" />
+      </label>
+      <label>
+        <span class="label-row">
+          Estimate year
+          ${helpTip("About project year control", "Target estimate year for ranking comparable project recency. This prototype does not apply automatic cost escalation.")}
+        </span>
+        <input name="estimateYear" type="number" min="1990" max="2100" value="${query.estimateYear}" />
+      </label>
+      <label>
+        <span class="label-row">
+          Work type
+          ${helpTip("About project work type control", "Discipline or project type used to rank comparable projects after the item has been identified.")}
+        </span>
+        <select name="workType">
+          <option value="Roadway" ${query.workType === "Roadway" ? "selected" : ""}>Roadway</option>
+        </select>
+      </label>
+      <button type="submit" class="secondary-button">Apply project controls</button>
+    </form>
+  `;
+}
+
+export function readProjectFiltersFromForm(
+  form: HTMLFormElement,
+  currentQuery: SearchQuery
+): SearchQuery {
+  const formData = new FormData(form);
+  const estimateYear = Number(formData.get("estimateYear") || currentQuery.estimateYear);
+
+  return {
+    ...currentQuery,
+    countyRegion: String(formData.get("countyRegion") || ""),
+    workType: String(formData.get("workType") || "Roadway"),
+    estimateYear: Number.isFinite(estimateYear) ? estimateYear : currentQuery.estimateYear
+  };
 }
 
 function renderComparableRow(match: ComparableMatch, index: number): string {

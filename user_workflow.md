@@ -28,43 +28,40 @@ https://[organization-or-user].github.io/[repo-name]/
 
 The first screen should show:
 
-- project context bar
+- fixed prototype scope bar
 - prototype warning
 - prototype review guide
-- item explorer form
+- item search form
 - recommendation and evidence panels
 
-## 2. Confirm project context
+## 2. Understand prototype scope
 
-The user reviews the context bar before searching.
+The user reviews the fixed scope bar before searching.
 
-Current context fields:
+Current fixed scope:
 
-- State
-- Region
-- Work type
-- Estimate year
+- State: Colorado
+- Default work type: Roadway
 - Source scope
 
 Why this matters:
 
-- State limits the source data to the correct agency and market.
-- Region helps rank geographically relevant projects.
-- Work type keeps roadway records separate from unrelated disciplines.
-- Estimate year helps rank recent records.
+- State limits the source data to the correct agency and market. Colorado is the only active state in this prototype.
+- Work type defaults to roadway because this prototype is validating roadway item comparables first.
 - Source scope tells the reviewer whether evidence is public-style data, internal-style data, or both.
+- Region, estimate year, and work type are adjusted after matching from the comparable project area.
 
 Current prototype default:
 
 ```text
-Colorado | Douglas | Roadway | 2026 | Public + internal demo data
+Colorado roadway demo | Public + internal demo data
 ```
 
-The context can be partial. Missing context should reduce confidence or produce review guidance rather than blocking the workflow.
+Comparable project context can be partial. Missing context should affect ranking or produce review guidance rather than blocking the item search.
 
 ## 3. Enter one roadway bid item
 
-The user enters one item at a time in the Item Explorer.
+The user enters one item at a time in the item search panel.
 
 The current picker includes a 200-row CDOT item-code sample for testing navigation across divisions and sections. Only the existing mapped demo items have comparable price records in the synthetic observation dataset.
 
@@ -73,14 +70,10 @@ Primary inputs:
 - Division
 - Section / prefix
 - Search
-- Selected item code
-- Auto-filled description
-- Auto-filled unit
+- Selected item code through the item picker
+- Fallback description when the item code is unknown
+- Manual unit only when the official item-code unit cannot be resolved
 - Quantity
-- County / region
-- Estimate year
-- State
-- Work type
 - Source scope
 
 Preferred input order:
@@ -89,11 +82,11 @@ Preferred input order:
 2. Select the section / three-digit item-code prefix if it helps narrow the item list.
 3. Search by full item code, suffix, or official item description if helpful.
 4. Select the item result.
-5. Confirm the auto-filled description and unit.
-6. Enter the quantity.
-7. Confirm county or region.
-8. Confirm estimate year.
-9. Search comparables.
+5. Enter the quantity.
+6. Select source scope if the reviewer needs public-only or internal-only demo evidence.
+7. Search comparables.
+
+If the item code is unknown, the user may enter fallback description and manual unit instead. This path is weaker than selecting an official CDOT item code.
 
 Best current example:
 
@@ -104,8 +97,6 @@ Section / prefix: 304 - Aggregate Base Course
 Description: AGGREGATE BASE COURSE (CLASS 6)
 Unit: CY
 Quantity: 1800
-County / region: Douglas
-Estimate year: 2026
 ```
 
 Why one item at a time:
@@ -121,6 +112,7 @@ After searching, the user first reads the Recommendation Summary.
 The summary includes:
 
 - interpreted item
+- item code
 - unit
 - quantity
 - recommended range
@@ -167,7 +159,22 @@ Reviewer interpretation:
 
 ## 6. Review the comparable projects table
 
-The user reviews the top-ranked comparable records.
+The user reviews the comparable project area after the item has been identified.
+
+Current project relevance controls:
+
+- County / region
+- Estimate year
+- Work type
+
+How to use the controls:
+
+1. Enter county or region when nearby projects should rank higher.
+2. Enter estimate year when recency should affect ranking.
+3. Keep work type as Roadway in the current prototype.
+4. Apply project controls and review whether the table order is more useful.
+
+The user then reviews the top-ranked comparable records.
 
 Current table columns:
 
@@ -185,8 +192,8 @@ Current table columns:
 
 How to use it:
 
-1. Check whether the project names and regions make sense.
-2. Check whether the item code and description are truly comparable.
+1. Check whether the item code and description are truly comparable.
+2. Check whether the project names and regions make sense.
 3. Check whether the unit matches the searched item.
 4. Check whether the quantity is similar enough to be useful.
 5. Read the "Why selected" field to understand the matching logic.
@@ -210,7 +217,7 @@ Warnings may identify:
 - sparse comparable data
 - unit mismatch
 - weak support
-- missing context
+- missing project relevance context
 - excluded candidate records
 
 How to use it:
@@ -228,7 +235,7 @@ These actions explain what would make the result more defensible.
 Examples:
 
 - Confirm the CDOT item code.
-- Add a county or region.
+- Use project relevance controls if geography should influence ranking.
 - Add a quantity.
 - Provide a comparable Colorado roadway estimate or bid tab.
 - Confirm unit compatibility.
@@ -248,13 +255,14 @@ Recommended meeting flow:
 1. Open the app.
 2. Explain that all current records are synthetic demo data.
 3. Pick one familiar roadway item.
-4. Enter item code, description, unit, quantity, region, and year.
+4. Select the item code, enter quantity, and search comparables.
 5. Review the recommendation summary.
-6. Review the comparable project table.
-7. Ask whether the match reasons are technically reasonable.
-8. Ask which fields should matter more or less.
-9. Ask what source data should be added first.
-10. Record feedback as implementation notes for the coding agent.
+6. Adjust comparable project controls for region and year when relevant.
+7. Review the comparable project table.
+8. Ask whether the match reasons are technically reasonable.
+9. Ask which fields should matter more or less.
+10. Ask what source data should be added first.
+11. Record feedback as implementation notes for the coding agent.
 
 Key questions for roadway engineers:
 

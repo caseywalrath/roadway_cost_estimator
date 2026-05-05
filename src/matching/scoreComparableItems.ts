@@ -26,7 +26,7 @@ interface MatchCandidate {
 }
 
 export function scoreComparableItems(data: AppData, rawQuery: SearchQuery): MatchResult {
-  const query = normalizeQuery(rawQuery);
+  const query = normalizeQuery(data, rawQuery);
   const queryCanonicalCandidates = findCanonicalCandidates(data, query);
   const warnings: string[] = [];
   const matches: ComparableMatch[] = [];
@@ -106,15 +106,23 @@ export function scoreComparableItems(data: AppData, rawQuery: SearchQuery): Matc
   };
 }
 
-function normalizeQuery(query: SearchQuery): SearchQuery {
+function normalizeQuery(data: AppData, query: SearchQuery): SearchQuery {
+  const state = query.state.trim().toUpperCase() || "CO";
+  const itemCode = query.itemCode.trim().toUpperCase();
+  const resolvedAgencyItem = itemCode
+    ? (data.agencyByCode.get(itemCode) ?? []).find((item) => item.state === state)
+    : null;
+
   return {
     ...query,
-    state: query.state.trim().toUpperCase() || "CO",
+    state,
     countyRegion: query.countyRegion.trim(),
     workType: query.workType.trim() || "Roadway",
-    itemCode: query.itemCode.trim().toUpperCase(),
-    description: query.description.trim(),
-    unit: normalizeUnit(query.unit),
+    itemCode,
+    description: resolvedAgencyItem?.officialDescription || query.description.trim(),
+    unit: resolvedAgencyItem?.officialUnit
+      ? normalizeUnit(resolvedAgencyItem.officialUnit)
+      : normalizeUnit(query.unit),
     quantity: query.quantity && query.quantity > 0 ? query.quantity : null
   };
 }
@@ -344,7 +352,7 @@ function buildImproveActions(
   }
 
   if (!query.countyRegion) {
-    actions.push("Add a county or region to improve geographic ranking.");
+    actions.push("Use the project relevance controls if geography should influence ranking.");
   }
 
   if (!query.quantity) {

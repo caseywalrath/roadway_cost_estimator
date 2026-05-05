@@ -2,7 +2,7 @@ import type { AppData, SearchQuery } from "../data/schema";
 import { scoreComparableItems } from "../matching/scoreComparableItems";
 import { helpTip } from "./helpTip";
 import { bindItemPicker, readQueryFromForm, renderExplorer } from "./renderExplorer";
-import { renderResults } from "./renderResults";
+import { readProjectFiltersFromForm, renderResults } from "./renderResults";
 
 const exampleQuery: SearchQuery = {
   state: "CO",
@@ -40,11 +40,8 @@ export function renderApp(root: HTMLElement, data: AppData): void {
             <p class="eyebrow">Static prototype | Demo data only</p>
             <h1>Colorado Roadway Comparable Project Explorer</h1>
           </div>
-          <div class="context-bar" aria-label="Project context">
-            <span>State: ${escapeHtml(query.state)} ${helpTip("About context state", "State filters the source data. Colorado is the only active state in this prototype.")}</span>
-            <span>Region: ${escapeHtml(query.countyRegion || "Statewide")} ${helpTip("About context region", "Region is used to favor nearby records. If missing, the app searches statewide Colorado demo records.")}</span>
-            <span>Work type: ${escapeHtml(query.workType)} ${helpTip("About context work type", "Work type keeps roadway records separate from traffic, drainage, utility, and other disciplines.")}</span>
-            <span>Estimate year: ${query.estimateYear} ${helpTip("About context estimate year", "Estimate year is used to rank recent records. This prototype does not yet apply cost escalation.")}</span>
+          <div class="context-bar" aria-label="Prototype scope">
+            <span>Scope: Colorado roadway demo ${helpTip("About prototype scope", "State is fixed to Colorado and work type defaults to roadway until later data sources add real multi-state or multi-discipline support.")}</span>
             <span>Sources: ${sourceScopeLabel(query.sourceScope)} ${helpTip("About context sources", "Source scope helps reviewers see whether evidence comes from public-style records, internal-style records, or both. Current data is synthetic demo data.")}</span>
           </div>
         </header>
@@ -77,7 +74,14 @@ export function renderApp(root: HTMLElement, data: AppData): void {
 
     form?.addEventListener("submit", (event) => {
       event.preventDefault();
-      query = readQueryFromForm(form);
+      query = readQueryFromForm(form, query);
+      render();
+    });
+
+    const projectFiltersForm = root.querySelector<HTMLFormElement>("#project-filters-form");
+    projectFiltersForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      query = readProjectFiltersFromForm(projectFiltersForm, query);
       render();
     });
 

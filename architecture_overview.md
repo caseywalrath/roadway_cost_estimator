@@ -4,7 +4,7 @@
 
 This repository contains a static-first prototype for a Colorado roadway cost-comparable explorer.
 
-The first product is not a chatbot and not a full project estimator. It is a structured evidence tool that helps a user enter one roadway bid item and review comparable demo records, price ranges, confidence, warnings, and next steps.
+The first product is not a chatbot and not a full project estimator. It is a structured evidence tool that helps a user identify one roadway bid item and review comparable demo records, price ranges, confidence, warnings, and next steps.
 
 ## Application Shape
 
@@ -25,7 +25,7 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 4. `src/matching/scoreComparableItems.ts` ranks comparable records.
 5. `src/matching/priceSummary.ts` calculates low, percentile, median, high, and suggested unit price values.
 6. `src/matching/confidence.ts` converts match quality into High, Medium, Low, or Not supportable.
-7. `src/ui` renders the project context, item explorer, recommendation summary, comparable table, warnings, and improve-confidence guidance.
+7. `src/ui` renders the fixed prototype scope, item search, recommendation summary, result-side project relevance controls, comparable table, warnings, and improve-confidence guidance.
 8. `src/ui/helpTip.ts` renders prototype-only explanatory markers for fields, metrics, and table columns.
 
 ## Data Governance
@@ -38,13 +38,14 @@ Do not commit private FHU estimate data to a public GitHub Pages repository. Rea
 
 The MVP matching rules are intentionally visible and simple:
 
-- Filter to the selected state.
+- Filter to the fixed Colorado prototype state.
 - Filter source scope when requested.
 - Prefer exact agency item-code matches.
+- Resolve official item descriptions and units from agency item-code records when possible.
 - Use approved alias or canonical item matches second.
 - Use keyword fallback last.
 - Require same unit for price recommendations.
-- Score quantity similarity, project recency, geography, work type, and Colorado source provenance.
+- Score quantity similarity, project recency, geography, work type, and Colorado source provenance. Project recency, geography, and work type are controlled from the result-side comparable project area, not from the item search panel.
 
 Unit mismatches are shown as warnings and excluded from the price summary.
 
@@ -58,14 +59,14 @@ The Item Explorer also includes a clear action for removing the current query va
 
 ## Item Code Search Funnel
 
-The Item Explorer uses a CDOT section-based item picker instead of a single long item-code dropdown.
+The item search uses a CDOT section-based item picker instead of a single long item-code dropdown.
 
 The picker flow is:
 
 1. Select a CDOT specification division when it helps narrow the search.
 2. Select a section/prefix within that division when it helps narrow the search.
 3. Use Search to filter loaded agency items by full item code, suffix after the hyphen, or official description.
-4. Select one item result to populate the submitted item code, official description, and official unit.
+4. Select one item result to populate the submitted item code. The matching layer resolves the official description and unit from the agency item table.
 
 Search works across all loaded agency items when no division or section is selected. Division and section selections narrow the visible search results when selected.
 
@@ -73,7 +74,7 @@ Section labels come from `public/data/spec_sections.csv`. Item-level options con
 
 The current item picker data is a 200-row sample generated from the public CDOT 2025 Item Code Book Excel file and spread across loaded CDOT Standard Specification sections. Existing synthetic demo rows with comparable observations are preserved so the pricing demo still works.
 
-The submitted `SearchQuery` shape did not change. The picker only controls the existing `itemCode`, `description`, and `unit` form values before the matching engine runs.
+The submitted `SearchQuery` shape did not change. The visible item search is limited to item identity, quantity, and source scope. Description and unit are fallback inputs only when an official item-code record is not selected. County / region, estimate year, and work type are applied from the comparable-project result controls after item identity is established.
 
 ## Near-Term Extension Points
 
