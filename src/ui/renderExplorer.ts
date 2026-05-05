@@ -2,12 +2,18 @@ import type { AgencyItemRecord, SearchQuery, SourceScope, SpecSectionRecord } fr
 import { helpTip } from "./helpTip";
 
 const MAX_VISIBLE_ITEM_RESULTS = 25;
+const DEFAULT_STATE = "CO";
+const DEFAULT_WORK_TYPE = "Roadway";
 
 export function renderExplorer(
   query: SearchQuery,
   agencyItems: AgencyItemRecord[],
   specSections: SpecSectionRecord[]
 ): string {
+  const resolvedAgencyItem = findAgencyItem(agencyItems, query.itemCode, query.state);
+  const hasResolvedItem = Boolean(resolvedAgencyItem);
+  const resolvedDescription = resolvedAgencyItem?.officialDescription ?? query.description;
+  const resolvedUnit = resolvedAgencyItem?.officialUnit ?? query.unit;
   const selectedSectionPrefix = sectionPrefixFromItemCode(query.itemCode);
   const selectedSection = selectedSectionPrefix
     ? findSpecSection(specSections, selectedSectionPrefix)
@@ -17,10 +23,10 @@ export function renderExplorer(
   return `
     <form id="explorer-form" class="search-panel">
       <div class="panel-heading">
-        <p class="eyebrow">Item Explorer</p>
+        <p class="eyebrow">Item I am looking for</p>
         <h2>
           Search one roadway bid item
-          ${helpTip("About the item explorer", "This is a one-item lookup. It is meant to test whether the app can find comparable historical records before building a full estimate worksheet.")}
+          ${helpTip("About the item search", "This panel identifies the bid item and quantity. Comparable project context is handled with the results controls after matching.")}
         </h2>
       </div>
 
@@ -58,7 +64,11 @@ export function renderExplorer(
         </label>
 
         <div class="selected-item-summary" data-selected-item-summary>
-          ${renderSelectedItemSummary(query)}
+          ${renderSelectedItemSummary({
+            itemCode: query.itemCode,
+            description: resolvedDescription,
+            unit: resolvedUnit
+          })}
         </div>
 
         <div class="item-result-list" data-item-results aria-live="polite">
@@ -66,76 +76,30 @@ export function renderExplorer(
         </div>
       </div>
 
+      <div class="manual-item-fields" data-manual-item-fields ${hasResolvedItem ? "hidden" : ""}>
+        <label>
+          <span class="label-row">
+            Fallback description
+            ${helpTip("About fallback description", "Use this only when the item code is unknown. Description text is a weaker match key than an official CDOT item code.")}
+          </span>
+          <input name="description" value="${escapeHtml(resolvedDescription)}" placeholder="Aggregate Base Course Class 6" />
+        </label>
+        <label>
+          <span class="label-row">
+            Manual unit
+            ${helpTip("About manual unit", "Use this only when the official item-code unit cannot be resolved. Same-unit records are required before the prototype supports a unit-price recommendation.")}
+          </span>
+          <input name="unit" value="${escapeHtml(resolvedUnit)}" placeholder="CY" />
+        </label>
+      </div>
+
       <label>
         <span class="label-row">
-          Selected item code
-          ${helpTip("About item code", "Agency bid item number. For Colorado roadway work this may be a CDOT item code. It is chosen as the strongest match key because it is more reliable than description text alone. Source: agency item code books or historical estimate line items.")}
+          Quantity
+          ${helpTip("About quantity", "Planned amount of work for this line item. It is used to rank projects with a similar scale of work higher than very small or very large examples. Source: current estimate line item.")}
         </span>
-        <input name="selectedItemCodeDisplay" value="${escapeHtml(query.itemCode)}" placeholder="Select from item search" readonly />
+        <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" placeholder="1800" />
       </label>
-
-      <label>
-        <span class="label-row">
-          Description
-          ${helpTip("About item description", "Official item description filled from the selected agency item code. Description search suggestions are planned for a later increment; this increment keeps pricing centered on item code.")}
-        </span>
-        <input name="description" value="${escapeHtml(query.description)}" placeholder="Auto-filled from item code" readonly />
-      </label>
-
-      <div class="field-grid">
-        <label>
-          <span class="label-row">
-            Unit
-            ${helpTip("About unit", "Official measurement basis filled from the selected agency item code. The prototype requires same-unit records for price recommendations because unit conversions can change the meaning of a cost comparison.")}
-          </span>
-          <input name="unit" value="${escapeHtml(query.unit)}" placeholder="Auto-filled" readonly />
-        </label>
-        <label>
-          <span class="label-row">
-            Quantity
-            ${helpTip("About quantity", "Planned amount of work for this line item. It is used to rank projects with a similar scale of work higher than very small or very large examples. Source: current estimate line item.")}
-          </span>
-          <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" placeholder="1800" />
-        </label>
-      </div>
-
-      <div class="field-grid">
-        <label>
-          <span class="label-row">
-            County / region
-            ${helpTip("About county or region", "Geographic context for the estimate. It is used as a ranking signal, not a hard requirement in the demo, because nearby projects may be more comparable than statewide records. Source: project setup, project metadata, or bid tab location.")}
-          </span>
-          <input name="countyRegion" value="${escapeHtml(query.countyRegion)}" placeholder="Douglas" />
-        </label>
-        <label>
-          <span class="label-row">
-            Estimate year
-            ${helpTip("About estimate year", "Target year for the estimate. Recent records receive a higher score. Future versions may use this field for escalation, but this prototype does not apply automatic inflation factors.")}
-          </span>
-          <input name="estimateYear" type="number" min="1990" max="2100" value="${query.estimateYear}" />
-        </label>
-      </div>
-
-      <div class="field-grid">
-        <label>
-          <span class="label-row">
-            State
-            ${helpTip("About state", "Initial prototype scope is Colorado only. State is a hard filter because cost data, item codes, and construction markets vary by agency and geography.")}
-          </span>
-          <select name="state">
-            <option value="CO" ${query.state === "CO" ? "selected" : ""}>Colorado</option>
-          </select>
-        </label>
-        <label>
-          <span class="label-row">
-            Work type
-            ${helpTip("About work type", "Discipline or project type. Roadway is the first scope because the initial design brief identified roadway items as the best place to validate the comparable engine.")}
-          </span>
-          <select name="workType">
-            <option value="Roadway" ${query.workType === "Roadway" ? "selected" : ""}>Roadway</option>
-          </select>
-        </label>
-      </div>
 
       <label>
         <span class="label-row">
@@ -164,7 +128,6 @@ export function bindItemPicker(
   specSections: SpecSectionRecord[]
 ): void {
   const itemCodeInput = form.elements.namedItem("itemCode") as HTMLInputElement | null;
-  const itemCodeDisplay = form.elements.namedItem("selectedItemCodeDisplay") as HTMLInputElement | null;
   const descriptionInput = form.elements.namedItem("description") as HTMLInputElement | null;
   const unitInput = form.elements.namedItem("unit") as HTMLInputElement | null;
   const divisionSelect = form.querySelector<HTMLSelectElement>("[data-division-select]");
@@ -172,19 +135,20 @@ export function bindItemPicker(
   const itemSearchInput = form.querySelector<HTMLInputElement>("[data-item-search]");
   const selectedItemSummary = form.querySelector<HTMLElement>("[data-selected-item-summary]");
   const itemResults = form.querySelector<HTMLElement>("[data-item-results]");
+  const manualItemFields = form.querySelector<HTMLElement>("[data-manual-item-fields]");
 
   function clearSelectedItem(): void {
     if (itemCodeInput) {
       itemCodeInput.value = "";
-    }
-    if (itemCodeDisplay) {
-      itemCodeDisplay.value = "";
     }
     if (descriptionInput) {
       descriptionInput.value = "";
     }
     if (unitInput) {
       unitInput.value = "";
+    }
+    if (manualItemFields) {
+      manualItemFields.hidden = false;
     }
     if (selectedItemSummary) {
       selectedItemSummary.innerHTML = renderSelectedItemSummary({
@@ -255,14 +219,14 @@ export function bindItemPicker(
     if (itemCodeInput) {
       itemCodeInput.value = itemCode;
     }
-    if (itemCodeDisplay) {
-      itemCodeDisplay.value = itemCode;
-    }
     if (descriptionInput) {
       descriptionInput.value = description;
     }
     if (unitInput) {
       unitInput.value = unit;
+    }
+    if (manualItemFields) {
+      manualItemFields.hidden = true;
     }
     if (selectedItemSummary) {
       selectedItemSummary.innerHTML = renderSelectedItemSummary({
@@ -372,22 +336,22 @@ function renderItemResultButton(agencyItem: AgencyItemRecord, selected: boolean)
 
 function renderSelectedItemSummary(query: Pick<SearchQuery, "itemCode" | "description" | "unit">): string {
   if (!query.itemCode) {
-    return `<p>No item selected.</p>`;
+    return `<p>No item code selected. Use fallback description and manual unit if needed.</p>`;
   }
 
   return `<p><strong>${escapeHtml(query.itemCode)}</strong> | ${escapeHtml(query.description)} | ${escapeHtml(query.unit)}</p>`;
 }
 
-export function readQueryFromForm(form: HTMLFormElement): SearchQuery {
+export function readQueryFromForm(form: HTMLFormElement, currentQuery?: SearchQuery): SearchQuery {
   const formData = new FormData(form);
   const quantity = Number(formData.get("quantity") || 0);
-  const estimateYear = Number(formData.get("estimateYear") || new Date().getFullYear());
+  const estimateYear = currentQuery?.estimateYear ?? new Date().getFullYear();
 
   return {
-    state: String(formData.get("state") || "CO"),
-    countyRegion: String(formData.get("countyRegion") || ""),
-    workType: String(formData.get("workType") || "Roadway"),
-    estimateYear: Number.isFinite(estimateYear) ? estimateYear : new Date().getFullYear(),
+    state: currentQuery?.state ?? DEFAULT_STATE,
+    countyRegion: currentQuery?.countyRegion ?? "",
+    workType: currentQuery?.workType ?? DEFAULT_WORK_TYPE,
+    estimateYear,
     sourceScope: String(formData.get("sourceScope") || "both") as SourceScope,
     itemCode: String(formData.get("itemCode") || ""),
     description: String(formData.get("description") || ""),
@@ -464,6 +428,19 @@ function findSpecSection(
   sectionPrefix: string
 ): SpecSectionRecord | null {
   return specSections.find((specSection) => specSection.sectionPrefix === sectionPrefix) ?? null;
+}
+
+function findAgencyItem(
+  agencyItems: AgencyItemRecord[],
+  itemCode: string,
+  state: string
+): AgencyItemRecord | null {
+  const normalizedItemCode = itemCode.trim().toUpperCase();
+  const normalizedState = state.trim().toUpperCase();
+
+  return agencyItems.find((agencyItem) =>
+    agencyItem.itemCode === normalizedItemCode && agencyItem.state === normalizedState
+  ) ?? null;
 }
 
 function sectionPrefixFromItemCode(itemCode: string): string {
