@@ -65,8 +65,8 @@ The current picker includes a 200-row CDOT item-code sample for testing navigati
 
 The left panel is organized into three numbered steps:
 
-1. Find item.
-2. Confirm matching item.
+1. Locate Item.
+2. Select Item.
 3. Enter quantity.
 
 Primary inputs:
@@ -75,19 +75,18 @@ Primary inputs:
 - Section / prefix
 - Item code or description
 - Selected item code through the item picker
-- Unit for pricing, shown only when no official item is selected
-- Quantity
+- Quantity, with the selected official item unit shown as a non-editable suffix when available
 
 Preferred input order:
 
-1. In Find item, select the CDOT specification division if it helps narrow the item list.
+1. In Locate Item, select the CDOT specification division if it helps narrow the item list.
 2. Select the section / three-digit item-code prefix if it helps narrow the item list.
 3. Enter item code or description to narrow the loaded item list.
-4. In Confirm matching item, review the potential matching items and select the correct official item. This section remains empty until the user starts an item search.
+4. In Select Item, review the potential matching items and select the correct official item. This section remains empty until the user starts an item search.
 5. In Enter quantity, enter the planned item quantity.
 6. Click Search Projects.
 
-If the item code is unknown, the user may enter a description and unit for pricing without selecting an official item. This path is weaker than selecting an official CDOT item code.
+If the item code is unknown, the user may enter a description without selecting an official item. This path is weaker than selecting an official CDOT item code and will not resolve a unit automatically.
 
 Best current example:
 

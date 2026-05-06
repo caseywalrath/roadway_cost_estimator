@@ -13,6 +13,7 @@ export function renderExplorer(
   const resolvedAgencyItem = findAgencyItem(agencyItems, query.itemCode, query.state);
   const hasResolvedItem = Boolean(resolvedAgencyItem);
   const resolvedUnit = resolvedAgencyItem?.officialUnit ?? query.unit;
+  const selectedUnit = hasResolvedItem ? resolvedUnit : "";
   const itemSearchValue = hasResolvedItem ? "" : query.description;
   const selectedSectionPrefix = sectionPrefixFromItemCode(query.itemCode);
   const selectedSection = selectedSectionPrefix
@@ -23,17 +24,17 @@ export function renderExplorer(
   return `
     <form id="explorer-form" class="search-panel">
       <div class="panel-heading">
-        <p class="eyebrow">Item I am looking for</p>
         <h2>
-          Search one roadway bid item
+          Cost Book Search
           ${helpTip("About the item search", "This panel identifies the bid item and quantity. Comparable project context is handled with the results controls after matching.")}
         </h2>
       </div>
 
       <input type="hidden" name="itemCode" value="${escapeHtml(query.itemCode)}" />
+      <input type="hidden" name="unit" value="${escapeHtml(selectedUnit)}" />
 
       <section class="workflow-step">
-        ${renderStepHeading("1", "Find item")}
+        ${renderStepHeading("1", "Locate Item")}
         <div class="item-picker" data-item-picker>
           <label>
             <span class="label-row">
@@ -68,18 +69,9 @@ export function renderExplorer(
       </section>
 
       <section class="workflow-step workflow-step--selected">
-        ${renderStepHeading("2", "Confirm matching item")}
+        ${renderStepHeading("2", "Select Item")}
         <div class="item-result-list" data-item-results aria-live="polite">
           ${renderItemResults(agencyItems, specSections, selectedDivisionPrefix, selectedSectionPrefix, itemSearchValue, query.itemCode)}
-        </div>
-        <div class="manual-item-fields" data-manual-item-fields ${hasResolvedItem ? "hidden" : ""}>
-          <label>
-            <span class="label-row">
-              Unit for pricing
-              ${helpTip("About unit for pricing", "Enter a unit only when no official item has been selected. Same-unit records are required before the prototype supports a unit-price recommendation.")}
-            </span>
-            <input name="unit" value="${escapeHtml(resolvedUnit)}" placeholder="CY" />
-          </label>
         </div>
       </section>
 
@@ -90,7 +82,10 @@ export function renderExplorer(
             Quantity
             ${helpTip("About quantity", "Planned amount of work for this line item. It is used to rank projects with a similar scale of work higher than very small or very large examples. Source: current estimate line item.")}
           </span>
-          <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" placeholder="1800" />
+          <div class="quantity-input-wrap">
+            <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" placeholder="1800" />
+            <span class="quantity-unit" data-quantity-unit aria-hidden="true">${escapeHtml(selectedUnit)}</span>
+          </div>
         </label>
       </section>
 
@@ -124,7 +119,7 @@ export function bindItemPicker(
   const sectionSelect = form.querySelector<HTMLSelectElement>("[data-section-select]");
   const itemSearchInput = form.querySelector<HTMLInputElement>("[data-item-search]");
   const itemResults = form.querySelector<HTMLElement>("[data-item-results]");
-  const manualItemFields = form.querySelector<HTMLElement>("[data-manual-item-fields]");
+  const quantityUnit = form.querySelector<HTMLElement>("[data-quantity-unit]");
 
   function clearSelectedItem(options: { clearSearch: boolean } = { clearSearch: false }): void {
     if (itemCodeInput) {
@@ -136,8 +131,8 @@ export function bindItemPicker(
     if (unitInput) {
       unitInput.value = "";
     }
-    if (manualItemFields) {
-      manualItemFields.hidden = false;
+    if (quantityUnit) {
+      quantityUnit.textContent = "";
     }
   }
 
@@ -207,8 +202,8 @@ export function bindItemPicker(
     if (unitInput) {
       unitInput.value = unit;
     }
-    if (manualItemFields) {
-      manualItemFields.hidden = true;
+    if (quantityUnit) {
+      quantityUnit.textContent = unit;
     }
     renderCurrentResults();
   });
@@ -259,7 +254,7 @@ function renderItemResults(
   );
 
   if (!searchHasStarted) {
-    return `<p class="item-result-message">Use Find item to search by division, section, item code, or description. Matching items will appear here.</p>`;
+    return `<p class="item-result-message">Use Locate Item to search by division, section, item code, or description. Matching items will appear here.</p>`;
   }
 
   const sectionByPrefix = new Map(

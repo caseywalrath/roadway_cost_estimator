@@ -344,15 +344,6 @@ input[readonly] {
   padding: 12px;
 }
 
-.manual-item-fields {
-  display: grid;
-  gap: 12px;
-}
-
-.manual-item-fields[hidden] {
-  display: none;
-}
-
 .item-result-list {
   display: grid;
   gap: 8px;
@@ -415,6 +406,25 @@ input[readonly] {
 .item-result-button small {
   color: var(--text-muted);
   font-weight: 800;
+}
+
+.quantity-input-wrap {
+  position: relative;
+}
+
+.quantity-input-wrap input {
+  padding-right: 58px;
+}
+
+.quantity-unit {
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+  pointer-events: none;
 }
 
 .field-grid {

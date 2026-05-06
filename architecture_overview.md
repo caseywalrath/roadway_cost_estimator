@@ -63,17 +63,17 @@ The item search uses a CDOT section-based item picker instead of a single long i
 
 The visible left-panel flow is:
 
-1. Find item: select a CDOT specification division and section/prefix when they help narrow the search, then use Item code or description to filter loaded agency items.
-2. Confirm matching item: review the potential matching items and select one result to populate the submitted item code. The matching layer resolves the official description and unit from the agency item table.
+1. Locate Item: select a CDOT specification division and section/prefix when they help narrow the search, then use Item code or description to filter loaded agency items.
+2. Select Item: review the potential matching items and select one result to populate the submitted item code. The matching layer resolves the official description and unit from the agency item table.
 3. Enter quantity: provide the planned quantity before searching comparable projects.
 
-Item code or description works across all loaded agency items when no division or section is selected. Division and section selections narrow the visible search results when selected. Confirm matching item stays empty until the user selects a division, selects a section, types an item search, or already has an official item selected. If the user does not select an official item, the typed description can still submit as a weaker manual description search.
+Item code or description works across all loaded agency items when no division or section is selected. Division and section selections narrow the visible search results when selected. Select Item stays empty until the user selects a division, selects a section, types an item search, or already has an official item selected. If the user does not select an official item, the typed description can still submit as a weaker manual description search.
 
 Section labels come from `public/data/spec_sections.csv`. Item-level options continue to come from `public/data/agency_items.csv`.
 
 The current item picker data is a 200-row sample generated from the public CDOT 2025 Item Code Book Excel file and spread across loaded CDOT Standard Specification sections. Existing synthetic demo rows with comparable observations are preserved so the pricing demo still works.
 
-The submitted `SearchQuery` shape did not change. The visible item search is limited to item identity and quantity. Unit is shown only when an official item-code record is not selected. County / region, estimate year, and work type are applied from the comparable-project result controls after item identity is established.
+The submitted `SearchQuery` shape did not change. The visible item search is limited to item identity and quantity. Unit is resolved from the selected official item and displayed as a non-editable suffix in the quantity field when available. County / region, estimate year, and work type are applied from the comparable-project result controls after item identity is established.
 
 ## Near-Term Extension Points
 
