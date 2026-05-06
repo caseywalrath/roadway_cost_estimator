@@ -42,19 +42,17 @@ Current fixed scope:
 
 - State: Colorado
 - Default work type: Roadway
-- Source scope
 
 Why this matters:
 
 - State limits the source data to the correct agency and market. Colorado is the only active state in this prototype.
 - Work type defaults to roadway because this prototype is validating roadway item comparables first.
-- Source scope tells the reviewer whether evidence is public-style data, internal-style data, or both.
 - Region, estimate year, and work type are adjusted after matching from the comparable project area.
 
 Current prototype default:
 
 ```text
-Colorado roadway demo | Public + internal demo data
+Colorado roadway demo
 ```
 
 Comparable project context can be partial. Missing context should affect ranking or produce review guidance rather than blocking the item search.
@@ -65,28 +63,30 @@ The user enters one item at a time in the item search panel.
 
 The current picker includes a 200-row CDOT item-code sample for testing navigation across divisions and sections. Only the existing mapped demo items have comparable price records in the synthetic observation dataset.
 
+The left panel is organized into three numbered steps:
+
+1. Locate Item.
+2. Select Item.
+3. Enter quantity.
+
 Primary inputs:
 
 - Division
 - Section / prefix
-- Search
+- Item code or description
 - Selected item code through the item picker
-- Fallback description when the item code is unknown
-- Manual unit only when the official item-code unit cannot be resolved
-- Quantity
-- Source scope
+- Quantity, with the selected official item unit shown as a non-editable suffix when available
 
 Preferred input order:
 
-1. Select the CDOT specification division if it helps narrow the item list.
+1. In Locate Item, select the CDOT specification division if it helps narrow the item list.
 2. Select the section / three-digit item-code prefix if it helps narrow the item list.
-3. Search by full item code, suffix, or official item description if helpful.
-4. Select the item result.
-5. Enter the quantity.
-6. Select source scope if the reviewer needs public-only or internal-only demo evidence.
-7. Search comparables.
+3. Enter item code or description to narrow the loaded item list.
+4. In Select Item, review the potential matching items and select the correct official item. This section remains empty until the user starts an item search.
+5. In Enter quantity, enter the planned item quantity.
+6. Click Search Projects.
 
-If the item code is unknown, the user may enter fallback description and manual unit instead. This path is weaker than selecting an official CDOT item code.
+If the item code is unknown, the user may enter a description without selecting an official item. This path is weaker than selecting an official CDOT item code and will not resolve a unit automatically.
 
 Best current example:
 
@@ -255,7 +255,7 @@ Recommended meeting flow:
 1. Open the app.
 2. Explain that all current records are synthetic demo data.
 3. Pick one familiar roadway item.
-4. Select the item code, enter quantity, and search comparables.
+4. Use the left-panel steps to find an item, select the matching item, enter quantity, and search projects.
 5. Review the recommendation summary.
 6. Adjust comparable project controls for region and year when relevant.
 7. Review the comparable project table.

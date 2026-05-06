@@ -248,6 +248,44 @@ select {
   padding: 18px;
 }
 
+.workflow-step {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.workflow-step--selected {
+  border-top-color: #bdd4e7;
+}
+
+.step-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-number {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.step-heading h3 {
+  margin: 0;
+  color: var(--heading);
+  font-size: 0.96rem;
+  line-height: 1.2;
+}
+
 .panel-heading h2,
 .panel-heading h3 {
   margin: 0;
@@ -306,36 +344,6 @@ input[readonly] {
   padding: 12px;
 }
 
-.selected-item-summary {
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  border: 1px solid #d6e1ea;
-  border-radius: 6px;
-  background: #ffffff;
-  padding: 8px 10px;
-  color: #405061;
-  font-size: 0.86rem;
-}
-
-.selected-item-summary p {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.selected-item-summary strong {
-  color: var(--heading);
-}
-
-.manual-item-fields {
-  display: grid;
-  gap: 12px;
-}
-
-.manual-item-fields[hidden] {
-  display: none;
-}
-
 .item-result-list {
   display: grid;
   gap: 8px;
@@ -361,15 +369,16 @@ input[readonly] {
 .item-result-button {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   width: 100%;
   border: 1px solid #cad6e1;
   border-radius: 6px;
   background: #ffffff;
   color: #223140;
-  padding: 8px 9px;
+  padding: 5px 8px;
   cursor: pointer;
+  line-height: 1.2;
   text-align: left;
 }
 
@@ -397,6 +406,25 @@ input[readonly] {
 .item-result-button small {
   color: var(--text-muted);
   font-weight: 800;
+}
+
+.quantity-input-wrap {
+  position: relative;
+}
+
+.quantity-input-wrap input {
+  padding-right: 58px;
+}
+
+.quantity-unit {
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+  pointer-events: none;
 }
 
 .field-grid {

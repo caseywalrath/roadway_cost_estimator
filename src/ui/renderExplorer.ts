@@ -1,4 +1,4 @@
-import type { AgencyItemRecord, SearchQuery, SourceScope, SpecSectionRecord } from "../data/schema";
+import type { AgencyItemRecord, SearchQuery, SpecSectionRecord } from "../data/schema";
 import { helpTip } from "./helpTip";
 
 const MAX_VISIBLE_ITEM_RESULTS = 25;
@@ -12,8 +12,9 @@ export function renderExplorer(
 ): string {
   const resolvedAgencyItem = findAgencyItem(agencyItems, query.itemCode, query.state);
   const hasResolvedItem = Boolean(resolvedAgencyItem);
-  const resolvedDescription = resolvedAgencyItem?.officialDescription ?? query.description;
   const resolvedUnit = resolvedAgencyItem?.officialUnit ?? query.unit;
+  const selectedUnit = hasResolvedItem ? resolvedUnit : "";
+  const itemSearchValue = hasResolvedItem ? "" : query.description;
   const selectedSectionPrefix = sectionPrefixFromItemCode(query.itemCode);
   const selectedSection = selectedSectionPrefix
     ? findSpecSection(specSections, selectedSectionPrefix)
@@ -23,102 +24,86 @@ export function renderExplorer(
   return `
     <form id="explorer-form" class="search-panel">
       <div class="panel-heading">
-        <p class="eyebrow">Item I am looking for</p>
         <h2>
-          Search one roadway bid item
+          Cost Book Search
           ${helpTip("About the item search", "This panel identifies the bid item and quantity. Comparable project context is handled with the results controls after matching.")}
         </h2>
       </div>
 
       <input type="hidden" name="itemCode" value="${escapeHtml(query.itemCode)}" />
+      <input type="hidden" name="unit" value="${escapeHtml(selectedUnit)}" />
 
-      <div class="item-picker" data-item-picker>
-        <label>
-          <span class="label-row">
-            Division
-            ${helpTip("About division", "CDOT Standard Specifications organize bid items into specification divisions. Division selection narrows the item-code search before choosing a section and item.")}
-          </span>
-          <select name="divisionPrefix" data-division-select>
-            <option value="" ${selectedDivisionPrefix ? "" : "selected"}>Select division</option>
-            ${renderDivisionOptions(specSections, selectedDivisionPrefix)}
-          </select>
-        </label>
+      <section class="workflow-step">
+        ${renderStepHeading("1", "Locate Item")}
+        <div class="item-picker" data-item-picker>
+          <label>
+            <span class="label-row">
+              Division
+              ${helpTip("About division", "CDOT Standard Specifications organize bid items into specification divisions. Division selection narrows the item-code search before choosing a section and item.")}
+            </span>
+            <select name="divisionPrefix" data-division-select>
+              <option value="" ${selectedDivisionPrefix ? "" : "selected"}>Select division</option>
+              ${renderDivisionOptions(specSections, selectedDivisionPrefix)}
+            </select>
+          </label>
 
-        <label>
-          <span class="label-row">
-            Section / prefix
-            ${helpTip("About section prefix", "The first three digits of a CDOT item code correspond to a specification section. Section labels are loaded from the spec section reference table, not inferred from item descriptions.")}
-          </span>
-          <select name="sectionPrefix" data-section-select ${selectedDivisionPrefix ? "" : "disabled"}>
-            <option value="" ${selectedSectionPrefix ? "" : "selected"}>Select section</option>
-            ${renderSectionOptions(specSections, selectedDivisionPrefix, selectedSectionPrefix)}
-          </select>
-        </label>
+          <label>
+            <span class="label-row">
+              Section / prefix
+              ${helpTip("About section prefix", "The first three digits of a CDOT item code correspond to a specification section. Section labels are loaded from the spec section reference table, not inferred from item descriptions.")}
+            </span>
+            <select name="sectionPrefix" data-section-select ${selectedDivisionPrefix ? "" : "disabled"}>
+              <option value="" ${selectedSectionPrefix ? "" : "selected"}>Select section</option>
+              ${renderSectionOptions(specSections, selectedDivisionPrefix, selectedSectionPrefix)}
+            </select>
+          </label>
 
-        <label>
-          <span class="label-row">
-            Search
-            ${helpTip("About search", "Searches loaded agency items by item code, suffix after the hyphen, or official description. Division and section selections narrow the visible results when selected.")}
-          </span>
-          <input name="itemSearch" data-item-search value="" placeholder="Search code, suffix, or description" />
-        </label>
-
-        <div class="selected-item-summary" data-selected-item-summary>
-          ${renderSelectedItemSummary({
-            itemCode: query.itemCode,
-            description: resolvedDescription,
-            unit: resolvedUnit
-          })}
+          <label>
+            <span class="label-row">
+              Item code or description
+              ${helpTip("About item code or description", "Searches loaded agency items by full item code, partial code, suffix after the hyphen, or official description. If no official item is selected, the typed description is used as a weaker manual search.")}
+            </span>
+            <input name="description" data-item-search value="${escapeHtml(itemSearchValue)}" />
+          </label>
         </div>
+      </section>
 
+      <section class="workflow-step workflow-step--selected">
+        ${renderStepHeading("2", "Select Item")}
         <div class="item-result-list" data-item-results aria-live="polite">
-          ${renderItemResults(agencyItems, specSections, selectedDivisionPrefix, selectedSectionPrefix, "", query.itemCode)}
+          ${renderItemResults(agencyItems, specSections, selectedDivisionPrefix, selectedSectionPrefix, itemSearchValue, query.itemCode)}
         </div>
-      </div>
+      </section>
 
-      <div class="manual-item-fields" data-manual-item-fields ${hasResolvedItem ? "hidden" : ""}>
+      <section class="workflow-step">
+        ${renderStepHeading("3", "Enter quantity")}
         <label>
           <span class="label-row">
-            Fallback description
-            ${helpTip("About fallback description", "Use this only when the item code is unknown. Description text is a weaker match key than an official CDOT item code.")}
+            Quantity
+            ${helpTip("About quantity", "Planned amount of work for this line item. It is used to rank projects with a similar scale of work higher than very small or very large examples. Source: current estimate line item.")}
           </span>
-          <input name="description" value="${escapeHtml(resolvedDescription)}" placeholder="Aggregate Base Course Class 6" />
+          <div class="quantity-input-wrap">
+            <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" placeholder="1800" />
+            <span class="quantity-unit" data-quantity-unit aria-hidden="true">${escapeHtml(selectedUnit)}</span>
+          </div>
         </label>
-        <label>
-          <span class="label-row">
-            Manual unit
-            ${helpTip("About manual unit", "Use this only when the official item-code unit cannot be resolved. Same-unit records are required before the prototype supports a unit-price recommendation.")}
-          </span>
-          <input name="unit" value="${escapeHtml(resolvedUnit)}" placeholder="CY" />
-        </label>
-      </div>
+      </section>
 
-      <label>
-        <span class="label-row">
-          Quantity
-          ${helpTip("About quantity", "Planned amount of work for this line item. It is used to rank projects with a similar scale of work higher than very small or very large examples. Source: current estimate line item.")}
-        </span>
-        <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" placeholder="1800" />
-      </label>
-
-      <label>
-        <span class="label-row">
-          Source scope
-          ${helpTip("About source scope", "Controls whether results come from public-style demo records, internal-style demo records, or both. Real FHU internal data should not be committed to a public GitHub Pages repository.")}
-        </span>
-        <select name="sourceScope">
-          <option value="both" ${query.sourceScope === "both" ? "selected" : ""}>Public + internal demo data</option>
-          <option value="public" ${query.sourceScope === "public" ? "selected" : ""}>Public demo data only</option>
-          <option value="internal" ${query.sourceScope === "internal" ? "selected" : ""}>Internal demo data only</option>
-        </select>
-      </label>
-
-      <button type="submit" class="primary-button">Search comparables</button>
+      <button type="submit" class="primary-button">Search Projects</button>
       <div class="form-action-grid">
         <button type="button" id="clear-query" class="secondary-button">Clear</button>
         <button type="button" id="reset-example" class="secondary-button">Reset example</button>
       </div>
     </form>
+  `;
+}
+
+function renderStepHeading(stepNumber: string, label: string): string {
+  return `
+    <div class="step-heading">
+      <span class="step-number">${stepNumber}</span>
+      <h3>${escapeHtml(label)}</h3>
+    </div>
   `;
 }
 
@@ -133,29 +118,21 @@ export function bindItemPicker(
   const divisionSelect = form.querySelector<HTMLSelectElement>("[data-division-select]");
   const sectionSelect = form.querySelector<HTMLSelectElement>("[data-section-select]");
   const itemSearchInput = form.querySelector<HTMLInputElement>("[data-item-search]");
-  const selectedItemSummary = form.querySelector<HTMLElement>("[data-selected-item-summary]");
   const itemResults = form.querySelector<HTMLElement>("[data-item-results]");
-  const manualItemFields = form.querySelector<HTMLElement>("[data-manual-item-fields]");
+  const quantityUnit = form.querySelector<HTMLElement>("[data-quantity-unit]");
 
-  function clearSelectedItem(): void {
+  function clearSelectedItem(options: { clearSearch: boolean } = { clearSearch: false }): void {
     if (itemCodeInput) {
       itemCodeInput.value = "";
     }
-    if (descriptionInput) {
+    if (descriptionInput && options.clearSearch) {
       descriptionInput.value = "";
     }
     if (unitInput) {
       unitInput.value = "";
     }
-    if (manualItemFields) {
-      manualItemFields.hidden = false;
-    }
-    if (selectedItemSummary) {
-      selectedItemSummary.innerHTML = renderSelectedItemSummary({
-        itemCode: "",
-        description: "",
-        unit: ""
-      });
+    if (quantityUnit) {
+      quantityUnit.textContent = "";
     }
   }
 
@@ -202,6 +179,7 @@ export function bindItemPicker(
   });
 
   itemSearchInput?.addEventListener("input", () => {
+    clearSelectedItem();
     renderCurrentResults();
   });
 
@@ -213,29 +191,20 @@ export function bindItemPicker(
     }
 
     const itemCode = button.dataset.itemCode ?? "";
-    const description = button.dataset.description ?? "";
     const unit = button.dataset.unit ?? "";
 
     if (itemCodeInput) {
       itemCodeInput.value = itemCode;
     }
-    if (descriptionInput) {
-      descriptionInput.value = description;
+    if (itemSearchInput) {
+      itemSearchInput.value = itemCode;
     }
     if (unitInput) {
       unitInput.value = unit;
     }
-    if (manualItemFields) {
-      manualItemFields.hidden = true;
+    if (quantityUnit) {
+      quantityUnit.textContent = unit;
     }
-    if (selectedItemSummary) {
-      selectedItemSummary.innerHTML = renderSelectedItemSummary({
-        itemCode,
-        description,
-        unit
-      });
-    }
-
     renderCurrentResults();
   });
 }
@@ -279,6 +248,15 @@ function renderItemResults(
   searchText: string,
   selectedItemCode: string
 ): string {
+  const normalizedSearchText = searchText.trim().toUpperCase();
+  const searchHasStarted = Boolean(
+    selectedDivisionPrefix || selectedSectionPrefix || normalizedSearchText || selectedItemCode
+  );
+
+  if (!searchHasStarted) {
+    return `<p class="item-result-message">Use Locate Item to search by division, section, item code, or description. Matching items will appear here.</p>`;
+  }
+
   const sectionByPrefix = new Map(
     specSections.map((specSection) => [specSection.sectionPrefix, specSection])
   );
@@ -293,11 +271,14 @@ function renderItemResults(
     )
     .sort((left, right) => left.itemCode.localeCompare(right.itemCode));
 
-  const normalizedSearchText = searchText.trim().toUpperCase();
   const matchingItems = filteredItems.filter((agencyItem) => itemMatchesSearch(agencyItem, normalizedSearchText));
 
   if (matchingItems.length === 0) {
-    return `<p class="item-result-message">No loaded items match this search.</p>`;
+    if (selectedDivisionPrefix || selectedSectionPrefix) {
+      return `<p class="item-result-message">No loaded items match this search in the selected division or section. Clear Division or Section / prefix to search all loaded items.</p>`;
+    }
+
+    return `<p class="item-result-message">No loaded items match this search. You can still search the typed description, but selecting an official item is more reliable.</p>`;
   }
 
   const visibleItems = matchingItems.slice(0, MAX_VISIBLE_ITEM_RESULTS);
@@ -334,14 +315,6 @@ function renderItemResultButton(agencyItem: AgencyItemRecord, selected: boolean)
   `;
 }
 
-function renderSelectedItemSummary(query: Pick<SearchQuery, "itemCode" | "description" | "unit">): string {
-  if (!query.itemCode) {
-    return `<p>No item code selected. Use fallback description and manual unit if needed.</p>`;
-  }
-
-  return `<p><strong>${escapeHtml(query.itemCode)}</strong> | ${escapeHtml(query.description)} | ${escapeHtml(query.unit)}</p>`;
-}
-
 export function readQueryFromForm(form: HTMLFormElement, currentQuery?: SearchQuery): SearchQuery {
   const formData = new FormData(form);
   const quantity = Number(formData.get("quantity") || 0);
@@ -352,7 +325,7 @@ export function readQueryFromForm(form: HTMLFormElement, currentQuery?: SearchQu
     countyRegion: currentQuery?.countyRegion ?? "",
     workType: currentQuery?.workType ?? DEFAULT_WORK_TYPE,
     estimateYear,
-    sourceScope: String(formData.get("sourceScope") || "both") as SourceScope,
+    sourceScope: currentQuery?.sourceScope ?? "both",
     itemCode: String(formData.get("itemCode") || ""),
     description: String(formData.get("description") || ""),
     unit: String(formData.get("unit") || ""),
