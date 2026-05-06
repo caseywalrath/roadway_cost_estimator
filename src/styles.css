@@ -378,15 +378,16 @@ input[readonly] {
 .item-result-button {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   width: 100%;
   border: 1px solid #cad6e1;
   border-radius: 6px;
   background: #ffffff;
   color: #223140;
-  padding: 8px 9px;
+  padding: 5px 8px;
   cursor: pointer;
+  line-height: 1.2;
   text-align: left;
 }
 

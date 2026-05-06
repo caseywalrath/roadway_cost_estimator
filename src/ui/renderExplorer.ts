@@ -253,6 +253,15 @@ function renderItemResults(
   searchText: string,
   selectedItemCode: string
 ): string {
+  const normalizedSearchText = searchText.trim().toUpperCase();
+  const searchHasStarted = Boolean(
+    selectedDivisionPrefix || selectedSectionPrefix || normalizedSearchText || selectedItemCode
+  );
+
+  if (!searchHasStarted) {
+    return `<p class="item-result-message">Use Find item to search by division, section, item code, or description. Matching items will appear here.</p>`;
+  }
+
   const sectionByPrefix = new Map(
     specSections.map((specSection) => [specSection.sectionPrefix, specSection])
   );
@@ -267,7 +276,6 @@ function renderItemResults(
     )
     .sort((left, right) => left.itemCode.localeCompare(right.itemCode));
 
-  const normalizedSearchText = searchText.trim().toUpperCase();
   const matchingItems = filteredItems.filter((agencyItem) => itemMatchesSearch(agencyItem, normalizedSearchText));
 
   if (matchingItems.length === 0) {

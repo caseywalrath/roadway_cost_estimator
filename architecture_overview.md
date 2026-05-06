@@ -67,7 +67,7 @@ The visible left-panel flow is:
 2. Confirm matching item: review the potential matching items and select one result to populate the submitted item code. The matching layer resolves the official description and unit from the agency item table.
 3. Enter quantity: provide the planned quantity before searching comparable projects.
 
-Item code or description works across all loaded agency items when no division or section is selected. Division and section selections narrow the visible search results when selected. If the user does not select an official item, the typed description can still submit as a weaker manual description search.
+Item code or description works across all loaded agency items when no division or section is selected. Division and section selections narrow the visible search results when selected. Confirm matching item stays empty until the user selects a division, selects a section, types an item search, or already has an official item selected. If the user does not select an official item, the typed description can still submit as a weaker manual description search.
 
 Section labels come from `public/data/spec_sections.csv`. Item-level options continue to come from `public/data/agency_items.csv`.
 

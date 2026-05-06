@@ -83,7 +83,7 @@ Preferred input order:
 1. In Find item, select the CDOT specification division if it helps narrow the item list.
 2. Select the section / three-digit item-code prefix if it helps narrow the item list.
 3. Enter item code or description to narrow the loaded item list.
-4. In Confirm matching item, review the potential matching items and select the correct official item.
+4. In Confirm matching item, review the potential matching items and select the correct official item. This section remains empty until the user starts an item search.
 5. In Enter quantity, enter the planned item quantity.
 6. Click Search Projects.
 
