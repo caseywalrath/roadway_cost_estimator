@@ -14,6 +14,7 @@ export function renderExplorer(
   const hasResolvedItem = Boolean(resolvedAgencyItem);
   const resolvedDescription = resolvedAgencyItem?.officialDescription ?? query.description;
   const resolvedUnit = resolvedAgencyItem?.officialUnit ?? query.unit;
+  const itemSearchValue = hasResolvedItem ? "" : query.description;
   const selectedSectionPrefix = sectionPrefixFromItemCode(query.itemCode);
   const selectedSection = selectedSectionPrefix
     ? findSpecSection(specSections, selectedSectionPrefix)
@@ -57,11 +58,15 @@ export function renderExplorer(
 
         <label>
           <span class="label-row">
-            Search
-            ${helpTip("About search", "Searches loaded agency items by item code, suffix after the hyphen, or official description. Division and section selections narrow the visible results when selected.")}
+            Item code or description
+            ${helpTip("About item code or description", "Searches loaded agency items by full item code, partial code, suffix after the hyphen, or official description. If no official item is selected, the typed description is used as a weaker manual search.")}
           </span>
-          <input name="itemSearch" data-item-search value="" placeholder="Search code, suffix, or description" />
+          <input name="description" data-item-search value="${escapeHtml(itemSearchValue)}" placeholder="304-06007 or aggregate base" />
         </label>
+
+        <div class="item-result-list" data-item-results aria-live="polite">
+          ${renderItemResults(agencyItems, specSections, selectedDivisionPrefix, selectedSectionPrefix, itemSearchValue, query.itemCode)}
+        </div>
 
         <div class="selected-item-summary" data-selected-item-summary>
           ${renderSelectedItemSummary({
@@ -70,24 +75,13 @@ export function renderExplorer(
             unit: resolvedUnit
           })}
         </div>
-
-        <div class="item-result-list" data-item-results aria-live="polite">
-          ${renderItemResults(agencyItems, specSections, selectedDivisionPrefix, selectedSectionPrefix, "", query.itemCode)}
-        </div>
       </div>
 
       <div class="manual-item-fields" data-manual-item-fields ${hasResolvedItem ? "hidden" : ""}>
         <label>
           <span class="label-row">
-            Fallback description
-            ${helpTip("About fallback description", "Use this only when the item code is unknown. Description text is a weaker match key than an official CDOT item code.")}
-          </span>
-          <input name="description" value="${escapeHtml(resolvedDescription)}" placeholder="Aggregate Base Course Class 6" />
-        </label>
-        <label>
-          <span class="label-row">
-            Manual unit
-            ${helpTip("About manual unit", "Use this only when the official item-code unit cannot be resolved. Same-unit records are required before the prototype supports a unit-price recommendation.")}
+            Unit for pricing
+            ${helpTip("About unit for pricing", "Enter a unit only when no official item has been selected. Same-unit records are required before the prototype supports a unit-price recommendation.")}
           </span>
           <input name="unit" value="${escapeHtml(resolvedUnit)}" placeholder="CY" />
         </label>
@@ -137,11 +131,11 @@ export function bindItemPicker(
   const itemResults = form.querySelector<HTMLElement>("[data-item-results]");
   const manualItemFields = form.querySelector<HTMLElement>("[data-manual-item-fields]");
 
-  function clearSelectedItem(): void {
+  function clearSelectedItem(options: { clearSearch: boolean } = { clearSearch: false }): void {
     if (itemCodeInput) {
       itemCodeInput.value = "";
     }
-    if (descriptionInput) {
+    if (descriptionInput && options.clearSearch) {
       descriptionInput.value = "";
     }
     if (unitInput) {
@@ -202,6 +196,7 @@ export function bindItemPicker(
   });
 
   itemSearchInput?.addEventListener("input", () => {
+    clearSelectedItem();
     renderCurrentResults();
   });
 
@@ -219,8 +214,8 @@ export function bindItemPicker(
     if (itemCodeInput) {
       itemCodeInput.value = itemCode;
     }
-    if (descriptionInput) {
-      descriptionInput.value = description;
+    if (itemSearchInput) {
+      itemSearchInput.value = itemCode;
     }
     if (unitInput) {
       unitInput.value = unit;
@@ -297,7 +292,11 @@ function renderItemResults(
   const matchingItems = filteredItems.filter((agencyItem) => itemMatchesSearch(agencyItem, normalizedSearchText));
 
   if (matchingItems.length === 0) {
-    return `<p class="item-result-message">No loaded items match this search.</p>`;
+    if (selectedDivisionPrefix || selectedSectionPrefix) {
+      return `<p class="item-result-message">No loaded items match this search in the selected division or section. Clear Division or Section / prefix to search all loaded items.</p>`;
+    }
+
+    return `<p class="item-result-message">No loaded items match this search. You can still search the typed description, but selecting an official item is more reliable.</p>`;
   }
 
   const visibleItems = matchingItems.slice(0, MAX_VISIBLE_ITEM_RESULTS);
@@ -336,7 +335,7 @@ function renderItemResultButton(agencyItem: AgencyItemRecord, selected: boolean)
 
 function renderSelectedItemSummary(query: Pick<SearchQuery, "itemCode" | "description" | "unit">): string {
   if (!query.itemCode) {
-    return `<p>No item code selected. Use fallback description and manual unit if needed.</p>`;
+    return `<p>No official item selected. Typed description can still be searched, but selecting an official item is more reliable.</p>`;
   }
 
   return `<p><strong>${escapeHtml(query.itemCode)}</strong> | ${escapeHtml(query.description)} | ${escapeHtml(query.unit)}</p>`;

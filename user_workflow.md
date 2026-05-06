@@ -69,10 +69,9 @@ Primary inputs:
 
 - Division
 - Section / prefix
-- Search
+- Item code or description
 - Selected item code through the item picker
-- Fallback description when the item code is unknown
-- Manual unit only when the official item-code unit cannot be resolved
+- Unit for pricing, shown only when no official item is selected
 - Quantity
 - Source scope
 
@@ -80,13 +79,13 @@ Preferred input order:
 
 1. Select the CDOT specification division if it helps narrow the item list.
 2. Select the section / three-digit item-code prefix if it helps narrow the item list.
-3. Search by full item code, suffix, or official item description if helpful.
+3. Enter item code or description to narrow the loaded item list.
 4. Select the item result.
 5. Enter the quantity.
 6. Select source scope if the reviewer needs public-only or internal-only demo evidence.
 7. Search comparables.
 
-If the item code is unknown, the user may enter fallback description and manual unit instead. This path is weaker than selecting an official CDOT item code.
+If the item code is unknown, the user may enter a description and unit for pricing without selecting an official item. This path is weaker than selecting an official CDOT item code.
 
 Best current example:
 

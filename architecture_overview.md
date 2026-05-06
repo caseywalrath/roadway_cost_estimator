@@ -65,16 +65,16 @@ The picker flow is:
 
 1. Select a CDOT specification division when it helps narrow the search.
 2. Select a section/prefix within that division when it helps narrow the search.
-3. Use Search to filter loaded agency items by full item code, suffix after the hyphen, or official description.
+3. Use Item code or description to filter loaded agency items by full item code, partial item code, suffix after the hyphen, or official description.
 4. Select one item result to populate the submitted item code. The matching layer resolves the official description and unit from the agency item table.
 
-Search works across all loaded agency items when no division or section is selected. Division and section selections narrow the visible search results when selected.
+Item code or description works across all loaded agency items when no division or section is selected. Division and section selections narrow the visible search results when selected. If the user does not select an official item, the typed description can still submit as a weaker manual description search.
 
 Section labels come from `public/data/spec_sections.csv`. Item-level options continue to come from `public/data/agency_items.csv`.
 
 The current item picker data is a 200-row sample generated from the public CDOT 2025 Item Code Book Excel file and spread across loaded CDOT Standard Specification sections. Existing synthetic demo rows with comparable observations are preserved so the pricing demo still works.
 
-The submitted `SearchQuery` shape did not change. The visible item search is limited to item identity, quantity, and source scope. Description and unit are fallback inputs only when an official item-code record is not selected. County / region, estimate year, and work type are applied from the comparable-project result controls after item identity is established.
+The submitted `SearchQuery` shape did not change. The visible item search is limited to item identity, quantity, and source scope. Unit is shown only when an official item-code record is not selected. County / region, estimate year, and work type are applied from the comparable-project result controls after item identity is established.
 
 ## Near-Term Extension Points
 
