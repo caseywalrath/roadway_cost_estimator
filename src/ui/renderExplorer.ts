@@ -1,4 +1,4 @@
-import type { AgencyItemRecord, SearchQuery, SourceScope, SpecSectionRecord } from "../data/schema";
+import type { AgencyItemRecord, SearchQuery, SpecSectionRecord } from "../data/schema";
 import { helpTip } from "./helpTip";
 
 const MAX_VISIBLE_ITEM_RESULTS = 25;
@@ -93,18 +93,6 @@ export function renderExplorer(
           ${helpTip("About quantity", "Planned amount of work for this line item. It is used to rank projects with a similar scale of work higher than very small or very large examples. Source: current estimate line item.")}
         </span>
         <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" placeholder="1800" />
-      </label>
-
-      <label>
-        <span class="label-row">
-          Source scope
-          ${helpTip("About source scope", "Controls whether results come from public-style demo records, internal-style demo records, or both. Real FHU internal data should not be committed to a public GitHub Pages repository.")}
-        </span>
-        <select name="sourceScope">
-          <option value="both" ${query.sourceScope === "both" ? "selected" : ""}>Public + internal demo data</option>
-          <option value="public" ${query.sourceScope === "public" ? "selected" : ""}>Public demo data only</option>
-          <option value="internal" ${query.sourceScope === "internal" ? "selected" : ""}>Internal demo data only</option>
-        </select>
       </label>
 
       <button type="submit" class="primary-button">Search comparables</button>
@@ -351,7 +339,7 @@ export function readQueryFromForm(form: HTMLFormElement, currentQuery?: SearchQu
     countyRegion: currentQuery?.countyRegion ?? "",
     workType: currentQuery?.workType ?? DEFAULT_WORK_TYPE,
     estimateYear,
-    sourceScope: String(formData.get("sourceScope") || "both") as SourceScope,
+    sourceScope: currentQuery?.sourceScope ?? "both",
     itemCode: String(formData.get("itemCode") || ""),
     description: String(formData.get("description") || ""),
     unit: String(formData.get("unit") || ""),

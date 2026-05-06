@@ -42,7 +42,6 @@ export function renderApp(root: HTMLElement, data: AppData): void {
           </div>
           <div class="context-bar" aria-label="Prototype scope">
             <span>Scope: Colorado roadway demo ${helpTip("About prototype scope", "State is fixed to Colorado and work type defaults to roadway until later data sources add real multi-state or multi-discipline support.")}</span>
-            <span>Sources: ${sourceScopeLabel(query.sourceScope)} ${helpTip("About context sources", "Source scope helps reviewers see whether evidence comes from public-style records, internal-style records, or both. Current data is synthetic demo data.")}</span>
           </div>
         </header>
 
@@ -97,18 +96,6 @@ export function renderApp(root: HTMLElement, data: AppData): void {
   }
 
   render();
-}
-
-function sourceScopeLabel(sourceScope: string): string {
-  if (sourceScope === "public") {
-    return "Public demo";
-  }
-
-  if (sourceScope === "internal") {
-    return "Internal demo";
-  }
-
-  return "Public + internal demo";
 }
 
 function escapeHtml(value: string): string {

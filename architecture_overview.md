@@ -39,7 +39,7 @@ Do not commit private FHU estimate data to a public GitHub Pages repository. Rea
 The MVP matching rules are intentionally visible and simple:
 
 - Filter to the fixed Colorado prototype state.
-- Filter source scope when requested.
+- Use all loaded demo source records by default.
 - Prefer exact agency item-code matches.
 - Resolve official item descriptions and units from agency item-code records when possible.
 - Use approved alias or canonical item matches second.
@@ -74,7 +74,7 @@ Section labels come from `public/data/spec_sections.csv`. Item-level options con
 
 The current item picker data is a 200-row sample generated from the public CDOT 2025 Item Code Book Excel file and spread across loaded CDOT Standard Specification sections. Existing synthetic demo rows with comparable observations are preserved so the pricing demo still works.
 
-The submitted `SearchQuery` shape did not change. The visible item search is limited to item identity, quantity, and source scope. Unit is shown only when an official item-code record is not selected. County / region, estimate year, and work type are applied from the comparable-project result controls after item identity is established.
+The submitted `SearchQuery` shape did not change. The visible item search is limited to item identity and quantity. Unit is shown only when an official item-code record is not selected. County / region, estimate year, and work type are applied from the comparable-project result controls after item identity is established.
 
 ## Near-Term Extension Points
 

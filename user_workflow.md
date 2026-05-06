@@ -42,19 +42,17 @@ Current fixed scope:
 
 - State: Colorado
 - Default work type: Roadway
-- Source scope
 
 Why this matters:
 
 - State limits the source data to the correct agency and market. Colorado is the only active state in this prototype.
 - Work type defaults to roadway because this prototype is validating roadway item comparables first.
-- Source scope tells the reviewer whether evidence is public-style data, internal-style data, or both.
 - Region, estimate year, and work type are adjusted after matching from the comparable project area.
 
 Current prototype default:
 
 ```text
-Colorado roadway demo | Public + internal demo data
+Colorado roadway demo
 ```
 
 Comparable project context can be partial. Missing context should affect ranking or produce review guidance rather than blocking the item search.
@@ -73,7 +71,6 @@ Primary inputs:
 - Selected item code through the item picker
 - Unit for pricing, shown only when no official item is selected
 - Quantity
-- Source scope
 
 Preferred input order:
 
@@ -82,8 +79,7 @@ Preferred input order:
 3. Enter item code or description to narrow the loaded item list.
 4. Select the item result.
 5. Enter the quantity.
-6. Select source scope if the reviewer needs public-only or internal-only demo evidence.
-7. Search comparables.
+6. Search comparables.
 
 If the item code is unknown, the user may enter a description and unit for pricing without selecting an official item. This path is weaker than selecting an official CDOT item code.
 
