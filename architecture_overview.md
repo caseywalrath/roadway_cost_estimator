@@ -61,12 +61,11 @@ The Item Explorer also includes a clear action for removing the current query va
 
 The item search uses a CDOT section-based item picker instead of a single long item-code dropdown.
 
-The picker flow is:
+The visible left-panel flow is:
 
-1. Select a CDOT specification division when it helps narrow the search.
-2. Select a section/prefix within that division when it helps narrow the search.
-3. Use Item code or description to filter loaded agency items by full item code, partial item code, suffix after the hyphen, or official description.
-4. Select one item result to populate the submitted item code. The matching layer resolves the official description and unit from the agency item table.
+1. Find item: select a CDOT specification division and section/prefix when they help narrow the search, then use Item code or description to filter loaded agency items.
+2. Confirm matching item: select one item result to populate the submitted item code. The matching layer resolves the official description and unit from the agency item table.
+3. Enter quantity: provide the planned quantity before searching comparable projects.
 
 Item code or description works across all loaded agency items when no division or section is selected. Division and section selections narrow the visible search results when selected. If the user does not select an official item, the typed description can still submit as a weaker manual description search.
 

@@ -33,41 +33,47 @@ export function renderExplorer(
 
       <input type="hidden" name="itemCode" value="${escapeHtml(query.itemCode)}" />
 
-      <div class="item-picker" data-item-picker>
-        <label>
-          <span class="label-row">
-            Division
-            ${helpTip("About division", "CDOT Standard Specifications organize bid items into specification divisions. Division selection narrows the item-code search before choosing a section and item.")}
-          </span>
-          <select name="divisionPrefix" data-division-select>
-            <option value="" ${selectedDivisionPrefix ? "" : "selected"}>Select division</option>
-            ${renderDivisionOptions(specSections, selectedDivisionPrefix)}
-          </select>
-        </label>
+      <section class="workflow-step">
+        ${renderStepHeading("1", "Find item")}
+        <div class="item-picker" data-item-picker>
+          <label>
+            <span class="label-row">
+              Division
+              ${helpTip("About division", "CDOT Standard Specifications organize bid items into specification divisions. Division selection narrows the item-code search before choosing a section and item.")}
+            </span>
+            <select name="divisionPrefix" data-division-select>
+              <option value="" ${selectedDivisionPrefix ? "" : "selected"}>Select division</option>
+              ${renderDivisionOptions(specSections, selectedDivisionPrefix)}
+            </select>
+          </label>
 
-        <label>
-          <span class="label-row">
-            Section / prefix
-            ${helpTip("About section prefix", "The first three digits of a CDOT item code correspond to a specification section. Section labels are loaded from the spec section reference table, not inferred from item descriptions.")}
-          </span>
-          <select name="sectionPrefix" data-section-select ${selectedDivisionPrefix ? "" : "disabled"}>
-            <option value="" ${selectedSectionPrefix ? "" : "selected"}>Select section</option>
-            ${renderSectionOptions(specSections, selectedDivisionPrefix, selectedSectionPrefix)}
-          </select>
-        </label>
+          <label>
+            <span class="label-row">
+              Section / prefix
+              ${helpTip("About section prefix", "The first three digits of a CDOT item code correspond to a specification section. Section labels are loaded from the spec section reference table, not inferred from item descriptions.")}
+            </span>
+            <select name="sectionPrefix" data-section-select ${selectedDivisionPrefix ? "" : "disabled"}>
+              <option value="" ${selectedSectionPrefix ? "" : "selected"}>Select section</option>
+              ${renderSectionOptions(specSections, selectedDivisionPrefix, selectedSectionPrefix)}
+            </select>
+          </label>
 
-        <label>
-          <span class="label-row">
-            Item code or description
-            ${helpTip("About item code or description", "Searches loaded agency items by full item code, partial code, suffix after the hyphen, or official description. If no official item is selected, the typed description is used as a weaker manual search.")}
-          </span>
-          <input name="description" data-item-search value="${escapeHtml(itemSearchValue)}" />
-        </label>
+          <label>
+            <span class="label-row">
+              Item code or description
+              ${helpTip("About item code or description", "Searches loaded agency items by full item code, partial code, suffix after the hyphen, or official description. If no official item is selected, the typed description is used as a weaker manual search.")}
+            </span>
+            <input name="description" data-item-search value="${escapeHtml(itemSearchValue)}" />
+          </label>
 
-        <div class="item-result-list" data-item-results aria-live="polite">
-          ${renderItemResults(agencyItems, specSections, selectedDivisionPrefix, selectedSectionPrefix, itemSearchValue, query.itemCode)}
+          <div class="item-result-list" data-item-results aria-live="polite">
+            ${renderItemResults(agencyItems, specSections, selectedDivisionPrefix, selectedSectionPrefix, itemSearchValue, query.itemCode)}
+          </div>
         </div>
+      </section>
 
+      <section class="workflow-step workflow-step--selected">
+        ${renderStepHeading("2", "Confirm matching item")}
         <div class="selected-item-summary" data-selected-item-summary>
           ${renderSelectedItemSummary({
             itemCode: query.itemCode,
@@ -75,32 +81,43 @@ export function renderExplorer(
             unit: resolvedUnit
           })}
         </div>
-      </div>
+        <div class="manual-item-fields" data-manual-item-fields ${hasResolvedItem ? "hidden" : ""}>
+          <label>
+            <span class="label-row">
+              Unit for pricing
+              ${helpTip("About unit for pricing", "Enter a unit only when no official item has been selected. Same-unit records are required before the prototype supports a unit-price recommendation.")}
+            </span>
+            <input name="unit" value="${escapeHtml(resolvedUnit)}" placeholder="CY" />
+          </label>
+        </div>
+      </section>
 
-      <div class="manual-item-fields" data-manual-item-fields ${hasResolvedItem ? "hidden" : ""}>
+      <section class="workflow-step">
+        ${renderStepHeading("3", "Enter quantity")}
         <label>
           <span class="label-row">
-            Unit for pricing
-            ${helpTip("About unit for pricing", "Enter a unit only when no official item has been selected. Same-unit records are required before the prototype supports a unit-price recommendation.")}
+            Quantity
+            ${helpTip("About quantity", "Planned amount of work for this line item. It is used to rank projects with a similar scale of work higher than very small or very large examples. Source: current estimate line item.")}
           </span>
-          <input name="unit" value="${escapeHtml(resolvedUnit)}" placeholder="CY" />
+          <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" placeholder="1800" />
         </label>
-      </div>
+      </section>
 
-      <label>
-        <span class="label-row">
-          Quantity
-          ${helpTip("About quantity", "Planned amount of work for this line item. It is used to rank projects with a similar scale of work higher than very small or very large examples. Source: current estimate line item.")}
-        </span>
-        <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" placeholder="1800" />
-      </label>
-
-      <button type="submit" class="primary-button">Search comparables</button>
+      <button type="submit" class="primary-button">Search Projects</button>
       <div class="form-action-grid">
         <button type="button" id="clear-query" class="secondary-button">Clear</button>
         <button type="button" id="reset-example" class="secondary-button">Reset example</button>
       </div>
     </form>
+  `;
+}
+
+function renderStepHeading(stepNumber: string, label: string): string {
+  return `
+    <div class="step-heading">
+      <span class="step-number">${stepNumber}</span>
+      <h3>${escapeHtml(label)}</h3>
+    </div>
   `;
 }
 

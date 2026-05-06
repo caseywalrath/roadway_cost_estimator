@@ -63,6 +63,12 @@ The user enters one item at a time in the item search panel.
 
 The current picker includes a 200-row CDOT item-code sample for testing navigation across divisions and sections. Only the existing mapped demo items have comparable price records in the synthetic observation dataset.
 
+The left panel is organized into three numbered steps:
+
+1. Find item.
+2. Confirm matching item.
+3. Enter quantity.
+
 Primary inputs:
 
 - Division
@@ -74,12 +80,12 @@ Primary inputs:
 
 Preferred input order:
 
-1. Select the CDOT specification division if it helps narrow the item list.
+1. In Find item, select the CDOT specification division if it helps narrow the item list.
 2. Select the section / three-digit item-code prefix if it helps narrow the item list.
 3. Enter item code or description to narrow the loaded item list.
-4. Select the item result.
-5. Enter the quantity.
-6. Search comparables.
+4. In Confirm matching item, select and review the matching item result.
+5. In Enter quantity, enter the planned item quantity.
+6. Click Search Projects.
 
 If the item code is unknown, the user may enter a description and unit for pricing without selecting an official item. This path is weaker than selecting an official CDOT item code.
 
@@ -250,7 +256,7 @@ Recommended meeting flow:
 1. Open the app.
 2. Explain that all current records are synthetic demo data.
 3. Pick one familiar roadway item.
-4. Select the item code, enter quantity, and search comparables.
+4. Use the left-panel steps to find an item, confirm the matching item, enter quantity, and search projects.
 5. Review the recommendation summary.
 6. Adjust comparable project controls for region and year when relevant.
 7. Review the comparable project table.
