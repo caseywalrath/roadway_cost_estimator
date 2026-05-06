@@ -344,27 +344,6 @@ input[readonly] {
   padding: 12px;
 }
 
-.selected-item-summary {
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  border: 1px solid #bdd4e7;
-  border-radius: 6px;
-  background: #f4f9fc;
-  padding: 8px 10px;
-  color: #405061;
-  font-size: 0.86rem;
-}
-
-.selected-item-summary p {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.selected-item-summary strong {
-  color: var(--heading);
-}
-
 .manual-item-fields {
   display: grid;
   gap: 12px;

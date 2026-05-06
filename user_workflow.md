@@ -83,7 +83,7 @@ Preferred input order:
 1. In Find item, select the CDOT specification division if it helps narrow the item list.
 2. Select the section / three-digit item-code prefix if it helps narrow the item list.
 3. Enter item code or description to narrow the loaded item list.
-4. In Confirm matching item, select and review the matching item result.
+4. In Confirm matching item, review the potential matching items and select the correct official item.
 5. In Enter quantity, enter the planned item quantity.
 6. Click Search Projects.
 
@@ -256,7 +256,7 @@ Recommended meeting flow:
 1. Open the app.
 2. Explain that all current records are synthetic demo data.
 3. Pick one familiar roadway item.
-4. Use the left-panel steps to find an item, confirm the matching item, enter quantity, and search projects.
+4. Use the left-panel steps to find an item, select the matching item, enter quantity, and search projects.
 5. Review the recommendation summary.
 6. Adjust comparable project controls for region and year when relevant.
 7. Review the comparable project table.

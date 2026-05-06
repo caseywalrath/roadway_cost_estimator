@@ -12,7 +12,6 @@ export function renderExplorer(
 ): string {
   const resolvedAgencyItem = findAgencyItem(agencyItems, query.itemCode, query.state);
   const hasResolvedItem = Boolean(resolvedAgencyItem);
-  const resolvedDescription = resolvedAgencyItem?.officialDescription ?? query.description;
   const resolvedUnit = resolvedAgencyItem?.officialUnit ?? query.unit;
   const itemSearchValue = hasResolvedItem ? "" : query.description;
   const selectedSectionPrefix = sectionPrefixFromItemCode(query.itemCode);
@@ -65,21 +64,13 @@ export function renderExplorer(
             </span>
             <input name="description" data-item-search value="${escapeHtml(itemSearchValue)}" />
           </label>
-
-          <div class="item-result-list" data-item-results aria-live="polite">
-            ${renderItemResults(agencyItems, specSections, selectedDivisionPrefix, selectedSectionPrefix, itemSearchValue, query.itemCode)}
-          </div>
         </div>
       </section>
 
       <section class="workflow-step workflow-step--selected">
         ${renderStepHeading("2", "Confirm matching item")}
-        <div class="selected-item-summary" data-selected-item-summary>
-          ${renderSelectedItemSummary({
-            itemCode: query.itemCode,
-            description: resolvedDescription,
-            unit: resolvedUnit
-          })}
+        <div class="item-result-list" data-item-results aria-live="polite">
+          ${renderItemResults(agencyItems, specSections, selectedDivisionPrefix, selectedSectionPrefix, itemSearchValue, query.itemCode)}
         </div>
         <div class="manual-item-fields" data-manual-item-fields ${hasResolvedItem ? "hidden" : ""}>
           <label>
@@ -132,7 +123,6 @@ export function bindItemPicker(
   const divisionSelect = form.querySelector<HTMLSelectElement>("[data-division-select]");
   const sectionSelect = form.querySelector<HTMLSelectElement>("[data-section-select]");
   const itemSearchInput = form.querySelector<HTMLInputElement>("[data-item-search]");
-  const selectedItemSummary = form.querySelector<HTMLElement>("[data-selected-item-summary]");
   const itemResults = form.querySelector<HTMLElement>("[data-item-results]");
   const manualItemFields = form.querySelector<HTMLElement>("[data-manual-item-fields]");
 
@@ -148,13 +138,6 @@ export function bindItemPicker(
     }
     if (manualItemFields) {
       manualItemFields.hidden = false;
-    }
-    if (selectedItemSummary) {
-      selectedItemSummary.innerHTML = renderSelectedItemSummary({
-        itemCode: "",
-        description: "",
-        unit: ""
-      });
     }
   }
 
@@ -213,7 +196,6 @@ export function bindItemPicker(
     }
 
     const itemCode = button.dataset.itemCode ?? "";
-    const description = button.dataset.description ?? "";
     const unit = button.dataset.unit ?? "";
 
     if (itemCodeInput) {
@@ -228,14 +210,6 @@ export function bindItemPicker(
     if (manualItemFields) {
       manualItemFields.hidden = true;
     }
-    if (selectedItemSummary) {
-      selectedItemSummary.innerHTML = renderSelectedItemSummary({
-        itemCode,
-        description,
-        unit
-      });
-    }
-
     renderCurrentResults();
   });
 }
@@ -336,14 +310,6 @@ function renderItemResultButton(agencyItem: AgencyItemRecord, selected: boolean)
       <small>${escapeHtml(agencyItem.officialUnit)}</small>
     </button>
   `;
-}
-
-function renderSelectedItemSummary(query: Pick<SearchQuery, "itemCode" | "description" | "unit">): string {
-  if (!query.itemCode) {
-    return `<p>No official item selected. Typed description can still be searched, but selecting an official item is more reliable.</p>`;
-  }
-
-  return `<p><strong>${escapeHtml(query.itemCode)}</strong> | ${escapeHtml(query.description)} | ${escapeHtml(query.unit)}</p>`;
 }
 
 export function readQueryFromForm(form: HTMLFormElement, currentQuery?: SearchQuery): SearchQuery {

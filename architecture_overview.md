@@ -64,7 +64,7 @@ The item search uses a CDOT section-based item picker instead of a single long i
 The visible left-panel flow is:
 
 1. Find item: select a CDOT specification division and section/prefix when they help narrow the search, then use Item code or description to filter loaded agency items.
-2. Confirm matching item: select one item result to populate the submitted item code. The matching layer resolves the official description and unit from the agency item table.
+2. Confirm matching item: review the potential matching items and select one result to populate the submitted item code. The matching layer resolves the official description and unit from the agency item table.
 3. Enter quantity: provide the planned quantity before searching comparable projects.
 
 Item code or description works across all loaded agency items when no division or section is selected. Division and section selections narrow the visible search results when selected. If the user does not select an official item, the typed description can still submit as a weaker manual description search.
