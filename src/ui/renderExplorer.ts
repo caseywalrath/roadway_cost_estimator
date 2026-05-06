@@ -61,7 +61,7 @@ export function renderExplorer(
             Item code or description
             ${helpTip("About item code or description", "Searches loaded agency items by full item code, partial code, suffix after the hyphen, or official description. If no official item is selected, the typed description is used as a weaker manual search.")}
           </span>
-          <input name="description" data-item-search value="${escapeHtml(itemSearchValue)}" placeholder="304-06007 or aggregate base" />
+          <input name="description" data-item-search value="${escapeHtml(itemSearchValue)}" />
         </label>
 
         <div class="item-result-list" data-item-results aria-live="polite">
