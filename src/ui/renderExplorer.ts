@@ -1,7 +1,7 @@
 import type { AgencyItemRecord, SearchQuery, SpecSectionRecord } from "../data/schema";
+import { normalizeDescription } from "../matching/normalizeDescription";
 import { helpTip } from "./helpTip";
 
-const MAX_VISIBLE_ITEM_RESULTS = 25;
 const DEFAULT_STATE = "CO";
 const DEFAULT_WORK_TYPE = "Roadway";
 
@@ -61,7 +61,7 @@ export function renderExplorer(
           <label>
             <span class="label-row">
               Item code or description
-              ${helpTip("About item code or description", "Searches loaded agency items by full item code, partial code, suffix after the hyphen, or official description. If no official item is selected, the typed description is used as a weaker manual search.")}
+              ${helpTip("About item code or description", "Searches loaded agency items by full item code, partial code, suffix after the hyphen, official description, or abbreviated description. If no official item is selected, the typed description is used as a weaker manual search.")}
             </span>
             <input name="description" data-item-search value="${escapeHtml(itemSearchValue)}" />
           </label>
@@ -83,16 +83,15 @@ export function renderExplorer(
             ${helpTip("About quantity", "Planned amount of work for this line item. It is used to rank projects with a similar scale of work higher than very small or very large examples. Source: current estimate line item.")}
           </span>
           <div class="quantity-input-wrap">
-            <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" placeholder="1800" />
+            <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" />
             <span class="quantity-unit" data-quantity-unit aria-hidden="true">${escapeHtml(selectedUnit)}</span>
           </div>
         </label>
       </section>
 
-      <button type="submit" class="primary-button">Search Projects</button>
       <div class="form-action-grid">
         <button type="button" id="clear-query" class="secondary-button">Clear</button>
-        <button type="button" id="reset-example" class="secondary-button">Reset example</button>
+        <button type="submit" class="primary-button">Search Projects</button>
       </div>
     </form>
   `;
@@ -165,6 +164,7 @@ export function bindItemPicker(
       searchText,
       itemCodeInput?.value ?? ""
     );
+    updateItemResultScrollCue(itemResults);
   }
 
   divisionSelect?.addEventListener("change", () => {
@@ -192,12 +192,16 @@ export function bindItemPicker(
 
     const itemCode = button.dataset.itemCode ?? "";
     const unit = button.dataset.unit ?? "";
+    const selectedItemCode = itemCodeInput?.value ?? "";
+
+    if (selectedItemCode === itemCode) {
+      clearSelectedItem();
+      renderCurrentResults();
+      return;
+    }
 
     if (itemCodeInput) {
       itemCodeInput.value = itemCode;
-    }
-    if (itemSearchInput) {
-      itemSearchInput.value = itemCode;
     }
     if (unitInput) {
       unitInput.value = unit;
@@ -207,6 +211,10 @@ export function bindItemPicker(
     }
     renderCurrentResults();
   });
+
+  if (itemResults) {
+    updateItemResultScrollCue(itemResults);
+  }
 }
 
 function renderDivisionOptions(
@@ -272,6 +280,10 @@ function renderItemResults(
     .sort((left, right) => left.itemCode.localeCompare(right.itemCode));
 
   const matchingItems = filteredItems.filter((agencyItem) => itemMatchesSearch(agencyItem, normalizedSearchText));
+  const selectedItem = selectedItemCode
+    ? agencyItems.find((agencyItem) => agencyItem.itemCode === selectedItemCode)
+    : null;
+  const displayedItems = selectedItem ? [selectedItem] : matchingItems;
 
   if (matchingItems.length === 0) {
     if (selectedDivisionPrefix || selectedSectionPrefix) {
@@ -281,21 +293,32 @@ function renderItemResults(
     return `<p class="item-result-message">No loaded items match this search. You can still search the typed description, but selecting an official item is more reliable.</p>`;
   }
 
-  const visibleItems = matchingItems.slice(0, MAX_VISIBLE_ITEM_RESULTS);
-  const overflowMessage =
-    matchingItems.length > MAX_VISIBLE_ITEM_RESULTS
-      ? `<p class="item-result-message">Showing first ${MAX_VISIBLE_ITEM_RESULTS} of ${matchingItems.length} matching items.</p>`
-      : "";
-
   return `
     <div class="item-result-count">${matchingItems.length} matching item${matchingItems.length === 1 ? "" : "s"}</div>
-    <div class="item-result-buttons">
-      ${visibleItems
-        .map((agencyItem) => renderItemResultButton(agencyItem, agencyItem.itemCode === selectedItemCode))
-        .join("")}
+    <div class="item-result-scroll-wrap" data-item-result-scroll-wrap>
+      <div class="item-result-buttons" data-item-result-scroll>
+        ${displayedItems
+          .map((agencyItem) => renderItemResultButton(agencyItem, agencyItem.itemCode === selectedItemCode))
+          .join("")}
+      </div>
+      <div class="item-result-fade" data-item-result-fade hidden></div>
     </div>
-    ${overflowMessage}
+    <p class="item-result-scroll-hint" data-item-result-scroll-hint hidden>Scroll for more matches</p>
   `;
+}
+
+function updateItemResultScrollCue(root: HTMLElement): void {
+  const scrollContainer = root.querySelector<HTMLElement>("[data-item-result-scroll]");
+  const fade = root.querySelector<HTMLElement>("[data-item-result-fade]");
+  const hint = root.querySelector<HTMLElement>("[data-item-result-scroll-hint]");
+
+  if (!scrollContainer || !fade || !hint) {
+    return;
+  }
+
+  const hasOverflow = scrollContainer.scrollHeight > scrollContainer.clientHeight + 1;
+  fade.hidden = !hasOverflow;
+  hint.hidden = !hasOverflow;
 }
 
 function renderItemResultButton(agencyItem: AgencyItemRecord, selected: boolean): string {
@@ -368,12 +391,15 @@ function itemMatchesSearch(agencyItem: AgencyItemRecord, normalizedSearchText: s
 
   const itemCode = agencyItem.itemCode.toUpperCase();
   const suffix = itemCode.split("-")[1] ?? "";
-  const description = agencyItem.officialDescription.toUpperCase();
+  const description = normalizeDescription(agencyItem.officialDescription);
+  const abbreviatedDescription = normalizeDescription(agencyItem.officialAbbreviatedDescription);
+  const normalizedDescriptionSearch = normalizeDescription(normalizedSearchText);
 
   return (
     itemCode.includes(normalizedSearchText) ||
     suffix.includes(normalizedSearchText) ||
-    description.includes(normalizedSearchText)
+    description.includes(normalizedDescriptionSearch) ||
+    abbreviatedDescription.includes(normalizedDescriptionSearch)
   );
 }
 

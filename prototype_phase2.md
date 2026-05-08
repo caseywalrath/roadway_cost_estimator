@@ -32,16 +32,16 @@ Current strengths:
 - One-item roadway bid item lookup exists.
 - Exact agency item-code matches are already scored above description matches.
 - The item-code entry path now uses a CDOT division, section/prefix, and item-result funnel instead of a single long dropdown.
-- The item picker now has a 200-row official CDOT item-code sample across 70 loaded specification sections for scale testing.
+- The item picker now has the full public CDOT 2026 item-code book for lookup, with 4,771 valid item-code rows across 100 loaded prefixes.
 - Same-unit records are required for price recommendations.
 - The UI already shows recommendation, price distribution, comparable records, warnings, and improve-confidence actions.
 - Synthetic demo data is labeled as demo data.
 
 Current gaps identified by roadmap and engineer feedback:
 
-- Search still needs full cost-book data to validate the section-based item picker at full CDOT scale.
+- Full item-code lookup data is now available, but search still needs real public cost observations to validate pricing behavior at CDOT scale.
 - Unit and county/region are free text, which allows avoidable spelling and wording errors.
-- A conflicting description can be entered with a valid item code and still produce high confidence.
+- The normal UI now prevents a user-entered item-code/description conflict by requiring selection from official item records, but the matching engine still lacks a defensive guard for crafted or future editable queries.
 - Source labels do not clearly distinguish FHU estimates, contractor bid tabs, public data, submittal level, and source reliability.
 - Project number is not shown.
 - Price distribution does not show the quantity context behind low, median, high, or quartile values.
@@ -86,9 +86,9 @@ Expected behavior:
 - The default example loads Division `300`, Section `304`, item `304-06007`, `AGGREGATE BASE COURSE (CLASS 6)`, and `CY`.
 - With no Division or Section selected, searching an exact item code such as `403-09221` can find that item directly.
 - Selecting Division `400`, Section `403`, then searching `HMA` can select `403-09221`.
-- The loaded sample includes about 200 item-code rows across 70 CDOT section prefixes, while only existing mapped demo rows have comparable pricing records.
+- The loaded item-code book includes 4,771 item-code rows across 100 prefixes, while only existing mapped demo rows have comparable pricing records.
 - Selecting `304-06007` fills `AGGREGATE BASE COURSE (CLASS 6)` and `CY`.
-- User can still clear the query and reset the demo example.
+- User can still clear the query.
 - Pricing runs against the selected item code and same-unit records.
 
 Documentation impact:
@@ -99,50 +99,77 @@ Documentation impact:
 
 ### Increment 2: Description Helper Before Pricing
 
+Status:
+
+Addressed by Increment 1 / no standalone implementation currently needed.
+
 Purpose:
 
 Let users search by description only when they do not know the pay item code, but prevent description search from being mistaken for a final pricing path.
 
+Current resolution:
+
+The concerns behind this increment have been addressed to the developer's satisfaction by the current item-code-first search funnel. The current Search field already searches `agency_items.csv` by full item code, suffix after the hyphen, and official description. The user must select an official item result before normal pricing runs. Selection auto-fills the submitted item code, official description, and official unit.
+
+The normal UI does not submit description-only pricing because the Description and Unit fields are readonly, and the item-picker `Search` text is not submitted as the pricing description. This keeps description text in a helper role instead of making it a final pricing path.
+
 Recommended changes:
 
-- Add a description helper mode that suggests likely item codes or item families.
-- Show suggested item code, official description, official unit, and match reason.
-- Require the user to select or confirm an item code before showing a high-confidence price recommendation.
-- If description-only pricing remains available, cap confidence below `High` and label it as weaker evidence.
+- No standalone implementation is currently needed.
+- If reviewer confusion appears, improve the Search label or help text so it is clear that official-description search is already supported.
+- Optionally show match-reason labels on item results, such as official description match, item-code match, or suffix match.
+- Optionally add a defensive matching-engine guard against description-only pricing as part of Increment 3 or Increment 9.
 
 Expected behavior:
 
-- Searching `aggregate base class 6` suggests `304-06007`.
-- Searching `traffic signal pole` does not produce high-confidence aggregate base pricing.
+- Searching `aggregate base class 6` in the current item picker can surface `304-06007`.
+- Selecting `304-06007` fills the official item code, `AGGREGATE BASE COURSE (CLASS 6)`, and `CY`.
+- Searching `traffic signal pole` through the normal UI does not produce high-confidence aggregate base pricing unless an official item result is selected.
+- Increment 3 remains the next higher-value correctness item because formal item-code/description mismatch detection is not yet implemented in matching logic.
 
 Documentation impact:
 
-- Update `user_workflow.md`.
-- Update confidence documentation if confidence behavior changes.
+- No additional documentation change is required for the current decision.
+- Update `user_workflow.md` only if the Search label, help text, or item-result behavior changes later.
+- Update confidence documentation only if a defensive matching-engine guard changes confidence behavior later.
 
 ### Increment 3: Item-Code and Description Mismatch Guard
+
+Status:
+
+Addressed for current UI workflow / no immediate user-facing implementation needed.
 
 Purpose:
 
 Prevent the exact issue reported by the engineer: a valid item code paired with an unrelated description can still return high confidence.
 
+Current resolution:
+
+The current item-code-first search funnel prevents this issue in normal browser use. The Search field only filters selectable official agency items. Selecting an item result fills the submitted item code, official description, and official unit from the same `agency_items.csv` row. The Description and Unit fields are readonly, and changing Division or Section clears the selected item.
+
+Because the item-picker `Search` text is not submitted as the pricing description, a normal user cannot submit `304-06007` with `traffic signal pole` as the description through the current UI.
+
+Remaining technical cleanup:
+
+The matching engine still does not compare the canonical family implied by an item code against the canonical family implied by a submitted description. If future workflows add editable descriptions, imports, API-style query entry, or tests that call `scoreComparableItems()` directly with crafted query values, a defensive mismatch guard should be added before those workflows are trusted.
+
 Recommended changes:
 
-- Compare the canonical item family implied by the selected item code against the canonical item family implied by the entered description.
-- Add a visible warning when they conflict.
-- Cap confidence at `Low` or `Not supportable` when the conflict is material.
-- Add improve-confidence guidance telling the user to correct either the item code or description.
+- No immediate user-facing implementation is needed for the current picker workflow.
+- Keep the defensive matching-engine guard as a future cleanup before editable descriptions, estimate imports, API-style query entry, or automated matching tests.
+- If implemented later, compare the canonical item family implied by the selected item code against the canonical item family implied by the submitted description.
+- If implemented later, add a visible warning and cap confidence at `Low` or `Not supportable` when the conflict is material.
 
 Expected behavior:
 
-- Item code `304-06007` plus description `traffic signal pole` triggers a mismatch warning.
-- The result does not show `High` confidence.
-- The top results may still be shown as item-code evidence, but the warning must be prominent.
+- Current normal UI prevents a user from submitting item code `304-06007` plus description `traffic signal pole`.
+- Current normal UI keeps selected item code, official description, and official unit synchronized from the selected agency item.
+- A future defensive engine guard should reject or downgrade crafted mismatched queries before any workflow allows editable descriptions or imported rows.
 
 Documentation impact:
 
-- Update `architecture_overview.md` matching rules.
-- Update `user_workflow.md` warning examples.
+- No additional documentation change is required for the current decision.
+- Update `architecture_overview.md` and `user_workflow.md` only if a future defensive matching-engine guard changes runtime matching behavior.
 
 ### Increment 4: Controlled Unit and County/City Inputs
 
@@ -298,20 +325,20 @@ Documentation impact:
 
 Recommended first sequence:
 
-1. Increment 3: Item-code and description mismatch guard.
-2. Increment 1: Item-code-first search funnel.
-3. Increment 4: Controlled unit and county/city inputs.
-4. Increment 6: Quantity context in price distribution.
-5. Increment 5: Source provenance and project traceability.
+1. Increment 1: Item-code-first search funnel.
+2. Increment 4: Controlled unit and county/city inputs.
+3. Increment 6: Quantity context in price distribution.
+4. Increment 5: Source provenance and project traceability.
+5. Defensive matching-engine guard from Increment 3 before editable descriptions, estimate imports, or automated matching tests.
 
 Reason:
 
-- The mismatch guard addresses a confirmed correctness issue.
-- Item-code-first search addresses the strongest engineer recommendation.
+- The item-code-first search addresses the strongest engineer recommendation and now prevents normal item-code/description mismatch entry.
 - Controlled inputs reduce avoidable user error.
 - Quantity and source context improve reviewer trust without expanding product scope.
+- The mismatch guard remains useful as defensive engine logic, but it is no longer the next user-facing implementation priority.
 
-Increments 2, 7, 8, and 9 can be implemented independently or alongside the sequence above when scope allows.
+Increments 2, 3 defensive cleanup, 7, 8, and 9 can be implemented independently or alongside the sequence above when scope allows.
 
 ## Agent Validation Instructions
 
@@ -469,19 +496,17 @@ Expected:
 - Source provenance remains clear.
 - Internal demo records remain labeled as demo data.
 
-### Clear and reset
+### Clear query
 
 Actions:
 
 ```text
 Click Clear.
-Click Reset example.
 ```
 
 Expected:
 
 - Clear removes current query values.
-- Reset restores the demo example.
 - Results update consistently.
 
 ## User Validation Instructions
@@ -534,7 +559,7 @@ Phase 2 is complete when:
 
 - Roadway reviewers can use item code as the primary search path.
 - Description search helps users find item codes without producing misleading high-confidence pricing.
-- The app warns when item code and description conflict.
+- The normal UI prevents item-code/description conflicts, or the app warns and downgrades confidence before any future editable-description workflow is trusted.
 - Unit and geography inputs are controlled or clearly constrained.
 - Source provenance is clear enough to distinguish estimate-style and bid-style evidence.
 - Price distribution includes quantity context.

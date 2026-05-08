@@ -211,6 +211,7 @@ function mapAgencyItem(row: CsvRow): AgencyItemRecord {
     agency: row.agency,
     itemCode: row.item_code.toUpperCase(),
     officialDescription: row.official_description,
+    officialAbbreviatedDescription: row.official_abbreviated_description ?? "",
     officialUnit: normalizeUnit(row.official_unit),
     canonicalItemId: row.canonical_item_id
   };

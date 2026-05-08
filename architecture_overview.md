@@ -21,7 +21,7 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 
 1. `src/main.ts` starts the app.
 2. `src/data/loadData.ts` loads CSV files from `public/data`.
-3. `src/data/schema.ts` defines app-facing data structures, including `SpecSectionRecord` for CDOT section/prefix labels.
+3. `src/data/schema.ts` defines app-facing data structures, including `SpecSectionRecord` for CDOT section/prefix labels and abbreviated agency item descriptions.
 4. `src/matching/scoreComparableItems.ts` ranks comparable records.
 5. `src/matching/priceSummary.ts` calculates low, percentile, median, high, and suggested unit price values.
 6. `src/matching/confidence.ts` converts match quality into High, Medium, Low, or Not supportable.
@@ -55,7 +55,7 @@ The UI includes small information markers that explain what each input, metric, 
 
 The information markers should open only when the marker itself is hovered or keyboard-focused. They should not appear when the user hovers over or types in the associated form field.
 
-The Item Explorer also includes a clear action for removing the current query values and a reset action for restoring the demo example query.
+The Item Explorer also includes a clear action for removing the current query values.
 
 ## Item Code Search Funnel
 
@@ -63,7 +63,7 @@ The item search uses a CDOT section-based item picker instead of a single long i
 
 The visible left-panel flow is:
 
-1. Locate Item: select a CDOT specification division and section/prefix when they help narrow the search, then use Item code or description to filter loaded agency items.
+1. Locate Item: select a CDOT specification division and section/prefix when they help narrow the search, then use Item code or description to filter loaded agency items by item code, suffix, official description, or abbreviated description.
 2. Select Item: review the potential matching items and select one result to populate the submitted item code. The matching layer resolves the official description and unit from the agency item table.
 3. Enter quantity: provide the planned quantity before searching comparable projects.
 
@@ -71,7 +71,11 @@ Item code or description works across all loaded agency items when no division o
 
 Section labels come from `public/data/spec_sections.csv`. Item-level options continue to come from `public/data/agency_items.csv`.
 
-The current item picker data is a 200-row sample generated from the public CDOT 2025 Item Code Book Excel file and spread across loaded CDOT Standard Specification sections. Existing synthetic demo rows with comparable observations are preserved so the pricing demo still works.
+The current item picker data is generated from the public CDOT 2026 Item Code Book Excel file linked from CDOT's Item Code Book by Year page. The committed CSV contains 4,771 valid item-code rows and 100 item-code prefixes. The raw Excel workbook is not committed; `scripts/import_cdot_item_code_book.py` converts a downloaded workbook into the static CSV files.
+
+Some prefixes use known CDOT Standard Specification section labels. Prefixes not yet mapped to a known section label use fallback labels so all valid item-code rows remain searchable.
+
+The full item code book supports lookup only. Existing synthetic demo rows with comparable observations are preserved separately, so pricing still appears only when matching rows exist in `public/data/item_observations.csv`.
 
 The submitted `SearchQuery` shape did not change. The visible item search is limited to item identity and quantity. Unit is resolved from the selected official item and displayed as a non-editable suffix in the quantity field when available. County / region, estimate year, and work type are applied from the comparable-project result controls after item identity is established.
 
