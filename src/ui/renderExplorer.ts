@@ -25,7 +25,7 @@ export function renderExplorer(
     <form id="explorer-form" class="search-panel">
       <div class="panel-heading">
         <h2>
-          Cost Book Search
+          Item Book Search
           ${helpTip("About the item search", "This panel identifies the bid item and quantity. Comparable project context is handled with the results controls after matching.")}
         </h2>
       </div>
