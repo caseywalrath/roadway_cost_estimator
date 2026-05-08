@@ -59,6 +59,46 @@ Do not include these in the next implementation phase unless explicitly repriori
 - Escalation or inflation adjustment.
 - Database, authentication, or server backend.
 
+## Next Session Starting Point: CDOT Cost Data Book Public Pricing
+
+Start here in the next implementation session. Do not resume by mechanically picking up the next item in the older increment list below.
+
+Current Phase 2 status:
+
+- Increments 1, 2, and 3 are treated as addressed for the current normal UI workflow.
+- The simplified item search and full CDOT 2026 item-code book now give users a controlled item-code-first lookup path.
+- The next useful Phase 2 work is public CDOT cost-evidence ingestion, not more refinement of the item lookup funnel.
+- The increment list below remains useful historical planning context, but it is not the active starting point for the next branch.
+
+Recommended next implementation:
+
+- Import public pricing evidence from the CDOT Cost Data Book before importing individual bid tabs.
+- Use the CDOT Cost Data Book as the first real public `item_observations.csv` source because it already contains item-level unit cost rows by project.
+- Keep individual bid tabs as later secondary evidence for spot-checking, bidder-level detail, or raw project audit.
+- Preserve the static GitHub Pages model. Do not add a server, database, authentication, or runtime external data fetch.
+- Keep raw source PDFs out of git. Store local working copies under an ignored path such as `tmp/source/cdot_cost_data_books/`.
+
+Instructions for the user:
+
+- Start from the latest merged branch or pull request that includes the simplified item search and full 2026 CDOT item book.
+- Provide or confirm the local CDOT Cost Data Book PDF path, starting with the 2026 Q1 PDF.
+- Tell the coding agent to begin with this section, not with the older increment list.
+- Confirm that awarded bid unit prices should be the first default pricing evidence.
+- Confirm that engineer estimate and average bid values should be retained as provenance or context rather than ignored.
+
+Instructions for the coding agent:
+
+- Review `architecture_overview.md`, this file, `docs/data_schema.md`, and `user_workflow.md` before coding.
+- Create a new branch, likely `codex/import-cdot-cost-data-book`.
+- Use the attached or user-provided Cost Data Book PDF as the first source document.
+- Build a repeatable Python importer using `pypdf` for text-layer PDF extraction.
+- Parse the project list rows and the item unit cost rows by project.
+- Capture item code, item description, unit, project number, project location, letting date, quantity, engineer estimate, average bid, and awarded bid.
+- Do not mix weighted-average summary rows into project-level comparable evidence in the first pass.
+- Validate imported item codes against `agency_items.csv`.
+- Add source labels and schema documentation needed to distinguish synthetic demo rows from public CDOT Cost Data Book evidence.
+- Run `npm run build` after implementation.
+
 ## Recommended Increment Sequence
 
 Each increment should be implemented on its own branch or as a clearly separated commit. Each increment should update documentation when behavior, data contracts, or user workflow changes.
