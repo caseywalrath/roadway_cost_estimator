@@ -61,7 +61,7 @@ Comparable project context can be partial. Missing context should affect ranking
 
 The user enters one item at a time in the item search panel.
 
-The current picker includes a 200-row CDOT item-code sample for testing navigation across divisions and sections. Only the existing mapped demo items have comparable price records in the synthetic observation dataset.
+The current picker includes the full public CDOT 2026 item-code book for lookup. Only the existing mapped demo items have comparable price records in the synthetic observation dataset.
 
 The left panel is organized into three numbered steps:
 
@@ -81,7 +81,7 @@ Preferred input order:
 
 1. In Locate Item, select the CDOT specification division if it helps narrow the item list.
 2. Select the section / three-digit item-code prefix if it helps narrow the item list.
-3. Enter item code or description to narrow the loaded item list.
+3. Enter item code, suffix, official item description, or abbreviated item description to narrow the loaded item list.
 4. In Select Item, review the potential matching items and select the correct official item. This section remains empty until the user starts an item search.
 5. In Enter quantity, enter the planned item quantity.
 6. Click Search Projects.

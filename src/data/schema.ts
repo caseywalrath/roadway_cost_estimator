@@ -58,6 +58,7 @@ export interface AgencyItemRecord {
   agency: string;
   itemCode: string;
   officialDescription: string;
+  officialAbbreviatedDescription: string;
   officialUnit: string;
   canonicalItemId: string;
 }

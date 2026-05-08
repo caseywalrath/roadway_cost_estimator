@@ -84,11 +84,6 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       render();
     });
 
-    root.querySelector<HTMLButtonElement>("#reset-example")?.addEventListener("click", () => {
-      query = { ...exampleQuery };
-      render();
-    });
-
     root.querySelector<HTMLButtonElement>("#clear-query")?.addEventListener("click", () => {
       query = { ...emptyQuery };
       render();

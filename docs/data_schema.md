@@ -85,10 +85,13 @@ Required columns:
 - `agency`
 - `item_code`
 - `official_description`
+- `official_abbreviated_description`
 - `official_unit`
 - `canonical_item_id`
 
 Rows with a blank `canonical_item_id` can appear when the row is present only to support item-code lookup and has not been mapped to a comparable item family yet. Exact-code pricing still requires matching rows in `item_observations.csv`.
+
+The current `agency_items.csv` is generated from the public CDOT 2026 Item Code Book Excel file linked from CDOT's Item Code Book by Year page. The generated file includes all valid item-code rows found in the workbook. The raw workbook is not committed.
 
 ### `spec_sections.csv`
 
@@ -105,7 +108,7 @@ Required columns:
 
 This file is a reference lookup table for section labels. It is not a cost book and does not replace `agency_items.csv`.
 
-The current sample is generated from the public CDOT 2025 Item Code Book Excel file with `scripts/generate_cdot_item_sample.py`. The generator preserves existing mapped demo rows and adds official item-code rows across loaded CDOT Standard Specification sections.
+The current file is generated with `scripts/import_cdot_item_code_book.py` from the same CDOT 2026 Item Code Book workbook as `agency_items.csv`. Known CDOT Standard Specification prefixes use reviewed section labels. Unmapped prefixes use fallback labels so every loaded agency item can appear in the section-based picker.
 
 ### `aliases.csv`
 
@@ -131,6 +134,7 @@ Required columns:
 - Do not compare unit prices across incompatible units.
 - Every observation must point to a source and project.
 - Every loaded agency item should have a matching section prefix in `spec_sections.csv` when the picker needs to expose that item.
+- The full item-code book is lookup data only; pricing requires matching records in `item_observations.csv`.
 - Demo data must stay clearly labeled.
 - Private FHU data must not be committed to a public repository.
 

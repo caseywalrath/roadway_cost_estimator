@@ -84,6 +84,35 @@ Known current local test URL:
 http://127.0.0.1:5173/
 ```
 
+## CDOT Item Code Book Import
+
+The app uses a committed static CSV version of the public CDOT 2026 Item Code Book for item lookup.
+
+The raw Excel workbook should be downloaded from CDOT's Item Code Book by Year page and saved outside tracked source, for example:
+
+```text
+tmp/source/cdot_item_code_book_2026.xlsx
+```
+
+The raw workbook is ignored by Git because `tmp/` is ignored.
+
+Run the importer:
+
+```text
+python scripts/import_cdot_item_code_book.py --source tmp/source/cdot_item_code_book_2026.xlsx
+```
+
+The importer requires `openpyxl`. In the Codex desktop environment, use the bundled Python runtime returned by the workspace dependency loader. In a normal local Python environment, install `openpyxl` before running the importer.
+
+The importer writes:
+
+```text
+public/data/agency_items.csv
+public/data/spec_sections.csv
+```
+
+It preserves existing `canonical_item_id` mappings by item code, adds abbreviated descriptions, validates item-code format, checks required fields, and creates fallback section labels for prefixes not yet mapped to reviewed CDOT section names.
+
 ## GitHub Pages
 
 The Vite config uses `base: "./"` so the built app can run from a GitHub Pages project path.
@@ -105,8 +134,8 @@ The workflow uses `npm ci` so GitHub builds from the committed lockfile.
 
 ## Next Product Steps
 
-1. Collect public CDOT source files or links.
+1. Collect public CDOT cost books, bid tabs, or awarded project records.
 2. Define import scripts for those source formats.
 3. Validate 5 to 10 common roadway item families with roadway reviewers.
-4. Replace or supplement demo data with validated public records.
+4. Replace or supplement demo cost observations with validated public records.
 5. Add a lightweight estimate workspace after item matching is trusted.
