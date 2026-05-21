@@ -34,6 +34,8 @@ The current CSV records are synthetic demo data. They are labeled as demo data a
 
 Do not commit private FHU estimate data to a public GitHub Pages repository. Real internal data should either stay outside the repo, be uploaded locally by the user in a later browser-only workflow, or move to an approved private hosting model.
 
+The repository can now generate a review-only staging CSV from the public CDOT 2026 Q1 Cost Data Book PDF. This staging output is not loaded by the app until the extracted rows are reviewed and mapped into the app data schema.
+
 ## Matching Rules
 
 The MVP matching rules are intentionally visible and simple:
@@ -82,6 +84,7 @@ The submitted `SearchQuery` shape did not change. The visible item search is lim
 ## Near-Term Extension Points
 
 - Replace demo CSVs with validated public CDOT source data.
+- Review CDOT cost-book staging rows and promote approved rows into app-loaded pricing data.
 - Add reviewed FHU data only through an approved private-data workflow.
 - Add estimate workspace rows after the item explorer is trusted.
 - Add CSV/XLSX import only after schema mapping rules are validated.

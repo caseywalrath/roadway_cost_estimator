@@ -23,7 +23,7 @@ Not included:
 - User accounts.
 - Server or hosted database.
 - Chat layer.
-- Automatic PDF or spreadsheet parsing.
+- General-purpose PDF or spreadsheet parsing.
 
 ## Local Commands
 
@@ -112,6 +112,34 @@ public/data/spec_sections.csv
 ```
 
 It preserves existing `canonical_item_id` mappings by item code, adds abbreviated descriptions, validates item-code format, checks required fields, and creates fallback section labels for prefixes not yet mapped to reviewed CDOT section names.
+
+## CDOT Cost Data Book Staging Import
+
+The repo includes a local parser for the known CDOT 2026 Q1 Cost Data Book PDF format. This is an explicit Phase 2 reprioritization from no automatic PDF parsing to a narrow parser for one public CDOT source format.
+
+Run the parser with the repo-root PDF:
+
+```text
+python scripts/parse_cdot_cost_data_book.py
+```
+
+To use the Codex bundled Python runtime, replace `python` with the bundled Python executable returned by the workspace dependency loader.
+
+The parser requires `pypdf`. The Codex bundled Python runtime includes it. In a normal local Python environment, install `pypdf` before running the parser.
+
+The parser writes:
+
+```text
+public/data/imports/cdot_cost_data_book_2026_q1_item_unit_costs.csv
+```
+
+The output is a staging CSV only. It is not loaded by the app and does not replace `item_observations.csv`. Review the staged rows before deciding how to map CDOT project/location fields and bid price columns into app-ready source, project, and observation records.
+
+Run parser fixture tests:
+
+```text
+python scripts/test_parse_cdot_cost_data_book.py
+```
 
 ## GitHub Pages
 

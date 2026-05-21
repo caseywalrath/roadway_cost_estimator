@@ -125,6 +125,31 @@ Required columns:
 - `confidence`
 - `notes`
 
+### `imports/cdot_cost_data_book_2026_q1_item_unit_costs.csv`
+
+Review staging rows extracted from the public CDOT 2026 Q1 Cost Data Book PDF.
+
+This file is not loaded by the app yet. It is an intermediate review artifact for validating the known CDOT cost-book PDF format before converting rows into `sources.csv`, `projects.csv`, and `item_observations.csv`.
+
+Required columns:
+
+- `source_file`
+- `source_period`
+- `page_number`
+- `item_code`
+- `item_description`
+- `unit_raw`
+- `unit_normalized`
+- `project_location_raw`
+- `date_let`
+- `quantity`
+- `engineer_estimate_unit_price`
+- `average_bid_unit_price`
+- `awarded_bid_unit_price`
+- `raw_text`
+
+The parser excludes CDOT weighted-average summary rows. `date_let` is normalized to ISO format. `raw_text` preserves the parsed PDF text for reviewer traceability.
+
 ## Data Rules
 
 - Use stable IDs.
@@ -135,6 +160,7 @@ Required columns:
 - Every observation must point to a source and project.
 - Every loaded agency item should have a matching section prefix in `spec_sections.csv` when the picker needs to expose that item.
 - The full item-code book is lookup data only; pricing requires matching records in `item_observations.csv`.
+- Cost data book staging imports must be reviewed before they are promoted into app-loaded pricing data.
 - Demo data must stay clearly labeled.
 - Private FHU data must not be committed to a public repository.
 
