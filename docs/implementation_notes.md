@@ -23,7 +23,7 @@ Not included:
 - User accounts.
 - Server or hosted database.
 - Chat layer.
-- Automatic PDF or spreadsheet parsing.
+- General-purpose PDF or spreadsheet parsing.
 
 ## Local Commands
 
@@ -112,6 +112,57 @@ public/data/spec_sections.csv
 ```
 
 It preserves existing `canonical_item_id` mappings by item code, adds abbreviated descriptions, validates item-code format, checks required fields, and creates fallback section labels for prefixes not yet mapped to reviewed CDOT section names.
+
+## CDOT Cost Data Book Staging Import
+
+The repo includes a local parser for the known CDOT 2026 Q1 Cost Data Book PDF format. This is an explicit Phase 2 reprioritization from no automatic PDF parsing to a narrow parser for one public CDOT source format.
+
+Run the parser with the repo-root PDF:
+
+```text
+python scripts/parse_cdot_cost_data_book.py
+```
+
+To use the Codex bundled Python runtime, replace `python` with the bundled Python executable returned by the workspace dependency loader.
+
+The parser requires `pypdf`. The Codex bundled Python runtime includes it. In a normal local Python environment, install `pypdf` before running the parser.
+
+The parser writes:
+
+```text
+public/data/imports/cdot_cost_data_book_2026_q1_item_unit_costs.csv
+```
+
+The item-unit output is the first staging CSV. It should be validated against the project-list pages and agency item table before promotion into app-loaded CSVs.
+
+Run parser fixture tests:
+
+```text
+python scripts/test_parse_cdot_cost_data_book.py
+```
+
+Promote reviewed staging rows into app-loaded CSVs:
+
+```text
+python scripts/promote_cdot_cost_data_book.py
+```
+
+The promotion script parses project-list pages from the PDF, writes a project staging lookup, validates item rows, and rewrites:
+
+```text
+public/data/imports/cdot_cost_data_book_2026_q1_projects.csv
+public/data/sources.csv
+public/data/projects.csv
+public/data/item_observations.csv
+```
+
+It preserves existing demo rows and adds one public source row, 26 CDOT project rows, and 6,126 promoted observations. Each cost-book item row becomes separate awarded-bid, average-bid, and engineer-estimate observations. The app defaults to awarded-bid evidence.
+
+Run promotion fixture tests:
+
+```text
+python scripts/test_promote_cdot_cost_data_book.py
+```
 
 ## GitHub Pages
 

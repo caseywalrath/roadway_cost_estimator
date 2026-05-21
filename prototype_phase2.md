@@ -33,17 +33,19 @@ Current strengths:
 - Exact agency item-code matches are already scored above description matches.
 - The item-code entry path now uses a CDOT division, section/prefix, and item-result funnel instead of a single long dropdown.
 - The item picker now has the full public CDOT 2026 item-code book for lookup, with 4,771 valid item-code rows across 100 loaded prefixes.
+- The CDOT 2026 Q1 Cost Data Book parser produced 2,042 item-level staging rows across 688 unique item codes and 26 project/location strings; `304-06007` was spot-checked with 13 rows.
+- The Cost Data Book promotion path now separates awarded bid, average bid, and engineer estimate values into separate observation types.
 - Same-unit records are required for price recommendations.
 - The UI already shows recommendation, price distribution, comparable records, warnings, and improve-confidence actions.
 - Synthetic demo data is labeled as demo data.
 
 Current gaps identified by roadmap and engineer feedback:
 
-- Full item-code lookup data is now available, but search still needs real public cost observations to validate pricing behavior at CDOT scale.
+- Public CDOT cost-book observations are now available, but roadway reviewers still need to validate whether the promoted rows and default awarded-bid behavior are useful for pricing review.
 - Unit and county/region are free text, which allows avoidable spelling and wording errors.
 - The normal UI now prevents a user-entered item-code/description conflict by requiring selection from official item records, but the matching engine still lacks a defensive guard for crafted or future editable queries.
-- Source labels do not clearly distinguish FHU estimates, contractor bid tabs, public data, submittal level, and source reliability.
-- Project number is not shown.
+- Source labels and price-type labels now distinguish public CDOT cost-book awarded bid, average bid, and engineer estimate evidence, but reviewer feedback is still needed on wording and trust level.
+- Project number is now available for promoted CDOT cost-book project records.
 - Price distribution does not show the quantity context behind low, median, high, or quartile values.
 
 ## Phase 2 Non-Goals
@@ -59,7 +61,7 @@ Do not include these in the next implementation phase unless explicitly repriori
 - Escalation or inflation adjustment.
 - Database, authentication, or server backend.
 
-## Next Session Starting Point: CDOT Cost Data Book Public Pricing
+## Active Phase 2 Starting Point: CDOT Cost Data Book Public Pricing
 
 Start here in the next implementation session. Do not resume by mechanically picking up the next item in the older increment list below.
 
@@ -67,12 +69,18 @@ Current Phase 2 status:
 
 - Increments 1, 2, and 3 are treated as addressed for the current normal UI workflow.
 - The simplified item search and full CDOT 2026 item-code book now give users a controlled item-code-first lookup path.
-- The next useful Phase 2 work is public CDOT cost-evidence ingestion, not more refinement of the item lookup funnel.
+- Public CDOT cost-evidence ingestion has started with the 2026 Q1 Cost Data Book.
+- The parser produced 2,042 item-level staging rows, 688 unique item codes, and 26 project/location strings.
+- Spot checking confirmed that item `304-06007` has 13 project-level rows and weighted-average rows are excluded.
+- Validation is now a separate step before app promotion. Current known agency item-code warnings are `202-00826`, `208-00065`, and `614-86739`.
+- The promotion path parses the PDF project-list pages rather than naively splitting `project_location_raw`; this preserves project numbers such as `C 0852-130`.
+- The app should use awarded-bid evidence by default and keep average bid and engineer estimate as separate review filters.
 - The increment list below remains useful historical planning context, but it is not the active starting point for the next branch.
 
-Recommended next implementation:
+Recommended next sequence:
 
-- Import public pricing evidence from the CDOT Cost Data Book before importing individual bid tabs.
+- Validate future CDOT cost-book staging rows before promotion.
+- Promote reviewed public pricing evidence from the CDOT Cost Data Book before importing individual bid tabs.
 - Use the CDOT Cost Data Book as the first real public `item_observations.csv` source because it already contains item-level unit cost rows by project.
 - Keep individual bid tabs as later secondary evidence for spot-checking, bidder-level detail, or raw project audit.
 - Preserve the static GitHub Pages model. Do not add a server, database, authentication, or runtime external data fetch.
@@ -83,8 +91,8 @@ Instructions for the user:
 - Start from the latest merged branch or pull request that includes the simplified item search and full 2026 CDOT item book.
 - Provide or confirm the local CDOT Cost Data Book PDF path, starting with the 2026 Q1 PDF.
 - Tell the coding agent to begin with this section, not with the older increment list.
-- Confirm that awarded bid unit prices should be the first default pricing evidence.
-- Confirm that engineer estimate and average bid values should be retained as provenance or context rather than ignored.
+- Awarded bid unit prices are the default pricing evidence.
+- Engineer estimate and average bid values are retained as separate price-type observations rather than ignored or mixed into the default distribution.
 
 Instructions for the coding agent:
 
@@ -97,6 +105,8 @@ Instructions for the coding agent:
 - Do not mix weighted-average summary rows into project-level comparable evidence in the first pass.
 - Validate imported item codes against `agency_items.csv`.
 - Add source labels and schema documentation needed to distinguish synthetic demo rows from public CDOT Cost Data Book evidence.
+- Promote each item-level staging row into separate `cdot_awarded_bid`, `cdot_average_bid`, and `cdot_engineer_estimate` observations.
+- Add result-table display for project number and price type.
 - Run `npm run build` after implementation.
 
 ## Recommended Increment Sequence

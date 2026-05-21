@@ -51,6 +51,10 @@ export function scoreComparableItems(data: AppData, rawQuery: SearchQuery): Matc
       continue;
     }
 
+    if (!priceTypeAllowed(observation.priceType, query.priceTypeScope)) {
+      continue;
+    }
+
     const candidate = classifyObservation(data, query, queryCanonicalCandidates, observation.agencyItemCode, observation.descriptionNormalized);
 
     if (!candidate) {
@@ -308,6 +312,28 @@ function sourceAllowed(source: SourceRecord | null, sourceScope: string): boolea
 
   if (sourceScope === "internal") {
     return sourceType.includes("internal");
+  }
+
+  return true;
+}
+
+function priceTypeAllowed(priceType: string, priceTypeScope: string): boolean {
+  const normalizedPriceType = priceType.toLowerCase();
+
+  if (priceTypeScope === "all") {
+    return true;
+  }
+
+  if (priceTypeScope === "awarded") {
+    return normalizedPriceType === "cdot_awarded_bid" || normalizedPriceType === "bid_tab_demo";
+  }
+
+  if (priceTypeScope === "average") {
+    return normalizedPriceType === "cdot_average_bid";
+  }
+
+  if (priceTypeScope === "engineer") {
+    return normalizedPriceType === "cdot_engineer_estimate" || normalizedPriceType === "engineers_estimate";
   }
 
   return true;

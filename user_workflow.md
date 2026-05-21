@@ -52,7 +52,7 @@ Why this matters:
 Current prototype default:
 
 ```text
-Colorado roadway demo
+Colorado roadway public and demo data
 ```
 
 Comparable project context can be partial. Missing context should affect ranking or produce review guidance rather than blocking the item search.
@@ -61,7 +61,7 @@ Comparable project context can be partial. Missing context should affect ranking
 
 The user enters one item at a time in the item search panel.
 
-The current picker includes the full public CDOT 2026 item-code book for lookup. Only the existing mapped demo items have comparable price records in the synthetic observation dataset.
+The current picker includes the full public CDOT 2026 item-code book for lookup. Comparable pricing records now include public CDOT 2026 Q1 Cost Data Book rows plus synthetic demo records.
 
 The left panel is organized into three numbered steps:
 
@@ -197,7 +197,7 @@ How to use it:
 3. Check whether the unit matches the searched item.
 4. Check whether the quantity is similar enough to be useful.
 5. Read the "Why selected" field to understand the matching logic.
-6. Use the source label to understand where the record came from.
+6. Use the source label and price type to understand where the record came from and whether it is awarded bid, average bid, or engineer estimate evidence.
 
 Expected roadway reviewer feedback:
 
