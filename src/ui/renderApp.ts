@@ -10,6 +10,7 @@ const exampleQuery: SearchQuery = {
   workType: "Roadway",
   estimateYear: 2026,
   sourceScope: "both",
+  priceTypeScope: "awarded",
   itemCode: "304-06007",
   description: "AGGREGATE BASE COURSE (CLASS 6)",
   unit: "CY",
@@ -22,6 +23,7 @@ const emptyQuery: SearchQuery = {
   workType: "Roadway",
   estimateYear: new Date().getFullYear(),
   sourceScope: "both",
+  priceTypeScope: "awarded",
   itemCode: "",
   description: "",
   unit: "",
@@ -37,16 +39,16 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       <main class="app-shell">
         <header class="app-header">
           <div>
-            <p class="eyebrow">Static prototype | Demo data only</p>
+            <p class="eyebrow">Static prototype | Public CDOT and demo data</p>
             <h1>Colorado Roadway Comparable Project Explorer</h1>
           </div>
           <div class="context-bar" aria-label="Prototype scope">
-            <span>Scope: Colorado roadway demo ${helpTip("About prototype scope", "State is fixed to Colorado and work type defaults to roadway until later data sources add real multi-state or multi-discipline support.")}</span>
+            <span>Scope: Colorado roadway ${helpTip("About prototype scope", "State is fixed to Colorado and work type defaults to roadway. The data package now includes public CDOT cost-book records plus synthetic demo records.")}</span>
           </div>
         </header>
 
         <section class="prototype-note">
-          This prototype uses synthetic demo records to prove the comparable-selection workflow. Do not use these prices for real estimating.
+          This prototype includes public CDOT cost-book records and synthetic demo records to prove the comparable-selection workflow. Review source and price type before using any value for estimating.
         </section>
 
         <section class="prototype-guide" aria-label="How to read this prototype">

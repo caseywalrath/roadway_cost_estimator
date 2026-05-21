@@ -1,5 +1,7 @@
 export type SourceScope = "both" | "public" | "internal";
 
+export type PriceTypeScope = "awarded" | "average" | "engineer" | "all";
+
 export type MatchType = "exact_code" | "canonical_alias" | "keyword_fallback";
 
 export type ConfidenceLevel = "High" | "Medium" | "Low" | "Not supportable";
@@ -23,6 +25,14 @@ export interface ProjectRecord {
   workType: string;
   estimateLetDate: string;
   sourceId: string;
+  projectNumber: string;
+  projectLocationRaw: string;
+  contractor: string;
+  district: string;
+  terrain: string;
+  bidCount: number | null;
+  awardedBidTotal: number | null;
+  awardIndex: number | null;
 }
 
 export interface ItemObservationRecord {
@@ -105,6 +115,7 @@ export interface SearchQuery {
   workType: string;
   estimateYear: number;
   sourceScope: SourceScope;
+  priceTypeScope: PriceTypeScope;
   itemCode: string;
   description: string;
   unit: string;

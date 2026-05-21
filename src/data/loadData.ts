@@ -169,7 +169,15 @@ function mapProject(row: CsvRow): ProjectRecord {
     countyRegion: row.county_region,
     workType: row.work_type,
     estimateLetDate: row.estimate_let_date,
-    sourceId: row.source_id
+    sourceId: row.source_id,
+    projectNumber: row.project_number ?? "",
+    projectLocationRaw: row.project_location_raw ?? "",
+    contractor: row.contractor ?? "",
+    district: row.district ?? "",
+    terrain: row.terrain ?? "",
+    bidCount: parseOptionalNumber(row.bid_count ?? ""),
+    awardedBidTotal: parseOptionalNumber(row.awarded_bid_total ?? ""),
+    awardIndex: parseOptionalNumber(row.award_index ?? "")
   };
 }
 

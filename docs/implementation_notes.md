@@ -133,12 +133,35 @@ The parser writes:
 public/data/imports/cdot_cost_data_book_2026_q1_item_unit_costs.csv
 ```
 
-The output is a staging CSV only. It is not loaded by the app and does not replace `item_observations.csv`. Review the staged rows before deciding how to map CDOT project/location fields and bid price columns into app-ready source, project, and observation records.
+The item-unit output is the first staging CSV. It should be validated against the project-list pages and agency item table before promotion into app-loaded CSVs.
 
 Run parser fixture tests:
 
 ```text
 python scripts/test_parse_cdot_cost_data_book.py
+```
+
+Promote reviewed staging rows into app-loaded CSVs:
+
+```text
+python scripts/promote_cdot_cost_data_book.py
+```
+
+The promotion script parses project-list pages from the PDF, writes a project staging lookup, validates item rows, and rewrites:
+
+```text
+public/data/imports/cdot_cost_data_book_2026_q1_projects.csv
+public/data/sources.csv
+public/data/projects.csv
+public/data/item_observations.csv
+```
+
+It preserves existing demo rows and adds one public source row, 26 CDOT project rows, and 6,126 promoted observations. Each cost-book item row becomes separate awarded-bid, average-bid, and engineer-estimate observations. The app defaults to awarded-bid evidence.
+
+Run promotion fixture tests:
+
+```text
+python scripts/test_promote_cdot_cost_data_book.py
 ```
 
 ## GitHub Pages

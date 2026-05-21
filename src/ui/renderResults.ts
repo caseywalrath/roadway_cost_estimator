@@ -153,13 +153,15 @@ function renderComparableProjects(result: MatchResult): string {
             <tr>
               <th>Rank ${helpTip("About rank", "Order after scoring. Higher-ranked records better match item code, unit, quantity, recency, geography, and work type.")}</th>
               <th>Project ${helpTip("About project", "Comparable project name. Source: project metadata table loaded from the CSV data package.")}</th>
+              <th>Project no. ${helpTip("About project number", "Public CDOT project number when available. Demo records may not have a project number.")}</th>
               <th>Region ${helpTip("About region", "County or market area for the historical record. Used to favor geographically relevant examples.")}</th>
               <th>Date ${helpTip("About date", "Estimate or let date for the record. Recent projects receive more score because pricing conditions change over time.")}</th>
               <th>Item ${helpTip("About item", "Agency item code on the historical record. Exact item-code matches are ranked above alias or keyword matches.")}</th>
               <th>Description ${helpTip("About comparable description", "Raw item description from the historical source row. Kept visible so engineers can check whether the match is truly similar.")}</th>
               <th>Qty ${helpTip("About comparable quantity", "Historical quantity. Similar quantity bands are ranked higher because very small or very large work quantities may price differently.")}</th>
               <th>Unit ${helpTip("About comparable unit", "Historical unit. Same-unit records are required for the price summary.")}</th>
-              <th>Unit price ${helpTip("About comparable unit price", "Historical unit cost from the source record. Demo data is synthetic; real data would come from bid tabs, cost books, or reviewed FHU estimates.")}</th>
+              <th>Unit price ${helpTip("About comparable unit price", "Historical unit cost from the source record. Public CDOT cost-book rows can represent awarded bid, average bid, or engineer estimate evidence.")}</th>
+              <th>Price type ${helpTip("About price type", "Distinguishes awarded bid, average bid, and engineer estimate evidence so the app does not silently mix different price concepts.")}</th>
               <th>Why selected ${helpTip("About why selected", "Human-readable reasons generated from scoring rules. These should help roadway engineers agree, reject, or tune the match logic.")}</th>
               <th>Source ${helpTip("About source", "Source label for provenance. Real implementation should distinguish public CDOT data, FHU estimates, bid tabs, and post-award data.")}</th>
             </tr>
@@ -192,6 +194,18 @@ function renderProjectRelevanceControls(query: SearchQuery): string {
       </label>
       <label>
         <span class="label-row">
+          Price type
+          ${helpTip("About price type control", "Awarded bid is the default evidence set. Average bid and engineer estimate can be reviewed separately but are not mixed into the default recommendation.")}
+        </span>
+        <select name="priceTypeScope">
+          <option value="awarded" ${query.priceTypeScope === "awarded" ? "selected" : ""}>Awarded bid evidence</option>
+          <option value="average" ${query.priceTypeScope === "average" ? "selected" : ""}>Average bid evidence</option>
+          <option value="engineer" ${query.priceTypeScope === "engineer" ? "selected" : ""}>Engineer estimate evidence</option>
+          <option value="all" ${query.priceTypeScope === "all" ? "selected" : ""}>All price types</option>
+        </select>
+      </label>
+      <label>
+        <span class="label-row">
           Work type
           ${helpTip("About project work type control", "Discipline or project type used to rank comparable projects after the item has been identified.")}
         </span>
@@ -215,6 +229,7 @@ export function readProjectFiltersFromForm(
     ...currentQuery,
     countyRegion: String(formData.get("countyRegion") || ""),
     workType: String(formData.get("workType") || "Roadway"),
+    priceTypeScope: String(formData.get("priceTypeScope") || "awarded") as SearchQuery["priceTypeScope"],
     estimateYear: Number.isFinite(estimateYear) ? estimateYear : currentQuery.estimateYear
   };
 }
@@ -230,6 +245,7 @@ function renderComparableRow(match: ComparableMatch, index: number): string {
     <tr>
       <td>${index + 1}</td>
       <td>${escapeHtml(match.project?.projectName ?? "Unknown project")}</td>
+      <td>${escapeHtml(match.project?.projectNumber || "Not listed")}</td>
       <td>${escapeHtml(match.project?.countyRegion ?? "Unknown")}</td>
       <td>${escapeHtml(match.project?.estimateLetDate ?? match.observation.dateBasis)}</td>
       <td>${escapeHtml(match.observation.agencyItemCode)}</td>
@@ -237,6 +253,7 @@ function renderComparableRow(match: ComparableMatch, index: number): string {
       <td>${formatNumber(match.observation.quantity)}</td>
       <td>${escapeHtml(match.observation.unitNormalized)}</td>
       <td>${formatCurrency(match.observation.unitPrice)}</td>
+      <td>${escapeHtml(formatPriceType(match.observation.priceType))}</td>
       <td>${escapeHtml(reasons)}</td>
       <td>${escapeHtml(match.source?.sourceLabel ?? "Unknown source")}</td>
     </tr>
@@ -284,6 +301,18 @@ function renderList(items: string[]): string {
 
 function confidenceClass(confidence: string): string {
   return `confidence confidence--${confidence.toLowerCase().replace(/\s+/g, "-")}`;
+}
+
+function formatPriceType(priceType: string): string {
+  const labels: Record<string, string> = {
+    bid_tab_demo: "Bid tab demo",
+    engineers_estimate: "Engineer estimate demo",
+    cdot_awarded_bid: "CDOT awarded bid",
+    cdot_average_bid: "CDOT average bid",
+    cdot_engineer_estimate: "CDOT engineer estimate"
+  };
+
+  return labels[priceType] ?? priceType;
 }
 
 function distributionHelp(label: string): string {

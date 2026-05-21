@@ -30,11 +30,11 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 
 ## Data Governance
 
-The current CSV records are synthetic demo data. They are labeled as demo data and must not be used for real estimating.
+The CSV records include synthetic demo data and public CDOT 2026 Q1 Cost Data Book records. They are prototype evidence and must be reviewed before estimating use.
 
 Do not commit private FHU estimate data to a public GitHub Pages repository. Real internal data should either stay outside the repo, be uploaded locally by the user in a later browser-only workflow, or move to an approved private hosting model.
 
-The repository can now generate a review-only staging CSV from the public CDOT 2026 Q1 Cost Data Book PDF. This staging output is not loaded by the app until the extracted rows are reviewed and mapped into the app data schema.
+The repository can generate staging CSVs from the public CDOT 2026 Q1 Cost Data Book PDF, validate them against project-list pages and agency item codes, and promote them into app-loaded source, project, and observation CSVs.
 
 ## Matching Rules
 
@@ -42,6 +42,7 @@ The MVP matching rules are intentionally visible and simple:
 
 - Filter to the fixed Colorado prototype state.
 - Use all loaded demo source records by default.
+- Use awarded-bid evidence by default. Average bid, engineer estimate, and all-price-type review are available from the result-side project controls.
 - Prefer exact agency item-code matches.
 - Resolve official item descriptions and units from agency item-code records when possible.
 - Use approved alias or canonical item matches second.
@@ -83,8 +84,8 @@ The submitted `SearchQuery` shape did not change. The visible item search is lim
 
 ## Near-Term Extension Points
 
-- Replace demo CSVs with validated public CDOT source data.
-- Review CDOT cost-book staging rows and promote approved rows into app-loaded pricing data.
+- Review promoted CDOT cost-book rows with roadway engineers.
+- Add validation coverage for future CDOT cost-book quarters before promotion.
 - Add reviewed FHU data only through an approved private-data workflow.
 - Add estimate workspace rows after the item explorer is trusted.
 - Add CSV/XLSX import only after schema mapping rules are validated.

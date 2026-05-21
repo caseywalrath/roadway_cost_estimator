@@ -349,6 +349,7 @@ export function readQueryFromForm(form: HTMLFormElement, currentQuery?: SearchQu
     workType: currentQuery?.workType ?? DEFAULT_WORK_TYPE,
     estimateYear,
     sourceScope: currentQuery?.sourceScope ?? "both",
+    priceTypeScope: currentQuery?.priceTypeScope ?? "awarded",
     itemCode: String(formData.get("itemCode") || ""),
     description: String(formData.get("description") || ""),
     unit: String(formData.get("unit") || ""),
