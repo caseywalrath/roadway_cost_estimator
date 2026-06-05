@@ -109,41 +109,6 @@ select {
   font-size: 0.86rem;
 }
 
-.prototype-note {
-  border: 1px solid #e6d4a9;
-  background: #fff8e6;
-  color: #624514;
-  border-radius: 6px;
-  padding: 10px 12px;
-  margin-bottom: 18px;
-  font-size: 0.95rem;
-}
-
-.prototype-guide {
-  display: grid;
-  grid-template-columns: minmax(240px, 0.75fr) minmax(280px, 1fr);
-  gap: 14px;
-  align-items: center;
-  border: 1px solid #bdd4e7;
-  background: #f4f9fc;
-  color: #253749;
-  border-radius: 8px;
-  padding: 14px 16px;
-  margin-bottom: 18px;
-}
-
-.prototype-guide h2 {
-  margin: 0;
-  color: var(--heading);
-  font-size: 1.08rem;
-  line-height: 1.25;
-}
-
-.prototype-guide p {
-  margin: 0;
-}
-
-.inline-info-example,
 .info-tip {
   width: 18px;
   height: 18px;
@@ -498,6 +463,26 @@ input[readonly] {
   min-width: 0;
 }
 
+.evidence-intro {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(280px, 0.65fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.evidence-intro h2 {
+  margin: 0 0 8px;
+  color: var(--heading);
+  font-size: 1.28rem;
+  line-height: 1.2;
+}
+
+.evidence-counts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .decision-card {
   display: grid;
   grid-template-columns: minmax(240px, 1fr) minmax(360px, 1.35fr);
@@ -574,6 +559,7 @@ input[readonly] {
 }
 
 .panel-block {
+  min-width: 0;
   padding: 18px;
 }
 
@@ -581,20 +567,116 @@ input[readonly] {
   padding-bottom: 12px;
 }
 
-.project-filter-form {
+.evidence-table-heading {
+  align-items: start;
+}
+
+.evidence-filter-toolbar {
   display: grid;
-  grid-template-columns: minmax(160px, 1fr) minmax(130px, 0.65fr) minmax(130px, 0.65fr) auto;
-  gap: 12px;
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
   margin-top: 12px;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid #d6e1ea;
   border-radius: 6px;
   background: #f8fafc;
 }
 
-.project-filter-form .secondary-button {
+.filter-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border: 1px solid #c9d6e1;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #2a3a49;
+  padding: 4px 9px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.filter-toggle-button {
+  min-height: 32px;
+  padding: 4px 12px;
+}
+
+.evidence-filter-drawer {
+  margin-top: 8px;
+}
+
+.evidence-filter-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  align-items: end;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d6e1ea;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.evidence-filter-form .secondary-button {
   padding-inline: 14px;
+}
+
+.evidence-filter-form label {
+  gap: 4px;
+  font-size: 0.86rem;
+}
+
+.evidence-filter-form input,
+.evidence-filter-form select {
+  min-height: 36px;
+  padding-block: 6px;
+}
+
+.filter-range-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.filter-range-group legend {
+  grid-column: 1 / -1;
+  margin: 0 0 -2px;
+  padding: 0;
+  color: #263544;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.filter-range-group label span {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.checkbox-label {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-label input {
+  width: 18px;
+  min-height: 18px;
+}
+
+.checkbox-label span {
+  display: inline;
 }
 
 .distribution-grid {
@@ -604,8 +686,25 @@ input[readonly] {
   margin-top: 12px;
 }
 
+.evidence-stats-grid {
+  grid-template-columns: repeat(7, minmax(100px, 1fr));
+}
+
+.evidence-empty {
+  margin: 14px 0 0;
+}
+
+.row-subtext {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .table-scroll {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
   margin-top: 12px;
   border: 1px solid var(--line);
@@ -617,6 +716,10 @@ table {
   min-width: 1180px;
   border-collapse: collapse;
   background: #ffffff;
+}
+
+.evidence-table {
+  min-width: 1560px;
 }
 
 th,
@@ -681,8 +784,8 @@ tbody tr:last-child td {
   .app-header,
   .workspace-grid,
   .decision-card,
-  .guidance-grid,
-  .prototype-guide {
+  .evidence-intro,
+  .guidance-grid {
     grid-template-columns: 1fr;
   }
 
@@ -698,7 +801,7 @@ tbody tr:last-child td {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .project-filter-form {
+  .evidence-filter-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -710,7 +813,7 @@ tbody tr:last-child td {
 
   .field-grid,
   .item-result-button,
-  .project-filter-form,
+  .evidence-filter-form,
   .metric-grid,
   .distribution-grid {
     grid-template-columns: 1fr;

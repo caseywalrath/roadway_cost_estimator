@@ -4,9 +4,9 @@
 
 This document describes the intended end-user workflow for the Roadway Cost Comparable Explorer prototype.
 
-The prototype is a decision-support tool. It is not an automatic estimator, a chatbot, or a replacement for roadway engineering judgment.
+The prototype is a project evidence browser. It is not an automatic estimator, a chatbot, or a replacement for roadway engineering judgment.
 
-The near-term user is expected to be a project manager, planner, estimator, or roadway reviewer who needs to understand whether a roadway bid item has defensible historical cost support.
+The near-term user is expected to be a project manager, planner, estimator, or roadway reviewer who needs to gather and review historical project evidence for one roadway bid item.
 
 ## Current Prototype Workflow
 
@@ -32,7 +32,9 @@ The first screen should show:
 - prototype warning
 - prototype review guide
 - item search form
-- recommendation and evidence panels
+- project evidence browser
+- awarded bid summary panel
+- data notes when filters exclude relevant rows
 
 ## 2. Understand prototype scope
 
@@ -46,8 +48,8 @@ Current fixed scope:
 Why this matters:
 
 - State limits the source data to the correct agency and market. Colorado is the only active state in this prototype.
-- Work type defaults to roadway because this prototype is validating roadway item comparables first.
-- Region, estimate year, and work type are adjusted after matching from the comparable project area.
+- Work type defaults to roadway because this prototype is validating roadway item evidence first.
+- Evidence filters are adjusted after item selection from the project evidence area.
 
 Current prototype default:
 
@@ -55,13 +57,13 @@ Current prototype default:
 Colorado roadway public and demo data
 ```
 
-Comparable project context can be partial. Missing context should affect ranking or produce review guidance rather than blocking the item search.
+Project context can be partial. Missing context should leave fields blank or produce data notes rather than blocking the item search.
 
 ## 3. Enter one roadway bid item
 
 The user enters one item at a time in the item search panel.
 
-The current picker includes the full public CDOT 2026 item-code book for lookup. Comparable pricing records now include public CDOT 2026 Q1 Cost Data Book rows plus synthetic demo records.
+The current picker includes the full public CDOT 2026 item-code book for lookup. Project evidence records now include public CDOT 2026 Q1 Cost Data Book rows plus synthetic demo records.
 
 The left panel is organized into three numbered steps:
 
@@ -84,9 +86,9 @@ Preferred input order:
 3. Enter item code, suffix, official item description, or abbreviated item description to narrow the loaded item list.
 4. In Select Item, review the potential matching items and select the correct official item. This section remains empty until the user starts an item search.
 5. In Enter quantity, enter the planned item quantity.
-6. Click Search Projects.
+6. Click Search.
 
-If the item code is unknown, the user may enter a description without selecting an official item. This path is weaker than selecting an official CDOT item code and will not resolve a unit automatically.
+If the item code is unknown, the user may use description text to find an official item in the picker. The evidence table requires selecting an official item code.
 
 Best current example:
 
@@ -105,146 +107,104 @@ Why one item at a time:
 - It lets roadway reviewers inspect matching logic before estimate-upload workflows are added.
 - It avoids giving false confidence from unvalidated bulk parsing.
 
-## 4. Review the recommendation summary
+## 4. Review the project evidence table
 
-After searching, the user first reads the Recommendation Summary.
+After selecting an item and reviewing evidence, the user first reviews the project evidence table.
 
-The summary includes:
+The table includes one row per filtered project-item evidence record.
 
-- interpreted item
-- item code
-- unit
-- quantity
-- recommended range
-- suggested unit price
-- confidence
-- comparable record count
+Default evidence behavior:
+
+- exact selected item-code matches only
+- public CDOT cost-book rows only
+- same unit as the selected official item
+- rows with awarded bid prices
+- newest projects first
 
 How to use it:
 
-- Treat the range as cost evidence, not a final estimate.
-- Treat the suggested unit price as a starting point for review.
-- Treat confidence as a triage signal.
-- Use the info markers to understand what each value means.
+- Review project number, project/location, district, let date, contractor, bid count, quantity, unit, item description, price columns, and source.
+- Treat each row as evidence to inspect, not as an app-approved comparable.
+- Use the info markers to understand what each field means.
 
 Expected reviewer question:
 
 ```text
-Does this result give enough evidence to support, challenge, or revise the current unit price?
+Which project-item rows are useful evidence for this bid item?
 ```
 
-## 5. Review the price distribution
+## 5. Filter the evidence set
 
-The user checks the Price Distribution panel.
+The user reviews active filter chips above the evidence table. The full filter controls are inside the inline Filters drawer.
 
-Current distribution fields:
+Current evidence filters:
 
+- Source
+- Geography
+- District
+- Unit
+- Year from
+- Year to
+- Quantity min
+- Quantity max
+- Only rows with awarded bid price
+
+How to use it:
+
+- Click Filters to open or close the filter drawer.
+- Use filters to narrow the evidence set directly.
+- Filters remove rows from the table instead of changing a hidden relevance score.
+- Unit defaults to the official selected item unit.
+- Unit-mismatch rows are excluded by default and counted in data notes when present.
+- Click Apply filters to update the table. The drawer closes after filters are applied.
+
+## 6. Review the awarded bid summary
+
+The user checks the Awarded Bid Summary panel after reviewing table rows.
+
+Current summary fields:
+
+- Count
 - Low
 - P25
 - Median
+- Average
 - P75
 - High
 
 How to use it:
 
-- Low and High show the full spread of matched same-unit records.
-- P25 and P75 show the middle range of comparable evidence.
-- Median is the current prototype's suggested unit price.
+- Treat the statistics as a summary of the currently filtered awarded bid unit prices.
+- Do not treat the summary as a suggested unit price.
+- Refilter the evidence table when the summary appears to be driven by rows the engineer would not use.
 
 Reviewer interpretation:
 
-- A narrow range may indicate consistent historical pricing.
-- A wide range may indicate scope differences, market differences, sparse data, or outliers.
-- A result with too few records should be treated as weak support.
+- A narrow spread may indicate consistent historical pricing.
+- A wide spread may indicate scope differences, market differences, sparse data, or outliers.
+- A small count should trigger more evidence review.
 
-## 6. Review the comparable projects table
+## 7. Review data notes
 
-The user reviews the comparable project area after the item has been identified.
+Data notes may identify:
 
-Current project relevance controls:
-
-- County / region
-- Estimate year
-- Work type
-
-How to use the controls:
-
-1. Enter county or region when nearby projects should rank higher.
-2. Enter estimate year when recency should affect ranking.
-3. Keep work type as Roadway in the current prototype.
-4. Apply project controls and review whether the table order is more useful.
-
-The user then reviews the top-ranked comparable records.
-
-Current table columns:
-
-- Rank
-- Project
-- Region
-- Date
-- Item
-- Description
-- Quantity
-- Unit
-- Unit price
-- Why selected
-- Source
+- unit mismatch
+- no rows matching current filters
+- missing awarded bid prices
+- synthetic demo rows visible under the current source filter
 
 How to use it:
 
-1. Check whether the item code and description are truly comparable.
-2. Check whether the project names and regions make sense.
-3. Check whether the unit matches the searched item.
-4. Check whether the quantity is similar enough to be useful.
-5. Read the "Why selected" field to understand the matching logic.
-6. Use the source label and price type to understand where the record came from and whether it is awarded bid, average bid, or engineer estimate evidence.
+- Data notes should trigger review, not automatic rejection.
+- Data notes explain why the table may not contain the expected evidence rows.
 
 Expected roadway reviewer feedback:
 
 - "This item mapping is correct."
 - "This item mapping is too broad."
 - "This source should be excluded."
-- "This record is a valid comparable but needs an adjustment."
-- "Quantity should matter more or less for this item family."
-- "County should matter more or less for this item family."
-
-## 7. Review warnings
-
-The user reviews the Warnings panel before using the output.
-
-Warnings may identify:
-
-- sparse comparable data
-- unit mismatch
-- weak support
-- missing project relevance context
-- excluded candidate records
-
-How to use it:
-
-- Warnings should trigger review, not automatic rejection.
-- Warnings explain why the tool may not be ready to support a strong recommendation.
-- Warnings should become discussion points with roadway engineers.
-
-## 8. Review improve-confidence actions
-
-The user reviews the Improve Confidence panel.
-
-These actions explain what would make the result more defensible.
-
-Examples:
-
-- Confirm the CDOT item code.
-- Use project relevance controls if geography should influence ranking.
-- Add a quantity.
-- Provide a comparable Colorado roadway estimate or bid tab.
-- Confirm unit compatibility.
-- Ask a roadway reviewer to approve or reject the item mapping.
-
-How to use it:
-
-- Treat this panel as a practical data collection checklist.
-- Use it to decide what source documents or engineering feedback are needed next.
+- "This record is useful evidence but needs an adjustment."
+- "This row should be excluded in a later manual review set."
 
 ## Roadway Engineer Review Workflow
 
@@ -253,14 +213,14 @@ For early feedback sessions, the project manager should use the prototype as a s
 Recommended meeting flow:
 
 1. Open the app.
-2. Explain that all current records are synthetic demo data.
+2. Explain that the default evidence source is public CDOT cost-book data and that optional demo rows are synthetic.
 3. Pick one familiar roadway item.
-4. Use the left-panel steps to find an item, select the matching item, enter quantity, and search projects.
-5. Review the recommendation summary.
-6. Adjust comparable project controls for region and year when relevant.
-7. Review the comparable project table.
-8. Ask whether the match reasons are technically reasonable.
-9. Ask which fields should matter more or less.
+4. Use the left-panel steps to find an item, select the official item, enter quantity, and review evidence.
+5. Review the project evidence table.
+6. Apply source, geography, district, year, unit, and quantity filters when relevant.
+7. Review the awarded bid summary after reviewing rows.
+8. Ask which rows are useful evidence and which rows should be excluded later.
+9. Ask which filters or fields are missing.
 10. Ask what source data should be added first.
 11. Record feedback as implementation notes for the coding agent.
 
@@ -268,11 +228,11 @@ Key questions for roadway engineers:
 
 - Which item families should be tested first?
 - Which CDOT item codes are good early validation targets?
-- Which records should be considered comparable?
+- Which records should be considered useful evidence?
 - Which records should be excluded?
 - Which units should never be compared without conversion?
 - Which source data is trusted?
-- Which source data is useful but lower confidence?
+- Which source data is useful but lower trust?
 - What should the tool say when data is weak?
 
 ## Intended Later Workflow
@@ -283,10 +243,10 @@ The intended later workflow is:
 
 1. User creates or opens an estimate workspace.
 2. User enters or imports multiple estimate line items.
-3. App runs comparable matching for each line.
-4. App flags weak, high, low, or unit-mismatch items.
+3. App gathers exact-code evidence for each line.
+4. App flags missing evidence, unit-mismatch rows, or sparse awarded-bid rows.
 5. User reviews one item at a time.
-6. User selects or rejects comparable records.
+6. User selects or rejects evidence records.
 7. User records override notes.
 8. User exports an estimate support table or basis-of-estimate notes.
 
@@ -327,7 +287,7 @@ Possible private-data workflows:
 The current prototype is successful if a reviewer can answer:
 
 ```text
-For this roadway bid item, what comparable records support the unit price, how strong is the evidence, and what should I check next?
+For this roadway bid item, which project records contain useful evidence, what do the awarded bid prices show, and what rows should I review or exclude?
 ```
 
 The prototype is not expected to:

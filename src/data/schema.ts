@@ -2,6 +2,8 @@ export type SourceScope = "both" | "public" | "internal";
 
 export type PriceTypeScope = "awarded" | "average" | "engineer" | "all";
 
+export type EvidenceSourceTypeFilter = "public_cost_book" | "public_demo" | "internal_demo" | "all";
+
 export type MatchType = "exact_code" | "canonical_alias" | "keyword_fallback";
 
 export type ConfidenceLevel = "High" | "Medium" | "Low" | "Not supportable";
@@ -146,6 +148,56 @@ export interface PriceSummary {
   p75: number;
   high: number;
   suggested: number;
+}
+
+export interface EvidenceFilters {
+  sourceType: EvidenceSourceTypeFilter;
+  geography: string;
+  district: string;
+  yearMin: number | null;
+  yearMax: number | null;
+  quantityMin: number | null;
+  quantityMax: number | null;
+  unit: string;
+  requireAwardedPrice: boolean;
+}
+
+export interface EvidenceRow {
+  rowId: string;
+  project: ProjectRecord | null;
+  source: SourceRecord | null;
+  itemCode: string;
+  descriptionRaw: string;
+  unit: string;
+  quantity: number;
+  dateBasis: string;
+  awardedBidUnitPrice: number | null;
+  averageBidUnitPrice: number | null;
+  engineerEstimateUnitPrice: number | null;
+  observationIds: string[];
+}
+
+export interface EvidenceStats {
+  count: number;
+  low: number;
+  p25: number;
+  median: number;
+  average: number;
+  p75: number;
+  high: number;
+}
+
+export interface EvidenceResult {
+  query: SearchQuery;
+  filters: EvidenceFilters;
+  interpretedDescription: string;
+  allExactRows: EvidenceRow[];
+  filteredRows: EvidenceRow[];
+  unitExcludedCount: number;
+  availableUnits: string[];
+  availableDistricts: string[];
+  stats: EvidenceStats | null;
+  notes: string[];
 }
 
 export interface MatchResult {

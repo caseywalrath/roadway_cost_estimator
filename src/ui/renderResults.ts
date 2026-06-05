@@ -1,86 +1,244 @@
-import type { ComparableMatch, MatchResult, PriceSummary, SearchQuery } from "../data/schema";
+import type {
+  EvidenceFilters,
+  EvidenceResult,
+  EvidenceRow,
+  EvidenceSourceTypeFilter,
+  EvidenceStats
+} from "../data/schema";
 import { helpTip } from "./helpTip";
 
-export function renderResults(result: MatchResult): string {
+export function renderResults(result: EvidenceResult, filtersExpanded: boolean): string {
   return `
     <section class="results-panel">
-      ${renderRecommendation(result)}
-      ${renderDistribution(result.priceSummary)}
-      ${renderComparableProjects(result)}
-      ${renderWarnings(result)}
+      ${renderEvidenceIntro(result)}
+      ${renderEvidenceTable(result, filtersExpanded)}
+      ${renderAwardedBidSummary(result.stats)}
+      ${renderDataNotes(result.notes)}
     </section>
   `;
 }
 
-function renderRecommendation(result: MatchResult): string {
-  const priceSummary = result.priceSummary;
-  const range = priceSummary
-    ? `${formatCurrency(priceSummary.low)}-${formatCurrency(priceSummary.high)} / ${priceSummary.unit}`
-    : "Not supportable";
-  const suggested = priceSummary
-    ? `${formatCurrency(priceSummary.suggested)} / ${priceSummary.unit}`
-    : "No suggested price";
-
+function renderEvidenceIntro(result: EvidenceResult): string {
   return `
-    <section class="decision-card">
+    <section class="evidence-intro panel-block">
       <div>
-        <p class="eyebrow">Item I am looking for</p>
+        <p class="eyebrow">Project Evidence Browser</p>
         <h2>
           ${escapeHtml(result.interpretedDescription)}
-          ${helpTip("About interpreted item", "The item name the tool thinks it is evaluating. It comes from the agency item table when an item code is recognized, otherwise from canonical aliases or the entered description.")}
+          ${helpTip("About project evidence", "The app lists exact item-code project evidence and leaves filtering and interpretation to the engineer. It does not choose a suggested unit price.")}
         </h2>
         <p class="query-line">
-          Item code: ${escapeHtml(result.query.itemCode || "Not entered")} |
-          Unit: ${escapeHtml(result.query.unit || "Not entered")} |
+          Item code: ${escapeHtml(result.query.itemCode || "Not selected")} |
+          Unit: ${escapeHtml(result.query.unit || "Not selected")} |
           Quantity: ${result.query.quantity ? formatNumber(result.query.quantity) : "Not entered"}
         </p>
       </div>
-      <div class="metric-grid">
+      <div class="evidence-counts" aria-label="Evidence counts">
         <div class="metric">
-          <span class="label-row">
-            Recommended range
-            ${helpTip("About recommended range", "Low to high unit prices from same-unit comparable records. This is evidence context, not an automatic estimate. Source: matched item observations in the CSV data package.")}
-          </span>
-          <strong>${range}</strong>
+          <span>Exact-code evidence rows</span>
+          <strong>${result.allExactRows.length}</strong>
         </div>
         <div class="metric">
-          <span class="label-row">
-            Suggested unit price
-            ${helpTip("About suggested unit price", "Prototype suggestion based on the median of same-unit comparable records. It is chosen because median is simple, visible, and less sensitive to extreme values than an average.")}
-          </span>
-          <strong>${suggested}</strong>
-        </div>
-        <div class="metric">
-          <span class="label-row">
-            Confidence
-            ${helpTip("About confidence", "A plain-language rating from deterministic rules. High requires enough same-unit, recent, strong matches. Low or Not supportable means the app should explain what data is missing instead of guessing.")}
-          </span>
-          <strong class="${confidenceClass(result.confidence)}">${result.confidence}</strong>
-        </div>
-        <div class="metric">
-          <span class="label-row">
-            Comparable records
-            ${helpTip("About comparable records", "Number of same-unit records used in the price summary. A small count does not make the record useless, but it should trigger more review.")}
-          </span>
-          <strong>${result.priceSummary?.count ?? 0}</strong>
+          <span>Rows after filters</span>
+          <strong>${result.filteredRows.length}</strong>
         </div>
       </div>
     </section>
   `;
 }
 
-function renderDistribution(priceSummary: PriceSummary | null): string {
-  if (!priceSummary) {
+function renderEvidenceTable(result: EvidenceResult, filtersExpanded: boolean): string {
+  if (!result.query.itemCode) {
     return `
       <section class="panel-block">
         <div class="panel-heading">
-          <p class="eyebrow">Price Distribution</p>
+          <p class="eyebrow">Matching Projects</p>
+          <h3>Select an official item</h3>
+        </div>
+        <p class="muted">Use Item Book Search to select a loaded CDOT item code before reviewing project evidence.</p>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="panel-block panel-block--table">
+      <div class="panel-heading evidence-table-heading">
+        <div>
+          <p class="eyebrow">Matching Projects</p>
           <h3>
-            No same-unit price range available
-            ${helpTip("About missing price distribution", "The app found no compatible same-unit prices. The likely causes are a unit mismatch, missing source data, or an item description that does not map to the demo catalog.")}
+            ${result.filteredRows.length} filtered project-item row${result.filteredRows.length === 1 ? "" : "s"}
+            ${helpTip("About matching projects", "Rows are exact item-code matches grouped by project, source, item description, unit, quantity, and date. Default results use public CDOT cost-book rows with the same unit as the selected item.")}
           </h3>
         </div>
-        <p class="muted">Enter a compatible unit or provide more source data before using a price recommendation.</p>
+      </div>
+      ${renderEvidenceControls(result, filtersExpanded)}
+      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows)}
+    </section>
+  `;
+}
+
+function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean): string {
+  const unitOptions = uniqueValues([result.filters.unit, ...result.availableUnits].filter(Boolean));
+
+  return `
+    <div class="evidence-filter-toolbar">
+      <div class="filter-chip-list" aria-label="Active evidence filters">
+        ${renderFilterChips(result)}
+      </div>
+      <button
+        type="button"
+        id="toggle-evidence-filters"
+        class="secondary-button filter-toggle-button"
+        aria-expanded="${filtersExpanded}"
+        aria-controls="evidence-filter-drawer"
+      >
+        ${filtersExpanded ? "Hide filters" : "Filters"}
+      </button>
+    </div>
+    <div id="evidence-filter-drawer" class="evidence-filter-drawer" ${filtersExpanded ? "" : "hidden"}>
+      <form id="evidence-filters-form" class="evidence-filter-form">
+        <label>
+          <span class="label-row">
+            Source
+            ${helpTip("About source filter", "Public CDOT cost-book rows are the default evidence source. Demo rows can be included for prototype review only.")}
+          </span>
+          <select name="sourceType">
+            ${renderSourceTypeOption("public_cost_book", "Public CDOT cost book", result.filters.sourceType)}
+            ${renderSourceTypeOption("all", "All loaded sources", result.filters.sourceType)}
+            ${renderSourceTypeOption("public_demo", "Public demo rows", result.filters.sourceType)}
+            ${renderSourceTypeOption("internal_demo", "Internal demo rows", result.filters.sourceType)}
+          </select>
+        </label>
+
+        <label>
+          <span class="label-row">
+            Geography
+            ${helpTip("About geography filter", "Text filter against project location, project name, and county or region fields. It filters rows directly instead of changing a relevance score.")}
+          </span>
+          <input name="geography" value="${escapeHtml(result.filters.geography)}" placeholder="District, county, or location" />
+        </label>
+
+        <label>
+          <span class="label-row">
+            District
+            ${helpTip("About district filter", "CDOT district parsed from project metadata when available. Demo rows may not include a district.")}
+          </span>
+          <select name="district">
+            <option value="">All districts</option>
+            ${renderDistrictOptions(result.availableDistricts, result.filters.district)}
+          </select>
+        </label>
+
+        <label>
+          <span class="label-row">
+            Unit
+            ${helpTip("About unit filter", "Defaults to the selected official item unit. Other exact-code units are excluded unless the unit filter is changed.")}
+          </span>
+          <select name="unit">
+            <option value="">All units</option>
+            ${unitOptions
+              .map((unit) => `<option value="${escapeHtml(unit)}" ${unit === result.filters.unit ? "selected" : ""}>${escapeHtml(unit)}</option>`)
+              .join("")}
+          </select>
+        </label>
+
+        <fieldset class="filter-range-group">
+          <legend>Year range</legend>
+          <label>
+            <span>From</span>
+            <input name="yearMin" type="number" min="1900" max="2100" value="${result.filters.yearMin ?? ""}" />
+          </label>
+          <label>
+            <span>To</span>
+            <input name="yearMax" type="number" min="1900" max="2100" value="${result.filters.yearMax ?? ""}" />
+          </label>
+        </fieldset>
+
+        <fieldset class="filter-range-group">
+          <legend>Quantity range</legend>
+          <label>
+            <span>Min</span>
+            <input name="quantityMin" type="number" min="0" step="0.01" value="${result.filters.quantityMin ?? ""}" />
+          </label>
+          <label>
+            <span>Max</span>
+            <input name="quantityMax" type="number" min="0" step="0.01" value="${result.filters.quantityMax ?? ""}" />
+          </label>
+        </fieldset>
+
+        <label class="checkbox-label">
+          <input name="requireAwardedPrice" type="checkbox" ${result.filters.requireAwardedPrice ? "checked" : ""} />
+          <span>Only rows with awarded bid price</span>
+        </label>
+
+        <button type="submit" class="secondary-button">Apply filters</button>
+      </form>
+    </div>
+  `;
+}
+
+function renderTable(rows: EvidenceRow[]): string {
+  return `
+    <div class="table-scroll">
+      <table class="evidence-table">
+        <thead>
+          <tr>
+            <th>Project no. ${helpTip("About project number", "Public CDOT project number when available. Demo records may not have a project number.")}</th>
+            <th>Project / location ${helpTip("About project location", "Project location or name from project metadata.")}
+            </th>
+            <th>District ${helpTip("About district", "CDOT district parsed from public cost-book project pages when available.")}</th>
+            <th>Let date ${helpTip("About let date", "Project letting or estimate date from source metadata.")}</th>
+            <th>Contractor ${helpTip("About contractor", "Awarded contractor when available from the public cost book.")}</th>
+            <th>Bid count ${helpTip("About bid count", "Number of bids listed for the project when parsed from the cost book.")}</th>
+            <th>Quantity ${helpTip("About quantity", "Quantity for this item on the historical project row.")}</th>
+            <th>Unit ${helpTip("About unit", "Historical item unit. Default results show the same unit as the selected item.")}</th>
+            <th>Item description ${helpTip("About item description", "Raw source description for the matching item code.")}</th>
+            <th>Awarded bid unit price ${helpTip("About awarded bid unit price", "Awarded bid evidence. Summary statistics use this column only.")}</th>
+            <th>Average bid unit price ${helpTip("About average bid unit price", "Average bid evidence when available. It is shown for review but not included in the phase 1 summary statistics.")}</th>
+            <th>Engineer estimate unit price ${helpTip("About engineer estimate unit price", "Engineer estimate evidence when available. It is shown separately from bid evidence.")}</th>
+            <th>Source ${helpTip("About source", "Source label for provenance. Review source type before using any value for estimating support.")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(renderEvidenceRow).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderEvidenceRow(row: EvidenceRow): string {
+  return `
+    <tr>
+      <td>${escapeHtml(row.project?.projectNumber || "Not listed")}</td>
+      <td>
+        ${escapeHtml(row.project?.projectName ?? "Unknown project")}
+        ${row.project?.countyRegion ? `<div class="row-subtext">${escapeHtml(row.project.countyRegion)}</div>` : ""}
+      </td>
+      <td>${escapeHtml(row.project?.district || "Not listed")}</td>
+      <td>${escapeHtml(row.project?.estimateLetDate || row.dateBasis)}</td>
+      <td>${escapeHtml(row.project?.contractor || "Not listed")}</td>
+      <td>${row.project?.bidCount ?? "Not listed"}</td>
+      <td>${formatNumber(row.quantity)}</td>
+      <td>${escapeHtml(row.unit)}</td>
+      <td>${escapeHtml(row.descriptionRaw)}</td>
+      <td>${formatNullableCurrency(row.awardedBidUnitPrice)}</td>
+      <td>${formatNullableCurrency(row.averageBidUnitPrice)}</td>
+      <td>${formatNullableCurrency(row.engineerEstimateUnitPrice)}</td>
+      <td>${escapeHtml(row.source?.sourceLabel ?? "Unknown source")}</td>
+    </tr>
+  `;
+}
+
+function renderAwardedBidSummary(stats: EvidenceStats | null): string {
+  if (!stats) {
+    return `
+      <section class="panel-block">
+        <div class="panel-heading">
+          <p class="eyebrow">Awarded Bid Summary</p>
+          <h3>No awarded bid statistics available</h3>
+        </div>
+        <p class="muted">The current evidence rows do not include awarded bid unit prices.</p>
       </section>
     `;
   }
@@ -88,243 +246,157 @@ function renderDistribution(priceSummary: PriceSummary | null): string {
   return `
     <section class="panel-block">
       <div class="panel-heading">
-        <p class="eyebrow">Price Distribution</p>
+        <p class="eyebrow">Awarded Bid Summary</p>
         <h3>
-          Same-unit comparable prices
-          ${helpTip("About price distribution", "Shows the spread of matched unit prices. Percentiles are included so reviewers can see whether the suggestion sits inside a broader evidence range.")}
+          Statistics for currently filtered awarded bid prices
+          ${helpTip("About awarded bid summary", "These statistics summarize the awarded bid unit price column for the rows currently visible in the table. They are not a suggested price.")}
         </h3>
       </div>
-      <div class="distribution-grid">
-        ${renderDistributionMetric("Low", priceSummary.low, priceSummary.unit)}
-        ${renderDistributionMetric("P25", priceSummary.p25, priceSummary.unit)}
-        ${renderDistributionMetric("Median", priceSummary.median, priceSummary.unit)}
-        ${renderDistributionMetric("P75", priceSummary.p75, priceSummary.unit)}
-        ${renderDistributionMetric("High", priceSummary.high, priceSummary.unit)}
+      <div class="distribution-grid evidence-stats-grid">
+        ${renderStatMetric("Count", stats.count, false)}
+        ${renderStatMetric("Low", stats.low, true)}
+        ${renderStatMetric("P25", stats.p25, true)}
+        ${renderStatMetric("Median", stats.median, true)}
+        ${renderStatMetric("Average", stats.average, true)}
+        ${renderStatMetric("P75", stats.p75, true)}
+        ${renderStatMetric("High", stats.high, true)}
       </div>
     </section>
   `;
 }
 
-function renderDistributionMetric(label: string, value: number, unit: string): string {
+function renderStatMetric(label: string, value: number, currency: boolean): string {
   return `
     <div class="distribution-metric">
-      <span class="label-row">
-        ${label}
-        ${helpTip(`About ${label}`, distributionHelp(label))}
-      </span>
-      <strong>${formatCurrency(value)}</strong>
-      <small>/${escapeHtml(unit)}</small>
+      <span>${escapeHtml(label)}</span>
+      <strong>${currency ? formatCurrency(value) : formatNumber(value)}</strong>
     </div>
   `;
 }
 
-function renderComparableProjects(result: MatchResult): string {
-  const matches = result.comparableMatches;
-
-  if (matches.length === 0) {
-    return `
-      <section class="panel-block">
-        <div class="panel-heading">
-          <p class="eyebrow">Projects this item appears in</p>
-          <h3>
-            No comparable records found
-            ${helpTip("About no comparable records", "No candidate in the demo data met the state and item matching rules. In real review this is a cue to provide more source data or ask a roadway reviewer to approve a mapping.")}
-          </h3>
-        </div>
-        ${renderProjectRelevanceControls(result.query)}
-        <p class="muted">The demo dataset does not contain a same-state candidate for this search.</p>
-      </section>
-    `;
+function renderDataNotes(notes: string[]): string {
+  if (notes.length === 0) {
+    return "";
   }
 
   return `
-    <section class="panel-block panel-block--table">
+    <section class="panel-block">
       <div class="panel-heading">
-        <p class="eyebrow">Projects this item appears in</p>
-        <h3>
-          Top ${matches.length} ranked records
-          ${helpTip("About ranked records", "The table shows the strongest historical item observations found by the scoring rules. It is intended to support reviewer judgment, not replace it.")}
-        </h3>
+        <p class="eyebrow">Data Notes</p>
+        <h3>Review before use</h3>
       </div>
-      ${renderProjectRelevanceControls(result.query)}
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Rank ${helpTip("About rank", "Order after scoring. Higher-ranked records better match item code, unit, quantity, recency, geography, and work type.")}</th>
-              <th>Project ${helpTip("About project", "Comparable project name. Source: project metadata table loaded from the CSV data package.")}</th>
-              <th>Project no. ${helpTip("About project number", "Public CDOT project number when available. Demo records may not have a project number.")}</th>
-              <th>Region ${helpTip("About region", "County or market area for the historical record. Used to favor geographically relevant examples.")}</th>
-              <th>Date ${helpTip("About date", "Estimate or let date for the record. Recent projects receive more score because pricing conditions change over time.")}</th>
-              <th>Item ${helpTip("About item", "Agency item code on the historical record. Exact item-code matches are ranked above alias or keyword matches.")}</th>
-              <th>Description ${helpTip("About comparable description", "Raw item description from the historical source row. Kept visible so engineers can check whether the match is truly similar.")}</th>
-              <th>Qty ${helpTip("About comparable quantity", "Historical quantity. Similar quantity bands are ranked higher because very small or very large work quantities may price differently.")}</th>
-              <th>Unit ${helpTip("About comparable unit", "Historical unit. Same-unit records are required for the price summary.")}</th>
-              <th>Unit price ${helpTip("About comparable unit price", "Historical unit cost from the source record. Public CDOT cost-book rows can represent awarded bid, average bid, or engineer estimate evidence.")}</th>
-              <th>Price type ${helpTip("About price type", "Distinguishes awarded bid, average bid, and engineer estimate evidence so the app does not silently mix different price concepts.")}</th>
-              <th>Why selected ${helpTip("About why selected", "Human-readable reasons generated from scoring rules. These should help roadway engineers agree, reject, or tune the match logic.")}</th>
-              <th>Source ${helpTip("About source", "Source label for provenance. Real implementation should distinguish public CDOT data, FHU estimates, bid tabs, and post-award data.")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${matches.map(renderComparableRow).join("")}
-          </tbody>
-        </table>
-      </div>
+      <ul class="guidance-list">
+        ${notes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}
+      </ul>
     </section>
   `;
 }
 
-function renderProjectRelevanceControls(query: SearchQuery): string {
-  return `
-    <form id="project-filters-form" class="project-filter-form">
-      <label>
-        <span class="label-row">
-          County / region
-          ${helpTip("About project region control", "Geographic context for ranking comparable projects. It is not part of item identification.")}
-        </span>
-        <input name="countyRegion" value="${escapeHtml(query.countyRegion)}" placeholder="Douglas" />
-      </label>
-      <label>
-        <span class="label-row">
-          Estimate year
-          ${helpTip("About project year control", "Target estimate year for ranking comparable project recency. This prototype does not apply automatic cost escalation.")}
-        </span>
-        <input name="estimateYear" type="number" min="1990" max="2100" value="${query.estimateYear}" />
-      </label>
-      <label>
-        <span class="label-row">
-          Price type
-          ${helpTip("About price type control", "Awarded bid is the default evidence set. Average bid and engineer estimate can be reviewed separately but are not mixed into the default recommendation.")}
-        </span>
-        <select name="priceTypeScope">
-          <option value="awarded" ${query.priceTypeScope === "awarded" ? "selected" : ""}>Awarded bid evidence</option>
-          <option value="average" ${query.priceTypeScope === "average" ? "selected" : ""}>Average bid evidence</option>
-          <option value="engineer" ${query.priceTypeScope === "engineer" ? "selected" : ""}>Engineer estimate evidence</option>
-          <option value="all" ${query.priceTypeScope === "all" ? "selected" : ""}>All price types</option>
-        </select>
-      </label>
-      <label>
-        <span class="label-row">
-          Work type
-          ${helpTip("About project work type control", "Discipline or project type used to rank comparable projects after the item has been identified.")}
-        </span>
-        <select name="workType">
-          <option value="Roadway" ${query.workType === "Roadway" ? "selected" : ""}>Roadway</option>
-        </select>
-      </label>
-      <button type="submit" class="secondary-button">Apply project controls</button>
-    </form>
-  `;
+function renderEmptyTableMessage(): string {
+  return `<p class="muted evidence-empty">No project-item rows match the current filters.</p>`;
 }
 
-export function readProjectFiltersFromForm(
+function renderFilterChips(result: EvidenceResult): string {
+  const chips = [
+    `Rows: ${formatNumber(result.filteredRows.length)}`,
+    `Source: ${sourceTypeLabel(result.filters.sourceType)}`,
+    result.filters.geography ? `Geography: ${result.filters.geography}` : "",
+    result.filters.district ? `District: ${result.filters.district}` : "",
+    result.filters.unit ? `Unit: ${result.filters.unit}` : "",
+    result.filters.yearMin !== null || result.filters.yearMax !== null
+      ? `Year: ${rangeLabel(result.filters.yearMin, result.filters.yearMax)}`
+      : "",
+    result.filters.quantityMin !== null || result.filters.quantityMax !== null
+      ? `Quantity: ${rangeLabel(result.filters.quantityMin, result.filters.quantityMax)}`
+      : "",
+    result.filters.requireAwardedPrice ? "Awarded price required" : ""
+  ].filter(Boolean);
+
+  return chips
+    .map((chip) => `<span class="filter-chip">${escapeHtml(chip)}</span>`)
+    .join("");
+}
+
+function renderSourceTypeOption(
+  value: EvidenceSourceTypeFilter,
+  label: string,
+  selectedValue: EvidenceSourceTypeFilter
+): string {
+  return `<option value="${value}" ${value === selectedValue ? "selected" : ""}>${escapeHtml(label)}</option>`;
+}
+
+function sourceTypeLabel(value: EvidenceSourceTypeFilter): string {
+  const labels: Record<EvidenceSourceTypeFilter, string> = {
+    public_cost_book: "Public CDOT cost book",
+    all: "All loaded sources",
+    public_demo: "Public demo rows",
+    internal_demo: "Internal demo rows"
+  };
+
+  return labels[value];
+}
+
+function rangeLabel(minimum: number | null, maximum: number | null): string {
+  if (minimum !== null && maximum !== null) {
+    return `${formatNumber(minimum)}-${formatNumber(maximum)}`;
+  }
+
+  if (minimum !== null) {
+    return `${formatNumber(minimum)}+`;
+  }
+
+  if (maximum !== null) {
+    return `<= ${formatNumber(maximum)}`;
+  }
+
+  return "Any";
+}
+
+function renderDistrictOptions(districts: string[], selectedDistrict: string): string {
+  const options = uniqueValues([selectedDistrict, ...districts].filter(Boolean));
+
+  return options
+    .map((district) => `<option value="${escapeHtml(district)}" ${district === selectedDistrict ? "selected" : ""}>${escapeHtml(district)}</option>`)
+    .join("");
+}
+
+export function readEvidenceFiltersFromForm(
   form: HTMLFormElement,
-  currentQuery: SearchQuery
-): SearchQuery {
+  currentFilters: EvidenceFilters
+): EvidenceFilters {
   const formData = new FormData(form);
-  const estimateYear = Number(formData.get("estimateYear") || currentQuery.estimateYear);
 
   return {
-    ...currentQuery,
-    countyRegion: String(formData.get("countyRegion") || ""),
-    workType: String(formData.get("workType") || "Roadway"),
-    priceTypeScope: String(formData.get("priceTypeScope") || "awarded") as SearchQuery["priceTypeScope"],
-    estimateYear: Number.isFinite(estimateYear) ? estimateYear : currentQuery.estimateYear
+    ...currentFilters,
+    sourceType: String(formData.get("sourceType") || "public_cost_book") as EvidenceSourceTypeFilter,
+    geography: String(formData.get("geography") || ""),
+    district: String(formData.get("district") || ""),
+    yearMin: readOptionalNumber(formData.get("yearMin")),
+    yearMax: readOptionalNumber(formData.get("yearMax")),
+    quantityMin: readOptionalNumber(formData.get("quantityMin")),
+    quantityMax: readOptionalNumber(formData.get("quantityMax")),
+    unit: String(formData.get("unit") || ""),
+    requireAwardedPrice: formData.get("requireAwardedPrice") === "on"
   };
 }
 
-function renderComparableRow(match: ComparableMatch, index: number): string {
-  const reasons = match.reasons
-    .filter((reason) => reason.points > 0)
-    .slice(0, 5)
-    .map((reason) => reason.label)
-    .join("; ");
+function readOptionalNumber(value: FormDataEntryValue | null): number | null {
+  const text = String(value || "").trim();
 
-  return `
-    <tr>
-      <td>${index + 1}</td>
-      <td>${escapeHtml(match.project?.projectName ?? "Unknown project")}</td>
-      <td>${escapeHtml(match.project?.projectNumber || "Not listed")}</td>
-      <td>${escapeHtml(match.project?.countyRegion ?? "Unknown")}</td>
-      <td>${escapeHtml(match.project?.estimateLetDate ?? match.observation.dateBasis)}</td>
-      <td>${escapeHtml(match.observation.agencyItemCode)}</td>
-      <td>${escapeHtml(match.observation.descriptionRaw)}</td>
-      <td>${formatNumber(match.observation.quantity)}</td>
-      <td>${escapeHtml(match.observation.unitNormalized)}</td>
-      <td>${formatCurrency(match.observation.unitPrice)}</td>
-      <td>${escapeHtml(formatPriceType(match.observation.priceType))}</td>
-      <td>${escapeHtml(reasons)}</td>
-      <td>${escapeHtml(match.source?.sourceLabel ?? "Unknown source")}</td>
-    </tr>
-  `;
-}
-
-function renderWarnings(result: MatchResult): string {
-  return `
-    <section class="guidance-grid">
-      <div class="panel-block">
-        <div class="panel-heading">
-          <p class="eyebrow">Warnings</p>
-          <h3>
-            Review before use
-            ${helpTip("About warnings", "Warnings identify reasons not to over-trust the output, such as sparse data, unit mismatch, or weak support. They are written for reviewer triage.")}
-          </h3>
-        </div>
-        ${renderList(result.warnings)}
-      </div>
-      <div class="panel-block">
-        <div class="panel-heading">
-          <p class="eyebrow">Improve Confidence</p>
-          <h3>
-            Next data or review steps
-            ${helpTip("About improve confidence", "Specific actions that would make the result more defensible, such as confirming the item code, adding a comparable bid tab, or asking an engineer to approve a mapping.")}
-          </h3>
-        </div>
-        ${renderList(result.improveActions)}
-      </div>
-    </section>
-  `;
-}
-
-function renderList(items: string[]): string {
-  if (items.length === 0) {
-    return `<p class="muted">No issues identified in this demo search.</p>`;
+  if (!text) {
+    return null;
   }
 
-  return `
-    <ul class="guidance-list">
-      ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
-    </ul>
-  `;
+  const numberValue = Number(text);
+  return Number.isFinite(numberValue) ? numberValue : null;
 }
 
-function confidenceClass(confidence: string): string {
-  return `confidence confidence--${confidence.toLowerCase().replace(/\s+/g, "-")}`;
+function uniqueValues(values: string[]): string[] {
+  return [...new Set(values)];
 }
 
-function formatPriceType(priceType: string): string {
-  const labels: Record<string, string> = {
-    bid_tab_demo: "Bid tab demo",
-    engineers_estimate: "Engineer estimate demo",
-    cdot_awarded_bid: "CDOT awarded bid",
-    cdot_average_bid: "CDOT average bid",
-    cdot_engineer_estimate: "CDOT engineer estimate"
-  };
-
-  return labels[priceType] ?? priceType;
-}
-
-function distributionHelp(label: string): string {
-  const descriptions: Record<string, string> = {
-    Low: "Lowest same-unit price in the matched comparable records. It may be an outlier and should not be used alone.",
-    P25: "25th percentile. About one quarter of matched records are at or below this value.",
-    Median: "Middle value of the matched records. The prototype uses this as the suggested unit price.",
-    P75: "75th percentile. About three quarters of matched records are at or below this value.",
-    High: "Highest same-unit price in the matched comparable records. It may reflect unusual scope, market conditions, or an outlier."
-  };
-
-  return descriptions[label] ?? "Price distribution marker from the matched comparable records.";
+function formatNullableCurrency(value: number | null): string {
+  return value === null ? "Not listed" : formatCurrency(value);
 }
 
 function formatCurrency(value: number): string {

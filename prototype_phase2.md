@@ -4,12 +4,14 @@
 
 This document consolidates the current roadmap, product notes, and roadway engineer feedback into a practical next-phase plan.
 
-Phase 2 should improve the current one-item comparable workflow. It should not become a full estimator, spreadsheet importer, chatbot, or private-data system yet.
+Phase 2 should improve the current one-item evidence workflow. It should not become a full estimator, spreadsheet importer, chatbot, or private-data system yet.
+
+The active Phase 2 product direction is now documented in `evidence_browser_pivot.md`. That document supersedes the older recommendation-centered increment sequence when planning new UI work.
 
 Primary goal:
 
 ```text
-Make the item lookup workflow clear, controlled, and defensible enough that roadway engineers can validate whether the comparable-selection logic is useful.
+Make the item lookup and project evidence workflow clear, controlled, and defensible enough that roadway engineers can review all exact item-code evidence before deciding how to use it.
 ```
 
 ## Source Inputs Reviewed
@@ -30,23 +32,26 @@ The current prototype is a static GitHub Pages-ready Vite and TypeScript app.
 Current strengths:
 
 - One-item roadway bid item lookup exists.
-- Exact agency item-code matches are already scored above description matches.
+- Exact agency item-code matches are the default evidence path.
 - The item-code entry path now uses a CDOT division, section/prefix, and item-result funnel instead of a single long dropdown.
 - The item picker now has the full public CDOT 2026 item-code book for lookup, with 4,771 valid item-code rows across 100 loaded prefixes.
 - The CDOT 2026 Q1 Cost Data Book parser produced 2,042 item-level staging rows across 688 unique item codes and 26 project/location strings; `304-06007` was spot-checked with 13 rows.
 - The Cost Data Book promotion path now separates awarded bid, average bid, and engineer estimate values into separate observation types.
-- Same-unit records are required for price recommendations.
-- The UI already shows recommendation, price distribution, comparable records, warnings, and improve-confidence actions.
+- Same-unit rows are shown by default.
+- The UI now foregrounds a project-item evidence table instead of a recommendation card.
+- The evidence browser shows all filtered exact-code rows rather than only the top five scored records.
+- Awarded bid statistics are secondary and summarize the currently filtered evidence table.
 - Synthetic demo data is labeled as demo data.
 
 Current gaps identified by roadmap and engineer feedback:
 
-- Public CDOT cost-book observations are now available, but roadway reviewers still need to validate whether the promoted rows and default awarded-bid behavior are useful for pricing review.
-- Unit and county/region are free text, which allows avoidable spelling and wording errors.
+- Public CDOT cost-book observations are now available, but roadway reviewers still need to validate whether the promoted rows and evidence-table layout are useful for pricing review.
+- CSV export and manual include/exclude review sets are not implemented yet.
 - The normal UI now prevents a user-entered item-code/description conflict by requiring selection from official item records, but the matching engine still lacks a defensive guard for crafted or future editable queries.
 - Source labels and price-type labels now distinguish public CDOT cost-book awarded bid, average bid, and engineer estimate evidence, but reviewer feedback is still needed on wording and trust level.
 - Project number is now available for promoted CDOT cost-book project records.
-- Price distribution does not show the quantity context behind low, median, high, or quartile values.
+- Alias, keyword, and description fallback matching are not part of the default evidence table.
+- Quantity context is visible in each evidence row, but percentile markers do not yet link back to supporting rows.
 
 ## Phase 2 Non-Goals
 
@@ -61,7 +66,7 @@ Do not include these in the next implementation phase unless explicitly repriori
 - Escalation or inflation adjustment.
 - Database, authentication, or server backend.
 
-## Active Phase 2 Starting Point: CDOT Cost Data Book Public Pricing
+## Active Phase 2 Starting Point: Evidence Browser Pivot
 
 Start here in the next implementation session. Do not resume by mechanically picking up the next item in the older increment list below.
 
@@ -74,39 +79,38 @@ Current Phase 2 status:
 - Spot checking confirmed that item `304-06007` has 13 project-level rows and weighted-average rows are excluded.
 - Validation is now a separate step before app promotion. Current known agency item-code warnings are `202-00826`, `208-00065`, and `614-86739`.
 - The promotion path parses the PDF project-list pages rather than naively splitting `project_location_raw`; this preserves project numbers such as `C 0852-130`.
-- The app should use awarded-bid evidence by default and keep average bid and engineer estimate as separate review filters.
+- The app now uses a public CDOT exact-code evidence table as the primary deliverable.
+- The app should calculate secondary statistics from awarded bid unit prices only.
+- Average bid and engineer estimate values should remain visible as separate columns, not mixed into awarded bid statistics.
 - The increment list below remains useful historical planning context, but it is not the active starting point for the next branch.
 
 Recommended next sequence:
 
+- Use `evidence_browser_pivot.md` as the master document for the product pivot.
+- Validate the evidence table with roadway engineers using exact item-code searches.
+- Add CSV export for the filtered evidence table.
+- Add manual include/exclude controls after reviewers confirm the table layout and filters.
 - Validate future CDOT cost-book staging rows before promotion.
-- Promote reviewed public pricing evidence from the CDOT Cost Data Book before importing individual bid tabs.
-- Use the CDOT Cost Data Book as the first real public `item_observations.csv` source because it already contains item-level unit cost rows by project.
 - Keep individual bid tabs as later secondary evidence for spot-checking, bidder-level detail, or raw project audit.
 - Preserve the static GitHub Pages model. Do not add a server, database, authentication, or runtime external data fetch.
 - Keep raw source PDFs out of git. Store local working copies under an ignored path such as `tmp/source/cdot_cost_data_books/`.
 
 Instructions for the user:
 
-- Start from the latest merged branch or pull request that includes the simplified item search and full 2026 CDOT item book.
-- Provide or confirm the local CDOT Cost Data Book PDF path, starting with the 2026 Q1 PDF.
-- Tell the coding agent to begin with this section, not with the older increment list.
-- Awarded bid unit prices are the default pricing evidence.
-- Engineer estimate and average bid values are retained as separate price-type observations rather than ignored or mixed into the default distribution.
+- Start from the latest merged branch or pull request that includes the simplified item search, full 2026 CDOT item book, and public CDOT 2026 Q1 cost-book promotion.
+- Tell the coding agent to begin with this section and `evidence_browser_pivot.md`, not with the older increment list.
+- Treat the project evidence table as the primary output.
+- Treat awarded bid summary statistics as secondary.
+- Do not restore suggested unit price or confidence as primary outputs without an explicit product decision.
 
 Instructions for the coding agent:
 
 - Review `architecture_overview.md`, this file, `docs/data_schema.md`, and `user_workflow.md` before coding.
-- Create a new branch, likely `codex/import-cdot-cost-data-book`.
-- Use the attached or user-provided Cost Data Book PDF as the first source document.
-- Build a repeatable Python importer using `pypdf` for text-layer PDF extraction.
-- Parse the project list rows and the item unit cost rows by project.
-- Capture item code, item description, unit, project number, project location, letting date, quantity, engineer estimate, average bid, and awarded bid.
-- Do not mix weighted-average summary rows into project-level comparable evidence in the first pass.
-- Validate imported item codes against `agency_items.csv`.
-- Add source labels and schema documentation needed to distinguish synthetic demo rows from public CDOT Cost Data Book evidence.
-- Promote each item-level staging row into separate `cdot_awarded_bid`, `cdot_average_bid`, and `cdot_engineer_estimate` observations.
-- Add result-table display for project number and price type.
+- Use `evidence_browser_pivot.md` as the decision source for evidence-browser changes.
+- Keep default matching to exact official item-code rows.
+- Keep public CDOT cost-book rows as the default source filter.
+- Group awarded bid, average bid, and engineer estimate observations into one project-item evidence row in the app layer.
+- Keep CSV schema unchanged unless a later phase explicitly requires new persisted data.
 - Run `npm run build` after implementation.
 
 ## Recommended Increment Sequence

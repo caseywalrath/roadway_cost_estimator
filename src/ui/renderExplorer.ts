@@ -26,7 +26,7 @@ export function renderExplorer(
       <div class="panel-heading">
         <h2>
           Item Book Search
-          ${helpTip("About the item search", "This panel identifies the bid item and quantity. Comparable project context is handled with the results controls after matching.")}
+          ${helpTip("About the item search", "This panel identifies the official bid item and quantity. The evidence table uses exact item-code matches after an item is selected.")}
         </h2>
       </div>
 
@@ -61,7 +61,7 @@ export function renderExplorer(
           <label>
             <span class="label-row">
               Item code or description
-              ${helpTip("About item code or description", "Searches loaded agency items by full item code, partial code, suffix after the hyphen, official description, or abbreviated description. If no official item is selected, the typed description is used as a weaker manual search.")}
+              ${helpTip("About item code or description", "Searches loaded agency items by full item code, partial code, suffix after the hyphen, official description, or abbreviated description. Select an official item before reviewing project evidence.")}
             </span>
             <input name="description" data-item-search value="${escapeHtml(itemSearchValue)}" />
           </label>
@@ -91,7 +91,7 @@ export function renderExplorer(
 
       <div class="form-action-grid">
         <button type="button" id="clear-query" class="secondary-button">Clear</button>
-        <button type="submit" class="primary-button">Search Projects</button>
+        <button type="submit" class="primary-button">Search</button>
       </div>
     </form>
   `;
@@ -290,7 +290,7 @@ function renderItemResults(
       return `<p class="item-result-message">No loaded items match this search in the selected division or section. Clear Division or Section / prefix to search all loaded items.</p>`;
     }
 
-    return `<p class="item-result-message">No loaded items match this search. You can still search the typed description, but selecting an official item is more reliable.</p>`;
+    return `<p class="item-result-message">No loaded items match this search. Select an official item code before reviewing project evidence.</p>`;
   }
 
   return `
