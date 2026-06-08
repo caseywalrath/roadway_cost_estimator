@@ -9,6 +9,30 @@ class CdotCostDataBookParserTests(unittest.TestCase):
     def parse_fixture(self, text: str):
         return parse_pages([(8, text)], "fixture.pdf", "2026 Q1")
 
+    def test_parses_configurable_item_section_marker(self) -> None:
+        rows, stats = parse_pages(
+            [
+                (
+                    14,
+                    "\n".join(
+                        [
+                            "Item Unit Costs by Projects -- 2025 Cost Data",
+                            "304-06007 ABC (CL 6) Cubic Yard",
+                            "2670252-499 I-25:MOBILITY HUB (LONE TREE) 01/16/25 1.00 10000.00 53833.33 53000.00",
+                        ]
+                    ),
+                )
+            ],
+            "fixture.pdf",
+            "2025 Q4",
+            "Item Unit Costs by Projects -- 2025 Cost Data",
+        )
+
+        self.assertEqual(1, len(rows))
+        self.assertEqual("2025 Q4", rows[0]["source_period"])
+        self.assertEqual("2025-01-16", rows[0]["date_let"])
+        self.assertEqual(1, stats.item_headers)
+
     def test_parses_item_header_and_project_row(self) -> None:
         rows, stats = self.parse_fixture(
             "\n".join(

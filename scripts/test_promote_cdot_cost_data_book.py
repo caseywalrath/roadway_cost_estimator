@@ -36,6 +36,32 @@ class CdotCostDataBookPromotionTests(unittest.TestCase):
         self.assertEqual("1", projects[0].district)
         self.assertEqual("U", projects[0].terrain)
 
+    def test_project_list_parses_2025_project_number_shapes(self) -> None:
+        projects = parse_project_list_pages(
+            [
+                (
+                    4,
+                    "\n".join(
+                        [
+                            "2025 Cost Data",
+                            "Projects Bid From 01/01/25 Through 12/31/25",
+                            "20250116 KRAEMER NORTH AMERICA, LLC 3 $53,000.00 98.10",
+                            "2670252-499 I-25:MOBILITY HUB (LONE TREE) 1 R",
+                            "20250626 MODERN RAILWAY SYSTEMS 2 $20,000.00 88.00",
+                            "ITSSW03-250 FRONT RANGE 0 P",
+                        ]
+                    ),
+                )
+            ],
+            "cdot_2025q4",
+        )
+
+        self.assertEqual(2, len(projects))
+        self.assertEqual("2670252-499", projects[0].project_number)
+        self.assertEqual("cdot_2025q4_2670252_499", projects[0].project_id)
+        self.assertEqual("ITSSW03-250", projects[1].project_number)
+        self.assertEqual("cdot_2025q4_itssw03_250", projects[1].project_id)
+
     def test_promotion_creates_three_observation_types_without_duplication(self) -> None:
         projects = parse_project_list_pages(
             [

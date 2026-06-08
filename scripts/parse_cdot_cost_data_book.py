@@ -11,8 +11,8 @@ from typing import Iterable
 DEFAULT_SOURCE = Path("CDOTRM_EEMA_Cost_Data_Book_-_2026_-_1st_Qtr_-_4-29-2026.pdf")
 DEFAULT_OUTPUT = Path("public/data/imports/cdot_cost_data_book_2026_q1_item_unit_costs.csv")
 DEFAULT_SOURCE_PERIOD = "2026 Q1"
+DEFAULT_ITEM_SECTION_MARKER = "Item Unit Costs by Projects -- 2026 Cost Data"
 
-ITEM_SECTION_MARKER = "Item Unit Costs by Projects -- 2026 Cost Data"
 ITEM_HEADER_PATTERN = re.compile(r"^(?P<code>\d{3}-\d{5})\s+(?P<rest>.+)$")
 PROJECT_ROW_PATTERN = re.compile(
     r"^(?P<project_location>.+?)\s+"
@@ -22,12 +22,12 @@ PROJECT_ROW_PATTERN = re.compile(
     r"(?P<average_bid_unit_price>[\d,]+\.\d{2})\s+"
     r"(?P<awarded_bid_unit_price>[\d,]+\.\d{2})$"
 )
-CONTINUATION_PATTERN = re.compile(r"^[A-Z][A-Z0-9 ]*[- ][A-Z0-9-]+\s+")
+CONTINUATION_PATTERN = re.compile(r"^[A-Z][A-Z0-9 ]*[- ][A-Z0-9-]+(?:\s+|$)")
 WEIGHTED_AVERAGE_PATTERN = re.compile(r"^Weighted Average for")
 
 FOOTER_PREFIXES = (
     "Colorado Department of Transportation",
-    ITEM_SECTION_MARKER,
+    "Item Unit Costs by Projects --",
     "Item Number/",
     "Project Number ",
 )
@@ -145,13 +145,18 @@ def normalize_date(value: str) -> str:
 
 
 def should_skip_line(line: str) -> bool:
-    return not line or any(line.startswith(prefix) for prefix in FOOTER_PREFIXES)
+    return (
+        not line
+        or any(line.startswith(prefix) for prefix in FOOTER_PREFIXES)
+        or re.match(r"^\d{4} Cost Data$", line) is not None
+    )
 
 
 def parse_pages(
     pages: Iterable[tuple[int, str]],
     source_file: str,
     source_period: str,
+    item_section_marker: str = DEFAULT_ITEM_SECTION_MARKER,
 ) -> tuple[list[dict[str, str]], ParseStats]:
     rows: list[dict[str, str]] = []
     stats = ParseStats()
@@ -160,7 +165,7 @@ def parse_pages(
     in_item_section = False
 
     for page_number, page_text in pages:
-        if ITEM_SECTION_MARKER in page_text:
+        if item_section_marker in page_text:
             in_item_section = True
 
         if not in_item_section:
@@ -264,11 +269,12 @@ def print_stats(stats: ParseStats, rows: list[dict[str, str]], output: Path) -> 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Extract item-level rows from the CDOT 2026 Q1 Cost Data Book PDF."
+        description="Extract item-level rows from a CDOT Cost Data Book PDF."
     )
     parser.add_argument("--source", default=DEFAULT_SOURCE, type=Path)
     parser.add_argument("--output", default=DEFAULT_OUTPUT, type=Path)
     parser.add_argument("--source-period", default=DEFAULT_SOURCE_PERIOD)
+    parser.add_argument("--item-section-marker", default=DEFAULT_ITEM_SECTION_MARKER)
     parser.add_argument("--min-row-count", default=2000, type=int)
     args = parser.parse_args()
 
@@ -276,7 +282,7 @@ def main() -> None:
         raise SystemExit(f"Source PDF not found: {args.source}")
 
     pages = extract_pdf_pages(args.source)
-    rows, stats = parse_pages(pages, args.source.name, args.source_period)
+    rows, stats = parse_pages(pages, args.source.name, args.source_period, args.item_section_marker)
 
     if len(rows) < args.min_row_count:
         raise SystemExit(f"Expected at least {args.min_row_count} item rows, found {len(rows)}.")

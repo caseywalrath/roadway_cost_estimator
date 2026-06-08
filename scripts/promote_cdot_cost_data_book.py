@@ -17,11 +17,12 @@ DEFAULT_PROJECTS = Path("public/data/projects.csv")
 DEFAULT_OBSERVATIONS = Path("public/data/item_observations.csv")
 DEFAULT_AGENCY_ITEMS = Path("public/data/agency_items.csv")
 
-SOURCE_ID = "cdot_cost_data_book_2026_q1"
-SOURCE_LABEL = "CDOT 2026 Q1 Cost Data Book"
-SOURCE_TYPE = "public_cost_book"
-SOURCE_YEAR = "2026"
-ROW_PREFIX = "cdot_2026q1"
+DEFAULT_SOURCE_ID = "cdot_cost_data_book_2026_q1"
+DEFAULT_SOURCE_LABEL = "CDOT 2026 Q1 Cost Data Book"
+DEFAULT_SOURCE_TYPE = "public_cost_book"
+DEFAULT_SOURCE_YEAR = "2026"
+DEFAULT_ROW_PREFIX = "cdot_2026q1"
+DEFAULT_SOURCE_NOTES = "Public CDOT Cost Data Book 2026 Q1 item-level project rows promoted from reviewed staging CSV."
 
 CONTRACTOR_LINE_PATTERN = re.compile(
     r"^(?P<letting>\d{8})\s+(?P<contractor>.+)\s+"
@@ -29,7 +30,7 @@ CONTRACTOR_LINE_PATTERN = re.compile(
     r"(?P<award_index>[\d.]+)$"
 )
 PROJECT_LINE_PATTERN = re.compile(
-    r"^(?P<project_number>[A-Z]+(?:\s+\d{4}-\d{3}|\d{3,}[A-Z]?-\d{3}))\s+"
+    r"^(?P<project_number>(?:[A-Z]+\s+\d{3,}[A-Z]?-\d{3}|[A-Z0-9]+-\d{3}|\d{3,}-\d{3}))\s+"
     r"(?P<project_location>.+?)"
     r"(?:\s+(?P<district>\d)(?:\s+(?P<terrain>[A-Z]))?)?$"
 )
@@ -116,12 +117,15 @@ def normalize_yyyymmdd(value: str) -> str:
     return f"{value[0:4]}-{value[4:6]}-{value[6:8]}"
 
 
-def slugify_project_number(project_number: str) -> str:
+def slugify_project_number(project_number: str, row_prefix: str = DEFAULT_ROW_PREFIX) -> str:
     slug = re.sub(r"[^a-z0-9]+", "_", project_number.lower()).strip("_")
-    return f"{ROW_PREFIX}_{slug}"
+    return f"{row_prefix}_{slug}"
 
 
-def parse_project_list_pages(pages: Iterable[tuple[int, str]]) -> list[CostBookProject]:
+def parse_project_list_pages(
+    pages: Iterable[tuple[int, str]],
+    row_prefix: str = DEFAULT_ROW_PREFIX,
+) -> list[CostBookProject]:
     projects: list[CostBookProject] = []
     current_contract: dict[str, str] | None = None
 
@@ -133,7 +137,7 @@ def parse_project_list_pages(pages: Iterable[tuple[int, str]]) -> list[CostBookP
             line = clean_line(raw_line)
             if not line or line.startswith("Colorado Department of Transportation"):
                 continue
-            if line.startswith("2026 Cost Data") or line.startswith("Projects Bid From"):
+            if re.match(r"^\d{4} Cost Data$", line) or line.startswith("Projects Bid From"):
                 continue
             if line.startswith("Bid Contractor/") or line.startswith("Letting Project Number"):
                 continue
@@ -158,7 +162,7 @@ def parse_project_list_pages(pages: Iterable[tuple[int, str]]) -> list[CostBookP
                 projects.append(
                     CostBookProject(
                         project_number=project_number,
-                        project_id=slugify_project_number(project_number),
+                        project_id=slugify_project_number(project_number, row_prefix),
                         project_location_raw=f"{project_number} {project_location}",
                         project_name=project_location,
                         letting_date=current_contract["letting_date"],
@@ -281,7 +285,10 @@ def validate_import(
     return errors, warnings
 
 
-def project_rows(projects: list[CostBookProject]) -> list[dict[str, str]]:
+def project_rows(
+    projects: list[CostBookProject],
+    source_id: str = DEFAULT_SOURCE_ID,
+) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     for project in projects:
         rows.append(
@@ -293,7 +300,7 @@ def project_rows(projects: list[CostBookProject]) -> list[dict[str, str]]:
                 "county_region": f"Colorado / CDOT District {project.district}" if project.district else "Colorado",
                 "work_type": "Roadway",
                 "estimate_let_date": project.letting_date,
-                "source_id": SOURCE_ID,
+                "source_id": source_id,
                 "project_number": project.project_number,
                 "project_location_raw": project.project_location_raw,
                 "contractor": project.contractor,
@@ -307,15 +314,21 @@ def project_rows(projects: list[CostBookProject]) -> list[dict[str, str]]:
     return rows
 
 
-def source_row() -> dict[str, str]:
+def source_row(
+    source_id: str = DEFAULT_SOURCE_ID,
+    source_label: str = DEFAULT_SOURCE_LABEL,
+    source_type: str = DEFAULT_SOURCE_TYPE,
+    source_year: str = DEFAULT_SOURCE_YEAR,
+    source_notes: str = DEFAULT_SOURCE_NOTES,
+) -> dict[str, str]:
     return {
-        "source_id": SOURCE_ID,
-        "source_type": SOURCE_TYPE,
+        "source_id": source_id,
+        "source_type": source_type,
         "agency": "CDOT",
         "state": "CO",
-        "source_label": SOURCE_LABEL,
-        "data_year": SOURCE_YEAR,
-        "notes": "Public CDOT Cost Data Book 2026 Q1 item-level project rows promoted from reviewed staging CSV.",
+        "source_label": source_label,
+        "data_year": source_year,
+        "notes": source_notes,
     }
 
 
@@ -326,6 +339,8 @@ def decimal_money(value: str) -> Decimal:
 def promoted_observation_rows(
     staging_rows: list[dict[str, str]],
     projects_by_number: dict[str, CostBookProject],
+    source_id: str = DEFAULT_SOURCE_ID,
+    row_prefix: str = DEFAULT_ROW_PREFIX,
 ) -> list[dict[str, str]]:
     observations: list[dict[str, str]] = []
 
@@ -339,9 +354,9 @@ def promoted_observation_rows(
             unit_price = decimal_money(staging_row[source_column])
             observations.append(
                 {
-                    "observation_id": f"{ROW_PREFIX}_{row_number:04d}_{price_type.replace('cdot_', '')}",
+                    "observation_id": f"{row_prefix}_{row_number:04d}_{price_type.replace('cdot_', '')}",
                     "project_id": project.project_id,
-                    "source_id": SOURCE_ID,
+                    "source_id": source_id,
                     "agency_item_code": staging_row["item_code"].strip().upper(),
                     "description_raw": staging_row["item_description"],
                     "description_normalized": normalize_description(staging_row["item_description"]),
@@ -368,7 +383,7 @@ def write_project_lookup(path: Path, projects: list[CostBookProject]) -> None:
 
 
 def promote(args: argparse.Namespace) -> None:
-    projects = parse_project_list_pages(extract_pdf_pages(args.source_pdf))
+    projects = parse_project_list_pages(extract_pdf_pages(args.source_pdf), args.row_prefix)
     staging_rows = read_csv(args.staging_items)
     known_item_codes = agency_item_codes(args.agency_items)
     errors, warnings = validate_import(staging_rows, projects, known_item_codes)
@@ -382,7 +397,12 @@ def promote(args: argparse.Namespace) -> None:
         raise SystemExit(1)
 
     projects_by_number = project_lookup(projects)
-    promoted_observations = promoted_observation_rows(staging_rows, projects_by_number)
+    promoted_observations = promoted_observation_rows(
+        staging_rows,
+        projects_by_number,
+        args.source_id,
+        args.row_prefix,
+    )
 
     if len(promoted_observations) != len(staging_rows) * len(PRICE_TYPES):
         raise SystemExit(
@@ -398,20 +418,33 @@ def promote(args: argparse.Namespace) -> None:
 
     existing_sources = [
         row for row in normalize_existing_rows(read_csv(args.sources), SOURCE_FIELDS)
-        if row["source_id"] != SOURCE_ID
+        if row["source_id"] != args.source_id
     ]
     existing_projects = [
         row for row in normalize_existing_rows(read_csv(args.projects), PROJECT_FIELDS)
-        if row["source_id"] != SOURCE_ID and not row["project_id"].startswith(f"{ROW_PREFIX}_")
+        if row["source_id"] != args.source_id and not row["project_id"].startswith(f"{args.row_prefix}_")
     ]
     existing_observations = [
         row for row in normalize_existing_rows(read_csv(args.observations), OBSERVATION_FIELDS)
-        if row["source_id"] != SOURCE_ID and not row["observation_id"].startswith(f"{ROW_PREFIX}_")
+        if row["source_id"] != args.source_id and not row["observation_id"].startswith(f"{args.row_prefix}_")
     ]
 
-    write_project_lookup(args.project_lookup_output, projects)
-    write_csv(args.sources, existing_sources + [source_row()], SOURCE_FIELDS)
-    write_csv(args.projects, existing_projects + project_rows(projects), PROJECT_FIELDS)
+    write_csv(args.project_lookup_output, project_rows(projects, args.source_id), PROJECT_FIELDS)
+    write_csv(
+        args.sources,
+        existing_sources
+        + [
+            source_row(
+                args.source_id,
+                args.source_label,
+                args.source_type,
+                args.source_year,
+                args.source_notes,
+            )
+        ],
+        SOURCE_FIELDS,
+    )
+    write_csv(args.projects, existing_projects + project_rows(projects, args.source_id), PROJECT_FIELDS)
     write_csv(args.observations, existing_observations + promoted_observations, OBSERVATION_FIELDS)
 
     print(f"Validated {len(staging_rows)} staging rows.")
@@ -431,6 +464,12 @@ def main() -> None:
     parser.add_argument("--projects", default=DEFAULT_PROJECTS, type=Path)
     parser.add_argument("--observations", default=DEFAULT_OBSERVATIONS, type=Path)
     parser.add_argument("--agency-items", default=DEFAULT_AGENCY_ITEMS, type=Path)
+    parser.add_argument("--source-id", default=DEFAULT_SOURCE_ID)
+    parser.add_argument("--source-label", default=DEFAULT_SOURCE_LABEL)
+    parser.add_argument("--source-type", default=DEFAULT_SOURCE_TYPE)
+    parser.add_argument("--source-year", default=DEFAULT_SOURCE_YEAR)
+    parser.add_argument("--source-notes", default=DEFAULT_SOURCE_NOTES)
+    parser.add_argument("--row-prefix", default=DEFAULT_ROW_PREFIX)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
