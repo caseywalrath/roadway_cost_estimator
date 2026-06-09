@@ -5,56 +5,30 @@ import type {
   EvidenceSourceTypeFilter,
   EvidenceStats
 } from "../data/schema";
-import { helpTip } from "./helpTip";
 
-export function renderResults(result: EvidenceResult, filtersExpanded: boolean): string {
+export function renderResults(
+  result: EvidenceResult,
+  filtersExpanded: boolean,
+  itemSearchCollapsed: boolean
+): string {
   return `
     <section class="results-panel">
-      ${renderEvidenceIntro(result)}
-      ${renderEvidenceTable(result, filtersExpanded)}
+      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed)}
       ${renderAwardedBidSummary(result.stats)}
       ${renderDataNotes(result.notes)}
     </section>
   `;
 }
 
-function renderEvidenceIntro(result: EvidenceResult): string {
-  return `
-    <section class="evidence-intro panel-block">
-      <div>
-        <p class="eyebrow">Project Evidence Browser</p>
-        <h2>
-          ${escapeHtml(result.interpretedDescription)}
-          ${helpTip("About project evidence", "The app lists exact item-code project evidence and leaves filtering and interpretation to the engineer. It does not choose a suggested unit price.")}
-        </h2>
-        <p class="query-line">
-          Item code: ${escapeHtml(result.query.itemCode || "Not selected")} |
-          Unit: ${escapeHtml(result.query.unit || "Not selected")} |
-          Quantity: ${result.query.quantity ? formatNumber(result.query.quantity) : "Not entered"}
-        </p>
-      </div>
-      <div class="evidence-counts" aria-label="Evidence counts">
-        <div class="metric">
-          <span>Exact-code evidence rows</span>
-          <strong>${result.allExactRows.length}</strong>
-        </div>
-        <div class="metric">
-          <span>Rows after filters</span>
-          <strong>${result.filteredRows.length}</strong>
-        </div>
-      </div>
-    </section>
-  `;
-}
-
-function renderEvidenceTable(result: EvidenceResult, filtersExpanded: boolean): string {
+function renderEvidenceTable(
+  result: EvidenceResult,
+  filtersExpanded: boolean,
+  itemSearchCollapsed: boolean
+): string {
   if (!result.query.itemCode) {
     return `
       <section class="panel-block">
-        <div class="panel-heading">
-          <p class="eyebrow">Matching Projects</p>
-          <h3>Select an official item</h3>
-        </div>
+        ${renderMatchingProjectsHeader(result, false)}
         <p class="muted">Use Item Book Search to select a loaded CDOT item code before reviewing project evidence.</p>
       </section>
     `;
@@ -62,18 +36,27 @@ function renderEvidenceTable(result: EvidenceResult, filtersExpanded: boolean): 
 
   return `
     <section class="panel-block panel-block--table">
-      <div class="panel-heading evidence-table-heading">
-        <div>
-          <p class="eyebrow">Matching Projects</p>
-          <h3>
-            ${result.filteredRows.length} filtered project-item row${result.filteredRows.length === 1 ? "" : "s"}
-            ${helpTip("About matching projects", "Rows are exact item-code matches grouped by project, source, item description, unit, quantity, and date. Default results use public CDOT cost-book rows with the same unit as the selected item.")}
-          </h3>
-        </div>
-      </div>
+      ${renderMatchingProjectsHeader(result, itemSearchCollapsed)}
       ${renderEvidenceControls(result, filtersExpanded)}
       ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows)}
     </section>
+  `;
+}
+
+function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: boolean): string {
+  return `
+    <div class="panel-heading evidence-table-heading">
+      <div>
+        <p class="eyebrow">Matching Projects</p>
+        <h3>${escapeHtml(result.query.itemCode ? result.interpretedDescription : "Select an official item")}</h3>
+        <p class="query-line">
+          Item code: ${escapeHtml(result.query.itemCode || "Not selected")} |
+          Unit: ${escapeHtml(result.query.unit || "Not selected")} |
+          Quantity: ${result.query.quantity ? formatNumber(result.query.quantity) : "Not entered"}
+        </p>
+      </div>
+      ${showEditButton ? `<button type="button" id="edit-item-search" class="primary-button matching-projects-edit-button">Edit Item Search</button>` : ""}
+    </div>
   `;
 }
 
@@ -100,7 +83,6 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
         <label>
           <span class="label-row">
             Source
-            ${helpTip("About source filter", "Public CDOT cost-book rows are the default evidence source. Demo rows can be included for prototype review only.")}
           </span>
           <select name="sourceType">
             ${renderSourceTypeOption("public_cost_book", "Public CDOT cost book", result.filters.sourceType)}
@@ -113,7 +95,6 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
         <label>
           <span class="label-row">
             Geography
-            ${helpTip("About geography filter", "Text filter against project location, project name, and county or region fields. It filters rows directly instead of changing a relevance score.")}
           </span>
           <input name="geography" value="${escapeHtml(result.filters.geography)}" placeholder="District, county, or location" />
         </label>
@@ -121,7 +102,6 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
         <label>
           <span class="label-row">
             District
-            ${helpTip("About district filter", "CDOT district parsed from project metadata when available. Demo rows may not include a district.")}
           </span>
           <select name="district">
             <option value="">All districts</option>
@@ -132,7 +112,6 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
         <label>
           <span class="label-row">
             Unit
-            ${helpTip("About unit filter", "Defaults to the selected official item unit. Other exact-code units are excluded unless the unit filter is changed.")}
           </span>
           <select name="unit">
             <option value="">All units</option>
@@ -183,20 +162,19 @@ function renderTable(rows: EvidenceRow[]): string {
       <table class="evidence-table">
         <thead>
           <tr>
-            <th>Project no. ${helpTip("About project number", "Public CDOT project number when available. Demo records may not have a project number.")}</th>
-            <th>Project / location ${helpTip("About project location", "Project location or name from project metadata.")}
-            </th>
-            <th>District ${helpTip("About district", "CDOT district parsed from public cost-book project pages when available.")}</th>
-            <th>Let date ${helpTip("About let date", "Project letting or estimate date from source metadata.")}</th>
-            <th>Contractor ${helpTip("About contractor", "Awarded contractor when available from the public cost book.")}</th>
-            <th>Bid count ${helpTip("About bid count", "Number of bids listed for the project when parsed from the cost book.")}</th>
-            <th>Quantity ${helpTip("About quantity", "Quantity for this item on the historical project row.")}</th>
-            <th>Unit ${helpTip("About unit", "Historical item unit. Default results show the same unit as the selected item.")}</th>
-            <th>Item description ${helpTip("About item description", "Raw source description for the matching item code.")}</th>
-            <th>Awarded bid unit price ${helpTip("About awarded bid unit price", "Awarded bid evidence. Summary statistics use this column only.")}</th>
-            <th>Average bid unit price ${helpTip("About average bid unit price", "Average bid evidence when available. It is shown for review but not included in the phase 1 summary statistics.")}</th>
-            <th>Engineer estimate unit price ${helpTip("About engineer estimate unit price", "Engineer estimate evidence when available. It is shown separately from bid evidence.")}</th>
-            <th>Source ${helpTip("About source", "Source label for provenance. Review source type before using any value for estimating support.")}</th>
+            <th>Project no.</th>
+            <th>Project / location</th>
+            <th>District</th>
+            <th>Let date</th>
+            <th>Contractor</th>
+            <th>Bid count</th>
+            <th>Quantity</th>
+            <th>Unit</th>
+            <th>Item description</th>
+            <th>Awarded bid unit price</th>
+            <th>Average bid unit price</th>
+            <th>Engineer estimate unit price</th>
+            <th>Source</th>
           </tr>
         </thead>
         <tbody>
@@ -247,10 +225,7 @@ function renderAwardedBidSummary(stats: EvidenceStats | null): string {
     <section class="panel-block">
       <div class="panel-heading">
         <p class="eyebrow">Awarded Bid Summary</p>
-        <h3>
-          Statistics for currently filtered awarded bid prices
-          ${helpTip("About awarded bid summary", "These statistics summarize the awarded bid unit price column for the rows currently visible in the table. They are not a suggested price.")}
-        </h3>
+        <h3>Statistics for currently filtered awarded bid prices</h3>
       </div>
       <div class="distribution-grid evidence-stats-grid">
         ${renderStatMetric("Count", stats.count, false)}

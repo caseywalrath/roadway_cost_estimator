@@ -28,7 +28,6 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 5. `src/matching/buildEvidenceResult.ts` applies explicit evidence filters and calculates awarded bid summary statistics for the filtered table.
 6. Prior comparable scoring modules remain in the repository for reference, but the primary UI no longer uses hidden top-five relevance selection.
 7. `src/ui` renders the fixed prototype scope, item search, evidence filters, evidence table, awarded bid summary, and data notes.
-8. `src/ui/helpTip.ts` renders prototype-only explanatory markers for fields, metrics, and table columns.
 
 ## Data Governance
 
@@ -55,14 +54,6 @@ The Phase 1 evidence browser rules are intentionally visible and simple:
 - Calculate summary statistics from awarded bid unit prices only.
 
 Alias, keyword, and description fallback matching should return only in a later explicit review mode. They are not part of the default evidence table.
-
-## Prototype Annotations
-
-The UI includes small information markers that explain what each input, metric, and table column means, why it affects matching, and where real data should come from. These annotations are intended for early review with non-roadway users and roadway subject-matter experts. They are not part of the long-term estimating workflow unless reviewers find them useful.
-
-The information markers should open only when the marker itself is hovered or keyboard-focused. They should not appear when the user hovers over or types in the associated form field.
-
-The Item Explorer also includes a clear action for removing the current query values.
 
 ## Item Code Search Funnel
 

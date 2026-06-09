@@ -1,6 +1,5 @@
 import type { AgencyItemRecord, SearchQuery, SpecSectionRecord } from "../data/schema";
 import { normalizeDescription } from "../matching/normalizeDescription";
-import { helpTip } from "./helpTip";
 
 const DEFAULT_STATE = "CO";
 const DEFAULT_WORK_TYPE = "Roadway";
@@ -24,10 +23,7 @@ export function renderExplorer(
   return `
     <form id="explorer-form" class="search-panel">
       <div class="panel-heading">
-        <h2>
-          Item Book Search
-          ${helpTip("About the item search", "This panel identifies the official bid item and quantity. The evidence table uses exact item-code matches after an item is selected.")}
-        </h2>
+        <h2>Item Book Search</h2>
       </div>
 
       <input type="hidden" name="itemCode" value="${escapeHtml(query.itemCode)}" />
@@ -39,7 +35,6 @@ export function renderExplorer(
           <label>
             <span class="label-row">
               Division
-              ${helpTip("About division", "CDOT Standard Specifications organize bid items into specification divisions. Division selection narrows the item-code search before choosing a section and item.")}
             </span>
             <select name="divisionPrefix" data-division-select>
               <option value="" ${selectedDivisionPrefix ? "" : "selected"}>Select division</option>
@@ -50,7 +45,6 @@ export function renderExplorer(
           <label>
             <span class="label-row">
               Section / prefix
-              ${helpTip("About section prefix", "The first three digits of a CDOT item code correspond to a specification section. Section labels are loaded from the spec section reference table, not inferred from item descriptions.")}
             </span>
             <select name="sectionPrefix" data-section-select ${selectedDivisionPrefix ? "" : "disabled"}>
               <option value="" ${selectedSectionPrefix ? "" : "selected"}>Select section</option>
@@ -61,7 +55,6 @@ export function renderExplorer(
           <label>
             <span class="label-row">
               Item code or description
-              ${helpTip("About item code or description", "Searches loaded agency items by full item code, partial code, suffix after the hyphen, official description, or abbreviated description. Select an official item before reviewing project evidence.")}
             </span>
             <input name="description" data-item-search value="${escapeHtml(itemSearchValue)}" />
           </label>
@@ -80,7 +73,6 @@ export function renderExplorer(
         <label>
           <span class="label-row">
             Quantity
-            ${helpTip("About quantity", "Planned amount of work for this line item. It is used to rank projects with a similar scale of work higher than very small or very large examples. Source: current estimate line item.")}
           </span>
           <div class="quantity-input-wrap">
             <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" />
@@ -94,31 +86,6 @@ export function renderExplorer(
         <button type="submit" class="primary-button">Search</button>
       </div>
     </form>
-  `;
-}
-
-export function renderItemSearchSummary(
-  query: SearchQuery,
-  agencyItems: AgencyItemRecord[]
-): string {
-  const selectedAgencyItem = findAgencyItem(agencyItems, query.itemCode, query.state);
-  const itemCode = selectedAgencyItem?.itemCode ?? query.itemCode;
-  const description = selectedAgencyItem?.officialDescription ?? query.description;
-  const unit = selectedAgencyItem?.officialUnit ?? query.unit;
-
-  return `
-    <section class="item-search-summary panel-block" aria-label="Selected item search">
-      <div class="item-search-summary__text">
-        <p class="eyebrow">Selected Item</p>
-        <h2>${escapeHtml(description || "No item selected")}</h2>
-        <p class="query-line">
-          Item code: ${escapeHtml(itemCode || "Not selected")} |
-          Unit: ${escapeHtml(unit || "Not selected")} |
-          Quantity: ${query.quantity ? formatNumber(query.quantity) : "Not entered"}
-        </p>
-      </div>
-      <button type="button" id="edit-item-search" class="secondary-button">Edit Item Search</button>
-    </section>
   `;
 }
 
@@ -395,12 +362,6 @@ function escapeHtml(value: string): string {
 
     return replacements[char];
   });
-}
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 2
-  }).format(value);
 }
 
 function uniqueSpecDivisions(specSections: SpecSectionRecord[]): SpecSectionRecord[] {
