@@ -22,6 +22,13 @@ PROJECT_ROW_PATTERN = re.compile(
     r"(?P<average_bid_unit_price>[\d,]+\.\d{2})\s+"
     r"(?P<awarded_bid_unit_price>[\d,]+\.\d{2})$"
 )
+PROJECT_VALUES_PATTERN = re.compile(
+    r"^(?P<date_let>\d{2}/\d{2}/\d{2})\s+"
+    r"(?P<quantity>[\d,]+\.\d{2})\s+"
+    r"(?P<engineer_estimate_unit_price>[\d,]+\.\d{2})\s+"
+    r"(?P<average_bid_unit_price>[\d,]+\.\d{2})\s+"
+    r"(?P<awarded_bid_unit_price>[\d,]+\.\d{2})$"
+)
 CONTINUATION_PATTERN = re.compile(r"^[A-Z][A-Z0-9 ]*[- ][A-Z0-9-]+(?:\s+|$)")
 WEIGHTED_AVERAGE_PATTERN = re.compile(r"^Weighted Average for")
 
@@ -152,6 +159,39 @@ def should_skip_line(line: str) -> bool:
     )
 
 
+def row_from_match(
+    match: re.Match[str],
+    current_item: CurrentItem,
+    source_file: str,
+    source_period: str,
+    page_number: int,
+    project_location_raw: str,
+    raw_text: str,
+) -> dict[str, str]:
+    return {
+        "source_file": source_file,
+        "source_period": source_period,
+        "page_number": str(page_number),
+        "item_code": current_item.item_code,
+        "item_description": current_item.item_description,
+        "unit_raw": current_item.unit_raw,
+        "unit_normalized": current_item.unit_normalized,
+        "project_location_raw": project_location_raw.strip(),
+        "date_let": normalize_date(match.group("date_let")),
+        "quantity": normalize_number(match.group("quantity")),
+        "engineer_estimate_unit_price": normalize_number(
+            match.group("engineer_estimate_unit_price")
+        ),
+        "average_bid_unit_price": normalize_number(
+            match.group("average_bid_unit_price")
+        ),
+        "awarded_bid_unit_price": normalize_number(
+            match.group("awarded_bid_unit_price")
+        ),
+        "raw_text": raw_text,
+    }
+
+
 def parse_pages(
     pages: Iterable[tuple[int, str]],
     source_file: str,
@@ -163,6 +203,24 @@ def parse_pages(
     current_item: CurrentItem | None = None
     last_row: dict[str, str] | None = None
     in_item_section = False
+    pending_project_lines: list[tuple[int, str]] = []
+    pending_can_attach_to_last_row = False
+
+    def flush_pending_project_lines() -> None:
+        nonlocal pending_project_lines, pending_can_attach_to_last_row, last_row
+        if not pending_project_lines:
+            return
+
+        if pending_can_attach_to_last_row and last_row:
+            for _, pending_line in pending_project_lines:
+                last_row["project_location_raw"] = f"{last_row['project_location_raw']} | {pending_line}"
+                last_row["raw_text"] = f"{last_row['raw_text']} | {pending_line}"
+                stats.continuation_lines += 1
+        else:
+            stats.unparsed_lines.extend(pending_project_lines)
+
+        pending_project_lines = []
+        pending_can_attach_to_last_row = False
 
     for page_number, page_text in pages:
         if item_section_marker in page_text:
@@ -178,6 +236,7 @@ def parse_pages(
 
             item_header_match = ITEM_HEADER_PATTERN.match(line)
             if item_header_match:
+                flush_pending_project_lines()
                 description, unit_raw = split_item_header(item_header_match.group("rest"))
                 current_item = CurrentItem(
                     item_code=item_header_match.group("code"),
@@ -190,47 +249,59 @@ def parse_pages(
                 continue
 
             if WEIGHTED_AVERAGE_PATTERN.match(line):
+                flush_pending_project_lines()
                 stats.weighted_average_rows += 1
                 last_row = None
                 continue
 
             project_row_match = PROJECT_ROW_PATTERN.match(line)
             if project_row_match and current_item:
-                row = {
-                    "source_file": source_file,
-                    "source_period": source_period,
-                    "page_number": str(page_number),
-                    "item_code": current_item.item_code,
-                    "item_description": current_item.item_description,
-                    "unit_raw": current_item.unit_raw,
-                    "unit_normalized": current_item.unit_normalized,
-                    "project_location_raw": project_row_match.group("project_location").strip(),
-                    "date_let": normalize_date(project_row_match.group("date_let")),
-                    "quantity": normalize_number(project_row_match.group("quantity")),
-                    "engineer_estimate_unit_price": normalize_number(
-                        project_row_match.group("engineer_estimate_unit_price")
-                    ),
-                    "average_bid_unit_price": normalize_number(
-                        project_row_match.group("average_bid_unit_price")
-                    ),
-                    "awarded_bid_unit_price": normalize_number(
-                        project_row_match.group("awarded_bid_unit_price")
-                    ),
-                    "raw_text": line,
-                }
+                flush_pending_project_lines()
+                row = row_from_match(
+                    project_row_match,
+                    current_item,
+                    source_file,
+                    source_period,
+                    page_number,
+                    project_row_match.group("project_location"),
+                    line,
+                )
                 rows.append(row)
                 stats.project_rows += 1
                 last_row = row
                 continue
 
-            if current_item and last_row and CONTINUATION_PATTERN.match(line):
-                last_row["project_location_raw"] = f"{last_row['project_location_raw']} | {line}"
-                last_row["raw_text"] = f"{last_row['raw_text']} | {line}"
-                stats.continuation_lines += 1
+            project_values_match = PROJECT_VALUES_PATTERN.match(line)
+            if project_values_match and current_item and pending_project_lines:
+                pending_text = [pending_line for _, pending_line in pending_project_lines]
+                project_location = " ".join(pending_text)
+                raw_text = " | ".join([*pending_text, line])
+                row = row_from_match(
+                    project_values_match,
+                    current_item,
+                    source_file,
+                    source_period,
+                    page_number,
+                    project_location,
+                    raw_text,
+                )
+                pending_project_lines = []
+                pending_can_attach_to_last_row = False
+                rows.append(row)
+                stats.project_rows += 1
+                last_row = row
                 continue
 
+            if current_item and CONTINUATION_PATTERN.match(line):
+                if not pending_project_lines:
+                    pending_can_attach_to_last_row = last_row is not None
+                pending_project_lines.append((page_number, line))
+                continue
+
+            flush_pending_project_lines()
             stats.unparsed_lines.append((page_number, line))
 
+    flush_pending_project_lines()
     return rows, stats
 
 

@@ -32,11 +32,11 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 
 ## Data Governance
 
-The CSV records include synthetic demo data and public CDOT 2025 Q4 and 2026 Q1 Cost Data Book records. They are prototype evidence and must be reviewed before estimating use.
+The CSV records include synthetic demo data and public CDOT 2024 Q4, 2025 Q4, and 2026 Q1 Cost Data Book records. They are prototype evidence and must be reviewed before estimating use.
 
 Do not commit private FHU estimate data to a public GitHub Pages repository. Real internal data should either stay outside the repo, be uploaded locally by the user in a later browser-only workflow, or move to an approved private hosting model.
 
-The repository can generate staging CSVs from public CDOT Cost Data Book PDFs, validate them against project-list pages and agency item codes, and promote them into app-loaded source, project, and observation CSVs. The current promoted public CDOT cost-book sources are `cdot_cost_data_book_2025_q4` and `cdot_cost_data_book_2026_q1`.
+The repository can generate staging CSVs from public CDOT Cost Data Book PDFs, validate them against project-list pages and agency item codes, and promote them into app-loaded source, project, and observation CSVs. The current promoted public CDOT cost-book sources are `cdot_cost_data_book_2024_q4`, `cdot_cost_data_book_2025_q4`, and `cdot_cost_data_book_2026_q1`.
 
 ## Evidence Browser Rules
 
@@ -88,7 +88,7 @@ The submitted `SearchQuery` shape did not change. The visible item search is lim
 
 ## Near-Term Extension Points
 
-- Review promoted 2025 Q4 and 2026 Q1 CDOT cost-book rows with roadway engineers.
+- Review promoted 2024 Q4, 2025 Q4, and 2026 Q1 CDOT cost-book rows with roadway engineers.
 - Add CSV export for the filtered evidence table.
 - Add manual include/exclude controls and reviewer notes for an engineer-selected evidence set.
 - Add validation coverage for future CDOT cost-book quarters before promotion.

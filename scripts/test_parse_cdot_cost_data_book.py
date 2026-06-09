@@ -87,6 +87,35 @@ class CdotCostDataBookParserTests(unittest.TestCase):
         self.assertIn("FBR006A-078", rows[0]["raw_text"])
         self.assertEqual(1, stats.continuation_lines)
 
+    def test_parses_split_project_location_and_value_rows(self) -> None:
+        rows, stats = parse_pages(
+            [
+                (
+                    17,
+                    "\n".join(
+                        [
+                            "Item Unit Costs by Projects -- 2024 Cost Data",
+                            "201-00000 Clear and Grub Lump Sum",
+                            "STA2873-229 US 287 MP 354.71 TO MP 355.70 09/12/24 1.00 15000.00 14228.25 23000.00",
+                            "STR133A-056 SH 133A MM 42.0-66.5",
+                            "US 6D MM",
+                            "12/12/24 1.00 30000.00 12500.00 10000.00",
+                        ]
+                    ),
+                )
+            ],
+            "fixture.pdf",
+            "2024 Q4",
+            "Item Unit Costs by Projects -- 2024 Cost Data",
+        )
+
+        self.assertEqual(2, len(rows))
+        self.assertEqual("STR133A-056 SH 133A MM 42.0-66.5 US 6D MM", rows[1]["project_location_raw"])
+        self.assertEqual("2024-12-12", rows[1]["date_let"])
+        self.assertEqual("10000.00", rows[1]["awarded_bid_unit_price"])
+        self.assertEqual(0, stats.continuation_lines)
+        self.assertEqual([], stats.unparsed_lines)
+
     def test_keeps_item_context_across_pages(self) -> None:
         rows, stats = parse_pages(
             [

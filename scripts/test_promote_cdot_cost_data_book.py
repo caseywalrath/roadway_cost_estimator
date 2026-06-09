@@ -99,6 +99,48 @@ class CdotCostDataBookPromotionTests(unittest.TestCase):
         self.assertEqual({"cdot_awarded_bid", "cdot_average_bid", "cdot_engineer_estimate"}, {row["price_type"] for row in observations})
         self.assertEqual({"cdot_2026q1_stm006a_076"}, {row["project_id"] for row in observations})
 
+    def test_promotion_uses_configurable_source_and_row_prefix(self) -> None:
+        projects = parse_project_list_pages(
+            [
+                (
+                    4,
+                    "\n".join(
+                        [
+                            "Projects Bid From 01/01/24 Through 12/31/24",
+                            "20241212 ABC CONSTRUCTION 2 $10,000.00 95.00",
+                            "STR133A-056 SH 133A MM 42.0-66.5 5 R",
+                        ]
+                    ),
+                )
+            ],
+            "cdot_2024q4",
+        )
+        staging_rows = [
+            {
+                "item_code": "201-00000",
+                "item_description": "Clear and Grub",
+                "unit_raw": "Lump Sum",
+                "unit_normalized": "L S",
+                "project_location_raw": "STR133A-056 SH 133A MM 42.0-66.5 US 6D MM",
+                "date_let": "2024-12-12",
+                "quantity": "1.00",
+                "engineer_estimate_unit_price": "30000.00",
+                "average_bid_unit_price": "12500.00",
+                "awarded_bid_unit_price": "10000.00",
+            }
+        ]
+
+        observations = promoted_observation_rows(
+            staging_rows,
+            project_lookup(projects),
+            "cdot_cost_data_book_2024_q4",
+            "cdot_2024q4",
+        )
+
+        self.assertEqual("cdot_cost_data_book_2024_q4", observations[0]["source_id"])
+        self.assertEqual("cdot_2024q4_0001_awarded_bid", observations[0]["observation_id"])
+        self.assertEqual("cdot_2024q4_str133a_056", observations[0]["project_id"])
+
     def test_validation_reports_missing_item_codes_as_warning(self) -> None:
         projects = parse_project_list_pages(
             [
