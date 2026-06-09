@@ -97,6 +97,31 @@ export function renderExplorer(
   `;
 }
 
+export function renderItemSearchSummary(
+  query: SearchQuery,
+  agencyItems: AgencyItemRecord[]
+): string {
+  const selectedAgencyItem = findAgencyItem(agencyItems, query.itemCode, query.state);
+  const itemCode = selectedAgencyItem?.itemCode ?? query.itemCode;
+  const description = selectedAgencyItem?.officialDescription ?? query.description;
+  const unit = selectedAgencyItem?.officialUnit ?? query.unit;
+
+  return `
+    <section class="item-search-summary panel-block" aria-label="Selected item search">
+      <div class="item-search-summary__text">
+        <p class="eyebrow">Selected Item</p>
+        <h2>${escapeHtml(description || "No item selected")}</h2>
+        <p class="query-line">
+          Item code: ${escapeHtml(itemCode || "Not selected")} |
+          Unit: ${escapeHtml(unit || "Not selected")} |
+          Quantity: ${query.quantity ? formatNumber(query.quantity) : "Not entered"}
+        </p>
+      </div>
+      <button type="button" id="edit-item-search" class="secondary-button">Edit Item Search</button>
+    </section>
+  `;
+}
+
 function renderStepHeading(stepNumber: string, label: string): string {
   return `
     <div class="step-heading">
@@ -370,6 +395,12 @@ function escapeHtml(value: string): string {
 
     return replacements[char];
   });
+}
+
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 2
+  }).format(value);
 }
 
 function uniqueSpecDivisions(specSections: SpecSectionRecord[]): SpecSectionRecord[] {

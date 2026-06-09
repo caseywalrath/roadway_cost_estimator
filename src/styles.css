@@ -196,6 +196,10 @@ select {
   align-items: start;
 }
 
+.workspace-grid--item-search-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .search-panel,
 .decision-card,
 .panel-block {
@@ -478,6 +482,30 @@ input[readonly] {
   display: grid;
   gap: 16px;
   min-width: 0;
+}
+
+.item-search-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.item-search-summary h2 {
+  margin: 0 0 6px;
+  color: var(--heading);
+  font-size: 1.12rem;
+  line-height: 1.2;
+}
+
+.item-search-summary__text {
+  min-width: 0;
+}
+
+.item-search-summary .secondary-button {
+  min-height: 36px;
+  padding: 6px 12px;
+  white-space: nowrap;
 }
 
 .evidence-intro {
@@ -830,6 +858,7 @@ tbody tr:last-child td {
 
   .field-grid,
   .item-result-button,
+  .item-search-summary,
   .evidence-filter-form,
   .metric-grid,
   .distribution-grid {
