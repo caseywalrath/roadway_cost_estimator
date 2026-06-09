@@ -1,7 +1,10 @@
 import type { AppData, SearchQuery } from "../data/schema";
 import { buildEvidenceResult, createDefaultEvidenceFilters } from "../matching/buildEvidenceResult";
-import { helpTip } from "./helpTip";
-import { bindItemPicker, readQueryFromForm, renderExplorer } from "./renderExplorer";
+import {
+  bindItemPicker,
+  readQueryFromForm,
+  renderExplorer
+} from "./renderExplorer";
 import { readEvidenceFiltersFromForm, renderResults } from "./renderResults";
 
 const emptyQuery: SearchQuery = {
@@ -21,6 +24,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
   let query = { ...emptyQuery };
   let evidenceFilters = createDefaultEvidenceFilters(query);
   let evidenceFiltersExpanded = false;
+  let itemSearchCollapsed = false;
 
   function render(): void {
     const result = buildEvidenceResult(data, query, evidenceFilters);
@@ -31,13 +35,13 @@ export function renderApp(root: HTMLElement, data: AppData): void {
             <h1>Colorado Roadway Comparable Project Explorer</h1>
           </div>
           <div class="context-bar" aria-label="Prototype scope">
-            <span>Scope: Colorado roadway ${helpTip("About prototype scope", "State is fixed to Colorado. The primary evidence table defaults to exact item-code matches from public CDOT cost-book rows.")}</span>
+            <span>Scope: Colorado roadway</span>
           </div>
         </header>
 
-        <section class="workspace-grid">
-          ${renderExplorer(query, data.agencyItems, data.specSections)}
-          ${renderResults(result, evidenceFiltersExpanded)}
+        <section class="workspace-grid ${itemSearchCollapsed ? "workspace-grid--item-search-collapsed" : ""}">
+          ${itemSearchCollapsed ? "" : renderExplorer(query, data.agencyItems, data.specSections)}
+          ${renderResults(result, evidenceFiltersExpanded, itemSearchCollapsed)}
         </section>
       </main>
     `;
@@ -52,6 +56,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       query = readQueryFromForm(form, query);
       evidenceFilters = createDefaultEvidenceFilters(query);
       evidenceFiltersExpanded = false;
+      itemSearchCollapsed = Boolean(query.itemCode);
       render();
     });
 
@@ -72,23 +77,15 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       query = { ...emptyQuery };
       evidenceFilters = createDefaultEvidenceFilters(query);
       evidenceFiltersExpanded = false;
+      itemSearchCollapsed = false;
+      render();
+    });
+
+    root.querySelector<HTMLButtonElement>("#edit-item-search")?.addEventListener("click", () => {
+      itemSearchCollapsed = false;
       render();
     });
   }
 
   render();
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (char) => {
-    const replacements: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    };
-
-    return replacements[char];
-  });
 }
