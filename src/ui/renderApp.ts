@@ -4,19 +4,6 @@ import { helpTip } from "./helpTip";
 import { bindItemPicker, readQueryFromForm, renderExplorer } from "./renderExplorer";
 import { readEvidenceFiltersFromForm, renderResults } from "./renderResults";
 
-const exampleQuery: SearchQuery = {
-  state: "CO",
-  countyRegion: "Douglas",
-  workType: "Roadway",
-  estimateYear: 2026,
-  sourceScope: "both",
-  priceTypeScope: "awarded",
-  itemCode: "304-06007",
-  description: "AGGREGATE BASE COURSE (CLASS 6)",
-  unit: "CY",
-  quantity: 1800
-};
-
 const emptyQuery: SearchQuery = {
   state: "CO",
   countyRegion: "",
@@ -31,7 +18,7 @@ const emptyQuery: SearchQuery = {
 };
 
 export function renderApp(root: HTMLElement, data: AppData): void {
-  let query = { ...exampleQuery };
+  let query = { ...emptyQuery };
   let evidenceFilters = createDefaultEvidenceFilters(query);
   let evidenceFiltersExpanded = false;
 
