@@ -191,7 +191,7 @@ select {
 
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(290px, 390px) minmax(0, 1fr);
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
@@ -210,7 +210,7 @@ select {
   top: 18px;
   display: grid;
   gap: 14px;
-  padding: 18px;
+  padding: 16px;
 }
 
 .workflow-step {
@@ -289,6 +289,13 @@ select {
   padding: 8px 10px;
 }
 
+.search-panel input,
+.search-panel select {
+  min-height: 38px;
+  padding: 7px 8px;
+  font-size: 0.86rem;
+}
+
 input:focus,
 select:focus {
   outline: 3px solid rgba(39, 95, 143, 0.22);
@@ -306,7 +313,7 @@ input[readonly] {
   border: 1px solid #d6e1ea;
   border-radius: 6px;
   background: #f8fafc;
-  padding: 12px;
+  padding: 10px;
 }
 
 .item-result-list {
@@ -389,7 +396,9 @@ input[readonly] {
 .item-result-button span {
   min-width: 0;
   font-size: 0.82rem;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .item-result-button small {
@@ -426,7 +435,7 @@ input[readonly] {
 .form-action-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
 }
 
 .primary-button,
@@ -436,6 +445,14 @@ input[readonly] {
   border: 1px solid transparent;
   cursor: pointer;
   font-weight: 800;
+}
+
+.search-panel .primary-button,
+.search-panel .secondary-button {
+  min-height: 38px;
+  padding: 7px 9px;
+  font-size: 0.86rem;
+  white-space: nowrap;
 }
 
 .primary-button {
@@ -820,7 +837,13 @@ tbody tr:last-child td {
   }
 
   .item-result-button strong,
+  .item-result-button span,
   .item-result-button small {
     white-space: normal;
+  }
+
+  .item-result-button span {
+    overflow: visible;
+    text-overflow: clip;
   }
 }

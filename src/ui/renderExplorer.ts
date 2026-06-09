@@ -330,6 +330,7 @@ function renderItemResultButton(agencyItem: AgencyItemRecord, selected: boolean)
       data-item-code="${escapeHtml(agencyItem.itemCode)}"
       data-description="${escapeHtml(agencyItem.officialDescription)}"
       data-unit="${escapeHtml(agencyItem.officialUnit)}"
+      title="${escapeHtml(agencyItem.officialDescription)}"
     >
       <strong>${escapeHtml(agencyItem.itemCode)}</strong>
       <span>${escapeHtml(agencyItem.officialDescription)}</span>
