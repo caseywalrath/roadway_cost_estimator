@@ -30,9 +30,8 @@ CONTRACTOR_LINE_PATTERN = re.compile(
     r"(?P<award_index>[\d.]+)$"
 )
 PROJECT_LINE_PATTERN = re.compile(
-    r"^(?P<project_number>(?:[A-Z]+\s+[A-Z]?\d{3,}[A-Z]?-\d{3}|[A-Z0-9]+-\d{3}|\d{3,}-\d{3}))\s+"
-    r"(?P<project_location>.+?)"
-    r"(?:\s+(?P<district>\d)(?:\s+(?P<terrain>[A-Z]))?)?$"
+    r"^(?P<project_number>(?:[A-Z]+\s+[A-Z]?\d{3,}[A-Z]?-\d{3}|[A-Z0-9]+-\d{3}|\d{3,}-\d{3}))"
+    r"(?:\s+(?P<tail>.*))?$"
 )
 
 PRICE_TYPES = [
@@ -122,6 +121,15 @@ def slugify_project_number(project_number: str, row_prefix: str = DEFAULT_ROW_PR
     return f"{row_prefix}_{slug}"
 
 
+def split_project_tail(tail: str) -> tuple[str, str, str]:
+    parts = tail.strip().split()
+    if len(parts) >= 2 and parts[-2].isdigit() and re.fullmatch(r"[A-Z]", parts[-1]):
+        return " ".join(parts[:-2]), parts[-2], parts[-1]
+    if parts and parts[-1].isdigit():
+        return " ".join(parts[:-1]), parts[-1], ""
+    return tail.strip(), "", ""
+
+
 def parse_project_list_pages(
     pages: Iterable[tuple[int, str]],
     row_prefix: str = DEFAULT_ROW_PREFIX,
@@ -130,18 +138,19 @@ def parse_project_list_pages(
     current_contract: dict[str, str] | None = None
 
     for _, page_text in pages:
-        if "Projects Bid From" not in page_text:
+        if "PROJECTS BID FROM" not in page_text.upper():
             continue
 
         for raw_line in page_text.splitlines():
             line = clean_line(raw_line)
-            if not line or line.startswith("Colorado Department of Transportation"):
+            line_upper = line.upper()
+            if not line or line_upper.startswith("COLORADO DEPARTMENT OF TRANSPORTATION"):
                 continue
-            if re.match(r"^\d{4} Cost Data$", line) or line.startswith("Projects Bid From"):
+            if re.match(r"^\d{4} Cost Data$", line) or line_upper.startswith("PROJECTS BID FROM"):
                 continue
-            if line.startswith("Bid Contractor/") or line.startswith("Letting Project Number"):
+            if line_upper.startswith("BID CONTRACTOR/") or line_upper.startswith("LETTING PROJECT NUMBER"):
                 continue
-            if line.startswith("Totals "):
+            if line_upper.startswith("TOTALS "):
                 continue
 
             contract_match = CONTRACTOR_LINE_PATTERN.match(line)
@@ -158,17 +167,17 @@ def parse_project_list_pages(
             project_match = PROJECT_LINE_PATTERN.match(line)
             if project_match and current_contract:
                 project_number = project_match.group("project_number").strip()
-                project_location = project_match.group("project_location").strip()
+                project_location, district, terrain = split_project_tail(project_match.group("tail") or "")
                 projects.append(
                     CostBookProject(
                         project_number=project_number,
                         project_id=slugify_project_number(project_number, row_prefix),
-                        project_location_raw=f"{project_number} {project_location}",
+                        project_location_raw=f"{project_number} {project_location}".strip(),
                         project_name=project_location,
                         letting_date=current_contract["letting_date"],
                         contractor=current_contract["contractor"],
-                        district=project_match.group("district") or "",
-                        terrain=project_match.group("terrain") or "",
+                        district=district,
+                        terrain=terrain,
                         bid_count=current_contract["bid_count"],
                         awarded_bid_total=current_contract["awarded_bid_total"],
                         award_index=current_contract["award_index"],

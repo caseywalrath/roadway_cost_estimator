@@ -141,6 +141,8 @@ public/data/imports/cdot_cost_data_book_2026_q1_item_unit_costs.csv
 
 The item-unit output is the first staging CSV. It should be validated against the project-list pages and agency item table before promotion into app-loaded CSVs.
 
+Older cost books can use all-caps section headings, separator-wrapped item headers, and placeholder price rows with `.` values. The parser skips weighted-average summaries and incomplete placeholder-price rows before promotion.
+
 Run parser fixture tests:
 
 ```text

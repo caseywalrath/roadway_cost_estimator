@@ -88,6 +88,34 @@ class CdotCostDataBookPromotionTests(unittest.TestCase):
         self.assertEqual("STM C440-013", projects[1].project_number)
         self.assertEqual("cdot_2023q4_stm_c440_013", projects[1].project_id)
 
+    def test_project_list_parses_2022_uppercase_pages_and_blank_locations(self) -> None:
+        projects = parse_project_list_pages(
+            [
+                (
+                    4,
+                    "\n".join(
+                        [
+                            "2022 Cost Data",
+                            "PROJECTS BID FROM 01/01/22 THROUGH 12/31/22",
+                            "20220106 ROADSAFE TRAFFIC SYSTEMS, INC 2 $1,168,613.00 87.75",
+                            "MTCE R500-218 5 U",
+                            "20220310 FLATIRON CONSTRUCTORS, INC. 8 $25,426,004.45 87.29",
+                            "NHPP 0761-238 I-76 DAHLIA TO YORK 1 R",
+                        ]
+                    ),
+                )
+            ],
+            "cdot_2022q4",
+        )
+
+        self.assertEqual(2, len(projects))
+        self.assertEqual("MTCE R500-218", projects[0].project_number)
+        self.assertEqual("", projects[0].project_name)
+        self.assertEqual("5", projects[0].district)
+        self.assertEqual("U", projects[0].terrain)
+        self.assertEqual("NHPP 0761-238", projects[1].project_number)
+        self.assertEqual("I-76 DAHLIA TO YORK", projects[1].project_name)
+
     def test_promotion_creates_three_observation_types_without_duplication(self) -> None:
         projects = parse_project_list_pages(
             [

@@ -14,6 +14,9 @@ DEFAULT_SOURCE_PERIOD = "2026 Q1"
 DEFAULT_ITEM_SECTION_MARKER = "Item Unit Costs by Projects -- 2026 Cost Data"
 
 ITEM_HEADER_PATTERN = re.compile(r"^(?P<code>\d{3}-\d{5})\s+(?P<rest>.+)$")
+SEPARATOR_ITEM_HEADER_PATTERN = re.compile(
+    r"^=+\s*(?P<code>\d{3}-\d{5})\s+(?P<rest>.+?)\s*=+$"
+)
 PROJECT_ROW_PATTERN = re.compile(
     r"^(?P<project_location>.+?)\s+"
     r"(?P<date_let>\d{2}/\d{2}/\d{2})\s+"
@@ -31,9 +34,12 @@ PROJECT_VALUES_PATTERN = re.compile(
 )
 CONTINUATION_PATTERN = re.compile(r"^[A-Z][A-Z0-9 ]*[- ][A-Z0-9-]+(?:\s+|$)")
 ORPHAN_PROJECT_LINE_PATTERN = re.compile(
-    r"^(?:[A-Z]+\s+[A-Z]?\d{3,}[A-Z]?-\d{3}|[A-Z0-9]+-\d{3}|\d{3,}-\d{3})\s+"
+    r"^(?:[A-Z]+\s+[A-Z]?\d{3,}[A-Z]?-\d{3}|[A-Z0-9]+-\d{3}|\d{3,}-\d{3})(?:\s+|$)"
 )
-WEIGHTED_AVERAGE_PATTERN = re.compile(r"^Weighted Average for")
+PLACEHOLDER_PRICE_ROW_PATTERN = re.compile(
+    r"^.+\s+\.\s+[\d,]+\.\d{2}\s+[\d,]+\.\d{2}\s+\.\s+\.$"
+)
+WEIGHTED_AVERAGE_PATTERN = re.compile(r"^Weighted Average for", re.IGNORECASE)
 
 FOOTER_PREFIXES = (
     "Colorado Department of Transportation",
@@ -121,6 +127,7 @@ class ParseStats:
     weighted_average_rows: int = 0
     continuation_lines: int = 0
     orphan_project_lines: int = 0
+    placeholder_price_rows: int = 0
     unparsed_lines: list[tuple[int, str]] = field(default_factory=list)
 
 
@@ -131,8 +138,9 @@ def clean_line(value: str) -> str:
 def split_item_header(rest: str) -> tuple[str, str]:
     for unit in UNIT_SUFFIXES:
         suffix = f" {unit}"
-        if rest.endswith(suffix):
-            return rest[: -len(suffix)].strip(), unit
+        if rest.upper().endswith(suffix.upper()):
+            unit_raw = rest[-len(unit) :].strip()
+            return rest[: -len(suffix)].strip(), unit_raw
 
     parts = rest.rsplit(" ", 1)
     if len(parts) == 2:
@@ -156,10 +164,12 @@ def normalize_date(value: str) -> str:
 
 
 def should_skip_line(line: str) -> bool:
+    line_upper = line.upper()
     return (
         not line
-        or any(line.startswith(prefix) for prefix in FOOTER_PREFIXES)
+        or any(line_upper.startswith(prefix.upper()) for prefix in FOOTER_PREFIXES)
         or re.match(r"^\d{4} Cost Data$", line) is not None
+        or re.match(r"^[\-= ]+$", line) is not None
     )
 
 
@@ -240,7 +250,7 @@ def parse_pages(
             if should_skip_line(line):
                 continue
 
-            item_header_match = ITEM_HEADER_PATTERN.match(line)
+            item_header_match = SEPARATOR_ITEM_HEADER_PATTERN.match(line) or ITEM_HEADER_PATTERN.match(line)
             if item_header_match:
                 flush_pending_project_lines()
                 description, unit_raw = split_item_header(item_header_match.group("rest"))
@@ -257,6 +267,12 @@ def parse_pages(
             if WEIGHTED_AVERAGE_PATTERN.match(line):
                 flush_pending_project_lines()
                 stats.weighted_average_rows += 1
+                last_row = None
+                continue
+
+            if PLACEHOLDER_PRICE_ROW_PATTERN.match(line):
+                flush_pending_project_lines()
+                stats.placeholder_price_rows += 1
                 last_row = None
                 continue
 
@@ -338,6 +354,7 @@ def print_stats(stats: ParseStats, rows: list[dict[str, str]], output: Path) -> 
     print(f"Skipped {stats.weighted_average_rows} weighted average row(s).")
     print(f"Attached {stats.continuation_lines} continuation line(s).")
     print(f"Skipped {stats.orphan_project_lines} orphan project line(s).")
+    print(f"Skipped {stats.placeholder_price_rows} placeholder price row(s).")
 
     if stats.unparsed_lines:
         print(f"WARNING: {len(stats.unparsed_lines)} non-empty item-section line(s) were not parsed.")
