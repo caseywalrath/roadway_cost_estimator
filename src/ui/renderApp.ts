@@ -1,5 +1,10 @@
 import type { AppData, SearchQuery } from "../data/schema";
-import { buildEvidenceResult, createDefaultEvidenceFilters } from "../matching/buildEvidenceResult";
+import type { EvidenceSortKey } from "../data/schema";
+import {
+  buildEvidenceResult,
+  createDefaultEvidenceFilters,
+  createDefaultEvidenceSort
+} from "../matching/buildEvidenceResult";
 import {
   bindItemPicker,
   readQueryFromForm,
@@ -23,11 +28,12 @@ const emptyQuery: SearchQuery = {
 export function renderApp(root: HTMLElement, data: AppData): void {
   let query = { ...emptyQuery };
   let evidenceFilters = createDefaultEvidenceFilters(query);
+  let evidenceSort = createDefaultEvidenceSort();
   let evidenceFiltersExpanded = false;
   let itemSearchCollapsed = false;
 
   function render(): void {
-    const result = buildEvidenceResult(data, query, evidenceFilters);
+    const result = buildEvidenceResult(data, query, evidenceFilters, evidenceSort);
     root.innerHTML = `
       <main class="app-shell">
         <header class="app-header">
@@ -55,6 +61,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       event.preventDefault();
       query = readQueryFromForm(form, query);
       evidenceFilters = createDefaultEvidenceFilters(query);
+      evidenceSort = createDefaultEvidenceSort();
       evidenceFiltersExpanded = false;
       itemSearchCollapsed = Boolean(query.itemCode);
       render();
@@ -76,6 +83,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     root.querySelector<HTMLButtonElement>("#clear-query")?.addEventListener("click", () => {
       query = { ...emptyQuery };
       evidenceFilters = createDefaultEvidenceFilters(query);
+      evidenceSort = createDefaultEvidenceSort();
       evidenceFiltersExpanded = false;
       itemSearchCollapsed = false;
       render();
@@ -85,7 +93,34 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       itemSearchCollapsed = false;
       render();
     });
+
+    root.querySelectorAll<HTMLButtonElement>("[data-evidence-sort-key]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const sortKey = button.dataset.evidenceSortKey as EvidenceSortKey | undefined;
+
+        if (!sortKey) {
+          return;
+        }
+
+        evidenceSort = evidenceSort.key === sortKey
+          ? {
+              key: sortKey,
+              direction: evidenceSort.direction === "asc" ? "desc" : "asc"
+            }
+          : {
+              key: sortKey,
+              direction: defaultSortDirection(sortKey)
+            };
+        render();
+      });
+    });
   }
 
   render();
+}
+
+function defaultSortDirection(sortKey: EvidenceSortKey): "asc" | "desc" {
+  return sortKey === "letDate" || sortKey.endsWith("Price") || sortKey === "quantity" || sortKey === "bidCount"
+    ? "desc"
+    : "asc";
 }

@@ -2,6 +2,8 @@ import type {
   EvidenceFilters,
   EvidenceResult,
   EvidenceRow,
+  EvidenceSort,
+  EvidenceSortKey,
   EvidenceSourceTypeFilter,
   EvidenceStats
 } from "../data/schema";
@@ -38,7 +40,7 @@ function renderEvidenceTable(
     <section class="panel-block panel-block--table">
       ${renderMatchingProjectsHeader(result, itemSearchCollapsed)}
       ${renderEvidenceControls(result, filtersExpanded)}
-      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows)}
+      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows, result.sort)}
     </section>
   `;
 }
@@ -156,32 +158,64 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
   `;
 }
 
-function renderTable(rows: EvidenceRow[]): string {
+interface EvidenceColumn {
+  key: EvidenceSortKey;
+  label: string;
+}
+
+const evidenceColumns: EvidenceColumn[] = [
+  { key: "projectNumber", label: "Project no." },
+  { key: "projectLocation", label: "Project / location" },
+  { key: "district", label: "District" },
+  { key: "letDate", label: "Let date" },
+  { key: "contractor", label: "Contractor" },
+  { key: "bidCount", label: "Bid count" },
+  { key: "quantity", label: "Quantity" },
+  { key: "unit", label: "Unit" },
+  { key: "description", label: "Item description" },
+  { key: "awardedBidUnitPrice", label: "Awarded bid unit price" },
+  { key: "averageBidUnitPrice", label: "Average bid unit price" },
+  { key: "engineerEstimateUnitPrice", label: "Engineer estimate unit price" },
+  { key: "source", label: "Source" }
+];
+
+function renderTable(rows: EvidenceRow[], sort: EvidenceSort): string {
   return `
-    <div class="table-scroll">
-      <table class="evidence-table">
-        <thead>
-          <tr>
-            <th>Project no.</th>
-            <th>Project / location</th>
-            <th>District</th>
-            <th>Let date</th>
-            <th>Contractor</th>
-            <th>Bid count</th>
-            <th>Quantity</th>
-            <th>Unit</th>
-            <th>Item description</th>
-            <th>Awarded bid unit price</th>
-            <th>Average bid unit price</th>
-            <th>Engineer estimate unit price</th>
-            <th>Source</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(renderEvidenceRow).join("")}
-        </tbody>
-      </table>
+    <div class="table-scroll-shell">
+      <div class="table-scroll-affordance" aria-hidden="true"><span></span></div>
+      <div class="table-scroll" tabindex="0" aria-label="Matching project evidence table">
+        <table class="evidence-table">
+          <thead>
+            <tr>
+              ${evidenceColumns.map((column) => renderSortableHeader(column, sort)).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(renderEvidenceRow).join("")}
+          </tbody>
+        </table>
+      </div>
     </div>
+  `;
+}
+
+function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): string {
+  const isActive = sort.key === column.key;
+  const ariaSort = isActive ? (sort.direction === "asc" ? "ascending" : "descending") : "none";
+  const nextDirection = isActive && sort.direction === "asc" ? "descending" : "ascending";
+
+  return `
+    <th aria-sort="${ariaSort}" class="${isActive ? "evidence-table__sorted-column" : ""}">
+      <button
+        type="button"
+        class="table-sort-button"
+        data-evidence-sort-key="${column.key}"
+        aria-label="Sort by ${escapeHtml(column.label)} ${nextDirection}"
+      >
+        <span>${escapeHtml(column.label)}</span>
+        <span class="sort-indicator sort-indicator--${isActive ? sort.direction : "inactive"}" aria-hidden="true"></span>
+      </button>
+    </th>
   `;
 }
 

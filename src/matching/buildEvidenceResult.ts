@@ -3,10 +3,17 @@ import type {
   EvidenceFilters,
   EvidenceResult,
   EvidenceRow,
+  EvidenceSort,
+  EvidenceSortKey,
   EvidenceStats,
   SearchQuery
 } from "../data/schema";
 import { normalizeDescription, normalizeUnit } from "./normalizeDescription";
+
+const DEFAULT_EVIDENCE_SORT: EvidenceSort = {
+  key: "letDate",
+  direction: "desc"
+};
 
 export function createDefaultEvidenceFilters(query: SearchQuery): EvidenceFilters {
   return {
@@ -22,19 +29,26 @@ export function createDefaultEvidenceFilters(query: SearchQuery): EvidenceFilter
   };
 }
 
+export function createDefaultEvidenceSort(): EvidenceSort {
+  return { ...DEFAULT_EVIDENCE_SORT };
+}
+
 export function buildEvidenceResult(
   data: AppData,
   rawQuery: SearchQuery,
-  rawFilters: EvidenceFilters
+  rawFilters: EvidenceFilters,
+  rawSort: EvidenceSort = DEFAULT_EVIDENCE_SORT
 ): EvidenceResult {
   const query = normalizeEvidenceQuery(data, rawQuery);
   const filters = normalizeEvidenceFilters(rawFilters, query);
+  const sort = normalizeEvidenceSort(rawSort);
   const interpretedDescription = resolveInterpretedDescription(data, query);
 
   if (!query.itemCode) {
     return {
       query,
       filters,
+      sort,
       interpretedDescription,
       allExactRows: [],
       filteredRows: [],
@@ -57,7 +71,7 @@ export function buildEvidenceResult(
   const nonUnitFilteredRows = sourceRows.filter((row) => rowMatchesNonUnitFilters(row, filters));
   const filteredRows = nonUnitFilteredRows
     .filter((row) => !filters.unit || row.unit === filters.unit)
-    .sort(compareEvidenceRows);
+    .sort((left, right) => compareEvidenceRows(left, right, sort));
   const unitExcludedCount = filters.unit
     ? nonUnitFilteredRows.filter((row) => row.unit !== filters.unit).length
     : 0;
@@ -67,6 +81,7 @@ export function buildEvidenceResult(
   return {
     query,
     filters,
+    sort,
     interpretedDescription,
     allExactRows,
     filteredRows,
@@ -75,6 +90,31 @@ export function buildEvidenceResult(
     availableDistricts,
     stats,
     notes
+  };
+}
+
+function normalizeEvidenceSort(sort: EvidenceSort): EvidenceSort {
+  const allowedKeys: EvidenceSortKey[] = [
+    "projectNumber",
+    "projectLocation",
+    "district",
+    "letDate",
+    "contractor",
+    "bidCount",
+    "quantity",
+    "unit",
+    "description",
+    "awardedBidUnitPrice",
+    "averageBidUnitPrice",
+    "engineerEstimateUnitPrice",
+    "source"
+  ];
+
+  return {
+    key: allowedKeys.includes(sort.key) ? sort.key : DEFAULT_EVIDENCE_SORT.key,
+    direction: sort.direction === "asc" || sort.direction === "desc"
+      ? sort.direction
+      : DEFAULT_EVIDENCE_SORT.direction
   };
 }
 
@@ -287,7 +327,17 @@ function buildNotes(
   return notes;
 }
 
-function compareEvidenceRows(left: EvidenceRow, right: EvidenceRow): number {
+function compareEvidenceRows(left: EvidenceRow, right: EvidenceRow, sort: EvidenceSort): number {
+  const sortOrder = compareSortValues(sortValue(left, sort.key), sortValue(right, sort.key), sort.direction);
+
+  if (sortOrder !== 0) {
+    return sortOrder;
+  }
+
+  return compareDefaultEvidenceRows(left, right);
+}
+
+function compareDefaultEvidenceRows(left: EvidenceRow, right: EvidenceRow): number {
   const leftDate = left.project?.estimateLetDate || left.dateBasis;
   const rightDate = right.project?.estimateLetDate || right.dateBasis;
   const dateOrder = rightDate.localeCompare(leftDate);
@@ -299,6 +349,87 @@ function compareEvidenceRows(left: EvidenceRow, right: EvidenceRow): number {
   const leftProject = left.project?.projectNumber || left.project?.projectName || "";
   const rightProject = right.project?.projectNumber || right.project?.projectName || "";
   return leftProject.localeCompare(rightProject);
+}
+
+function sortValue(row: EvidenceRow, key: EvidenceSortKey): string | number | null {
+  if (key === "projectNumber") {
+    return emptyStringAsNull(row.project?.projectNumber);
+  }
+
+  if (key === "projectLocation") {
+    return emptyStringAsNull(row.project?.projectName || row.project?.projectLocationRaw);
+  }
+
+  if (key === "district") {
+    return emptyStringAsNull(row.project?.district);
+  }
+
+  if (key === "letDate") {
+    return emptyStringAsNull(row.project?.estimateLetDate || row.dateBasis);
+  }
+
+  if (key === "contractor") {
+    return emptyStringAsNull(row.project?.contractor);
+  }
+
+  if (key === "bidCount") {
+    return row.project?.bidCount ?? null;
+  }
+
+  if (key === "quantity") {
+    return row.quantity;
+  }
+
+  if (key === "unit") {
+    return emptyStringAsNull(row.unit);
+  }
+
+  if (key === "description") {
+    return emptyStringAsNull(row.descriptionRaw);
+  }
+
+  if (key === "awardedBidUnitPrice") {
+    return row.awardedBidUnitPrice;
+  }
+
+  if (key === "averageBidUnitPrice") {
+    return row.averageBidUnitPrice;
+  }
+
+  if (key === "engineerEstimateUnitPrice") {
+    return row.engineerEstimateUnitPrice;
+  }
+
+  return emptyStringAsNull(row.source?.sourceLabel);
+}
+
+function compareSortValues(
+  left: string | number | null,
+  right: string | number | null,
+  direction: EvidenceSort["direction"]
+): number {
+  if (left === null && right === null) {
+    return 0;
+  }
+
+  if (left === null) {
+    return 1;
+  }
+
+  if (right === null) {
+    return -1;
+  }
+
+  const order = typeof left === "number" && typeof right === "number"
+    ? left - right
+    : String(left).localeCompare(String(right), undefined, { numeric: true, sensitivity: "base" });
+
+  return direction === "asc" ? order : -order;
+}
+
+function emptyStringAsNull(value: string | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  return trimmed ? trimmed : null;
 }
 
 function resolveInterpretedDescription(data: AppData, query: SearchQuery): string {
