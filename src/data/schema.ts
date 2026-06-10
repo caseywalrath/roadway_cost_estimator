@@ -162,6 +162,28 @@ export interface EvidenceFilters {
   requireAwardedPrice: boolean;
 }
 
+export type EvidenceSortKey =
+  | "projectNumber"
+  | "projectLocation"
+  | "district"
+  | "letDate"
+  | "contractor"
+  | "bidCount"
+  | "quantity"
+  | "unit"
+  | "description"
+  | "awardedBidUnitPrice"
+  | "averageBidUnitPrice"
+  | "engineerEstimateUnitPrice"
+  | "source";
+
+export type SortDirection = "asc" | "desc";
+
+export interface EvidenceSort {
+  key: EvidenceSortKey;
+  direction: SortDirection;
+}
+
 export interface EvidenceRow {
   rowId: string;
   project: ProjectRecord | null;
@@ -190,6 +212,7 @@ export interface EvidenceStats {
 export interface EvidenceResult {
   query: SearchQuery;
   filters: EvidenceFilters;
+  sort: EvidenceSort;
   interpretedDescription: string;
   allExactRows: EvidenceRow[];
   filteredRows: EvidenceRow[];
