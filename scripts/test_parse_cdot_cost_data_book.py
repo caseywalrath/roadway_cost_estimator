@@ -116,6 +116,83 @@ class CdotCostDataBookParserTests(unittest.TestCase):
         self.assertEqual(0, stats.continuation_lines)
         self.assertEqual([], stats.unparsed_lines)
 
+    def test_parses_2022_separator_item_headers(self) -> None:
+        rows, stats = parse_pages(
+            [
+                (
+                    12,
+                    "\n".join(
+                        [
+                            "ITEM UNIT COSTS BY PROJECTS -- 2022 COST DATA",
+                            "=============== 201-00000 Clear and Grub LUMP SUM ===============================================",
+                            "NHPP0702-383 I-70 EB AUX FRISCO TO SILVERT 01/13/22 1.00 160000.00 249794.77 251778.00",
+                            "WEIGHTED AVERAGE FOR THE FIRST QUARTER 1.00 160000.00 249794.77 251778.00",
+                        ]
+                    ),
+                )
+            ],
+            "fixture.pdf",
+            "2022 Q4",
+            "ITEM UNIT COSTS BY PROJECTS -- 2022 COST DATA",
+        )
+
+        self.assertEqual(1, len(rows))
+        self.assertEqual("201-00000", rows[0]["item_code"])
+        self.assertEqual("Clear and Grub", rows[0]["item_description"])
+        self.assertEqual("LUMP SUM", rows[0]["unit_raw"])
+        self.assertEqual("L S", rows[0]["unit_normalized"])
+        self.assertEqual("2022-01-13", rows[0]["date_let"])
+        self.assertEqual(1, stats.item_headers)
+        self.assertEqual(1, stats.weighted_average_rows)
+
+    def test_skips_2022_placeholder_price_rows(self) -> None:
+        rows, stats = parse_pages(
+            [
+                (
+                    641,
+                    "\n".join(
+                        [
+                            "ITEM UNIT COSTS BY PROJECTS -- 2022 COST DATA",
+                            "=============== 614-00000 Traffic Signal LUMP SUM ===============================================",
+                            "ITS0703-477 ITS EQUIPMENT UPGRADE AT EJMT . 1.00 400000.00 . .",
+                            "NHPP2873-189 US 287 (FEDERAL BLVD) - COLFA 01/06/22 1.00 225000.00 240000.00 250000.00",
+                        ]
+                    ),
+                )
+            ],
+            "fixture.pdf",
+            "2022 Q4",
+            "ITEM UNIT COSTS BY PROJECTS -- 2022 COST DATA",
+        )
+
+        self.assertEqual(1, len(rows))
+        self.assertEqual(1, stats.placeholder_price_rows)
+        self.assertEqual([], stats.unparsed_lines)
+
+    def test_skips_orphan_project_number_lines(self) -> None:
+        rows, stats = parse_pages(
+            [
+                (
+                    43,
+                    "\n".join(
+                        [
+                            "Item Unit Costs by Projects -- 2023 Cost Data",
+                            "202-00240 Rem Asphalt Mat (Planing) Sq Yard",
+                            "BRM322-041 US 34 EAST OF LAIRD",
+                            "NHPP0821-116 SH 82 MP 26 - MP 33 IN PITKIN 11/30/23 178,948.00 5.26 3.33 2.40",
+                        ]
+                    ),
+                )
+            ],
+            "fixture.pdf",
+            "2023 Q4",
+            "Item Unit Costs by Projects -- 2023 Cost Data",
+        )
+
+        self.assertEqual(1, len(rows))
+        self.assertEqual(1, stats.orphan_project_lines)
+        self.assertEqual([], stats.unparsed_lines)
+
     def test_keeps_item_context_across_pages(self) -> None:
         rows, stats = parse_pages(
             [
