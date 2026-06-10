@@ -30,6 +30,9 @@ PROJECT_VALUES_PATTERN = re.compile(
     r"(?P<awarded_bid_unit_price>[\d,]+\.\d{2})$"
 )
 CONTINUATION_PATTERN = re.compile(r"^[A-Z][A-Z0-9 ]*[- ][A-Z0-9-]+(?:\s+|$)")
+ORPHAN_PROJECT_LINE_PATTERN = re.compile(
+    r"^(?:[A-Z]+\s+[A-Z]?\d{3,}[A-Z]?-\d{3}|[A-Z0-9]+-\d{3}|\d{3,}-\d{3})\s+"
+)
 WEIGHTED_AVERAGE_PATTERN = re.compile(r"^Weighted Average for")
 
 FOOTER_PREFIXES = (
@@ -117,6 +120,7 @@ class ParseStats:
     project_rows: int = 0
     weighted_average_rows: int = 0
     continuation_lines: int = 0
+    orphan_project_lines: int = 0
     unparsed_lines: list[tuple[int, str]] = field(default_factory=list)
 
 
@@ -216,6 +220,8 @@ def parse_pages(
                 last_row["project_location_raw"] = f"{last_row['project_location_raw']} | {pending_line}"
                 last_row["raw_text"] = f"{last_row['raw_text']} | {pending_line}"
                 stats.continuation_lines += 1
+        elif all(ORPHAN_PROJECT_LINE_PATTERN.match(pending_line) for _, pending_line in pending_project_lines):
+            stats.orphan_project_lines += len(pending_project_lines)
         else:
             stats.unparsed_lines.extend(pending_project_lines)
 
@@ -331,6 +337,7 @@ def print_stats(stats: ParseStats, rows: list[dict[str, str]], output: Path) -> 
     print(f"Found {stats.item_headers} item header row(s).")
     print(f"Skipped {stats.weighted_average_rows} weighted average row(s).")
     print(f"Attached {stats.continuation_lines} continuation line(s).")
+    print(f"Skipped {stats.orphan_project_lines} orphan project line(s).")
 
     if stats.unparsed_lines:
         print(f"WARNING: {len(stats.unparsed_lines)} non-empty item-section line(s) were not parsed.")

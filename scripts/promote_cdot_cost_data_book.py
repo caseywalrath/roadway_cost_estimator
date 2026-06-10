@@ -30,7 +30,7 @@ CONTRACTOR_LINE_PATTERN = re.compile(
     r"(?P<award_index>[\d.]+)$"
 )
 PROJECT_LINE_PATTERN = re.compile(
-    r"^(?P<project_number>(?:[A-Z]+\s+\d{3,}[A-Z]?-\d{3}|[A-Z0-9]+-\d{3}|\d{3,}-\d{3}))\s+"
+    r"^(?P<project_number>(?:[A-Z]+\s+[A-Z]?\d{3,}[A-Z]?-\d{3}|[A-Z0-9]+-\d{3}|\d{3,}-\d{3}))\s+"
     r"(?P<project_location>.+?)"
     r"(?:\s+(?P<district>\d)(?:\s+(?P<terrain>[A-Z]))?)?$"
 )

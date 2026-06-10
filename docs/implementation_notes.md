@@ -115,12 +115,18 @@ It preserves existing `canonical_item_id` mappings by item code, adds abbreviate
 
 ## CDOT Cost Data Book Staging Import
 
-The repo includes a local parser for the known CDOT 2026 Q1 Cost Data Book PDF format. This is an explicit Phase 2 reprioritization from no automatic PDF parsing to a narrow parser for one public CDOT source format.
+The repo includes a local parser for the known public CDOT Cost Data Book PDF format. It is a narrow parser for CDOT cost-book PDFs, not a general-purpose PDF parser.
 
-Run the parser with the repo-root PDF:
+Run the parser with the default 2026 Q1 repo-root PDF:
 
 ```text
 python scripts/parse_cdot_cost_data_book.py
+```
+
+For another promoted period, pass the source PDF, output path, source period, and item-section marker explicitly:
+
+```text
+python scripts/parse_cdot_cost_data_book.py --source CDOTRM_EEMA_Cost_Data_Book_-_2023_-_4th_Qtr_-_4-9-2026.pdf --output public/data/imports/cdot_cost_data_book_2023_q4_item_unit_costs.csv --source-period "2023 Q4" --item-section-marker "Item Unit Costs by Projects -- 2023 Cost Data"
 ```
 
 To use the Codex bundled Python runtime, replace `python` with the bundled Python executable returned by the workspace dependency loader.
@@ -147,6 +153,12 @@ Promote reviewed staging rows into app-loaded CSVs:
 python scripts/promote_cdot_cost_data_book.py
 ```
 
+For another promoted period, pass the period-specific source metadata explicitly:
+
+```text
+python scripts/promote_cdot_cost_data_book.py --source-pdf CDOTRM_EEMA_Cost_Data_Book_-_2023_-_4th_Qtr_-_4-9-2026.pdf --staging-items public/data/imports/cdot_cost_data_book_2023_q4_item_unit_costs.csv --project-lookup-output public/data/imports/cdot_cost_data_book_2023_q4_projects.csv --source-id cdot_cost_data_book_2023_q4 --source-label "CDOT 2023 Q4 Cost Data Book" --source-year 2023 --source-notes "Public CDOT Cost Data Book 2023 Q4 item-level project rows promoted from reviewed staging CSV." --row-prefix cdot_2023q4
+```
+
 The promotion script parses project-list pages from the PDF, writes a project staging lookup, validates item rows, and rewrites:
 
 ```text
@@ -156,7 +168,7 @@ public/data/projects.csv
 public/data/item_observations.csv
 ```
 
-It preserves existing demo rows and adds one public source row, 26 CDOT project rows, and 6,126 promoted observations. Each cost-book item row becomes separate awarded-bid, average-bid, and engineer-estimate observations. The app defaults to awarded-bid evidence.
+It preserves existing demo rows and other promoted cost-book periods. Each cost-book item row becomes separate awarded-bid, average-bid, and engineer-estimate observations. The app defaults to awarded-bid evidence.
 
 Run promotion fixture tests:
 

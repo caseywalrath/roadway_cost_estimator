@@ -116,6 +116,30 @@ class CdotCostDataBookParserTests(unittest.TestCase):
         self.assertEqual(0, stats.continuation_lines)
         self.assertEqual([], stats.unparsed_lines)
 
+    def test_skips_orphan_project_number_lines(self) -> None:
+        rows, stats = parse_pages(
+            [
+                (
+                    43,
+                    "\n".join(
+                        [
+                            "Item Unit Costs by Projects -- 2023 Cost Data",
+                            "202-00240 Rem Asphalt Mat (Planing) Sq Yard",
+                            "BRM322-041 US 34 EAST OF LAIRD",
+                            "NHPP0821-116 SH 82 MP 26 - MP 33 IN PITKIN 11/30/23 178,948.00 5.26 3.33 2.40",
+                        ]
+                    ),
+                )
+            ],
+            "fixture.pdf",
+            "2023 Q4",
+            "Item Unit Costs by Projects -- 2023 Cost Data",
+        )
+
+        self.assertEqual(1, len(rows))
+        self.assertEqual(1, stats.orphan_project_lines)
+        self.assertEqual([], stats.unparsed_lines)
+
     def test_keeps_item_context_across_pages(self) -> None:
         rows, stats = parse_pages(
             [
