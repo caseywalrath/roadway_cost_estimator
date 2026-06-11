@@ -7,7 +7,7 @@ The first implementation is the Colorado Roadway Comparable Project Explorer.
 Included:
 
 - Static Vite + TypeScript app.
-- Demo CSV data package.
+- Static public CDOT cost-book CSV data package.
 - One-item lookup form.
 - Deterministic browser-side matching.
 - Recommendation summary.
@@ -170,7 +170,7 @@ public/data/projects.csv
 public/data/item_observations.csv
 ```
 
-It preserves existing demo rows and other promoted cost-book periods. Each cost-book item row becomes separate awarded-bid, average-bid, and engineer-estimate observations. The app defaults to awarded-bid evidence.
+It preserves other promoted cost-book periods and removes any old app-loaded demo evidence rows if they are present in the CSV package. Each cost-book item row becomes separate awarded-bid, average-bid, and engineer-estimate observations. The app defaults to awarded-bid evidence.
 
 Run promotion fixture tests:
 
@@ -202,5 +202,5 @@ The workflow uses `npm ci` so GitHub builds from the committed lockfile.
 1. Collect public CDOT cost books, bid tabs, or awarded project records.
 2. Define import scripts for those source formats.
 3. Validate 5 to 10 common roadway item families with roadway reviewers.
-4. Replace or supplement demo cost observations with validated public records.
+4. Expand validated public records for common roadway item families.
 5. Add a lightweight estimate workspace after item matching is trusted.

@@ -11,7 +11,7 @@ if (!root) {
 root.innerHTML = `
   <main class="app-shell app-shell--loading">
     <section class="status-panel">
-      <p class="eyebrow">Loading demo data</p>
+      <p class="eyebrow">Loading project data</p>
       <h1>Roadway Cost Comparable Explorer</h1>
       <p>Loading static CSV records from the public data package.</p>
     </section>

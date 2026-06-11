@@ -218,11 +218,19 @@ function assignPrice(row: EvidenceRow, priceType: string, unitPrice: number): vo
 }
 
 function sourceMatches(row: EvidenceRow, filters: EvidenceFilters): boolean {
+  if (isDemoSourceType(row.source?.sourceType)) {
+    return false;
+  }
+
   if (filters.sourceType === "all") {
     return true;
   }
 
   return row.source?.sourceType === filters.sourceType;
+}
+
+function isDemoSourceType(sourceType: string | undefined): boolean {
+  return sourceType === "public_demo" || sourceType === "internal_demo";
 }
 
 function rowMatchesNonUnitFilters(row: EvidenceRow, filters: EvidenceFilters): boolean {
@@ -318,10 +326,6 @@ function buildNotes(
 
   if (filteredRows.length > 0 && !stats) {
     notes.push("The filtered evidence rows do not include awarded bid unit prices for summary statistics.");
-  }
-
-  if (filters.sourceType === "public_demo" || filters.sourceType === "internal_demo" || filters.sourceType === "all") {
-    notes.push("Synthetic demo rows may be visible under the current source filter.");
   }
 
   return notes;
