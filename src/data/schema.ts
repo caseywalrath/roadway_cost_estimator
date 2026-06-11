@@ -2,7 +2,7 @@ export type SourceScope = "both" | "public" | "internal";
 
 export type PriceTypeScope = "awarded" | "average" | "engineer" | "all";
 
-export type EvidenceSourceTypeFilter = "public_cost_book" | "public_demo" | "internal_demo" | "all";
+export type EvidenceSourceTypeFilter = "public_cost_book" | "all";
 
 export type MatchType = "exact_code" | "canonical_alias" | "keyword_fallback";
 

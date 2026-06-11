@@ -31,7 +31,7 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 
 ## Data Governance
 
-The CSV records include synthetic demo data and public CDOT 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 Cost Data Book records. They are prototype evidence and must be reviewed before estimating use.
+The CSV records include public CDOT 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 Cost Data Book records. They are prototype evidence and must be reviewed before estimating use.
 
 Do not commit private FHU estimate data to a public GitHub Pages repository. Real internal data should either stay outside the repo, be uploaded locally by the user in a later browser-only workflow, or move to an approved private hosting model.
 
@@ -74,7 +74,7 @@ The current item picker data is generated from the public CDOT 2026 Item Code Bo
 
 Some prefixes use known CDOT Standard Specification section labels. Prefixes not yet mapped to a known section label use fallback labels so all valid item-code rows remain searchable.
 
-The full item code book supports lookup only. Existing synthetic demo rows with comparable observations are preserved separately, so pricing still appears only when matching rows exist in `public/data/item_observations.csv`.
+The full item code book supports lookup only, so pricing appears only when matching public cost-book rows exist in `public/data/item_observations.csv`.
 
 The submitted `SearchQuery` shape did not change. The visible item search is limited to item identity and quantity. Unit is resolved from the selected official item and displayed as a non-editable suffix in the quantity field when available. Evidence filters are applied from the result-side evidence controls after item identity is established.
 

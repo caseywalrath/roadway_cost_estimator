@@ -100,8 +100,6 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
           <select name="sourceType">
             ${renderSourceTypeOption("public_cost_book", "Public CDOT cost book", result.filters.sourceType)}
             ${renderSourceTypeOption("all", "All loaded sources", result.filters.sourceType)}
-            ${renderSourceTypeOption("public_demo", "Public demo rows", result.filters.sourceType)}
-            ${renderSourceTypeOption("internal_demo", "Internal demo rows", result.filters.sourceType)}
           </select>
         </label>
 
@@ -348,9 +346,7 @@ function renderSourceTypeOption(
 function sourceTypeLabel(value: EvidenceSourceTypeFilter): string {
   const labels: Record<EvidenceSourceTypeFilter, string> = {
     public_cost_book: "Public CDOT cost book",
-    all: "All loaded sources",
-    public_demo: "Public demo rows",
-    internal_demo: "Internal demo rows"
+    all: "All loaded sources"
   };
 
   return labels[value];

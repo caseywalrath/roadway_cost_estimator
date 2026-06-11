@@ -387,6 +387,10 @@ def normalize_existing_rows(rows: list[dict[str, str]], fieldnames: list[str]) -
     return [{field: row.get(field, "") for field in fieldnames} for row in rows]
 
 
+def is_demo_source(source_id: str, source_type: str = "") -> bool:
+    return source_id.startswith("demo_") or source_type in {"public_demo", "internal_demo"}
+
+
 def write_project_lookup(path: Path, projects: list[CostBookProject]) -> None:
     write_csv(path, project_rows(projects), PROJECT_FIELDS)
 
@@ -427,15 +431,24 @@ def promote(args: argparse.Namespace) -> None:
 
     existing_sources = [
         row for row in normalize_existing_rows(read_csv(args.sources), SOURCE_FIELDS)
-        if row["source_id"] != args.source_id
+        if row["source_id"] != args.source_id and not is_demo_source(row["source_id"], row["source_type"])
     ]
     existing_projects = [
         row for row in normalize_existing_rows(read_csv(args.projects), PROJECT_FIELDS)
-        if row["source_id"] != args.source_id and not row["project_id"].startswith(f"{args.row_prefix}_")
+        if (
+            row["source_id"] != args.source_id
+            and not row["project_id"].startswith(f"{args.row_prefix}_")
+            and not is_demo_source(row["source_id"])
+        )
     ]
     existing_observations = [
         row for row in normalize_existing_rows(read_csv(args.observations), OBSERVATION_FIELDS)
-        if row["source_id"] != args.source_id and not row["observation_id"].startswith(f"{args.row_prefix}_")
+        if (
+            row["source_id"] != args.source_id
+            and not row["observation_id"].startswith(f"{args.row_prefix}_")
+            and not is_demo_source(row["source_id"])
+            and row["price_type"] not in {"bid_tab_demo", "engineers_estimate"}
+        )
     ]
 
     write_csv(args.project_lookup_output, project_rows(projects, args.source_id), PROJECT_FIELDS)

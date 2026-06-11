@@ -90,7 +90,7 @@ export function scoreComparableItems(data: AppData, rawQuery: SearchQuery): Matc
   }
 
   if (priceSummary && priceSummary.count < 3) {
-    warnings.push("Fewer than three same-unit comparable records are available in the demo dataset.");
+    warnings.push("Fewer than three same-unit comparable records are available in the loaded dataset.");
   }
 
   if (confidence === "Low") {

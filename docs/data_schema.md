@@ -4,7 +4,7 @@
 
 The prototype uses static CSV files so non-developers can inspect records and Git can track every data change.
 
-The current data package includes synthetic demo records and public CDOT 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 Cost Data Book records. It is prototype evidence, not estimating guidance.
+The current data package includes public CDOT 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 Cost Data Book records. It is prototype evidence, not estimating guidance.
 
 ## Files
 
@@ -71,8 +71,6 @@ Required columns:
 
 Known `price_type` values include:
 
-- `bid_tab_demo`
-- `engineers_estimate`
 - `cdot_awarded_bid`
 - `cdot_average_bid`
 - `cdot_engineer_estimate`
@@ -324,6 +322,6 @@ Required columns match the extended `projects.csv` columns.
 - Every loaded agency item should have a matching section prefix in `spec_sections.csv` when the picker needs to expose that item.
 - The full item-code book is lookup data only; pricing requires matching records in `item_observations.csv`.
 - Cost data book staging imports must be reviewed before they are promoted into app-loaded pricing data.
-- Demo data must stay clearly labeled.
+- Synthetic demo project evidence should not be committed to the app-loaded public data package.
 - Private FHU data must not be committed to a public repository.
 
