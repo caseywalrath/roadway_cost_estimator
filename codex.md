@@ -4,7 +4,7 @@
 
 The user is not a developer, coder, or software engineer.
 
-The user has a remedial understanding of GitHub and Codex.
+The user has a basic but functional understanding of GitHub and Codex.
 
 The user previously used Claude Code through a web/cloud workflow and is now adopting a local Codex workflow.
 

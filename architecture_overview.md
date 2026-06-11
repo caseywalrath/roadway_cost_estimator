@@ -6,7 +6,7 @@ This repository contains a static-first prototype for a Colorado roadway bid-ite
 
 The first product is not a chatbot, not a full project estimator, and not an automatic price recommendation tool. It is a structured evidence tool that helps a user identify one official roadway bid item and review the project records where that exact item appears.
 
-The primary deliverable is the project-item evidence table. Awarded bid statistics are secondary aids that summarize the currently filtered evidence rows.
+The primary deliverable is the project-item evidence table. Awarded bid statistics are secondary aids that summarize the currently filtered evidence rows. Filtered Matching Projects rows can be exported to CSV for external review.
 
 ## Application Shape
 
@@ -51,6 +51,7 @@ The Phase 1 evidence browser rules are intentionally visible and simple:
 - Show unit-mismatch counts as data notes instead of mixing units in the default table.
 - Apply source, geography, district, year, quantity, unit, and awarded-price filters as hard filters.
 - Sort evidence rows newest first, then by project number or project name.
+- Export the currently filtered Matching Projects rows to CSV with the displayed table columns and useful project/source metadata.
 - Calculate summary statistics from awarded bid unit prices only.
 
 Alias, keyword, and description fallback matching should return only in a later explicit review mode. They are not part of the default evidence table.
@@ -80,7 +81,6 @@ The submitted `SearchQuery` shape did not change. The visible item search is lim
 ## Near-Term Extension Points
 
 - Review promoted 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 CDOT cost-book rows with roadway engineers.
-- Add CSV export for the filtered evidence table.
 - Add manual include/exclude controls and reviewer notes for an engineer-selected evidence set.
 - Add validation coverage for future CDOT cost-book quarters before promotion.
 - Add reviewed FHU data only through an approved private-data workflow.

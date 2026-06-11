@@ -404,6 +404,14 @@ input[readonly] {
   background: #dde6ee;
 }
 
+.secondary-button:disabled,
+.secondary-button:disabled:hover {
+  background: #edf1f5;
+  color: #7a8794;
+  border-color: #d4dde6;
+  cursor: not-allowed;
+}
+
 .results-panel {
   display: grid;
   gap: 16px;
@@ -501,7 +509,15 @@ input[readonly] {
   align-items: start;
 }
 
-.matching-projects-edit-button {
+.matching-projects-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.matching-projects-edit-button,
+.matching-projects-export-button {
   min-height: 36px;
   padding: 6px 12px;
   white-space: nowrap;
@@ -896,5 +912,9 @@ tbody tr:last-child td {
   .item-result-button span {
     overflow: visible;
     text-overflow: clip;
+  }
+
+  .matching-projects-actions {
+    justify-content: flex-start;
   }
 }

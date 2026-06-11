@@ -5,6 +5,7 @@ import {
   createDefaultEvidenceFilters,
   createDefaultEvidenceSort
 } from "../matching/buildEvidenceResult";
+import { downloadEvidenceCsv } from "./exportEvidenceCsv";
 import {
   bindItemPicker,
   readQueryFromForm,
@@ -92,6 +93,10 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     root.querySelector<HTMLButtonElement>("#edit-item-search")?.addEventListener("click", () => {
       itemSearchCollapsed = false;
       render();
+    });
+
+    root.querySelector<HTMLButtonElement>("#download-matching-projects-csv")?.addEventListener("click", () => {
+      downloadEvidenceCsv(result);
     });
 
     root.querySelectorAll<HTMLButtonElement>("[data-evidence-sort-key]").forEach((button) => {
