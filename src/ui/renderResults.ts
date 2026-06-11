@@ -46,6 +46,8 @@ function renderEvidenceTable(
 }
 
 function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: boolean): string {
+  const showExportButton = Boolean(result.query.itemCode);
+
   return `
     <div class="panel-heading evidence-table-heading">
       <div>
@@ -57,7 +59,16 @@ function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: bo
           Quantity: ${result.query.quantity ? formatNumber(result.query.quantity) : "Not entered"}
         </p>
       </div>
-      ${showEditButton ? `<button type="button" id="edit-item-search" class="primary-button matching-projects-edit-button">Edit Item Search</button>` : ""}
+      ${showExportButton || showEditButton
+        ? `
+          <div class="matching-projects-actions">
+            ${showExportButton
+              ? `<button type="button" id="download-matching-projects-csv" class="secondary-button matching-projects-export-button" ${result.filteredRows.length === 0 ? "disabled" : ""}>Download CSV</button>`
+              : ""}
+            ${showEditButton ? `<button type="button" id="edit-item-search" class="primary-button matching-projects-edit-button">Edit Item Search</button>` : ""}
+          </div>
+        `
+        : ""}
     </div>
   `;
 }
