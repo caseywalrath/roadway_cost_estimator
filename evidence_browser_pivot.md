@@ -1,5 +1,7 @@
 # Evidence Browser Pivot
 
+Status: Historical planning reference. The current consolidated roadmap is `project_roadmap.md`.
+
 ## Purpose
 
 This document is the master plan for pivoting the prototype from a price recommendation tool to a bid-item evidence browser.

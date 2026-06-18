@@ -1,5 +1,7 @@
 # Prototype Phase 2 Plan
 
+Status: Historical planning reference. The current consolidated roadmap is `project_roadmap.md`.
+
 ## Purpose
 
 This document consolidates the current roadmap, product notes, and roadway engineer feedback into a practical next-phase plan.
