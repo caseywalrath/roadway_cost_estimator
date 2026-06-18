@@ -75,7 +75,7 @@ Known `price_type` values include:
 - `cdot_average_bid`
 - `cdot_engineer_estimate`
 
-The app defaults to awarded-bid evidence for recommendations. Average bid and engineer estimate rows are loaded as separate observation types for review and filtering.
+The app defaults to awarded-bid evidence for summary statistics. Average bid and engineer estimate rows are loaded as separate observation types for review, table display, and CSV export.
 
 ### `canonical_items.csv`
 
@@ -325,3 +325,41 @@ Required columns match the extended `projects.csv` columns.
 - Synthetic demo project evidence should not be committed to the app-loaded public data package.
 - Private FHU data must not be committed to a public repository.
 
+## Data Package Validation
+
+Run the committed CSV package validator before promoting new app-loaded data or deploying the site:
+
+```text
+npm run validate:data
+```
+
+The validator uses only Python standard library modules and reads the app-loaded CSV files from `public/data`.
+
+Validation errors fail the command when the data package has:
+
+- missing required columns
+- duplicate source, project, observation, agency item, or section IDs
+- project rows that reference missing sources
+- observation rows that reference missing projects or sources
+- observation source IDs that do not match the referenced project source IDs
+- blank required relationship or evidence fields
+- nonnumeric numeric fields
+- invalid date shapes
+- app-loaded demo evidence IDs or legacy demo source and price types
+- no awarded-bid evidence for smoke-test item `304-06007`
+
+Validation warnings do not fail the command when the data package has:
+
+- observation item codes that are not present in the current `agency_items.csv`
+- agency item prefixes that are not present in `spec_sections.csv`
+- blank optional project metadata
+- smoke-test item counts that change from the current baseline
+
+Current smoke-test awarded-bid baselines:
+
+- `304-06007`: 151 rows
+- `626-00000`: 422 rows
+- `630-80341`: 420 rows
+- `630-00012`: 415 rows
+- `630-80342`: 411 rows
+- `630-00000`: 396 rows

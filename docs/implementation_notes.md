@@ -8,15 +8,19 @@ Included:
 
 - Static Vite + TypeScript app.
 - Static public CDOT cost-book CSV data package.
-- One-item lookup form.
-- Deterministic browser-side matching.
-- Recommendation summary.
-- Price distribution summary.
-- Top comparable records table.
-- Warnings and improve-confidence guidance.
+- CDOT section-based one-item lookup form.
+- Deterministic browser-side exact-code evidence matching.
+- Matching Projects evidence table.
+- Evidence filters, sortable table columns, and CSV export.
+- Awarded Bid Summary based on currently filtered awarded bid unit prices.
+- Source coverage and data notes.
+- Data-package validation script.
 
 Not included:
 
+- Price recommendation.
+- Confidence score.
+- Demo project evidence.
 - Real estimating data.
 - Estimate upload.
 - Estimate workspace.
@@ -32,6 +36,14 @@ Install dependencies:
 ```text
 npm install
 ```
+
+Validate the app-loaded CSV data package:
+
+```text
+npm run validate:data
+```
+
+This runs `scripts/validate_data_package.py` against `public/data`. It fails on structural data problems, relationship errors, invalid numeric/date values, and app-loaded demo evidence leakage. It warns on missing optional metadata, lookup coverage gaps, and smoke-test count changes.
 
 Run a local development server:
 
@@ -172,6 +184,14 @@ public/data/item_observations.csv
 
 It preserves other promoted cost-book periods and removes any old app-loaded demo evidence rows if they are present in the CSV package. Each cost-book item row becomes separate awarded-bid, average-bid, and engineer-estimate observations. The app defaults to awarded-bid evidence.
 
+After promotion, run:
+
+```text
+npm run validate:data
+```
+
+Review any warnings before committing promoted data.
+
 Run promotion fixture tests:
 
 ```text
@@ -199,8 +219,6 @@ The workflow uses `npm ci` so GitHub builds from the committed lockfile.
 
 ## Next Product Steps
 
-1. Collect public CDOT cost books, bid tabs, or awarded project records.
-2. Define import scripts for those source formats.
-3. Validate 5 to 10 common roadway item families with roadway reviewers.
-4. Expand validated public records for common roadway item families.
-5. Add a lightweight estimate workspace after item matching is trusted.
+Current sequencing lives in `project_roadmap.md`.
+
+Near-term development should keep hardening the exact-code evidence browser before estimate workspace, non-exact matching, private data, or import workflows are added.
