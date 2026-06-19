@@ -68,19 +68,6 @@ export function renderExplorer(
         </div>
       </section>
 
-      <section class="workflow-step">
-        ${renderStepHeading("3", "Enter quantity")}
-        <label>
-          <span class="label-row">
-            Quantity
-          </span>
-          <div class="quantity-input-wrap">
-            <input name="quantity" type="number" min="0" step="0.01" value="${query.quantity ?? ""}" />
-            <span class="quantity-unit" data-quantity-unit aria-hidden="true">${escapeHtml(selectedUnit)}</span>
-          </div>
-        </label>
-      </section>
-
       <div class="form-action-grid">
         <button type="button" id="clear-query" class="secondary-button">Clear</button>
         <button type="submit" class="primary-button">Search</button>
@@ -110,7 +97,6 @@ export function bindItemPicker(
   const sectionSelect = form.querySelector<HTMLSelectElement>("[data-section-select]");
   const itemSearchInput = form.querySelector<HTMLInputElement>("[data-item-search]");
   const itemResults = form.querySelector<HTMLElement>("[data-item-results]");
-  const quantityUnit = form.querySelector<HTMLElement>("[data-quantity-unit]");
 
   function clearSelectedItem(options: { clearSearch: boolean } = { clearSearch: false }): void {
     if (itemCodeInput) {
@@ -121,9 +107,6 @@ export function bindItemPicker(
     }
     if (unitInput) {
       unitInput.value = "";
-    }
-    if (quantityUnit) {
-      quantityUnit.textContent = "";
     }
   }
 
@@ -197,9 +180,6 @@ export function bindItemPicker(
     }
     if (unitInput) {
       unitInput.value = unit;
-    }
-    if (quantityUnit) {
-      quantityUnit.textContent = unit;
     }
     renderCurrentResults();
   });
@@ -333,7 +313,6 @@ function renderItemResultButton(agencyItem: AgencyItemRecord, selected: boolean)
 
 export function readQueryFromForm(form: HTMLFormElement, currentQuery?: SearchQuery): SearchQuery {
   const formData = new FormData(form);
-  const quantity = Number(formData.get("quantity") || 0);
   const estimateYear = currentQuery?.estimateYear ?? new Date().getFullYear();
 
   return {
@@ -346,7 +325,7 @@ export function readQueryFromForm(form: HTMLFormElement, currentQuery?: SearchQu
     itemCode: String(formData.get("itemCode") || ""),
     description: String(formData.get("description") || ""),
     unit: String(formData.get("unit") || ""),
-    quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : null
+    quantity: null
   };
 }
 

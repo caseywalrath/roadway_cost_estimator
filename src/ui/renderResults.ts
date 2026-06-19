@@ -72,8 +72,7 @@ function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: bo
         <h3>${escapeHtml(result.query.itemCode ? result.interpretedDescription : "Select an official item")}</h3>
         <p class="query-line">
           Item code: ${escapeHtml(result.query.itemCode || "Not selected")} |
-          Unit: ${escapeHtml(result.query.unit || "Not selected")} |
-          Quantity: ${result.query.quantity ? formatNumber(result.query.quantity) : "Not entered"}
+          Unit: ${escapeHtml(result.query.unit || "Not selected")}
         </p>
       </div>
       ${showExportButton || showEditButton
@@ -99,15 +98,21 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
         ${renderFilterChips(result)}
         ${visibleExcludedCount > 0 ? `<span class="filter-chip">Excluded: ${formatNumber(visibleExcludedCount)}</span>` : ""}
       </div>
-      <button
-        type="button"
-        id="toggle-evidence-filters"
-        class="secondary-button filter-toggle-button"
-        aria-expanded="${filtersExpanded}"
-        aria-controls="evidence-filter-drawer"
-      >
-        ${filtersExpanded ? "Hide filters" : "Filters"}
-      </button>
+      <div class="evidence-filter-actions">
+        <span class="results-step-cue" aria-label="Step 3 refine results">
+          <span class="step-number" aria-hidden="true">3</span>
+          <span>Refine results</span>
+        </span>
+        <button
+          type="button"
+          id="toggle-evidence-filters"
+          class="secondary-button filter-toggle-button"
+          aria-expanded="${filtersExpanded}"
+          aria-controls="evidence-filter-drawer"
+        >
+          ${filtersExpanded ? "Hide filters" : "Filters"}
+        </button>
+      </div>
     </div>
     <div id="evidence-filter-drawer" class="evidence-filter-drawer" ${filtersExpanded ? "" : "hidden"}>
       <form id="evidence-filters-form" class="evidence-filter-form">
@@ -128,15 +133,15 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
           <input name="geography" value="${escapeHtml(result.filters.geography)}" placeholder="District, county, or location" />
         </label>
 
-        <label>
-          <span class="label-row">
-            District
-          </span>
-          <select name="district">
-            <option value="">All districts</option>
-            ${renderDistrictOptions(result.availableDistricts, result.filters.district)}
-          </select>
-        </label>
+        <fieldset class="district-filter-field">
+          <legend>District</legend>
+          <details class="district-multiselect">
+            <summary>${escapeHtml(districtSummaryLabel(result.filters.districts))}</summary>
+            <div class="district-multiselect-menu">
+              ${renderDistrictCheckboxOptions(result.availableDistricts, result.filters.districts)}
+            </div>
+          </details>
+        </fieldset>
 
         <label>
           <span class="label-row">
@@ -166,11 +171,11 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
           <legend>Quantity range</legend>
           <label>
             <span>Min</span>
-            <input name="quantityMin" type="number" min="0" step="0.01" value="${result.filters.quantityMin ?? ""}" />
+            ${renderQuantityStepper("quantityMin", result.filters.quantityMin)}
           </label>
           <label>
             <span>Max</span>
-            <input name="quantityMax" type="number" min="0" step="0.01" value="${result.filters.quantityMax ?? ""}" />
+            ${renderQuantityStepper("quantityMax", result.filters.quantityMax)}
           </label>
         </fieldset>
 
@@ -179,7 +184,10 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
           <span>Only rows with awarded bid price</span>
         </label>
 
-        <button type="submit" class="secondary-button">Apply filters</button>
+        <div class="filter-form-actions">
+          <button type="submit" class="secondary-button">Apply filters</button>
+          <button type="button" id="clear-evidence-filters" class="secondary-button">Clear Filters</button>
+        </div>
       </form>
     </div>
   `;
@@ -440,7 +448,7 @@ function renderFilterChips(result: EvidenceResult): string {
     `Rows: ${formatNumber(result.filteredRows.length)}`,
     `Source: ${sourceTypeLabel(result.filters.sourceType)}`,
     result.filters.geography ? `Geography: ${result.filters.geography}` : "",
-    result.filters.district ? `District: ${result.filters.district}` : "",
+    result.filters.districts.length > 0 ? `District: ${districtSummaryLabel(result.filters.districts)}` : "",
     result.filters.unit ? `Unit: ${result.filters.unit}` : "",
     result.filters.yearMin !== null || result.filters.yearMax !== null
       ? `Year: ${rangeLabel(result.filters.yearMin, result.filters.yearMax)}`
@@ -489,12 +497,44 @@ function rangeLabel(minimum: number | null, maximum: number | null): string {
   return "Any";
 }
 
-function renderDistrictOptions(districts: string[], selectedDistrict: string): string {
-  const options = uniqueValues([selectedDistrict, ...districts].filter(Boolean));
+function renderDistrictCheckboxOptions(districts: string[], selectedDistricts: string[]): string {
+  const selectedSet = new Set(selectedDistricts);
+  const options = uniqueValues([...selectedDistricts, ...districts].filter(Boolean));
+
+  if (options.length === 0) {
+    return `<p class="district-multiselect-empty">No districts available for current source.</p>`;
+  }
 
   return options
-    .map((district) => `<option value="${escapeHtml(district)}" ${district === selectedDistrict ? "selected" : ""}>${escapeHtml(district)}</option>`)
+    .map((district) => `
+      <label class="district-checkbox-label">
+        <input name="districts" type="checkbox" value="${escapeHtml(district)}" ${selectedSet.has(district) ? "checked" : ""} />
+        <span>${escapeHtml(district)}</span>
+      </label>
+    `)
     .join("");
+}
+
+function districtSummaryLabel(selectedDistricts: string[]): string {
+  if (selectedDistricts.length === 0) {
+    return "All districts";
+  }
+
+  if (selectedDistricts.length === 1) {
+    return `District ${selectedDistricts[0]}`;
+  }
+
+  return `${selectedDistricts.length} districts`;
+}
+
+function renderQuantityStepper(name: "quantityMin" | "quantityMax", value: number | null): string {
+  return `
+    <div class="filter-number-stepper">
+      <button type="button" class="stepper-button" data-quantity-step="-1" data-quantity-target="${name}" aria-label="Decrease ${name === "quantityMin" ? "minimum" : "maximum"} quantity">-</button>
+      <input name="${name}" type="number" min="0" step="any" value="${value ?? ""}" inputmode="decimal" />
+      <button type="button" class="stepper-button" data-quantity-step="1" data-quantity-target="${name}" aria-label="Increase ${name === "quantityMin" ? "minimum" : "maximum"} quantity">+</button>
+    </div>
+  `;
 }
 
 export function readEvidenceFiltersFromForm(
@@ -507,7 +547,7 @@ export function readEvidenceFiltersFromForm(
     ...currentFilters,
     sourceType: String(formData.get("sourceType") || "public_cost_book") as EvidenceSourceTypeFilter,
     geography: String(formData.get("geography") || ""),
-    district: String(formData.get("district") || ""),
+    districts: formData.getAll("districts").map((value) => String(value)).filter(Boolean),
     yearMin: readOptionalNumber(formData.get("yearMin")),
     yearMax: readOptionalNumber(formData.get("yearMax")),
     quantityMin: readOptionalNumber(formData.get("quantityMin")),

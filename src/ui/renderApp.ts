@@ -102,6 +102,30 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       render();
     });
 
+    root.querySelector<HTMLButtonElement>("#clear-evidence-filters")?.addEventListener("click", () => {
+      evidenceFilters = createDefaultEvidenceFilters(result.query);
+      evidenceFiltersExpanded = false;
+      render();
+    });
+
+    root.querySelectorAll<HTMLButtonElement>("[data-quantity-step]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const targetName = button.dataset.quantityTarget;
+        const step = Number(button.dataset.quantityStep ?? 0);
+        const input = targetName
+          ? root.querySelector<HTMLInputElement>(`input[name="${targetName}"]`)
+          : null;
+
+        if (!input || !Number.isFinite(step)) {
+          return;
+        }
+
+        const currentValue = Number(input.value || 0);
+        const nextValue = Math.max(0, (Number.isFinite(currentValue) ? currentValue : 0) + step);
+        input.value = Number.isInteger(nextValue) ? String(nextValue) : String(Number(nextValue.toFixed(6)));
+      });
+    });
+
     root.querySelector<HTMLButtonElement>("#clear-query")?.addEventListener("click", () => {
       query = { ...emptyQuery };
       evidenceFilters = createDefaultEvidenceFilters(query);

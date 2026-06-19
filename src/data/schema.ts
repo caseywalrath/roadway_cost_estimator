@@ -168,7 +168,7 @@ export interface PriceSummary {
 export interface EvidenceFilters {
   sourceType: EvidenceSourceTypeFilter;
   geography: string;
-  district: string;
+  districts: string[];
   yearMin: number | null;
   yearMax: number | null;
   quantityMin: number | null;

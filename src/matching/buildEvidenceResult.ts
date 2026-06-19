@@ -19,7 +19,7 @@ export function createDefaultEvidenceFilters(query: SearchQuery): EvidenceFilter
   return {
     sourceType: "public_cost_book",
     geography: "",
-    district: "",
+    districts: [],
     yearMin: null,
     yearMax: null,
     quantityMin: null,
@@ -141,7 +141,7 @@ function normalizeEvidenceFilters(filters: EvidenceFilters, query: SearchQuery):
   return {
     ...filters,
     geography: filters.geography.trim(),
-    district: filters.district.trim(),
+    districts: uniqueSorted(filters.districts.map((district) => district.trim()).filter(Boolean)),
     unit: normalizeUnit(filters.unit || query.unit),
     yearMin: positiveNumberOrNull(filters.yearMin),
     yearMax: positiveNumberOrNull(filters.yearMax),
@@ -242,7 +242,7 @@ function rowMatchesNonUnitFilters(row: EvidenceRow, filters: EvidenceFilters): b
     return false;
   }
 
-  if (filters.district && row.project?.district !== filters.district) {
+  if (filters.districts.length > 0 && !filters.districts.includes(row.project?.district ?? "")) {
     return false;
   }
 

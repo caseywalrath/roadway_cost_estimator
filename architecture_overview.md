@@ -70,7 +70,8 @@ The visible left-panel flow is:
 
 1. Locate Item: select a CDOT specification division and section/prefix when they help narrow the search, then use Item code or description to filter loaded agency items by item code, suffix, official description, or abbreviated description.
 2. Select Item: review the potential matching items and select one result to populate the submitted item code. The matching layer resolves the official description and unit from the agency item table.
-3. Enter quantity: provide the planned quantity before reviewing project evidence.
+
+Quantity is no longer part of the item search because the project evidence table has explicit result-side quantity filters.
 
 Item code or description works across all loaded agency items when no division or section is selected. Division and section selections narrow the visible search results when selected. Select Item stays empty until the user selects a division, selects a section, types an item search, or already has an official item selected. If the user does not select an official item, the typed description can still submit as a weaker manual description search.
 
@@ -82,7 +83,7 @@ Some prefixes use known CDOT Standard Specification section labels. Prefixes not
 
 The full item code book supports lookup only, so pricing appears only when matching public cost-book rows exist in `public/data/item_observations.csv`.
 
-The submitted `SearchQuery` shape did not change. The visible item search is limited to item identity and quantity. Unit is resolved from the selected official item and displayed as a non-editable suffix in the quantity field when available. Evidence filters are applied from the result-side evidence controls after item identity is established.
+The submitted `SearchQuery` shape did not change. The visible item search is limited to item identity. Unit is resolved from the selected official item and used as the default evidence filter. Evidence filters are applied from the result-side evidence controls after item identity is established. The result-side Filters control is the third workflow step for refining source, geography, district, year, quantity, unit, and awarded-price filters.
 
 ## Near-Term Extension Points
 

@@ -66,11 +66,10 @@ The user enters one item at a time in the item search panel.
 
 The current picker includes the full public CDOT 2026 item-code book for lookup. Project evidence records include public CDOT Cost Data Book rows from 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1.
 
-The left panel is organized into three numbered steps:
+The left panel is organized into two numbered steps:
 
 1. Locate Item.
 2. Select Item.
-3. Enter quantity.
 
 Primary inputs:
 
@@ -78,7 +77,6 @@ Primary inputs:
 - Section / prefix
 - Item code or description
 - Selected item code through the item picker
-- Quantity, with the selected official item unit shown as a non-editable suffix when available
 
 Preferred input order:
 
@@ -86,8 +84,7 @@ Preferred input order:
 2. Select the section / three-digit item-code prefix if it helps narrow the item list.
 3. Enter item code, suffix, official item description, or abbreviated item description to narrow the loaded item list.
 4. In Select Item, review the potential matching items and select the correct official item. This section remains empty until the user starts an item search.
-5. In Enter quantity, enter the planned item quantity.
-6. Click Search.
+5. Click Search.
 
 If the item code is unknown, the user may use description text to find an official item in the picker. The evidence table requires selecting an official item code.
 
@@ -99,7 +96,6 @@ Division: 300 - Bases
 Section / prefix: 304 - Aggregate Base Course
 Description: AGGREGATE BASE COURSE (CLASS 6)
 Unit: CY
-Quantity: 1800
 ```
 
 Why one item at a time:
@@ -155,9 +151,13 @@ How to use it:
 - Click Filters to open or close the filter drawer.
 - Use filters to narrow the evidence set directly.
 - Filters remove rows from the table instead of changing a hidden relevance score.
+- Use Quantity min and Quantity max in the filter drawer to refine the evidence set by bid quantity.
+- Use the quantity stepper buttons for whole-value changes or type decimals directly when needed.
+- Select one or more districts from the District checkbox dropdown when district filtering is useful.
 - Unit defaults to the official selected item unit.
 - Unit-mismatch rows are excluded by default and counted in data notes when present.
 - Click Apply filters to update the table. The drawer closes after filters are applied.
+- Click Clear Filters to restore default public CDOT, selected-unit, awarded-price filters while clearing geography, district, year, and quantity filters.
 
 ## 6. Review the awarded bid summary
 
