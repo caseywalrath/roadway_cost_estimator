@@ -84,6 +84,19 @@ export interface SpecSectionRecord {
   sourceUrl: string;
 }
 
+export interface InflationIndexRecord {
+  indexId: string;
+  indexName: string;
+  periodYear: number;
+  periodQuarter: number;
+  periodLabel: string;
+  periodStartDate: string;
+  periodEndDate: string;
+  indexValue: number;
+  sourceUrl: string;
+  notes: string;
+}
+
 export interface AliasRecord {
   aliasId: string;
   state: string;
@@ -102,6 +115,7 @@ export interface AppData {
   canonicalItems: CanonicalItemRecord[];
   agencyItems: AgencyItemRecord[];
   specSections: SpecSectionRecord[];
+  inflationIndexes: InflationIndexRecord[];
   aliases: AliasRecord[];
   sourceById: Map<string, SourceRecord>;
   projectById: Map<string, ProjectRecord>;
@@ -109,6 +123,7 @@ export interface AppData {
   agencyByCode: Map<string, AgencyItemRecord[]>;
   specSectionByPrefix: Map<string, SpecSectionRecord>;
   specSectionsByDivision: Map<string, SpecSectionRecord[]>;
+  inflationIndexByPeriod: Map<string, InflationIndexRecord>;
 }
 
 export interface SearchQuery {

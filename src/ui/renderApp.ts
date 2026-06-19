@@ -1,10 +1,12 @@
-import type { AppData, SearchQuery } from "../data/schema";
+import type { AppData, EvidenceRow, SearchQuery } from "../data/schema";
 import type { EvidenceSortKey } from "../data/schema";
 import {
   buildEvidenceResult,
+  buildEvidenceStats,
   createDefaultEvidenceFilters,
   createDefaultEvidenceSort
 } from "../matching/buildEvidenceResult";
+import { buildInflationAdjustedSummary } from "../matching/inflationAdjustment";
 import { downloadEvidenceCsv } from "./exportEvidenceCsv";
 import {
   bindItemPicker,
@@ -32,9 +34,17 @@ export function renderApp(root: HTMLElement, data: AppData): void {
   let evidenceSort = createDefaultEvidenceSort();
   let evidenceFiltersExpanded = false;
   let itemSearchCollapsed = false;
+  let excludedSummaryRowIds = new Set<string>();
+  let inflationAdjustmentEnabled = false;
 
   function render(): void {
     const result = buildEvidenceResult(data, query, evidenceFilters, evidenceSort);
+    const includedRows = includedEvidenceRows(result.filteredRows, excludedSummaryRowIds);
+    const includedStats = buildEvidenceStats(includedRows);
+    const inflationAdjustedSummary = inflationAdjustmentEnabled
+      ? buildInflationAdjustedSummary(includedRows, data.inflationIndexByPeriod)
+      : null;
+    const visibleExcludedCount = result.filteredRows.length - includedRows.length;
     root.innerHTML = `
       <main class="app-shell">
         <header class="app-header">
@@ -48,7 +58,17 @@ export function renderApp(root: HTMLElement, data: AppData): void {
 
         <section class="workspace-grid ${itemSearchCollapsed ? "workspace-grid--item-search-collapsed" : ""}">
           ${itemSearchCollapsed ? "" : renderExplorer(query, data.agencyItems, data.specSections)}
-          ${renderResults(result, evidenceFiltersExpanded, itemSearchCollapsed)}
+          ${renderResults(
+            result,
+            evidenceFiltersExpanded,
+            itemSearchCollapsed,
+            excludedSummaryRowIds,
+            includedRows.length,
+            visibleExcludedCount,
+            includedStats,
+            inflationAdjustmentEnabled,
+            inflationAdjustedSummary
+          )}
         </section>
       </main>
     `;
@@ -63,6 +83,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       query = readQueryFromForm(form, query);
       evidenceFilters = createDefaultEvidenceFilters(query);
       evidenceSort = createDefaultEvidenceSort();
+      excludedSummaryRowIds = new Set<string>();
       evidenceFiltersExpanded = false;
       itemSearchCollapsed = Boolean(query.itemCode);
       render();
@@ -85,6 +106,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       query = { ...emptyQuery };
       evidenceFilters = createDefaultEvidenceFilters(query);
       evidenceSort = createDefaultEvidenceSort();
+      excludedSummaryRowIds = new Set<string>();
       evidenceFiltersExpanded = false;
       itemSearchCollapsed = false;
       render();
@@ -96,7 +118,30 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     });
 
     root.querySelector<HTMLButtonElement>("#download-matching-projects-csv")?.addEventListener("click", () => {
-      downloadEvidenceCsv(result);
+      downloadEvidenceCsv(result, includedRows);
+    });
+
+    root.querySelector<HTMLInputElement>("#inflation-adjustment-toggle")?.addEventListener("change", (event) => {
+      inflationAdjustmentEnabled = (event.currentTarget as HTMLInputElement).checked;
+      render();
+    });
+
+    root.querySelectorAll<HTMLInputElement>("[data-exclude-row-id]").forEach((checkbox) => {
+      checkbox.addEventListener("change", () => {
+        const rowId = checkbox.dataset.excludeRowId;
+
+        if (!rowId) {
+          return;
+        }
+
+        if (checkbox.checked) {
+          excludedSummaryRowIds.add(rowId);
+        } else {
+          excludedSummaryRowIds.delete(rowId);
+        }
+
+        render();
+      });
     });
 
     root.querySelectorAll<HTMLButtonElement>("[data-evidence-sort-key]").forEach((button) => {
@@ -122,6 +167,10 @@ export function renderApp(root: HTMLElement, data: AppData): void {
   }
 
   render();
+}
+
+function includedEvidenceRows(rows: EvidenceRow[], excludedRowIds: ReadonlySet<string>): EvidenceRow[] {
+  return rows.filter((row) => !excludedRowIds.has(row.rowId));
 }
 
 function defaultSortDirection(sortKey: EvidenceSortKey): "asc" | "desc" {

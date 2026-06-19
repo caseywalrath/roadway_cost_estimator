@@ -6,14 +6,14 @@ This repository contains a static-first prototype for a Colorado roadway bid-ite
 
 The first product is not a chatbot, not a full project estimator, and not an automatic price recommendation tool. It is a structured evidence tool that helps a user identify one official roadway bid item and review the project records where that exact item appears.
 
-The primary deliverable is the project-item evidence table. Awarded bid statistics are secondary aids that summarize the currently filtered evidence rows. Filtered Matching Projects rows can be exported to CSV for external review.
+The primary deliverable is the project-item evidence table. Awarded bid statistics are secondary aids that summarize the currently filtered evidence rows that the user has not excluded from summary. Those summary statistics can optionally be adjusted with loaded FHWA National Highway Construction Cost Index quarters. Included Matching Projects rows can be exported to CSV for external review.
 
 ## Application Shape
 
 - Hosting target: GitHub Pages.
 - Frontend stack: Vite + TypeScript.
 - Runtime model: static files only; no server and no database.
-- Data model: browser-loaded CSV files in `public/data`, including item observations, agency item mappings, and CDOT section metadata.
+- Data model: browser-loaded CSV files in `public/data`, including item observations, agency item mappings, CDOT section metadata, and FHWA NHCCI inflation index values.
 - Evidence model: deterministic TypeScript grouping and filtering rules in `src/matching`.
 - Deployment path: GitHub Actions validates the app-loaded CSV package, builds the Vite app, and publishes `dist` to GitHub Pages from `main`.
 
@@ -27,7 +27,7 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 4. `src/matching/buildEvidenceResult.ts` groups exact item-code observations into project-item evidence rows.
 5. `src/matching/buildEvidenceResult.ts` applies explicit evidence filters and calculates awarded bid summary statistics for the filtered table.
 6. Prior comparable scoring modules remain in the repository for reference, but the primary UI no longer uses hidden top-five relevance selection.
-7. `src/ui` renders the fixed prototype scope, item search, evidence filters, sortable evidence table, CSV export, awarded bid summary, source coverage note, and data notes.
+7. `src/ui` renders the fixed prototype scope, item search, evidence filters, sortable evidence table, row-level summary exclusions, CSV export, awarded bid summary, optional NHCCI summary adjustment, source coverage note, and data notes.
 
 ## Data Governance
 
@@ -37,7 +37,7 @@ Do not commit private FHU estimate data to a public GitHub Pages repository. Rea
 
 The repository can generate staging CSVs from public CDOT Cost Data Book PDFs, validate them against project-list pages and agency item codes, and promote them into app-loaded source, project, and observation CSVs. The current promoted public CDOT cost-book sources are `cdot_cost_data_book_2022_q4`, `cdot_cost_data_book_2023_q4`, `cdot_cost_data_book_2024_q4`, `cdot_cost_data_book_2025_q4`, and `cdot_cost_data_book_2026_q1`.
 
-The app-loaded CSV package is checked by `scripts/validate_data_package.py`. The validator fails deployment for broken source/project/observation relationships, duplicate IDs, invalid required values, invalid numeric/date fields, app-loaded demo evidence leakage, and missing smoke-test evidence for `304-06007`. Lookup gaps and optional metadata gaps are reported as warnings.
+The app-loaded CSV package is checked by `scripts/validate_data_package.py`. The validator fails deployment for broken source/project/observation relationships, duplicate IDs, invalid required values, invalid numeric/date fields, malformed NHCCI rows, app-loaded demo evidence leakage, and missing smoke-test evidence for `304-06007`. Lookup gaps, optional metadata gaps, and evidence quarters newer than the latest loaded official NHCCI quarter are reported as warnings.
 
 ## Evidence Browser Rules
 
@@ -54,9 +54,11 @@ The Phase 1 evidence browser rules are intentionally visible and simple:
 - Show unit-mismatch counts as data notes instead of mixing units in the default table.
 - Apply source, geography, district, year, quantity, unit, and awarded-price filters as hard filters.
 - Sort evidence rows newest first by default, then allow users to sort by displayed table columns.
-- Export the currently filtered Matching Projects rows to CSV with the displayed table columns and useful project/source metadata.
+- Allow users to exclude visible rows from the Awarded Bid Summary without removing them from the visible evidence table.
+- Export the currently filtered and non-excluded Matching Projects rows to CSV with the displayed table columns and useful project/source metadata.
 - Show source coverage near the evidence results so users can see loaded public CDOT periods and excluded evidence categories.
-- Calculate summary statistics from awarded bid unit prices only.
+- Calculate summary statistics from included awarded bid unit prices only.
+- Let users toggle summary-only inflation adjustment with loaded FHWA NHCCI quarters. Matching Projects table prices and CSV export stay in original awarded-bid dollars.
 
 Alias, keyword, and description fallback matching should return only in a later explicit review mode. They are not part of the default evidence table.
 

@@ -161,7 +161,9 @@ How to use it:
 
 ## 6. Review the awarded bid summary
 
-The user checks the Awarded Bid Summary panel after reviewing table rows.
+The user checks the Awarded Bid Summary panel after reviewing table rows. Rows checked in `Exclude from Summary` stay visible in Matching Projects but are removed from the summary statistics.
+
+The user can turn on `Inflation Adjustment` to recalculate the summary statistics with loaded FHWA National Highway Construction Cost Index values. The adjustment applies only to this summary panel.
 
 Current summary fields:
 
@@ -175,15 +177,19 @@ Current summary fields:
 
 How to use it:
 
-- Treat the statistics as a summary of the currently filtered awarded bid unit prices.
+- Treat the statistics as a summary of currently filtered awarded bid unit prices that have not been excluded.
+- Leave Inflation Adjustment off when reviewing original awarded bid dollars.
+- Turn Inflation Adjustment on when a quick summary normalized to the latest loaded NHCCI quarter is useful.
 - Do not treat the summary as a suggested unit price.
 - Refilter the evidence table when the summary appears to be driven by rows the engineer would not use.
+- Check `Exclude from Summary` for rows that should remain visible but should not affect the summary.
 
 Reviewer interpretation:
 
 - A narrow spread may indicate consistent historical pricing.
 - A wide spread may indicate scope differences, market differences, sparse data, or outliers.
 - A small count should trigger more evidence review.
+- Inflation-adjusted values are an index-based review aid, not a final escalated estimate.
 
 ## 7. Review source coverage
 
@@ -194,13 +200,14 @@ Current source coverage states:
 - loaded evidence source: public CDOT Cost Data Books
 - loaded periods: 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1
 - default matching: exact official item-code matching only
-- not included: private FHU data, demo project evidence, escalation, unit conversion, or a final price recommendation
+- optional inflation adjustment: Awarded Bid Summary only, using loaded FHWA NHCCI quarters
+- not included: private FHU data, demo project evidence, unit conversion, or a final price recommendation
 
 How to use it:
 
 - Treat source coverage as the boundary of what the app can show.
 - Use the Matching Projects table and CSV export for review, not as a final estimating recommendation.
-- Escalation, adjustments, and final pricing judgment happen outside the app.
+- Final pricing judgment happens outside the app.
 
 ## 8. Export filtered evidence
 
@@ -210,7 +217,9 @@ How to use it:
 
 - Click Download CSV above the Matching Projects table.
 - The export includes all displayed table columns plus project/source metadata.
-- The button is disabled when current filters produce zero rows.
+- Rows checked in `Exclude from Summary` are omitted from the export.
+- Inflation Adjustment does not change CSV values; the export remains original-dollar project evidence.
+- The button is disabled when current filters produce zero rows or all current rows are excluded from summary.
 - Use the CSV for reviewer discussion, basis-of-estimate support, or external analysis.
 
 ## 9. Review data notes

@@ -72,6 +72,18 @@ SPEC_SECTION_FIELDS = [
     "source_year",
     "source_url",
 ]
+INFLATION_INDEX_FIELDS = [
+    "index_id",
+    "index_name",
+    "period_year",
+    "period_quarter",
+    "period_label",
+    "period_start_date",
+    "period_end_date",
+    "index_value",
+    "source_url",
+    "notes",
+]
 
 SOURCE_REQUIRED_VALUES = ["source_id", "source_type", "agency", "state", "source_label", "data_year"]
 PROJECT_REQUIRED_VALUES = ["project_id", "agency_owner", "state", "county_region", "work_type", "estimate_let_date", "source_id"]
@@ -92,6 +104,17 @@ OBSERVATION_REQUIRED_VALUES = [
 ]
 AGENCY_ITEM_REQUIRED_VALUES = ["agency_item_id", "state", "agency", "item_code", "official_description", "official_unit"]
 SPEC_SECTION_REQUIRED_VALUES = ["section_prefix", "division_prefix", "division_title", "section_title", "source_year", "source_url"]
+INFLATION_INDEX_REQUIRED_VALUES = [
+    "index_id",
+    "index_name",
+    "period_year",
+    "period_quarter",
+    "period_label",
+    "period_start_date",
+    "period_end_date",
+    "index_value",
+    "source_url",
+]
 PROJECT_OPTIONAL_METADATA = ["contractor", "district", "terrain", "bid_count", "awarded_bid_total", "award_index"]
 
 KNOWN_PRICE_TYPES = {"cdot_awarded_bid", "cdot_average_bid", "cdot_engineer_estimate"}
@@ -137,24 +160,28 @@ def main() -> None:
     observations = read_table(args.data_dir, "item_observations.csv")
     agency_items = read_table(args.data_dir, "agency_items.csv")
     spec_sections = read_table(args.data_dir, "spec_sections.csv")
+    inflation_indexes = read_table(args.data_dir, "inflation_index.csv")
 
     validate_headers(sources, SOURCE_FIELDS, errors)
     validate_headers(projects, PROJECT_FIELDS, errors)
     validate_headers(observations, OBSERVATION_FIELDS, errors)
     validate_headers(agency_items, AGENCY_ITEM_FIELDS, errors)
     validate_headers(spec_sections, SPEC_SECTION_FIELDS, errors)
+    validate_headers(inflation_indexes, INFLATION_INDEX_FIELDS, errors)
 
     validate_required_values(sources, SOURCE_REQUIRED_VALUES, "source_id", errors)
     validate_required_values(projects, PROJECT_REQUIRED_VALUES, "project_id", errors)
     validate_required_values(observations, OBSERVATION_REQUIRED_VALUES, "observation_id", errors)
     validate_required_values(agency_items, AGENCY_ITEM_REQUIRED_VALUES, "agency_item_id", errors)
     validate_required_values(spec_sections, SPEC_SECTION_REQUIRED_VALUES, "section_prefix", errors)
+    validate_required_values(inflation_indexes, INFLATION_INDEX_REQUIRED_VALUES, "index_id", errors)
 
     validate_unique_id(sources, "source_id", errors)
     validate_unique_id(projects, "project_id", errors)
     validate_unique_id(observations, "observation_id", errors)
     validate_unique_id(agency_items, "agency_item_id", errors)
     validate_unique_id(spec_sections, "section_prefix", errors)
+    validate_unique_id(inflation_indexes, "index_id", errors)
 
     source_by_id = {row["source_id"]: row for row in sources.rows}
     project_by_id = {row["project_id"]: row for row in projects.rows}
@@ -165,9 +192,10 @@ def main() -> None:
     validate_projects(projects, source_by_id, errors, warnings)
     validate_observations(observations, source_by_id, project_by_id, agency_item_codes, errors, warnings)
     validate_agency_sections(agency_items, section_prefixes, warnings)
+    validate_inflation_indexes(inflation_indexes, projects, errors, warnings)
     validate_smoke_items(observations, source_by_id, project_by_id, errors, warnings)
 
-    print_summary(sources, projects, observations, source_by_id)
+    print_summary(sources, projects, observations, source_by_id, inflation_indexes)
     print_smoke_summary(observations)
     print_messages("WARNING", warnings)
     print_messages("ERROR", errors)
@@ -297,6 +325,64 @@ def validate_agency_sections(
         warnings.append(f"Agency item prefixes missing from spec_sections.csv: {', '.join(missing_prefixes[:30])}")
 
 
+def validate_inflation_indexes(
+    inflation_indexes: CsvTable,
+    projects: CsvTable,
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    period_counts: Counter[str] = Counter()
+    index_periods: set[tuple[int, int]] = set()
+
+    for row in inflation_indexes.rows:
+        index_id = row["index_id"]
+        period_label = row["period_label"]
+        period_counts[period_label] += 1
+
+        period = parse_period(row.get("period_year", ""), row.get("period_quarter", ""))
+        label_period = parse_period_label(period_label)
+        if period is None:
+            errors.append(f"inflation_index.csv {index_id}: period_year/period_quarter are invalid.")
+            continue
+        if label_period is None:
+            errors.append(f"inflation_index.csv {index_id}: period_label is not shaped like YYYY Qn.")
+        elif label_period != period:
+            errors.append(f"inflation_index.csv {index_id}: period_label does not match period_year/period_quarter.")
+
+        index_periods.add(period)
+
+        if row.get("index_value") and not is_number(row["index_value"]):
+            errors.append(f"inflation_index.csv {index_id}: index_value is not numeric.")
+        elif row.get("index_value") and Decimal(row["index_value"].replace("$", "").replace(",", "")) <= 0:
+            errors.append(f"inflation_index.csv {index_id}: index_value must be greater than zero.")
+        for field in ["period_start_date", "period_end_date"]:
+            if row.get(field) and not is_iso_date(row[field]):
+                errors.append(f"inflation_index.csv {index_id}: {field} is not YYYY-MM-DD.")
+
+    for period_label, count in sorted(period_counts.items()):
+        if count > 1:
+            errors.append(f"inflation_index.csv: duplicate period_label {period_label}.")
+
+    if not index_periods:
+        errors.append("inflation_index.csv: no valid NHCCI periods loaded.")
+        return
+
+    latest_index_period = max(index_periods)
+    project_periods = {
+        period
+        for period in (period_from_date(row.get("estimate_let_date", "")) for row in projects.rows)
+        if period is not None
+    }
+    missing_project_periods = sorted(project_periods - index_periods)
+
+    for period in missing_project_periods:
+        message = f"NHCCI index missing project evidence quarter {format_period(period)}."
+        if period > latest_index_period:
+            warnings.append(f"{message} Latest loaded NHCCI quarter is {format_period(latest_index_period)}.")
+        else:
+            errors.append(message)
+
+
 def validate_smoke_items(
     observations: CsvTable,
     source_by_id: dict[str, dict[str, str]],
@@ -362,11 +448,21 @@ def print_summary(
     projects: CsvTable,
     observations: CsvTable,
     source_by_id: dict[str, dict[str, str]],
+    inflation_indexes: CsvTable,
 ) -> None:
     print("Data package summary")
     print(f"- Sources: {len(sources.rows)}")
     print(f"- Projects: {len(projects.rows)}")
     print(f"- Observations: {len(observations.rows)}")
+    print(f"- Inflation index rows: {len(inflation_indexes.rows)}")
+
+    valid_index_periods = [
+        period
+        for period in (parse_period(row.get("period_year", ""), row.get("period_quarter", "")) for row in inflation_indexes.rows)
+        if period is not None
+    ]
+    if valid_index_periods:
+        print(f"- Latest inflation index period: {format_period(max(valid_index_periods))}")
 
     project_counts = Counter(row["source_id"] for row in projects.rows)
     observation_counts = Counter(row["source_id"] for row in observations.rows)
@@ -418,6 +514,36 @@ def is_iso_date(value: str) -> bool:
     except ValueError:
         return False
     return True
+
+
+def period_from_date(value: str) -> tuple[int, int] | None:
+    try:
+        parsed = datetime.strptime(value, "%Y-%m-%d")
+    except ValueError:
+        return None
+    return parsed.year, ((parsed.month - 1) // 3) + 1
+
+
+def parse_period(year_value: str, quarter_value: str) -> tuple[int, int] | None:
+    try:
+        year = int(year_value)
+        quarter = int(quarter_value)
+    except ValueError:
+        return None
+    if quarter < 1 or quarter > 4:
+        return None
+    return year, quarter
+
+
+def parse_period_label(value: str) -> tuple[int, int] | None:
+    parts = value.split()
+    if len(parts) != 2 or not parts[1].startswith("Q"):
+        return None
+    return parse_period(parts[0], parts[1][1:])
+
+
+def format_period(period: tuple[int, int]) -> str:
+    return f"{period[0]} Q{period[1]}"
 
 
 if __name__ == "__main__":
