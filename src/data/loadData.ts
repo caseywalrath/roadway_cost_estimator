@@ -3,6 +3,7 @@ import type {
   AliasRecord,
   AppData,
   CanonicalItemRecord,
+  InflationIndexRecord,
   ItemObservationRecord,
   ProjectRecord,
   SourceRecord,
@@ -19,11 +20,12 @@ const dataFiles = {
   canonicalItems: "canonical_items.csv",
   agencyItems: "agency_items.csv",
   specSections: "spec_sections.csv",
+  inflationIndexes: "inflation_index.csv",
   aliases: "aliases.csv"
 } as const;
 
 export async function loadData(): Promise<AppData> {
-  const [sources, projects, observations, canonicalItems, agencyItems, specSections, aliases] =
+  const [sources, projects, observations, canonicalItems, agencyItems, specSections, inflationIndexes, aliases] =
     await Promise.all([
       loadCsv(dataFiles.sources, mapSource),
       loadCsv(dataFiles.projects, mapProject),
@@ -31,6 +33,7 @@ export async function loadData(): Promise<AppData> {
       loadCsv(dataFiles.canonicalItems, mapCanonicalItem),
       loadCsv(dataFiles.agencyItems, mapAgencyItem),
       loadCsv(dataFiles.specSections, mapSpecSection),
+      loadCsv(dataFiles.inflationIndexes, mapInflationIndex),
       loadCsv(dataFiles.aliases, mapAlias)
     ]);
 
@@ -42,6 +45,7 @@ export async function loadData(): Promise<AppData> {
   const agencyByCode = new Map<string, AgencyItemRecord[]>();
   const specSectionByPrefix = new Map<string, SpecSectionRecord>();
   const specSectionsByDivision = new Map<string, SpecSectionRecord[]>();
+  const inflationIndexByPeriod = new Map(inflationIndexes.map((index) => [index.periodLabel, index]));
 
   for (const agencyItem of agencyItems) {
     const key = agencyItem.itemCode.toUpperCase();
@@ -67,13 +71,15 @@ export async function loadData(): Promise<AppData> {
     canonicalItems,
     agencyItems,
     specSections,
+    inflationIndexes,
     aliases,
     sourceById,
     projectById,
     canonicalById,
     agencyByCode,
     specSectionByPrefix,
-    specSectionsByDivision
+    specSectionsByDivision,
+    inflationIndexByPeriod
   };
 }
 
@@ -233,6 +239,21 @@ function mapSpecSection(row: CsvRow): SpecSectionRecord {
     sectionTitle: row.section_title,
     sourceYear: parseOptionalNumber(row.source_year),
     sourceUrl: row.source_url
+  };
+}
+
+function mapInflationIndex(row: CsvRow): InflationIndexRecord {
+  return {
+    indexId: row.index_id,
+    indexName: row.index_name,
+    periodYear: parseRequiredNumber(row.period_year),
+    periodQuarter: parseRequiredNumber(row.period_quarter),
+    periodLabel: row.period_label,
+    periodStartDate: row.period_start_date,
+    periodEndDate: row.period_end_date,
+    indexValue: parseRequiredNumber(row.index_value),
+    sourceUrl: row.source_url,
+    notes: row.notes
   };
 }
 
