@@ -18,11 +18,12 @@ export function renderResults(
   visibleExcludedCount: number,
   includedStats: EvidenceStats | null,
   inflationAdjustmentEnabled: boolean,
-  inflationAdjustedSummary: InflationAdjustedSummary | null
+  inflationAdjustedSummary: InflationAdjustedSummary | null,
+  adjustedPriceByRowId: ReadonlyMap<string, number> | null
 ): string {
   return `
     <section class="results-panel">
-      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount)}
+      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, adjustedPriceByRowId)}
       ${renderAwardedBidSummary(
         inflationAdjustmentEnabled ? inflationAdjustedSummary?.stats ?? null : includedStats,
         result.filteredRows.length,
@@ -42,7 +43,8 @@ function renderEvidenceTable(
   itemSearchCollapsed: boolean,
   excludedSummaryRowIds: ReadonlySet<string>,
   includedRowCount: number,
-  visibleExcludedCount: number
+  visibleExcludedCount: number,
+  adjustedPriceByRowId: ReadonlyMap<string, number> | null
 ): string {
   if (!result.query.itemCode) {
     return `
@@ -57,7 +59,7 @@ function renderEvidenceTable(
     <section class="panel-block panel-block--table">
       ${renderMatchingProjectsHeader(result, itemSearchCollapsed, includedRowCount)}
       ${renderEvidenceControls(result, filtersExpanded, visibleExcludedCount)}
-      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows, result.sort, excludedSummaryRowIds)}
+      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows, result.sort, excludedSummaryRowIds, adjustedPriceByRowId)}
     </section>
   `;
 }
@@ -214,7 +216,12 @@ const evidenceColumns: EvidenceColumn[] = [
   { key: "source", label: "Source" }
 ];
 
-function renderTable(rows: EvidenceRow[], sort: EvidenceSort, excludedSummaryRowIds: ReadonlySet<string>): string {
+function renderTable(
+  rows: EvidenceRow[],
+  sort: EvidenceSort,
+  excludedSummaryRowIds: ReadonlySet<string>,
+  adjustedPriceByRowId: ReadonlyMap<string, number> | null
+): string {
   return `
     <div class="table-scroll-shell">
       <div class="table-scroll-affordance" aria-hidden="true"><span></span></div>
@@ -227,7 +234,7 @@ function renderTable(rows: EvidenceRow[], sort: EvidenceSort, excludedSummaryRow
             </tr>
           </thead>
           <tbody>
-            ${rows.map((row) => renderEvidenceRow(row, excludedSummaryRowIds.has(row.rowId))).join("")}
+            ${rows.map((row) => renderEvidenceRow(row, excludedSummaryRowIds.has(row.rowId), adjustedPriceByRowId?.get(row.rowId) ?? null)).join("")}
           </tbody>
         </table>
       </div>
@@ -255,7 +262,7 @@ function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): strin
   `;
 }
 
-function renderEvidenceRow(row: EvidenceRow, isExcluded: boolean): string {
+function renderEvidenceRow(row: EvidenceRow, isExcluded: boolean, adjustedAwardedBidUnitPrice: number | null): string {
   const projectLabel = row.project?.projectNumber || row.project?.projectName || row.project?.projectLocationRaw || row.itemCode;
 
   return `
@@ -281,7 +288,7 @@ function renderEvidenceRow(row: EvidenceRow, isExcluded: boolean): string {
       <td>${formatNumber(row.quantity)}</td>
       <td>${escapeHtml(row.unit)}</td>
       <td>${escapeHtml(row.descriptionRaw)}</td>
-      <td>${formatNullableCurrency(row.awardedBidUnitPrice)}</td>
+      <td>${renderAwardedBidUnitPrice(row.awardedBidUnitPrice, adjustedAwardedBidUnitPrice)}</td>
       <td>${formatNullableCurrency(row.averageBidUnitPrice)}</td>
       <td>${formatNullableCurrency(row.engineerEstimateUnitPrice)}</td>
       <td>${escapeHtml(row.source?.sourceLabel ?? "Unknown source")}</td>
@@ -400,6 +407,20 @@ function renderStatMetric(label: string, value: number, currency: boolean): stri
   `;
 }
 
+function renderAwardedBidUnitPrice(value: number | null, adjustedValue: number | null): string {
+  if (value === null) {
+    return "Not listed";
+  }
+
+  const roundedValue = Math.round(value);
+  const roundedAdjustedValue = adjustedValue === null ? null : Math.round(adjustedValue);
+  const adjustedLine = roundedAdjustedValue !== null && roundedAdjustedValue !== roundedValue
+    ? `<div class="adjusted-price-line">(${formatWholeCurrency(roundedAdjustedValue)})</div>`
+    : "";
+
+  return `${formatCurrency(value)}${adjustedLine}`;
+}
+
 function renderDataNotes(notes: string[]): string {
   if (notes.length === 0) {
     return "";
@@ -432,7 +453,7 @@ function renderSourceCoverageNote(result: EvidenceResult): string {
       <ul class="guidance-list">
         <li>Loaded periods: 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1.</li>
         <li>Default evidence is exact official item-code matching only.</li>
-        <li>Optional inflation adjustment applies only to Awarded Bid Summary statistics and uses loaded FHWA NHCCI quarters.</li>
+        <li>Optional inflation adjustment uses loaded FHWA NHCCI quarters for summary statistics and display-only row context.</li>
         <li>Not included: private FHU data, demo project evidence, unit conversion, or a final price recommendation.</li>
       </ul>
     </section>
@@ -575,6 +596,14 @@ function formatCurrency(value: number): string {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: value >= 100 ? 0 : 2
+  }).format(value);
+}
+
+function formatWholeCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0
   }).format(value);
 }
 

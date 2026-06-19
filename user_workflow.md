@@ -163,7 +163,7 @@ How to use it:
 
 The user checks the Awarded Bid Summary panel after reviewing table rows. Rows checked in `Exclude from Summary` stay visible in Matching Projects but are removed from the summary statistics.
 
-The user can turn on `Inflation Adjustment` to recalculate the summary statistics with loaded FHWA National Highway Construction Cost Index values. The adjustment applies only to this summary panel.
+The user can turn on `Inflation Adjustment` to recalculate the summary statistics with loaded FHWA National Highway Construction Cost Index values. When it is on, Matching Projects awarded bid unit prices also show a second parenthetical adjusted value when the rounded adjusted dollar differs from the rounded original dollar.
 
 Current summary fields:
 
@@ -180,6 +180,7 @@ How to use it:
 - Treat the statistics as a summary of currently filtered awarded bid unit prices that have not been excluded.
 - Leave Inflation Adjustment off when reviewing original awarded bid dollars.
 - Turn Inflation Adjustment on when a quick summary normalized to the latest loaded NHCCI quarter is useful.
+- Treat parenthetical adjusted unit prices in Matching Projects as display-only context; the primary table value remains the original awarded bid unit price.
 - Do not treat the summary as a suggested unit price.
 - Refilter the evidence table when the summary appears to be driven by rows the engineer would not use.
 - Check `Exclude from Summary` for rows that should remain visible but should not affect the summary.
@@ -200,7 +201,7 @@ Current source coverage states:
 - loaded evidence source: public CDOT Cost Data Books
 - loaded periods: 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1
 - default matching: exact official item-code matching only
-- optional inflation adjustment: Awarded Bid Summary only, using loaded FHWA NHCCI quarters
+- optional inflation adjustment: summary statistics and display-only row context, using loaded FHWA NHCCI quarters
 - not included: private FHU data, demo project evidence, unit conversion, or a final price recommendation
 
 How to use it:

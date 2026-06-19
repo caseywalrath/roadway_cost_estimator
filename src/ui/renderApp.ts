@@ -6,7 +6,7 @@ import {
   createDefaultEvidenceFilters,
   createDefaultEvidenceSort
 } from "../matching/buildEvidenceResult";
-import { buildInflationAdjustedSummary } from "../matching/inflationAdjustment";
+import { buildInflationAdjustedPriceSet, buildInflationAdjustedSummary } from "../matching/inflationAdjustment";
 import { downloadEvidenceCsv } from "./exportEvidenceCsv";
 import {
   bindItemPicker,
@@ -44,6 +44,9 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     const inflationAdjustedSummary = inflationAdjustmentEnabled
       ? buildInflationAdjustedSummary(includedRows, data.inflationIndexByPeriod)
       : null;
+    const inflationAdjustedPriceSet = inflationAdjustmentEnabled
+      ? buildInflationAdjustedPriceSet(result.filteredRows, data.inflationIndexByPeriod)
+      : null;
     const visibleExcludedCount = result.filteredRows.length - includedRows.length;
     root.innerHTML = `
       <main class="app-shell">
@@ -67,7 +70,8 @@ export function renderApp(root: HTMLElement, data: AppData): void {
             visibleExcludedCount,
             includedStats,
             inflationAdjustmentEnabled,
-            inflationAdjustedSummary
+            inflationAdjustedSummary,
+            inflationAdjustedPriceSet?.adjustedPriceByRowId ?? null
           )}
         </section>
       </main>

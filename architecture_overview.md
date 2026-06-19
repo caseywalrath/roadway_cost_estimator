@@ -58,7 +58,7 @@ The Phase 1 evidence browser rules are intentionally visible and simple:
 - Export the currently filtered and non-excluded Matching Projects rows to CSV with the displayed table columns and useful project/source metadata.
 - Show source coverage near the evidence results so users can see loaded public CDOT periods and excluded evidence categories.
 - Calculate summary statistics from included awarded bid unit prices only.
-- Let users toggle summary-only inflation adjustment with loaded FHWA NHCCI quarters. Matching Projects table prices and CSV export stay in original awarded-bid dollars.
+- Let users toggle inflation adjustment with loaded FHWA NHCCI quarters. Matching Projects table awarded bid prices stay in original dollars and show secondary adjusted values for transparency when rounded adjusted dollars differ. CSV export stays in original awarded-bid dollars.
 
 Alias, keyword, and description fallback matching should return only in a later explicit review mode. They are not part of the default evidence table.
 
