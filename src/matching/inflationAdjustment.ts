@@ -9,6 +9,11 @@ export interface InflationAdjustedSummary {
   awardedRowCount: number;
 }
 
+export interface InflationAdjustedPriceSet {
+  targetPeriod: InflationIndexRecord | null;
+  adjustedPriceByRowId: Map<string, number>;
+}
+
 export function buildInflationAdjustedSummary(
   rows: EvidenceRow[],
   indexByPeriod: ReadonlyMap<string, InflationIndexRecord>
@@ -56,6 +61,28 @@ export function buildInflationAdjustedSummary(
   };
 }
 
+export function buildInflationAdjustedPriceSet(
+  rows: EvidenceRow[],
+  indexByPeriod: ReadonlyMap<string, InflationIndexRecord>
+): InflationAdjustedPriceSet {
+  const targetPeriod = latestInflationIndex([...indexByPeriod.values()]);
+  const adjustedPriceByRowId = new Map<string, number>();
+
+  if (!targetPeriod) {
+    return { targetPeriod: null, adjustedPriceByRowId };
+  }
+
+  for (const row of rows) {
+    const adjustedPrice = adjustedAwardedBidUnitPrice(row, indexByPeriod, targetPeriod);
+
+    if (adjustedPrice !== null) {
+      adjustedPriceByRowId.set(row.rowId, adjustedPrice);
+    }
+  }
+
+  return { targetPeriod, adjustedPriceByRowId };
+}
+
 export function periodLabelFromDate(value: string): string | null {
   const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(value.trim());
 
@@ -72,6 +99,25 @@ export function periodLabelFromDate(value: string): string | null {
 
   const quarter = Math.floor((month - 1) / 3) + 1;
   return `${year} Q${quarter}`;
+}
+
+function adjustedAwardedBidUnitPrice(
+  row: EvidenceRow,
+  indexByPeriod: ReadonlyMap<string, InflationIndexRecord>,
+  targetPeriod: InflationIndexRecord
+): number | null {
+  if (row.awardedBidUnitPrice === null) {
+    return null;
+  }
+
+  const sourcePeriodLabel = periodLabelFromDate(row.project?.estimateLetDate || row.dateBasis);
+  const sourcePeriod = sourcePeriodLabel ? indexByPeriod.get(sourcePeriodLabel) : null;
+
+  if (!sourcePeriod) {
+    return null;
+  }
+
+  return row.awardedBidUnitPrice * (targetPeriod.indexValue / sourcePeriod.indexValue);
 }
 
 function latestInflationIndex(indexes: InflationIndexRecord[]): InflationIndexRecord | null {

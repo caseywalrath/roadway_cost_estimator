@@ -4,7 +4,7 @@
 
 The prototype uses static CSV files so non-developers can inspect records and Git can track every data change.
 
-The current data package includes public CDOT 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 Cost Data Book records, plus static FHWA NHCCI quarterly index values for optional summary-only inflation adjustment. It is prototype evidence, not estimating guidance.
+The current data package includes public CDOT 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 Cost Data Book records, plus static FHWA NHCCI quarterly index values for optional inflation adjustment in summary statistics and display-only row context. It is prototype evidence, not estimating guidance.
 
 ## Files
 

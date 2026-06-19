@@ -66,11 +66,10 @@ The user enters one item at a time in the item search panel.
 
 The current picker includes the full public CDOT 2026 item-code book for lookup. Project evidence records include public CDOT Cost Data Book rows from 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1.
 
-The left panel is organized into three numbered steps:
+The left panel is organized into two numbered steps:
 
 1. Locate Item.
 2. Select Item.
-3. Enter quantity.
 
 Primary inputs:
 
@@ -78,7 +77,6 @@ Primary inputs:
 - Section / prefix
 - Item code or description
 - Selected item code through the item picker
-- Quantity, with the selected official item unit shown as a non-editable suffix when available
 
 Preferred input order:
 
@@ -86,8 +84,7 @@ Preferred input order:
 2. Select the section / three-digit item-code prefix if it helps narrow the item list.
 3. Enter item code, suffix, official item description, or abbreviated item description to narrow the loaded item list.
 4. In Select Item, review the potential matching items and select the correct official item. This section remains empty until the user starts an item search.
-5. In Enter quantity, enter the planned item quantity.
-6. Click Search.
+5. Click Search.
 
 If the item code is unknown, the user may use description text to find an official item in the picker. The evidence table requires selecting an official item code.
 
@@ -99,7 +96,6 @@ Division: 300 - Bases
 Section / prefix: 304 - Aggregate Base Course
 Description: AGGREGATE BASE COURSE (CLASS 6)
 Unit: CY
-Quantity: 1800
 ```
 
 Why one item at a time:
@@ -155,15 +151,19 @@ How to use it:
 - Click Filters to open or close the filter drawer.
 - Use filters to narrow the evidence set directly.
 - Filters remove rows from the table instead of changing a hidden relevance score.
+- Use Quantity min and Quantity max in the filter drawer to refine the evidence set by bid quantity.
+- Enter numeric quantity values directly. Decimals are allowed when needed, and the app warns if minimum quantity exceeds maximum quantity.
+- Select one or more districts from the District checkbox dropdown when district filtering is useful.
 - Unit defaults to the official selected item unit.
 - Unit-mismatch rows are excluded by default and counted in data notes when present.
 - Click Apply filters to update the table. The drawer closes after filters are applied.
+- Click Clear Filters to restore default public CDOT, selected-unit, awarded-price filters while clearing geography, district, year, and quantity filters.
 
 ## 6. Review the awarded bid summary
 
 The user checks the Awarded Bid Summary panel after reviewing table rows. Rows checked in `Exclude from Summary` stay visible in Matching Projects but are removed from the summary statistics.
 
-The user can turn on `Inflation Adjustment` to recalculate the summary statistics with loaded FHWA National Highway Construction Cost Index values. The adjustment applies only to this summary panel.
+The user can turn on `Inflation Adjustment` to recalculate the summary statistics with loaded FHWA National Highway Construction Cost Index values. When it is on, Matching Projects awarded bid unit prices also show a second parenthetical adjusted value when the rounded adjusted dollar differs from the rounded original dollar.
 
 Current summary fields:
 
@@ -180,6 +180,7 @@ How to use it:
 - Treat the statistics as a summary of currently filtered awarded bid unit prices that have not been excluded.
 - Leave Inflation Adjustment off when reviewing original awarded bid dollars.
 - Turn Inflation Adjustment on when a quick summary normalized to the latest loaded NHCCI quarter is useful.
+- Treat parenthetical adjusted unit prices in Matching Projects as display-only context; the primary table value remains the original awarded bid unit price.
 - Do not treat the summary as a suggested unit price.
 - Refilter the evidence table when the summary appears to be driven by rows the engineer would not use.
 - Check `Exclude from Summary` for rows that should remain visible but should not affect the summary.
@@ -200,7 +201,7 @@ Current source coverage states:
 - loaded evidence source: public CDOT Cost Data Books
 - loaded periods: 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1
 - default matching: exact official item-code matching only
-- optional inflation adjustment: Awarded Bid Summary only, using loaded FHWA NHCCI quarters
+- optional inflation adjustment: summary statistics and display-only row context, using loaded FHWA NHCCI quarters
 - not included: private FHU data, demo project evidence, unit conversion, or a final price recommendation
 
 How to use it:

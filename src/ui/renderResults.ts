@@ -18,11 +18,12 @@ export function renderResults(
   visibleExcludedCount: number,
   includedStats: EvidenceStats | null,
   inflationAdjustmentEnabled: boolean,
-  inflationAdjustedSummary: InflationAdjustedSummary | null
+  inflationAdjustedSummary: InflationAdjustedSummary | null,
+  adjustedPriceByRowId: ReadonlyMap<string, number> | null
 ): string {
   return `
     <section class="results-panel">
-      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount)}
+      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, adjustedPriceByRowId)}
       ${renderAwardedBidSummary(
         inflationAdjustmentEnabled ? inflationAdjustedSummary?.stats ?? null : includedStats,
         result.filteredRows.length,
@@ -42,7 +43,8 @@ function renderEvidenceTable(
   itemSearchCollapsed: boolean,
   excludedSummaryRowIds: ReadonlySet<string>,
   includedRowCount: number,
-  visibleExcludedCount: number
+  visibleExcludedCount: number,
+  adjustedPriceByRowId: ReadonlyMap<string, number> | null
 ): string {
   if (!result.query.itemCode) {
     return `
@@ -57,7 +59,7 @@ function renderEvidenceTable(
     <section class="panel-block panel-block--table">
       ${renderMatchingProjectsHeader(result, itemSearchCollapsed, includedRowCount)}
       ${renderEvidenceControls(result, filtersExpanded, visibleExcludedCount)}
-      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows, result.sort, excludedSummaryRowIds)}
+      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows, result.sort, excludedSummaryRowIds, adjustedPriceByRowId)}
     </section>
   `;
 }
@@ -72,8 +74,7 @@ function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: bo
         <h3>${escapeHtml(result.query.itemCode ? result.interpretedDescription : "Select an official item")}</h3>
         <p class="query-line">
           Item code: ${escapeHtml(result.query.itemCode || "Not selected")} |
-          Unit: ${escapeHtml(result.query.unit || "Not selected")} |
-          Quantity: ${result.query.quantity ? formatNumber(result.query.quantity) : "Not entered"}
+          Unit: ${escapeHtml(result.query.unit || "Not selected")}
         </p>
       </div>
       ${showExportButton || showEditButton
@@ -99,15 +100,21 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
         ${renderFilterChips(result)}
         ${visibleExcludedCount > 0 ? `<span class="filter-chip">Excluded: ${formatNumber(visibleExcludedCount)}</span>` : ""}
       </div>
-      <button
-        type="button"
-        id="toggle-evidence-filters"
-        class="secondary-button filter-toggle-button"
-        aria-expanded="${filtersExpanded}"
-        aria-controls="evidence-filter-drawer"
-      >
-        ${filtersExpanded ? "Hide filters" : "Filters"}
-      </button>
+      <div class="evidence-filter-actions">
+        <span class="results-step-cue" aria-label="Step 3 refine results">
+          <span class="step-number" aria-hidden="true">3</span>
+          <span>Refine results</span>
+        </span>
+        <button
+          type="button"
+          id="toggle-evidence-filters"
+          class="secondary-button filter-toggle-button"
+          aria-expanded="${filtersExpanded}"
+          aria-controls="evidence-filter-drawer"
+        >
+          ${filtersExpanded ? "Hide filters" : "Filters"}
+        </button>
+      </div>
     </div>
     <div id="evidence-filter-drawer" class="evidence-filter-drawer" ${filtersExpanded ? "" : "hidden"}>
       <form id="evidence-filters-form" class="evidence-filter-form">
@@ -128,15 +135,15 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
           <input name="geography" value="${escapeHtml(result.filters.geography)}" placeholder="District, county, or location" />
         </label>
 
-        <label>
-          <span class="label-row">
-            District
-          </span>
-          <select name="district">
-            <option value="">All districts</option>
-            ${renderDistrictOptions(result.availableDistricts, result.filters.district)}
-          </select>
-        </label>
+        <fieldset class="district-filter-field">
+          <legend>District</legend>
+          <details class="district-multiselect">
+            <summary>${escapeHtml(districtSummaryLabel(result.filters.districts))}</summary>
+            <div class="district-multiselect-menu">
+              ${renderDistrictCheckboxOptions(result.availableDistricts, result.filters.districts)}
+            </div>
+          </details>
+        </fieldset>
 
         <label>
           <span class="label-row">
@@ -166,11 +173,11 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
           <legend>Quantity range</legend>
           <label>
             <span>Min</span>
-            <input name="quantityMin" type="number" min="0" step="0.01" value="${result.filters.quantityMin ?? ""}" />
+            ${renderQuantityInput("quantityMin", result.filters.quantityMin)}
           </label>
           <label>
             <span>Max</span>
-            <input name="quantityMax" type="number" min="0" step="0.01" value="${result.filters.quantityMax ?? ""}" />
+            ${renderQuantityInput("quantityMax", result.filters.quantityMax)}
           </label>
         </fieldset>
 
@@ -179,7 +186,10 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
           <span>Only rows with awarded bid price</span>
         </label>
 
-        <button type="submit" class="secondary-button">Apply filters</button>
+        <div class="filter-form-actions">
+          <button type="submit" class="secondary-button">Apply filters</button>
+          <button type="button" id="clear-evidence-filters" class="secondary-button">Clear Filters</button>
+        </div>
       </form>
     </div>
   `;
@@ -206,7 +216,12 @@ const evidenceColumns: EvidenceColumn[] = [
   { key: "source", label: "Source" }
 ];
 
-function renderTable(rows: EvidenceRow[], sort: EvidenceSort, excludedSummaryRowIds: ReadonlySet<string>): string {
+function renderTable(
+  rows: EvidenceRow[],
+  sort: EvidenceSort,
+  excludedSummaryRowIds: ReadonlySet<string>,
+  adjustedPriceByRowId: ReadonlyMap<string, number> | null
+): string {
   return `
     <div class="table-scroll-shell">
       <div class="table-scroll-affordance" aria-hidden="true"><span></span></div>
@@ -219,7 +234,7 @@ function renderTable(rows: EvidenceRow[], sort: EvidenceSort, excludedSummaryRow
             </tr>
           </thead>
           <tbody>
-            ${rows.map((row) => renderEvidenceRow(row, excludedSummaryRowIds.has(row.rowId))).join("")}
+            ${rows.map((row) => renderEvidenceRow(row, excludedSummaryRowIds.has(row.rowId), adjustedPriceByRowId?.get(row.rowId) ?? null)).join("")}
           </tbody>
         </table>
       </div>
@@ -247,7 +262,7 @@ function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): strin
   `;
 }
 
-function renderEvidenceRow(row: EvidenceRow, isExcluded: boolean): string {
+function renderEvidenceRow(row: EvidenceRow, isExcluded: boolean, adjustedAwardedBidUnitPrice: number | null): string {
   const projectLabel = row.project?.projectNumber || row.project?.projectName || row.project?.projectLocationRaw || row.itemCode;
 
   return `
@@ -273,7 +288,7 @@ function renderEvidenceRow(row: EvidenceRow, isExcluded: boolean): string {
       <td>${formatNumber(row.quantity)}</td>
       <td>${escapeHtml(row.unit)}</td>
       <td>${escapeHtml(row.descriptionRaw)}</td>
-      <td>${formatNullableCurrency(row.awardedBidUnitPrice)}</td>
+      <td>${renderAwardedBidUnitPrice(row.awardedBidUnitPrice, adjustedAwardedBidUnitPrice)}</td>
       <td>${formatNullableCurrency(row.averageBidUnitPrice)}</td>
       <td>${formatNullableCurrency(row.engineerEstimateUnitPrice)}</td>
       <td>${escapeHtml(row.source?.sourceLabel ?? "Unknown source")}</td>
@@ -392,6 +407,20 @@ function renderStatMetric(label: string, value: number, currency: boolean): stri
   `;
 }
 
+function renderAwardedBidUnitPrice(value: number | null, adjustedValue: number | null): string {
+  if (value === null) {
+    return "Not listed";
+  }
+
+  const roundedValue = Math.round(value);
+  const roundedAdjustedValue = adjustedValue === null ? null : Math.round(adjustedValue);
+  const adjustedLine = roundedAdjustedValue !== null && roundedAdjustedValue !== roundedValue
+    ? `<div class="adjusted-price-line">(${formatWholeCurrency(roundedAdjustedValue)})</div>`
+    : "";
+
+  return `${formatCurrency(value)}${adjustedLine}`;
+}
+
 function renderDataNotes(notes: string[]): string {
   if (notes.length === 0) {
     return "";
@@ -424,7 +453,7 @@ function renderSourceCoverageNote(result: EvidenceResult): string {
       <ul class="guidance-list">
         <li>Loaded periods: 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1.</li>
         <li>Default evidence is exact official item-code matching only.</li>
-        <li>Optional inflation adjustment applies only to Awarded Bid Summary statistics and uses loaded FHWA NHCCI quarters.</li>
+        <li>Optional inflation adjustment uses loaded FHWA NHCCI quarters for summary statistics and display-only row context.</li>
         <li>Not included: private FHU data, demo project evidence, unit conversion, or a final price recommendation.</li>
       </ul>
     </section>
@@ -440,7 +469,7 @@ function renderFilterChips(result: EvidenceResult): string {
     `Rows: ${formatNumber(result.filteredRows.length)}`,
     `Source: ${sourceTypeLabel(result.filters.sourceType)}`,
     result.filters.geography ? `Geography: ${result.filters.geography}` : "",
-    result.filters.district ? `District: ${result.filters.district}` : "",
+    result.filters.districts.length > 0 ? `District: ${districtSummaryLabel(result.filters.districts)}` : "",
     result.filters.unit ? `Unit: ${result.filters.unit}` : "",
     result.filters.yearMin !== null || result.filters.yearMax !== null
       ? `Year: ${rangeLabel(result.filters.yearMin, result.filters.yearMax)}`
@@ -489,12 +518,38 @@ function rangeLabel(minimum: number | null, maximum: number | null): string {
   return "Any";
 }
 
-function renderDistrictOptions(districts: string[], selectedDistrict: string): string {
-  const options = uniqueValues([selectedDistrict, ...districts].filter(Boolean));
+function renderDistrictCheckboxOptions(districts: string[], selectedDistricts: string[]): string {
+  const selectedSet = new Set(selectedDistricts);
+  const options = uniqueValues([...selectedDistricts, ...districts].filter(Boolean));
+
+  if (options.length === 0) {
+    return `<p class="district-multiselect-empty">No districts available for current source.</p>`;
+  }
 
   return options
-    .map((district) => `<option value="${escapeHtml(district)}" ${district === selectedDistrict ? "selected" : ""}>${escapeHtml(district)}</option>`)
+    .map((district) => `
+      <label class="district-checkbox-label">
+        <input name="districts" type="checkbox" value="${escapeHtml(district)}" ${selectedSet.has(district) ? "checked" : ""} />
+        <span>${escapeHtml(district)}</span>
+      </label>
+    `)
     .join("");
+}
+
+function districtSummaryLabel(selectedDistricts: string[]): string {
+  if (selectedDistricts.length === 0) {
+    return "All districts";
+  }
+
+  if (selectedDistricts.length === 1) {
+    return `District ${selectedDistricts[0]}`;
+  }
+
+  return `${selectedDistricts.length} districts`;
+}
+
+function renderQuantityInput(name: "quantityMin" | "quantityMax", value: number | null): string {
+  return `<input name="${name}" type="text" value="${value ?? ""}" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" />`;
 }
 
 export function readEvidenceFiltersFromForm(
@@ -507,7 +562,7 @@ export function readEvidenceFiltersFromForm(
     ...currentFilters,
     sourceType: String(formData.get("sourceType") || "public_cost_book") as EvidenceSourceTypeFilter,
     geography: String(formData.get("geography") || ""),
-    district: String(formData.get("district") || ""),
+    districts: formData.getAll("districts").map((value) => String(value)).filter(Boolean),
     yearMin: readOptionalNumber(formData.get("yearMin")),
     yearMax: readOptionalNumber(formData.get("yearMax")),
     quantityMin: readOptionalNumber(formData.get("quantityMin")),
@@ -541,6 +596,14 @@ function formatCurrency(value: number): string {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: value >= 100 ? 0 : 2
+  }).format(value);
+}
+
+function formatWholeCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0
   }).format(value);
 }
 
