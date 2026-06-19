@@ -17,6 +17,7 @@ export function renderResults(
     <section class="results-panel">
       ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed)}
       ${renderAwardedBidSummary(result.stats)}
+      ${renderSourceCoverageNote(result)}
       ${renderDataNotes(result.notes)}
     </section>
   `;
@@ -305,6 +306,26 @@ function renderDataNotes(notes: string[]): string {
       </div>
       <ul class="guidance-list">
         ${notes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}
+      </ul>
+    </section>
+  `;
+}
+
+function renderSourceCoverageNote(result: EvidenceResult): string {
+  if (!result.query.itemCode) {
+    return "";
+  }
+
+  return `
+    <section class="panel-block source-coverage-note">
+      <div class="panel-heading">
+        <p class="eyebrow">Source Coverage</p>
+        <h3>Public CDOT Cost Data Books</h3>
+      </div>
+      <ul class="guidance-list">
+        <li>Loaded periods: 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1.</li>
+        <li>Default evidence is exact official item-code matching only.</li>
+        <li>Not included: private FHU data, demo project evidence, escalation, unit conversion, or a final price recommendation.</li>
       </ul>
     </section>
   `;

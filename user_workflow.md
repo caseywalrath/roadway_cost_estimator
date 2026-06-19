@@ -34,6 +34,7 @@ The first screen should show:
 - item search form
 - project evidence browser
 - awarded bid summary panel
+- source coverage note
 - data notes when filters exclude relevant rows
 
 ## 2. Understand prototype scope
@@ -54,7 +55,7 @@ Why this matters:
 Current prototype default:
 
 ```text
-Colorado roadway public and demo data
+Colorado roadway public CDOT cost-book evidence
 ```
 
 Project context can be partial. Missing context should leave fields blank or produce data notes rather than blocking the item search.
@@ -63,7 +64,7 @@ Project context can be partial. Missing context should leave fields blank or pro
 
 The user enters one item at a time in the item search panel.
 
-The current picker includes the full public CDOT 2026 item-code book for lookup. Project evidence records now include public CDOT 2026 Q1 Cost Data Book rows plus synthetic demo records.
+The current picker includes the full public CDOT 2026 item-code book for lookup. Project evidence records include public CDOT Cost Data Book rows from 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1.
 
 The left panel is organized into three numbered steps:
 
@@ -184,14 +185,42 @@ Reviewer interpretation:
 - A wide spread may indicate scope differences, market differences, sparse data, or outliers.
 - A small count should trigger more evidence review.
 
-## 7. Review data notes
+## 7. Review source coverage
+
+The user reviews the Source Coverage panel after an item is selected.
+
+Current source coverage states:
+
+- loaded evidence source: public CDOT Cost Data Books
+- loaded periods: 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1
+- default matching: exact official item-code matching only
+- not included: private FHU data, demo project evidence, escalation, unit conversion, or a final price recommendation
+
+How to use it:
+
+- Treat source coverage as the boundary of what the app can show.
+- Use the Matching Projects table and CSV export for review, not as a final estimating recommendation.
+- Escalation, adjustments, and final pricing judgment happen outside the app.
+
+## 8. Export filtered evidence
+
+The user can download the currently filtered and sorted Matching Projects rows as a CSV after selecting an official item code.
+
+How to use it:
+
+- Click Download CSV above the Matching Projects table.
+- The export includes all displayed table columns plus project/source metadata.
+- The button is disabled when current filters produce zero rows.
+- Use the CSV for reviewer discussion, basis-of-estimate support, or external analysis.
+
+## 9. Review data notes
 
 Data notes may identify:
 
 - unit mismatch
 - no rows matching current filters
 - missing awarded bid prices
-- synthetic demo rows visible under the current source filter
+- weak or incomplete evidence conditions
 
 How to use it:
 
@@ -213,16 +242,18 @@ For early feedback sessions, the project manager should use the prototype as a s
 Recommended meeting flow:
 
 1. Open the app.
-2. Explain that the default evidence source is public CDOT cost-book data and that optional demo rows are synthetic.
+2. Explain that the default evidence source is public CDOT cost-book data only.
 3. Pick one familiar roadway item.
 4. Use the left-panel steps to find an item, select the official item, enter quantity, and review evidence.
 5. Review the project evidence table.
 6. Apply source, geography, district, year, unit, and quantity filters when relevant.
 7. Review the awarded bid summary after reviewing rows.
-8. Ask which rows are useful evidence and which rows should be excluded later.
-9. Ask which filters or fields are missing.
-10. Ask what source data should be added first.
-11. Record feedback as implementation notes for the coding agent.
+8. Review source coverage and data notes.
+9. Download the CSV if external review is needed.
+10. Ask which rows are useful evidence and which rows should be excluded later.
+11. Ask which filters or fields are missing.
+12. Ask what source data should be added first.
+13. Record feedback as implementation notes for the coding agent.
 
 Key questions for roadway engineers:
 
@@ -261,7 +292,7 @@ Later outputs may include:
 
 ## Data Source Workflow
 
-Real source data should be added only after the demo workflow is validated.
+Additional source data should be added only after the current public CDOT evidence browser remains valid under data-package checks and reviewer smoke tests.
 
 Preferred source order:
 

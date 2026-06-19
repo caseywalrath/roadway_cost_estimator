@@ -15,7 +15,7 @@ The primary deliverable is the project-item evidence table. Awarded bid statisti
 - Runtime model: static files only; no server and no database.
 - Data model: browser-loaded CSV files in `public/data`, including item observations, agency item mappings, and CDOT section metadata.
 - Evidence model: deterministic TypeScript grouping and filtering rules in `src/matching`.
-- Deployment path: GitHub Actions builds the Vite app and publishes `dist` to GitHub Pages from `main`.
+- Deployment path: GitHub Actions validates the app-loaded CSV package, builds the Vite app, and publishes `dist` to GitHub Pages from `main`.
 
 The app loads the CSV package at startup, builds in-memory lookup maps, and runs all filtering and scoring in the browser.
 
@@ -27,7 +27,7 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 4. `src/matching/buildEvidenceResult.ts` groups exact item-code observations into project-item evidence rows.
 5. `src/matching/buildEvidenceResult.ts` applies explicit evidence filters and calculates awarded bid summary statistics for the filtered table.
 6. Prior comparable scoring modules remain in the repository for reference, but the primary UI no longer uses hidden top-five relevance selection.
-7. `src/ui` renders the fixed prototype scope, item search, evidence filters, evidence table, awarded bid summary, and data notes.
+7. `src/ui` renders the fixed prototype scope, item search, evidence filters, sortable evidence table, CSV export, awarded bid summary, source coverage note, and data notes.
 
 ## Data Governance
 
@@ -37,12 +37,15 @@ Do not commit private FHU estimate data to a public GitHub Pages repository. Rea
 
 The repository can generate staging CSVs from public CDOT Cost Data Book PDFs, validate them against project-list pages and agency item codes, and promote them into app-loaded source, project, and observation CSVs. The current promoted public CDOT cost-book sources are `cdot_cost_data_book_2022_q4`, `cdot_cost_data_book_2023_q4`, `cdot_cost_data_book_2024_q4`, `cdot_cost_data_book_2025_q4`, and `cdot_cost_data_book_2026_q1`.
 
+The app-loaded CSV package is checked by `scripts/validate_data_package.py`. The validator fails deployment for broken source/project/observation relationships, duplicate IDs, invalid required values, invalid numeric/date fields, app-loaded demo evidence leakage, and missing smoke-test evidence for `304-06007`. Lookup gaps and optional metadata gaps are reported as warnings.
+
 ## Evidence Browser Rules
 
 The Phase 1 evidence browser rules are intentionally visible and simple:
 
 - Filter to the fixed Colorado prototype state.
 - Use public CDOT cost-book rows by default.
+- Exclude app-loaded demo evidence rows from Matching Projects, including from the all-sources filter.
 - Require selection of an official agency item code before displaying project evidence.
 - Use exact agency item-code matches as the default definition of relevant evidence.
 - Resolve official item descriptions and units from agency item-code records when possible.
@@ -50,8 +53,9 @@ The Phase 1 evidence browser rules are intentionally visible and simple:
 - Show same-unit rows by default.
 - Show unit-mismatch counts as data notes instead of mixing units in the default table.
 - Apply source, geography, district, year, quantity, unit, and awarded-price filters as hard filters.
-- Sort evidence rows newest first, then by project number or project name.
+- Sort evidence rows newest first by default, then allow users to sort by displayed table columns.
 - Export the currently filtered Matching Projects rows to CSV with the displayed table columns and useful project/source metadata.
+- Show source coverage near the evidence results so users can see loaded public CDOT periods and excluded evidence categories.
 - Calculate summary statistics from awarded bid unit prices only.
 
 Alias, keyword, and description fallback matching should return only in a later explicit review mode. They are not part of the default evidence table.
@@ -81,6 +85,8 @@ The submitted `SearchQuery` shape did not change. The visible item search is lim
 ## Near-Term Extension Points
 
 - Review promoted 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 CDOT cost-book rows with roadway engineers.
+- Maintain data integrity checks for loaded CSV relationships.
+- Refine source coverage notes for promoted CDOT cost-book periods.
 - Add manual include/exclude controls and reviewer notes for an engineer-selected evidence set.
 - Add validation coverage for future CDOT cost-book quarters before promotion.
 - Add reviewed FHU data only through an approved private-data workflow.

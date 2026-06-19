@@ -2,367 +2,281 @@
 
 ## Purpose
 
-This roadmap outlines a plausible development pathway for the Roadway Cost Comparable Explorer.
+This roadmap is the current planning source for the Roadway Cost Comparable Explorer.
 
-It is a planning guide, not a fixed commitment. The sequence should change if user testing, roadway engineer feedback, source data constraints, or hosting requirements point in a better direction.
+It consolidates the older `evidence_browser_pivot.md` and `prototype_phase2.md` planning notes into the current product direction as of June 18, 2026. Those older files remain historical references, but this file should guide new roadmap and implementation decisions.
 
-The current product is a static prototype that lets a user search one roadway bid item and review comparable demo records, price ranges, confidence, warnings, and next steps.
+The product is a structured evidence browser, not a price recommendation engine and not a full estimate system.
 
-## Guiding Product Direction
+## Current Product Position
 
-The product should remain a structured evidence tool before it becomes a full estimator.
+The current app is a static GitHub Pages-ready Vite and TypeScript app that helps a user select one official CDOT roadway bid item and review exact item-code project evidence.
 
-Near-term work should answer:
+Implemented:
 
-- Can users understand the comparable evidence?
-- Can roadway engineers trust or challenge the matching logic?
-- Can source data be loaded without weakening data governance?
-- Can weak results clearly explain what is missing?
+- Static browser-only app with CSV files loaded from `public/data`.
+- CDOT section-based item search using the 2026 CDOT item-code book.
+- Official item selection before project evidence is shown.
+- Public CDOT Cost Data Book records from 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1.
+- Demo project evidence removed from the app-loaded data package.
+- Matching Projects table built from exact agency item-code observations.
+- Awarded bid, average bid, and engineer estimate values grouped into one project-item evidence row.
+- Source, geography, district, unit, year, quantity, and awarded-price filters.
+- Same-unit default evidence table with unit-mismatch notes.
+- Sortable Matching Projects table.
+- Awarded Bid Summary based only on currently filtered awarded bid unit prices.
+- CSV export for the currently filtered and sorted Matching Projects rows.
 
-Avoid building broad estimate automation until the item-level comparable workflow is trusted.
+Current default smoke-test item:
+
+- `304-06007`, Aggregate Base Course (Class 6), `CY`.
+
+## Superseded Plans
+
+The following older plan elements are no longer compatible with the current trajectory unless explicitly reopened:
+
+- Treating the app as a demo-data recommendation prototype.
+- Presenting suggested unit price, confidence rating, or top-five ranked matches as the main result.
+- Letting description-only matching drive default project evidence.
+- Showing alias, keyword, or description fallback matches in the normal evidence table.
+- Using public/internal demo source scopes or demo query presets.
+- Mixing awarded bid, average bid, and engineer estimate values into one statistic.
+- Adding private FHU data to this public GitHub Pages repository.
+- Starting with estimate upload, spreadsheet import, chat, accounts, database, or server workflows before the one-item evidence browser is trusted.
+
+## Product Direction
+
+The near-term product should remain a one-item evidence review tool.
+
+Primary user value:
+
+- Find an official item.
+- Review all exact-code public CDOT project evidence.
+- Filter, sort, export, and discuss the evidence with roadway reviewers.
+- Decide outside the app how the evidence should inform estimating judgment.
+
+The app should make weak or incomplete evidence visible. It should not imply a final recommended price.
 
 ## Recommended Sequencing
 
-### Phase 0: Current prototype stabilization
+### Phase 1: Evidence Browser Hardening
 
-Goal: Make the existing demo app stable enough for early review.
+Goal: Make the current exact-code evidence browser credible enough for roadway engineer review.
 
-Current status:
+Next work:
 
-- Static GitHub Pages-ready app.
-- Synthetic demo CSV records.
-- One-item Item Explorer.
-- Recommendation summary.
-- Comparable table.
-- Price distribution.
-- Confidence and improve-confidence guidance.
-- Prototype annotations.
-- Clear and Reset Example actions.
-
-Recommended small next efforts:
-
-- Confirm GitHub Pages deployment works after merge to `main`.
-- Add a short tester instruction block or link to `user_workflow.md`.
-- Add a short list of recommended demo queries inside documentation or an optional app help panel.
-- Confirm tooltip behavior across Chrome and Edge.
-- Confirm mobile layout is usable enough for review, even if desktop remains primary.
-- Keep synthetic data labels visible.
+- Validate promoted CDOT 2022 Q4 through 2026 Q1 rows with roadway reviewers.
+- Add automated checks for source, project, and observation relationships.
+- Add source coverage notes by cost-book period and item family.
+- Add targeted smoke tests for common item codes, including `304-06007`.
+- Confirm GitHub Pages deployment after each merged PR.
+- Keep `architecture_overview.md`, `docs/data_schema.md`, and `user_workflow.md` aligned with behavior.
 
 Exit criteria:
 
-- Test users can open the app.
-- Test users can run at least five demo searches.
-- Test users understand that the data is synthetic.
-- Roadway reviewers can explain whether the result layout is useful.
+- Reviewers can run common CDOT item searches.
+- Reviewers understand source limitations and unit handling.
+- The app can detect basic data integrity failures before promotion.
 
-### Phase 1: Roadway reviewer feedback loop
+### Phase 2: Reviewer-Controlled Evidence Set
 
-Goal: Use the prototype to collect specific feedback before adding real data or larger workflows.
+Goal: Let reviewers move from a filtered evidence table to a deliberate review set.
 
-User-facing features:
+Recommended features:
 
-- A documented feedback form or markdown template.
-- A short list of review questions for roadway engineers.
-- Optional in-app example query presets.
-- Optional "what changed in this result" explanation when source scope, quantity, or region changes.
+- Manual include/exclude controls for Matching Projects rows.
+- Exclusion reasons and reviewer notes.
+- Included-set awarded bid statistics recalculated from selected rows.
+- Clear reset behavior for reviewer selections when item or filters change.
+- CSV export that can include review decisions and notes.
 
-Small iterative efforts:
+Non-goals:
 
-- Add a "Copy query summary" or "Copy result summary" button.
-- Add clearer labels for "suggested unit price" versus "final estimate."
-- Add a warning when item code and description appear to point to different item families.
-- Add a visible count of excluded unit-mismatch records.
-- Add a way to collapse prototype annotations once users understand the screen.
-
-Large-scale decisions to defer:
-
-- Full estimate upload.
-- Private data storage.
-- Chat interface.
-- Automatic source document parsing.
+- Automatic outlier removal.
+- Unit conversion.
+- Price recommendation.
+- Persistent shared review history.
 
 Exit criteria:
 
-- Roadway reviewers identify which current matches feel correct or too broad.
-- Reviewers identify priority item families.
-- Reviewers identify trusted public source documents.
-- The team has a ranked backlog of rule, data, and UI changes.
+- A reviewer can document why rows were used or excluded.
+- Exported evidence can support an external basis-of-estimate discussion.
 
-### Phase 2: Validated public data package
+### Phase 3: Richer Evidence Filtering And Traceability
 
-Goal: Replace or supplement synthetic data with reviewed public roadway data.
+Goal: Improve scanning and auditability without changing the exact-code default.
 
-User-facing features:
+Recommended features:
 
-- Clearly labeled public source data.
-- Source notes that identify agency, source type, year, and limitations.
-- Better confidence guidance based on actual data coverage.
-- More item families and realistic price variation.
-
-Data work:
-
-- Collect public CDOT item code books, cost books, bid tabs, or awarded project records.
-- Decide which source format should be imported first.
-- Create repeatable source-to-CSV conversion steps.
-- Preserve raw descriptions, raw units, normalized descriptions, normalized units, and source metadata.
-- Keep demo data separate from validated source data.
-
-Small iterative efforts:
-
-- Add 5 to 10 high-priority CDOT item families first.
-- Add unit tests or fixture checks for matching rules.
-- Add data validation checks for missing project IDs, source IDs, units, prices, and dates.
-- Add a source coverage summary in documentation.
-- Add known limitations for each source.
+- Contractor filter.
+- Bid count range filter.
+- Project number search.
+- Table-wide text search across project, location, contractor, item description, and source.
+- Optional terrain and awarded-bid-total filters if reviewers find them useful.
+- Clear source-period and data-limitations display.
 
 Exit criteria:
 
-- At least one real public data source is represented in the CSV schema.
-- Roadway reviewers confirm that several item mappings are technically reasonable.
-- The app still works as a static site.
-- Private FHU data remains out of the public repository.
+- Reviewers can quickly narrow large item-code evidence sets.
+- Filtering remains visible, reversible, and exportable.
 
-### Phase 3: Matching and confidence refinement
+### Phase 4: Data Pipeline And Coverage Expansion
 
-Goal: Make recommendations more defensible and easier to challenge.
+Goal: Make public data updates repeatable and auditable.
 
-User-facing features:
+Recommended work:
 
-- Better "why selected" explanations.
-- Clearer distinction between exact code, approved alias, and keyword fallback matches.
-- Filters for region, source type, date range, quantity range, and project type.
-- Outlier visibility or outlier exclusion controls.
-- Confidence reasons shown in plain language.
-
-Matching improvements:
-
-- Tune weights for quantity similarity, recency, geography, and work type.
-- Add item-family-specific matching rules where needed.
-- Add reviewed alias approval status.
-- Add source-quality weighting.
-- Add optional escalation or date-basis adjustment only after the team agrees on the method.
-- Add unit conversion only for approved item families and only with visible assumptions.
-
-Small iterative efforts:
-
-- Add tests for exact-code, alias, keyword, unit mismatch, and no-match cases.
-- Add a "show all candidates" review mode.
-- Add a "why not included" explanation for excluded records.
-- Add warnings for sparse data and stale data.
-- Add confidence thresholds to documentation.
+- Validate future CDOT cost-book quarters before promotion.
+- Improve parser and promotion tests for known CDOT PDF variations.
+- Add a repeatable checklist for adding a new cost-book period.
+- Track source coverage by item code, unit, year, and district.
+- Keep raw source PDFs out of git and use ignored local source folders.
 
 Exit criteria:
 
-- Roadway reviewers can explain why the top records were selected.
-- Users can see when evidence is weak.
-- The app avoids presenting a strong recommendation when the data does not support it.
+- Adding a new public cost-book period is a controlled process.
+- Data coverage gaps are visible before users interpret evidence.
 
-### Phase 4: Estimate workspace
+### Phase 5: Explicit Non-Exact Review Mode
 
-Goal: Move from one-item lookup to a small multi-item review workflow.
+Goal: Support broader evidence discovery only when reviewers intentionally leave exact-code mode.
 
-User-facing features:
+Recommended features:
 
-- Add estimate rows in a workspace.
-- Let users enter multiple item codes, descriptions, units, quantities, and notes.
-- Run comparable matching per row.
-- Flag rows with high confidence, low confidence, no support, unit mismatch, or missing context.
-- Let users open a row detail view that uses the current Item Explorer evidence pattern.
+- Separate mode for reviewed aliases or description-adjacent matches.
+- Clear labels for exact code, reviewed alias, and non-exact candidate rows.
+- No non-exact rows mixed into the default evidence table.
+- Reviewer warnings when evidence is not exact-code support.
 
-Small iterative efforts:
+Non-goals:
 
-- Start with manual row entry before upload.
-- Add duplicate row and delete row actions.
-- Add row status badges.
-- Add project-level context shared across rows.
-- Add simple local browser persistence if useful.
+- Hidden relevance scoring.
+- Keyword fallback as default evidence.
+- High-confidence recommendation from non-exact matches.
 
-Large-scale features to defer until the workspace is trusted:
+Exit criteria:
 
-- Full spreadsheet import.
-- Advanced estimate versioning.
+- Users can inspect adjacent evidence without mistaking it for exact item-code support.
+
+### Phase 6: Estimate Workspace
+
+Goal: Add multi-item review only after the one-item evidence workflow is trusted.
+
+Recommended features:
+
+- Manual estimate rows before any file import.
+- Per-row item selection using the existing item search.
+- Row status for evidence found, no support, unit mismatch, or needs review.
+- Link each row to the existing Matching Projects detail view.
+
+Deferred until later:
+
+- Spreadsheet import.
+- Advanced versioning.
+- Collaboration.
 - User accounts.
-- Database-backed collaboration.
 
 Exit criteria:
 
-- A user can review a small estimate section with multiple bid items.
-- Weak rows are easy to identify.
-- The existing one-item evidence view remains available for detailed review.
+- A user can review a small estimate section while preserving the current one-item evidence workflow.
 
-### Phase 5: Import and export workflows
+### Phase 7: Import, Export, And Private-Data Strategy
 
-Goal: Reduce manual entry while keeping review traceable.
+Goal: Reduce manual work without weakening governance.
 
-User-facing features:
+Recommended sequence:
 
-- CSV import for estimate rows.
-- Later XLSX import if the schema is stable.
-- Export comparable support tables.
-- Export basis-of-estimate notes or review summaries.
-- Export a reviewer feedback package.
+- Expand evidence export formats only after reviewer-set behavior is stable.
+- Add CSV import for estimate rows only after the estimate-row schema is stable.
+- Add XLSX import later if CSV import proves useful.
+- Decide private-data hosting before using reviewed FHU records.
 
-Small iterative efforts:
+Governance rules:
 
-- Add a downloadable CSV template.
-- Add import validation with clear row-level errors.
-- Add mapping instructions for required columns.
-- Add CSV export before XLSX export.
-- Add "copy table" support if users need quick sharing.
-
-Data governance requirements:
-
-- Do not transmit private files to a third party from the static app.
-- Prefer browser-local parsing for user-uploaded files.
-- Clearly explain whether imported data is stored, temporary, or exported.
+- Private FHU data must not be committed to the public repository.
+- Browser-local upload can be considered before server storage.
+- Private hosting or a backend should be considered only when access control, persistence, or collaboration is required.
 
 Exit criteria:
 
-- A user can bring in a simple estimate table.
-- A user can export evidence without manually rebuilding tables.
-- Import errors are understandable to non-developers.
-
-### Phase 6: Private-data strategy
-
-Goal: Decide how reviewed FHU data can be used without exposing private data in a public repo.
-
-Potential options:
-
-- Browser-local user upload of private files.
-- Private GitHub repository and private Pages or equivalent internal hosting.
-- Internal static hosting with access control.
-- Later server or database model if collaboration and persistence become necessary.
-
-User-facing implications:
-
-- Public prototype can remain a demo and public-data tool.
-- Internal prototype can use reviewed FHU records if governance is approved.
-- Users should always know which source type supports a recommendation.
-
-Questions to answer before implementation:
-
-- Which private data is allowed?
-- Who can access it?
-- Can it be committed to any repository?
-- Does the app need persistent shared history?
-- Does the app need user accounts or role-based access?
-
-Exit criteria:
-
-- The team chooses a private-data path.
-- The path is documented before private data is added.
-- Public GitHub Pages remains free of private FHU data.
-
-### Phase 7: Production hardening
-
-Goal: Prepare the tool for regular internal or public use.
-
-User-facing features:
-
-- More reliable source coverage.
-- Better error messages.
-- Accessibility improvements.
-- Review status tracking.
-- Exportable documentation.
-- Version labels for data packages and matching rules.
-
-Technical and process work:
-
-- Add automated data validation.
-- Add automated app tests.
-- Add release notes.
-- Add versioned source data packages.
-- Add performance checks for larger CSV files.
-- Reconsider DuckDB-WASM, SQLite-in-browser, or a backend only if static CSVs become limiting.
-
-Exit criteria:
-
-- Users can trust which data version and matching rules produced a recommendation.
-- The app has a repeatable update and review process.
-- The team has made an explicit hosting and data-governance decision.
+- Import/export behavior is traceable and understandable to non-developers.
+- Private-data handling is approved before implementation.
 
 ## Cross-Cutting Workstreams
 
-### Data source workstream
+### Data
 
-Recommended sequence:
+- Keep public CDOT cost-book rows separate by source period.
+- Preserve raw descriptions, raw units, normalized descriptions, normalized units, source IDs, project IDs, and price types.
+- Add validation before promotion, not after users discover data issues.
+- Document source coverage and known limitations.
 
-1. Validate schema against demo records.
-2. Add public CDOT item and project records.
-3. Add source coverage documentation.
-4. Add quality flags.
-5. Add reviewed FHU data only after governance approval.
+### User Experience
 
-### User experience workstream
+- Keep the first screen focused on item selection and evidence review.
+- Avoid marketing-style screens or broad estimator workflows.
+- Keep filters visible through chips and reversible controls.
+- Keep row-level evidence dense enough for repeated engineering review.
 
-Recommended sequence:
+### Matching
 
-1. Keep the one-item workflow clear.
-2. Add review aids and query presets.
-3. Add filters and detail views.
-4. Add multi-item workspace.
-5. Add import and export.
+- Exact official item code remains the default definition of relevant evidence.
+- Same-unit evidence remains the default table.
+- Alias and description matching are future explicit review modes.
+- Unit conversion, escalation, and outlier removal require approved assumptions before implementation.
 
-### Matching workstream
+### Documentation
 
-Recommended sequence:
+- Update `architecture_overview.md` when data flow, runtime behavior, or major evidence-browser rules change.
+- Update `docs/data_schema.md` when CSV fields, allowed values, or data governance rules change.
+- Update `docs/implementation_notes.md` when import, promotion, build, or test commands change.
+- Update `user_workflow.md` when the user-facing workflow changes.
+- Update this roadmap when sequencing or product direction changes.
 
-1. Preserve exact code match priority.
-2. Improve alias and canonical mappings.
-3. Add tests for known item families.
-4. Add reviewer-controlled inclusion and exclusion.
-5. Add escalation, outlier, and conversion logic only with approved assumptions.
+## Near-Term Backlog
 
-### Documentation workstream
+Recommended next backlog, in order:
 
-Recommended sequence:
-
-1. Keep `architecture_overview.md` current when app structure or data flow changes.
-2. Keep `docs/data_schema.md` current when CSV contracts change.
-3. Keep `user_workflow.md` current when user workflows change.
-4. Keep this roadmap current when sequencing decisions change.
-5. Keep `codex.md` current when local development lessons change.
-
-## Near-Term Backlog Candidates
-
-Recommended near-term backlog:
-
-- Merge and deploy the Clear button and tooltip fixes.
-- Add this roadmap to the repository.
-- Confirm GitHub Pages deployment after merge.
-- Add optional query presets for the current demo item families.
-- Add a compact tester guide in the app or documentation.
-- Add result export by copy or CSV.
-- Add reviewed public CDOT sample data.
-- Add matching tests for current demo item families.
-- Add source coverage notes.
-- Add an annotation toggle.
+1. Add data integrity checks for loaded CSV relationships.
+2. Add source coverage notes for promoted CDOT cost-book periods.
+3. Validate several high-volume item codes with roadway reviewers.
+4. Add manual include/exclude review controls and reviewer notes.
+5. Add included-set statistics and review-aware CSV export.
+6. Add contractor, bid count, and project number filters.
+7. Update `user_workflow.md` to match the current evidence browser and export workflow.
+8. Add smoke-test documentation for `304-06007` and other reviewer-selected items.
 
 ## Decision Points
 
-Before adding real data:
+Before manual review sets:
 
-- Which public source should be imported first?
-- Which item families should be validated first?
-- Who reviews item mappings?
+- What inclusion and exclusion reasons should reviewers use?
+- Should notes be plain text only?
+- Should review decisions be export-only or persisted in browser storage?
 
-Before adding private data:
+Before richer filtering:
 
-- Where can private data safely live?
+- Which filters materially help reviewers narrow evidence?
+- Which fields should stay export-only metadata rather than visible table columns?
+
+Before non-exact review mode:
+
+- Who approves aliases?
+- How should non-exact candidates be labeled?
+- What warnings are required?
+
+Before estimate workspace:
+
+- What fields define one estimate row?
+- Should workspace state persist locally?
+- What is the minimum useful export?
+
+Before private data:
+
+- Which data is allowed?
+- Where can it be hosted?
 - Who can access it?
 - What source labels and warnings are required?
-
-Before adding estimate upload:
-
-- What input schema should users prepare?
-- Which fields are required?
-- What should happen when rows cannot be matched?
-
-Before adding escalation or unit conversion:
-
-- Which method is approved?
-- Which item families are eligible?
-- How should assumptions be displayed?
 
 ## Working Rule
 
