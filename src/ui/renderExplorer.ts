@@ -267,30 +267,27 @@ function renderItemResults(
 
   return `
     <div class="item-result-count">${matchingItems.length} matching item${matchingItems.length === 1 ? "" : "s"}</div>
-    <div class="item-result-scroll-wrap" data-item-result-scroll-wrap>
-      <div class="item-result-buttons" data-item-result-scroll>
-        ${displayedItems
-          .map((agencyItem) => renderItemResultButton(agencyItem, agencyItem.itemCode === selectedItemCode))
-          .join("")}
-      </div>
-      <div class="item-result-fade" data-item-result-fade hidden></div>
+    <div class="item-result-buttons" data-item-result-scroll>
+      ${displayedItems
+        .map((agencyItem) => renderItemResultButton(agencyItem, agencyItem.itemCode === selectedItemCode))
+        .join("")}
     </div>
-    <p class="item-result-scroll-hint" data-item-result-scroll-hint hidden>Scroll for more matches</p>
   `;
 }
 
 function updateItemResultScrollCue(root: HTMLElement): void {
   const scrollContainer = root.querySelector<HTMLElement>("[data-item-result-scroll]");
-  const fade = root.querySelector<HTMLElement>("[data-item-result-fade]");
-  const hint = root.querySelector<HTMLElement>("[data-item-result-scroll-hint]");
 
-  if (!scrollContainer || !fade || !hint) {
+  if (!scrollContainer) {
     return;
   }
 
-  const hasOverflow = scrollContainer.scrollHeight > scrollContainer.clientHeight + 1;
-  fade.hidden = !hasOverflow;
-  hint.hidden = !hasOverflow;
+  scrollContainer.setAttribute(
+    "aria-label",
+    scrollContainer.scrollHeight > scrollContainer.clientHeight + 1
+      ? "Scrollable item results"
+      : "Item results"
+  );
 }
 
 function renderItemResultButton(agencyItem: AgencyItemRecord, selected: boolean): string {
