@@ -7,16 +7,29 @@ import type {
   EvidenceSourceTypeFilter,
   EvidenceStats
 } from "../data/schema";
+import type { InflationAdjustedSummary } from "../matching/inflationAdjustment";
 
 export function renderResults(
   result: EvidenceResult,
   filtersExpanded: boolean,
-  itemSearchCollapsed: boolean
+  itemSearchCollapsed: boolean,
+  excludedSummaryRowIds: ReadonlySet<string>,
+  includedRowCount: number,
+  visibleExcludedCount: number,
+  includedStats: EvidenceStats | null,
+  inflationAdjustmentEnabled: boolean,
+  inflationAdjustedSummary: InflationAdjustedSummary | null
 ): string {
   return `
     <section class="results-panel">
-      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed)}
-      ${renderAwardedBidSummary(result.stats)}
+      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount)}
+      ${renderAwardedBidSummary(
+        inflationAdjustmentEnabled ? inflationAdjustedSummary?.stats ?? null : includedStats,
+        result.filteredRows.length,
+        includedRowCount,
+        inflationAdjustmentEnabled,
+        inflationAdjustedSummary
+      )}
       ${renderSourceCoverageNote(result)}
       ${renderDataNotes(result.notes)}
     </section>
@@ -26,7 +39,10 @@ export function renderResults(
 function renderEvidenceTable(
   result: EvidenceResult,
   filtersExpanded: boolean,
-  itemSearchCollapsed: boolean
+  itemSearchCollapsed: boolean,
+  excludedSummaryRowIds: ReadonlySet<string>,
+  includedRowCount: number,
+  visibleExcludedCount: number
 ): string {
   if (!result.query.itemCode) {
     return `
@@ -39,14 +55,14 @@ function renderEvidenceTable(
 
   return `
     <section class="panel-block panel-block--table">
-      ${renderMatchingProjectsHeader(result, itemSearchCollapsed)}
-      ${renderEvidenceControls(result, filtersExpanded)}
-      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows, result.sort)}
+      ${renderMatchingProjectsHeader(result, itemSearchCollapsed, includedRowCount)}
+      ${renderEvidenceControls(result, filtersExpanded, visibleExcludedCount)}
+      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows, result.sort, excludedSummaryRowIds)}
     </section>
   `;
 }
 
-function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: boolean): string {
+function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: boolean, includedRowCount = result.filteredRows.length): string {
   const showExportButton = Boolean(result.query.itemCode);
 
   return `
@@ -64,7 +80,7 @@ function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: bo
         ? `
           <div class="matching-projects-actions">
             ${showExportButton
-              ? `<button type="button" id="download-matching-projects-csv" class="secondary-button matching-projects-export-button" ${result.filteredRows.length === 0 ? "disabled" : ""}>Download CSV</button>`
+              ? `<button type="button" id="download-matching-projects-csv" class="secondary-button matching-projects-export-button" ${includedRowCount === 0 ? "disabled" : ""}>Download CSV</button>`
               : ""}
             ${showEditButton ? `<button type="button" id="edit-item-search" class="primary-button matching-projects-edit-button">Edit Item Search</button>` : ""}
           </div>
@@ -74,13 +90,14 @@ function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: bo
   `;
 }
 
-function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean): string {
+function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean, visibleExcludedCount: number): string {
   const unitOptions = uniqueValues([result.filters.unit, ...result.availableUnits].filter(Boolean));
 
   return `
     <div class="evidence-filter-toolbar">
       <div class="filter-chip-list" aria-label="Active evidence filters">
         ${renderFilterChips(result)}
+        ${visibleExcludedCount > 0 ? `<span class="filter-chip">Excluded: ${formatNumber(visibleExcludedCount)}</span>` : ""}
       </div>
       <button
         type="button"
@@ -189,7 +206,7 @@ const evidenceColumns: EvidenceColumn[] = [
   { key: "source", label: "Source" }
 ];
 
-function renderTable(rows: EvidenceRow[], sort: EvidenceSort): string {
+function renderTable(rows: EvidenceRow[], sort: EvidenceSort, excludedSummaryRowIds: ReadonlySet<string>): string {
   return `
     <div class="table-scroll-shell">
       <div class="table-scroll-affordance" aria-hidden="true"><span></span></div>
@@ -197,11 +214,12 @@ function renderTable(rows: EvidenceRow[], sort: EvidenceSort): string {
         <table class="evidence-table">
           <thead>
             <tr>
+              <th class="evidence-exclude-header">Exclude from Summary</th>
               ${evidenceColumns.map((column) => renderSortableHeader(column, sort)).join("")}
             </tr>
           </thead>
           <tbody>
-            ${rows.map(renderEvidenceRow).join("")}
+            ${rows.map((row) => renderEvidenceRow(row, excludedSummaryRowIds.has(row.rowId))).join("")}
           </tbody>
         </table>
       </div>
@@ -229,9 +247,20 @@ function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): strin
   `;
 }
 
-function renderEvidenceRow(row: EvidenceRow): string {
+function renderEvidenceRow(row: EvidenceRow, isExcluded: boolean): string {
+  const projectLabel = row.project?.projectNumber || row.project?.projectName || row.project?.projectLocationRaw || row.itemCode;
+
   return `
-    <tr>
+    <tr class="${isExcluded ? "evidence-row--excluded" : ""}">
+      <td class="exclude-summary-cell">
+        <input
+          type="checkbox"
+          class="exclude-summary-checkbox"
+          data-exclude-row-id="${escapeHtml(row.rowId)}"
+          aria-label="Exclude ${escapeHtml(projectLabel)} from summary"
+          ${isExcluded ? "checked" : ""}
+        />
+      </td>
       <td>${escapeHtml(row.project?.projectNumber || "Not listed")}</td>
       <td>
         ${escapeHtml(row.project?.projectName ?? "Unknown project")}
@@ -252,24 +281,60 @@ function renderEvidenceRow(row: EvidenceRow): string {
   `;
 }
 
-function renderAwardedBidSummary(stats: EvidenceStats | null): string {
-  if (!stats) {
+function renderAwardedBidSummary(
+  stats: EvidenceStats | null,
+  filteredRowCount: number,
+  includedRowCount: number,
+  inflationAdjustmentEnabled: boolean,
+  inflationAdjustedSummary: InflationAdjustedSummary | null
+): string {
+  const inflationControl = renderInflationAdjustmentControl(inflationAdjustmentEnabled);
+  const inflationNote = renderInflationAdjustmentNote(inflationAdjustmentEnabled, inflationAdjustedSummary);
+
+  if (filteredRowCount > 0 && includedRowCount === 0) {
     return `
       <section class="panel-block">
-        <div class="panel-heading">
-          <p class="eyebrow">Awarded Bid Summary</p>
-          <h3>No awarded bid statistics available</h3>
+        <div class="summary-heading-row">
+          <div class="panel-heading">
+            <p class="eyebrow">Awarded Bid Summary</p>
+            <h3>No included rows in summary</h3>
+          </div>
+          ${inflationControl}
         </div>
-        <p class="muted">The current evidence rows do not include awarded bid unit prices.</p>
+        <p class="muted">All current evidence rows are excluded from the Awarded Bid Summary.</p>
+        ${inflationNote}
+      </section>
+    `;
+  }
+
+  if (!stats) {
+    const noStatsMessage = inflationAdjustmentEnabled && (inflationAdjustedSummary?.awardedRowCount ?? 0) > 0
+      ? "No included awarded bid rows could be adjusted because their source quarters are not loaded in the FHWA NHCCI table."
+      : "The included evidence rows do not include awarded bid unit prices.";
+
+    return `
+      <section class="panel-block">
+        <div class="summary-heading-row">
+          <div class="panel-heading">
+            <p class="eyebrow">Awarded Bid Summary</p>
+            <h3>No awarded bid statistics available</h3>
+          </div>
+          ${inflationControl}
+        </div>
+        <p class="muted">${noStatsMessage}</p>
+        ${inflationNote}
       </section>
     `;
   }
 
   return `
     <section class="panel-block">
-      <div class="panel-heading">
-        <p class="eyebrow">Awarded Bid Summary</p>
-        <h3>Statistics for currently filtered awarded bid prices</h3>
+      <div class="summary-heading-row">
+        <div class="panel-heading">
+          <p class="eyebrow">Awarded Bid Summary</p>
+          <h3>${inflationAdjustmentEnabled ? "Statistics for NHCCI-adjusted awarded bid prices" : "Statistics for included awarded bid prices"}</h3>
+        </div>
+        ${inflationControl}
       </div>
       <div class="distribution-grid evidence-stats-grid">
         ${renderStatMetric("Count", stats.count, false)}
@@ -280,7 +345,41 @@ function renderAwardedBidSummary(stats: EvidenceStats | null): string {
         ${renderStatMetric("P75", stats.p75, true)}
         ${renderStatMetric("High", stats.high, true)}
       </div>
+      ${inflationNote}
     </section>
+  `;
+}
+
+function renderInflationAdjustmentControl(enabled: boolean): string {
+  return `
+    <label class="summary-toggle">
+      <input id="inflation-adjustment-toggle" type="checkbox" ${enabled ? "checked" : ""} />
+      <span>Inflation Adjustment</span>
+    </label>
+  `;
+}
+
+function renderInflationAdjustmentNote(
+  enabled: boolean,
+  summary: InflationAdjustedSummary | null
+): string {
+  if (!enabled) {
+    return "";
+  }
+
+  if (!summary?.targetPeriod) {
+    return `<p class="summary-adjustment-note">Inflation Adjustment is on, but no FHWA NHCCI index values are loaded.</p>`;
+  }
+
+  const missingNote = summary.missingIndexCount > 0
+    ? ` ${formatNumber(summary.missingIndexCount)} included awarded bid row(s) could not be adjusted because no NHCCI value is loaded for their source quarter.`
+    : "";
+
+  return `
+    <p class="summary-adjustment-note">
+      Inflation Adjustment is on. Awarded bid unit prices are adjusted with FHWA NHCCI to ${escapeHtml(summary.targetPeriod.periodLabel)}.
+      Original Matching Projects prices and CSV export are unchanged.${missingNote}
+    </p>
   `;
 }
 
@@ -325,7 +424,8 @@ function renderSourceCoverageNote(result: EvidenceResult): string {
       <ul class="guidance-list">
         <li>Loaded periods: 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1.</li>
         <li>Default evidence is exact official item-code matching only.</li>
-        <li>Not included: private FHU data, demo project evidence, escalation, unit conversion, or a final price recommendation.</li>
+        <li>Optional inflation adjustment applies only to Awarded Bid Summary statistics and uses loaded FHWA NHCCI quarters.</li>
+        <li>Not included: private FHU data, demo project evidence, unit conversion, or a final price recommendation.</li>
       </ul>
     </section>
   `;

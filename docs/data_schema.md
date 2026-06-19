@@ -4,7 +4,7 @@
 
 The prototype uses static CSV files so non-developers can inspect records and Git can track every data change.
 
-The current data package includes public CDOT 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 Cost Data Book records. It is prototype evidence, not estimating guidance.
+The current data package includes public CDOT 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 Cost Data Book records, plus static FHWA NHCCI quarterly index values for optional summary-only inflation adjustment. It is prototype evidence, not estimating guidance.
 
 ## Files
 
@@ -128,6 +128,27 @@ Required columns:
 This file is a reference lookup table for section labels. It is not a cost book and does not replace `agency_items.csv`.
 
 The current file is generated with `scripts/import_cdot_item_code_book.py` from the same CDOT 2026 Item Code Book workbook as `agency_items.csv`. Known CDOT Standard Specification prefixes use reviewed section labels. Unmapped prefixes use fallback labels so every loaded agency item can appear in the section-based picker.
+
+### `inflation_index.csv`
+
+Static FHWA National Highway Construction Cost Index values used only when the user turns on Inflation Adjustment in the Awarded Bid Summary.
+
+Required columns:
+
+- `index_id`
+- `index_name`
+- `period_year`
+- `period_quarter`
+- `period_label`
+- `period_start_date`
+- `period_end_date`
+- `index_value`
+- `source_url`
+- `notes`
+
+The current file is generated with `scripts/refresh_nhcci_index.py` from the DOT public data endpoint for FHWA NHCCI. The app uses the unadjusted quarterly NHCCI value and adjusts awarded bid unit prices from each evidence row's let-date quarter to the latest loaded NHCCI quarter. Matching Projects table prices and CSV export remain original awarded-bid evidence.
+
+If evidence contains quarters newer than the latest loaded official NHCCI value, validation reports a warning and the adjusted summary excludes those awarded bid rows when Inflation Adjustment is on. The app does not interpolate or fabricate missing index values.
 
 ### `aliases.csv`
 

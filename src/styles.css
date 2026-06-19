@@ -196,6 +196,43 @@ select {
   font-size: 1.05rem;
 }
 
+.summary-heading-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.summary-toggle {
+  display: inline-flex;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-height: 34px;
+  color: #263544;
+  font-size: 0.86rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.summary-toggle input {
+  width: 18px;
+  min-height: 18px;
+  margin: 0;
+}
+
+.summary-toggle span {
+  display: inline;
+}
+
+.summary-adjustment-note {
+  margin: 12px 0 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -749,7 +786,7 @@ table {
 }
 
 .evidence-table {
-  min-width: 1560px;
+  min-width: 1660px;
 }
 
 th,
@@ -772,6 +809,14 @@ th {
 
 .evidence-table th {
   padding: 0;
+}
+
+.evidence-exclude-header {
+  width: 92px;
+  min-width: 92px;
+  padding: 8px 8px;
+  text-align: center;
+  white-space: normal;
 }
 
 .evidence-table__sorted-column {
@@ -833,10 +878,33 @@ th {
   transform: rotate(45deg);
 }
 
-td:nth-child(1),
-td:nth-child(7),
+.exclude-summary-cell {
+  width: 92px;
+  min-width: 92px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.exclude-summary-checkbox {
+  width: 18px;
+  min-height: 18px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.evidence-row--excluded {
+  color: #7a8591;
+  background: #f4f6f8;
+}
+
+.evidence-row--excluded .row-subtext {
+  color: #8b96a1;
+}
+
+td:nth-child(2),
 td:nth-child(8),
-td:nth-child(9) {
+td:nth-child(9),
+td:nth-child(10) {
   white-space: nowrap;
 }
 
@@ -916,5 +984,10 @@ tbody tr:last-child td {
 
   .matching-projects-actions {
     justify-content: flex-start;
+  }
+
+  .summary-heading-row {
+    flex-direction: column;
+    gap: 10px;
   }
 }

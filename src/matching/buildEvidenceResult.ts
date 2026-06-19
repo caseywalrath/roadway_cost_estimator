@@ -278,10 +278,17 @@ function rowMatchesNonUnitFilters(row: EvidenceRow, filters: EvidenceFilters): b
   return true;
 }
 
-function buildEvidenceStats(rows: EvidenceRow[]): EvidenceStats | null {
-  const prices = rows
-    .map((row) => row.awardedBidUnitPrice)
-    .filter((price): price is number => price !== null && Number.isFinite(price) && price > 0)
+export function buildEvidenceStats(rows: EvidenceRow[]): EvidenceStats | null {
+  return buildEvidenceStatsFromPrices(
+    rows
+      .map((row) => row.awardedBidUnitPrice)
+      .filter((price): price is number => price !== null && Number.isFinite(price) && price > 0)
+  );
+}
+
+export function buildEvidenceStatsFromPrices(rawPrices: number[]): EvidenceStats | null {
+  const prices = rawPrices
+    .filter((price) => Number.isFinite(price) && price > 0)
     .sort((left, right) => left - right);
 
   if (prices.length === 0) {

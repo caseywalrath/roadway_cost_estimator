@@ -27,10 +27,10 @@ const csvColumns: CsvColumn[] = [
   { header: "Observation IDs", value: (row) => row.observationIds.join(";") || null }
 ];
 
-export function buildEvidenceCsv(result: EvidenceResult): string {
+export function buildEvidenceCsv(result: EvidenceResult, rows: EvidenceRow[] = result.filteredRows): string {
   const lines = [
     csvColumns.map((column) => escapeCsvValue(column.header)).join(","),
-    ...result.filteredRows.map((row) =>
+    ...rows.map((row) =>
       csvColumns.map((column) => escapeCsvValue(column.value(row))).join(",")
     )
   ];
@@ -38,12 +38,12 @@ export function buildEvidenceCsv(result: EvidenceResult): string {
   return lines.join("\r\n");
 }
 
-export function downloadEvidenceCsv(result: EvidenceResult): void {
-  if (result.filteredRows.length === 0) {
+export function downloadEvidenceCsv(result: EvidenceResult, rows: EvidenceRow[] = result.filteredRows): void {
+  if (rows.length === 0) {
     return;
   }
 
-  const csv = buildEvidenceCsv(result);
+  const csv = buildEvidenceCsv(result, rows);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
