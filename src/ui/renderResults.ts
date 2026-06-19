@@ -171,11 +171,11 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
           <legend>Quantity range</legend>
           <label>
             <span>Min</span>
-            ${renderQuantityStepper("quantityMin", result.filters.quantityMin)}
+            ${renderQuantityInput("quantityMin", result.filters.quantityMin)}
           </label>
           <label>
             <span>Max</span>
-            ${renderQuantityStepper("quantityMax", result.filters.quantityMax)}
+            ${renderQuantityInput("quantityMax", result.filters.quantityMax)}
           </label>
         </fieldset>
 
@@ -527,14 +527,8 @@ function districtSummaryLabel(selectedDistricts: string[]): string {
   return `${selectedDistricts.length} districts`;
 }
 
-function renderQuantityStepper(name: "quantityMin" | "quantityMax", value: number | null): string {
-  return `
-    <div class="filter-number-stepper">
-      <button type="button" class="stepper-button" data-quantity-step="-1" data-quantity-target="${name}" aria-label="Decrease ${name === "quantityMin" ? "minimum" : "maximum"} quantity">-</button>
-      <input name="${name}" type="number" min="0" step="any" value="${value ?? ""}" inputmode="decimal" />
-      <button type="button" class="stepper-button" data-quantity-step="1" data-quantity-target="${name}" aria-label="Increase ${name === "quantityMin" ? "minimum" : "maximum"} quantity">+</button>
-    </div>
-  `;
+function renderQuantityInput(name: "quantityMin" | "quantityMax", value: number | null): string {
+  return `<input name="${name}" type="text" value="${value ?? ""}" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" />`;
 }
 
 export function readEvidenceFiltersFromForm(

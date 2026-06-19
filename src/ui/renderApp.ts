@@ -95,8 +95,19 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     });
 
     const evidenceFiltersForm = root.querySelector<HTMLFormElement>("#evidence-filters-form");
+    evidenceFiltersForm?.querySelectorAll<HTMLInputElement>('input[name="quantityMin"], input[name="quantityMax"]').forEach((input) => {
+      input.addEventListener("input", () => {
+        input.setCustomValidity("");
+      });
+    });
+
     evidenceFiltersForm?.addEventListener("submit", (event) => {
       event.preventDefault();
+
+      if (!validateQuantityRange(evidenceFiltersForm)) {
+        return;
+      }
+
       evidenceFilters = readEvidenceFiltersFromForm(evidenceFiltersForm, evidenceFilters);
       evidenceFiltersExpanded = false;
       render();
@@ -106,24 +117,6 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       evidenceFilters = createDefaultEvidenceFilters(result.query);
       evidenceFiltersExpanded = false;
       render();
-    });
-
-    root.querySelectorAll<HTMLButtonElement>("[data-quantity-step]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const targetName = button.dataset.quantityTarget;
-        const step = Number(button.dataset.quantityStep ?? 0);
-        const input = targetName
-          ? root.querySelector<HTMLInputElement>(`input[name="${targetName}"]`)
-          : null;
-
-        if (!input || !Number.isFinite(step)) {
-          return;
-        }
-
-        const currentValue = Number(input.value || 0);
-        const nextValue = Math.max(0, (Number.isFinite(currentValue) ? currentValue : 0) + step);
-        input.value = Number.isInteger(nextValue) ? String(nextValue) : String(Number(nextValue.toFixed(6)));
-      });
     });
 
     root.querySelector<HTMLButtonElement>("#clear-query")?.addEventListener("click", () => {
@@ -195,6 +188,52 @@ export function renderApp(root: HTMLElement, data: AppData): void {
 
 function includedEvidenceRows(rows: EvidenceRow[], excludedRowIds: ReadonlySet<string>): EvidenceRow[] {
   return rows.filter((row) => !excludedRowIds.has(row.rowId));
+}
+
+function validateQuantityRange(form: HTMLFormElement): boolean {
+  const quantityMinInput = form.elements.namedItem("quantityMin") as HTMLInputElement | null;
+  const quantityMaxInput = form.elements.namedItem("quantityMax") as HTMLInputElement | null;
+
+  if (!quantityMinInput || !quantityMaxInput) {
+    return true;
+  }
+
+  quantityMinInput.setCustomValidity("");
+  quantityMaxInput.setCustomValidity("");
+
+  const quantityMin = readOptionalFormNumber(quantityMinInput.value);
+  const quantityMax = readOptionalFormNumber(quantityMaxInput.value);
+
+  if (quantityMinInput.value.trim() && quantityMin === null) {
+    quantityMinInput.setCustomValidity("Enter a numeric minimum quantity.");
+    quantityMinInput.reportValidity();
+    return false;
+  }
+
+  if (quantityMaxInput.value.trim() && quantityMax === null) {
+    quantityMaxInput.setCustomValidity("Enter a numeric maximum quantity.");
+    quantityMaxInput.reportValidity();
+    return false;
+  }
+
+  if (quantityMin !== null && quantityMax !== null && quantityMin > quantityMax) {
+    quantityMaxInput.setCustomValidity("Maximum quantity must be greater than or equal to minimum quantity.");
+    quantityMaxInput.reportValidity();
+    return false;
+  }
+
+  return true;
+}
+
+function readOptionalFormNumber(value: string): number | null {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return null;
+  }
+
+  const numberValue = Number(trimmedValue);
+  return Number.isFinite(numberValue) && numberValue >= 0 ? numberValue : null;
 }
 
 function defaultSortDirection(sortKey: EvidenceSortKey): "asc" | "desc" {

@@ -152,7 +152,7 @@ How to use it:
 - Use filters to narrow the evidence set directly.
 - Filters remove rows from the table instead of changing a hidden relevance score.
 - Use Quantity min and Quantity max in the filter drawer to refine the evidence set by bid quantity.
-- Use the quantity stepper buttons for whole-value changes or type decimals directly when needed.
+- Enter numeric quantity values directly. Decimals are allowed when needed, and the app warns if minimum quantity exceeds maximum quantity.
 - Select one or more districts from the District checkbox dropdown when district filtering is useful.
 - Unit defaults to the official selected item unit.
 - Unit-mismatch rows are excluded by default and counted in data notes when present.
