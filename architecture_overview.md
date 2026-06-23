@@ -83,7 +83,7 @@ Section labels come from `public/data/spec_sections.csv`. Item-level options con
 
 The current item picker data is generated from the public CDOT 2026 Item Code Book Excel file linked from CDOT's Item Code Book by Year page. The committed CSV contains 4,771 valid item-code rows and 100 item-code prefixes. The raw Excel workbook is not committed; `scripts/import_cdot_item_code_book.py` converts a downloaded workbook into the static CSV files.
 
-Some prefixes use known CDOT Standard Specification section labels. Prefixes not yet mapped to a known section label use fallback labels so all valid item-code rows remain searchable.
+Current CDOT item-code prefixes use reviewed section labels. If a future CDOT item-code workbook introduces a new unmapped prefix, the importer will still create a fallback label so all valid item-code rows remain searchable.
 
 The full item code book supports lookup only, so pricing appears only when matching public cost-book rows exist in `public/data/item_observations.csv`.
 

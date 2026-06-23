@@ -1,38 +1,38 @@
 section_prefix,division_prefix,division_title,section_title,source_year,source_url
-000,000,Other CDOT item prefixes,Prefix 000,2026,https://www.codot.gov/business/eema/itemcodebook
+000,000,Administrative Items,Project Development and Construction Engineering,2026,https://www.codot.gov/business/eema/itemcodebook
 201,200,Earthwork,Clearing and Grubbing,2026,https://www.codot.gov/business/eema/itemcodebook
 202,200,Earthwork,Removal of Structures and Obstructions,2026,https://www.codot.gov/business/eema/itemcodebook
 203,200,Earthwork,Excavation and Embankment,2026,https://www.codot.gov/business/eema/itemcodebook
-204,200,Other CDOT item prefixes,Prefix 204,2026,https://www.codot.gov/business/eema/itemcodebook
+204,200,Earthwork,Haul,2026,https://www.codot.gov/business/eema/itemcodebook
 206,200,Earthwork,Excavation and Backfill for Structures,2026,https://www.codot.gov/business/eema/itemcodebook
 207,200,Earthwork,Topsoil,2026,https://www.codot.gov/business/eema/itemcodebook
 208,200,Earthwork,Erosion Control,2026,https://www.codot.gov/business/eema/itemcodebook
 209,200,Earthwork,Watering and Dust Palliative,2026,https://www.codot.gov/business/eema/itemcodebook
 210,200,Earthwork,Reset Structures,2026,https://www.codot.gov/business/eema/itemcodebook
-211,200,Other CDOT item prefixes,Prefix 211,2026,https://www.codot.gov/business/eema/itemcodebook
+211,200,Earthwork,Tunnel Excavation and Rock Reinforcement,2026,https://www.codot.gov/business/eema/itemcodebook
 212,200,Earthwork,"Seeding, Fertilizing, Soil Conditioner and Sodding",2026,https://www.codot.gov/business/eema/itemcodebook
 213,200,Earthwork,Mulching,2026,https://www.codot.gov/business/eema/itemcodebook
 214,200,Earthwork,Planting,2026,https://www.codot.gov/business/eema/itemcodebook
 215,200,Earthwork,Transplanting,2026,https://www.codot.gov/business/eema/itemcodebook
 216,200,Earthwork,Soil Retention Covering,2026,https://www.codot.gov/business/eema/itemcodebook
 217,200,Earthwork,Herbicide Treatment,2026,https://www.codot.gov/business/eema/itemcodebook
-218,200,Other CDOT item prefixes,Prefix 218,2026,https://www.codot.gov/business/eema/itemcodebook
-240,200,Other CDOT item prefixes,Prefix 240,2026,https://www.codot.gov/business/eema/itemcodebook
+218,200,Earthwork,Noxious Weed Management,2026,https://www.codot.gov/business/eema/itemcodebook
+240,200,Earthwork,Wildlife Protection,2026,https://www.codot.gov/business/eema/itemcodebook
 250,200,Earthwork,"Environmental, Health and Safety Management",2026,https://www.codot.gov/business/eema/itemcodebook
-251,200,Other CDOT item prefixes,Prefix 251,2026,https://www.codot.gov/business/eema/itemcodebook
-301,300,Other CDOT item prefixes,Prefix 301,2026,https://www.codot.gov/business/eema/itemcodebook
+251,200,Earthwork,Paint Testing and Analysis Management,2026,https://www.codot.gov/business/eema/itemcodebook
+301,300,Bases,Plant Mix Bituminous Base,2026,https://www.codot.gov/business/eema/itemcodebook
 304,300,Bases,Aggregate Base Course,2026,https://www.codot.gov/business/eema/itemcodebook
 306,300,Bases,Reconditioning,2026,https://www.codot.gov/business/eema/itemcodebook
 307,300,Bases,Lime Treated Subgrade,2026,https://www.codot.gov/business/eema/itemcodebook
-308,300,Other CDOT item prefixes,Prefix 308,2026,https://www.codot.gov/business/eema/itemcodebook
-310,300,Other CDOT item prefixes,Prefix 310,2026,https://www.codot.gov/business/eema/itemcodebook
+308,300,Bases,Stabilized Bases,2026,https://www.codot.gov/business/eema/itemcodebook
+310,300,Bases,Full Depth Reclamation,2026,https://www.codot.gov/business/eema/itemcodebook
 403,400,Pavements,Hot Mix Asphalt,2026,https://www.codot.gov/business/eema/itemcodebook
 405,400,Pavements,Heating and Scarifying Treatment,2026,https://www.codot.gov/business/eema/itemcodebook
 406,400,Pavements,Cold Asphalt Pavement (Recycle),2026,https://www.codot.gov/business/eema/itemcodebook
 407,400,Pavements,"Prime Coat, Tack Coat and Rejuvenating Agent",2026,https://www.codot.gov/business/eema/itemcodebook
 408,400,Pavements,Joint and Crack Sealer,2026,https://www.codot.gov/business/eema/itemcodebook
 409,400,Pavements,Chip Seal,2026,https://www.codot.gov/business/eema/itemcodebook
-410,400,Other CDOT item prefixes,Prefix 410,2026,https://www.codot.gov/business/eema/itemcodebook
+410,400,Pavements,Slurry Seal Coat,2026,https://www.codot.gov/business/eema/itemcodebook
 411,400,Pavements,Asphalt Materials,2026,https://www.codot.gov/business/eema/itemcodebook
 412,400,Pavements,Portland Cement Concrete Pavement,2026,https://www.codot.gov/business/eema/itemcodebook
 420,400,Pavements,Geosynthetics,2026,https://www.codot.gov/business/eema/itemcodebook
@@ -45,18 +45,18 @@ section_prefix,division_prefix,division_title,section_title,source_year,source_u
 508,500,Structures,Timber Structures,2026,https://www.codot.gov/business/eema/itemcodebook
 509,500,Structures,Steel Structures,2026,https://www.codot.gov/business/eema/itemcodebook
 510,500,Structures,Structural Plate Structures,2026,https://www.codot.gov/business/eema/itemcodebook
-511,500,Other CDOT item prefixes,Prefix 511,2026,https://www.codot.gov/business/eema/itemcodebook
+511,500,Structures,Structural Precast Concrete Arch Units,2026,https://www.codot.gov/business/eema/itemcodebook
 512,500,Structures,Bearing Device,2026,https://www.codot.gov/business/eema/itemcodebook
-513,500,Other CDOT item prefixes,Prefix 513,2026,https://www.codot.gov/business/eema/itemcodebook
+513,500,Structures,Bridge Drains,2026,https://www.codot.gov/business/eema/itemcodebook
 514,500,Structures,Pedestrian and Bikeway Railing,2026,https://www.codot.gov/business/eema/itemcodebook
 515,500,Structures,Waterproofing Membrane,2026,https://www.codot.gov/business/eema/itemcodebook
 516,500,Structures,Dampproofing,2026,https://www.codot.gov/business/eema/itemcodebook
 517,500,Structures,Waterproofing,2026,https://www.codot.gov/business/eema/itemcodebook
 518,500,Structures,Waterstops and Expansion Joints,2026,https://www.codot.gov/business/eema/itemcodebook
-519,500,Other CDOT item prefixes,Prefix 519,2026,https://www.codot.gov/business/eema/itemcodebook
-520,500,Other CDOT item prefixes,Prefix 520,2026,https://www.codot.gov/business/eema/itemcodebook
-521,500,Other CDOT item prefixes,Prefix 521,2026,https://www.codot.gov/business/eema/itemcodebook
-522,500,Other CDOT item prefixes,Prefix 522,2026,https://www.codot.gov/business/eema/itemcodebook
+519,500,Structures,Concrete Structure Repair,2026,https://www.codot.gov/business/eema/itemcodebook
+520,500,Structures,Bridge Hanger Cable Assembly,2026,https://www.codot.gov/business/eema/itemcodebook
+521,500,Structures,Slurry Walls,2026,https://www.codot.gov/business/eema/itemcodebook
+522,500,Structures,Galvanized Surface Treatment,2026,https://www.codot.gov/business/eema/itemcodebook
 601,600,Miscellaneous Construction,Structural Concrete,2026,https://www.codot.gov/business/eema/itemcodebook
 602,600,Miscellaneous Construction,Reinforcing Steel,2026,https://www.codot.gov/business/eema/itemcodebook
 603,600,Miscellaneous Construction,Culverts and Sewers,2026,https://www.codot.gov/business/eema/itemcodebook
@@ -76,26 +76,26 @@ section_prefix,division_prefix,division_title,section_title,source_year,source_u
 618,600,Miscellaneous Construction,Prestressed Concrete,2026,https://www.codot.gov/business/eema/itemcodebook
 619,600,Miscellaneous Construction,Water Lines,2026,https://www.codot.gov/business/eema/itemcodebook
 620,600,Miscellaneous Construction,Field Facilities,2026,https://www.codot.gov/business/eema/itemcodebook
-621,600,Other CDOT item prefixes,Prefix 621,2026,https://www.codot.gov/business/eema/itemcodebook
+621,600,Miscellaneous Construction,Detours and Temporary Structures,2026,https://www.codot.gov/business/eema/itemcodebook
 622,600,Miscellaneous Construction,Rest Areas and Buildings,2026,https://www.codot.gov/business/eema/itemcodebook
 623,600,Miscellaneous Construction,Irrigation System,2026,https://www.codot.gov/business/eema/itemcodebook
 624,600,Miscellaneous Construction,Drainage Pipe,2026,https://www.codot.gov/business/eema/itemcodebook
 625,600,Miscellaneous Construction,Construction Surveying,2026,https://www.codot.gov/business/eema/itemcodebook
 626,600,Miscellaneous Construction,Mobilization,2026,https://www.codot.gov/business/eema/itemcodebook
 627,600,Miscellaneous Construction,Pavement Marking,2026,https://www.codot.gov/business/eema/itemcodebook
-628,600,Other CDOT item prefixes,Prefix 628,2026,https://www.codot.gov/business/eema/itemcodebook
+628,600,Miscellaneous Construction,Bridge Girder and Deck Units,2026,https://www.codot.gov/business/eema/itemcodebook
 629,600,Miscellaneous Construction,Survey Monumentation,2026,https://www.codot.gov/business/eema/itemcodebook
 630,600,Miscellaneous Construction,Construction Zone Traffic Control,2026,https://www.codot.gov/business/eema/itemcodebook
-631,600,Other CDOT item prefixes,Prefix 631,2026,https://www.codot.gov/business/eema/itemcodebook
-632,600,Other CDOT item prefixes,Prefix 632,2026,https://www.codot.gov/business/eema/itemcodebook
-637,600,Other CDOT item prefixes,Prefix 637,2026,https://www.codot.gov/business/eema/itemcodebook
+631,600,Miscellaneous Construction,Design and Construction Allowances,2026,https://www.codot.gov/business/eema/itemcodebook
+632,600,Miscellaneous Construction,Night Work Lighting,2026,https://www.codot.gov/business/eema/itemcodebook
+637,600,Miscellaneous Construction,Roadway Sweeping,2026,https://www.codot.gov/business/eema/itemcodebook
 641,600,Miscellaneous Construction,Shotcrete,2026,https://www.codot.gov/business/eema/itemcodebook
-642,600,Other CDOT item prefixes,Prefix 642,2026,https://www.codot.gov/business/eema/itemcodebook
-660,600,Other CDOT item prefixes,Prefix 660,2026,https://www.codot.gov/business/eema/itemcodebook
-670,600,Other CDOT item prefixes,Prefix 670,2026,https://www.codot.gov/business/eema/itemcodebook
-680,600,Other CDOT item prefixes,Prefix 680,2026,https://www.codot.gov/business/eema/itemcodebook
-699,600,Other CDOT item prefixes,Prefix 699,2026,https://www.codot.gov/business/eema/itemcodebook
-700,700,Other CDOT item prefixes,Prefix 700,2026,https://www.codot.gov/business/eema/itemcodebook
-800,800,Other CDOT item prefixes,Prefix 800,2026,https://www.codot.gov/business/eema/itemcodebook
-900,900,Other CDOT item prefixes,Prefix 900,2026,https://www.codot.gov/business/eema/itemcodebook
-950,900,Other CDOT item prefixes,Prefix 950,2026,https://www.codot.gov/business/eema/itemcodebook
+642,600,Miscellaneous Construction,Avalanche Control Equipment,2026,https://www.codot.gov/business/eema/itemcodebook
+660,600,Miscellaneous Construction,Special Systems,2026,https://www.codot.gov/business/eema/itemcodebook
+670,600,Miscellaneous Construction,Electrical Systems,2026,https://www.codot.gov/business/eema/itemcodebook
+680,600,Miscellaneous Construction,Lighting Systems,2026,https://www.codot.gov/business/eema/itemcodebook
+699,600,Miscellaneous Construction,Fixed Fee,2026,https://www.codot.gov/business/eema/itemcodebook
+700,700,Materials,Force Account,2026,https://www.codot.gov/business/eema/itemcodebook
+800,800,Owner-Furnished and Right-of-Way Items,Owner-Furnished Materials and Right-of-Way,2026,https://www.codot.gov/business/eema/itemcodebook
+900,900,Added Items and Project Controls,Added Items,2026,https://www.codot.gov/business/eema/itemcodebook
+950,900,Added Items and Project Controls,Project Control Accounts,2026,https://www.codot.gov/business/eema/itemcodebook

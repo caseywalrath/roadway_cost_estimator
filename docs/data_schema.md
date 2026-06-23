@@ -165,7 +165,7 @@ Required columns:
 
 This file is a reference lookup table for section labels. It is not a cost book and does not replace `agency_items.csv`.
 
-The current file is generated with `scripts/import_cdot_item_code_book.py` from the same CDOT 2026 Item Code Book workbook as `agency_items.csv`. Known CDOT Standard Specification prefixes use reviewed section labels. Unmapped prefixes use fallback labels so every loaded agency item can appear in the section-based picker.
+The current file is generated with `scripts/import_cdot_item_code_book.py` from the same CDOT 2026 Item Code Book workbook as `agency_items.csv`. Current loaded CDOT item-code prefixes use reviewed section labels. If a future workbook introduces an unmapped prefix, the importer creates a fallback label so every loaded agency item can appear in the section-based picker.
 
 ### `inflation_index.csv`
 
