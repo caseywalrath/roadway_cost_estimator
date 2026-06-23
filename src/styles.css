@@ -64,10 +64,6 @@ select {
 }
 
 .app-header {
-  display: grid;
-  grid-template-columns: minmax(280px, 1fr) auto;
-  gap: 20px;
-  align-items: end;
   margin-bottom: 14px;
 }
 
@@ -86,27 +82,6 @@ select {
   font-weight: 800;
   letter-spacing: 0;
   text-transform: uppercase;
-}
-
-.context-bar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-  max-width: 760px;
-}
-
-.context-bar span {
-  min-height: 32px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--panel);
-  padding: 6px 10px;
-  color: #334253;
-  font-size: 0.86rem;
 }
 
 .label-row {
@@ -231,6 +206,28 @@ select {
   color: var(--text-muted);
   font-size: 0.84rem;
   line-height: 1.45;
+}
+
+.summary-table-wrap {
+  margin-top: 12px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.summary-table {
+  min-width: 820px;
+  box-shadow: none;
+}
+
+.summary-table th,
+.summary-table td {
+  white-space: nowrap;
+}
+
+.summary-table__empty {
+  color: var(--text-muted);
+  font-weight: 700;
 }
 
 label {
@@ -712,10 +709,14 @@ input[readonly] {
 }
 
 .filter-form-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  align-items: end;
+  align-items: stretch;
+}
+
+.filter-form-actions button {
+  width: 100%;
 }
 
 .filter-range-group {
@@ -998,6 +999,75 @@ th {
   line-height: 1.2;
 }
 
+.link-button {
+  display: inline;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--accent-dark);
+  padding: 0;
+  font: inherit;
+  font-weight: 900;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link-button:hover,
+.link-button:focus-visible {
+  color: var(--accent);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgba(18, 29, 41, 0.42);
+  padding: 18px;
+}
+
+.bidder-modal {
+  width: min(960px, 100%);
+  max-height: min(760px, calc(100vh - 36px));
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 18px 50px rgba(24, 37, 51, 0.28);
+  padding: 18px;
+}
+
+.bidder-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.bidder-modal__close {
+  flex: 0 0 auto;
+}
+
+.bidder-modal__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-top: 12px;
+  color: #263544;
+  font-size: 0.88rem;
+}
+
+.bidder-detail-scroll {
+  margin-top: 12px;
+}
+
+.bidder-detail-table {
+  min-width: 760px;
+}
+
 td:nth-child(2),
 td:nth-child(8),
 td:nth-child(9),
@@ -1035,10 +1105,6 @@ tbody tr:last-child td {
   .decision-card,
   .guidance-grid {
     grid-template-columns: 1fr;
-  }
-
-  .context-bar {
-    justify-content: flex-start;
   }
 
   .search-panel {

@@ -6,6 +6,7 @@ import type {
   EvidenceSort,
   EvidenceSortKey,
   EvidenceStats,
+  EvidenceSummaryStats,
   SearchQuery
 } from "../data/schema";
 import { normalizeDescription, normalizeUnit } from "./normalizeDescription";
@@ -17,15 +18,14 @@ const DEFAULT_EVIDENCE_SORT: EvidenceSort = {
 
 export function createDefaultEvidenceFilters(query: SearchQuery): EvidenceFilters {
   return {
-    sourceType: "public_cost_book",
+    sourceType: "all",
     geography: "",
     districts: [],
     yearMin: null,
     yearMax: null,
     quantityMin: null,
     quantityMax: null,
-    unit: normalizeUnit(query.unit),
-    requireAwardedPrice: true
+    unit: normalizeUnit(query.unit)
   };
 }
 
@@ -189,6 +189,8 @@ function buildExactRows(data: AppData, query: SearchQuery): EvidenceRow[] {
         awardedBidUnitPrice: null,
         averageBidUnitPrice: null,
         engineerEstimateUnitPrice: null,
+        bidderDetailKey: buildBidderDetailKey(observation),
+        hasBidderDetails: false,
         observationIds: []
       };
       rowByKey.set(key, row);
@@ -196,6 +198,10 @@ function buildExactRows(data: AppData, query: SearchQuery): EvidenceRow[] {
 
     row.observationIds.push(observation.observationId);
     assignPrice(row, observation.priceType, observation.unitPrice);
+  }
+
+  for (const row of rowByKey.values()) {
+    row.hasBidderDetails = (data.bidderItemsByRowKey.get(row.bidderDetailKey) ?? []).length > 0;
   }
 
   return [...rowByKey.values()];
@@ -208,13 +214,35 @@ function assignPrice(row: EvidenceRow, priceType: string, unitPrice: number): vo
     row.awardedBidUnitPrice ??= unitPrice;
   }
 
-  if (normalizedPriceType === "cdot_average_bid") {
+  if (normalizedPriceType === "cdot_average_bid" || normalizedPriceType === "public_bid_tab_average") {
     row.averageBidUnitPrice ??= unitPrice;
   }
 
-  if (normalizedPriceType === "cdot_engineer_estimate" || normalizedPriceType === "engineers_estimate") {
+  if (
+    normalizedPriceType === "cdot_engineer_estimate"
+    || normalizedPriceType === "engineers_estimate"
+    || normalizedPriceType === "public_bid_tab_engineer_estimate"
+  ) {
     row.engineerEstimateUnitPrice ??= unitPrice;
   }
+}
+
+function buildBidderDetailKey(observation: {
+  projectId: string;
+  sourceId: string;
+  agencyItemCode: string;
+  descriptionRaw: string;
+  unitNormalized: string;
+  quantity: number;
+}): string {
+  return [
+    observation.projectId,
+    observation.sourceId,
+    observation.agencyItemCode,
+    observation.descriptionRaw,
+    observation.unitNormalized,
+    observation.quantity
+  ].join("|");
 }
 
 function sourceMatches(row: EvidenceRow, filters: EvidenceFilters): boolean {
@@ -235,10 +263,6 @@ function isDemoSourceType(sourceType: string | undefined): boolean {
 
 function rowMatchesNonUnitFilters(row: EvidenceRow, filters: EvidenceFilters): boolean {
   if (!sourceMatches(row, filters)) {
-    return false;
-  }
-
-  if (filters.requireAwardedPrice && row.awardedBidUnitPrice === null) {
     return false;
   }
 
@@ -284,6 +308,22 @@ export function buildEvidenceStats(rows: EvidenceRow[]): EvidenceStats | null {
       .map((row) => row.awardedBidUnitPrice)
       .filter((price): price is number => price !== null && Number.isFinite(price) && price > 0)
   );
+}
+
+export function buildEvidenceSummaryStats(rows: EvidenceRow[]): EvidenceSummaryStats {
+  return {
+    awarded: buildEvidenceStats(rows),
+    average: buildEvidenceStatsFromPrices(
+      rows
+        .map((row) => row.averageBidUnitPrice)
+        .filter((price): price is number => price !== null && Number.isFinite(price) && price > 0)
+    ),
+    engineer: buildEvidenceStatsFromPrices(
+      rows
+        .map((row) => row.engineerEstimateUnitPrice)
+        .filter((price): price is number => price !== null && Number.isFinite(price) && price > 0)
+    )
+  };
 }
 
 export function buildEvidenceStatsFromPrices(rawPrices: number[]): EvidenceStats | null {
@@ -333,6 +373,10 @@ function buildNotes(
 
   if (filteredRows.length > 0 && !stats) {
     notes.push("The filtered evidence rows do not include awarded bid unit prices for summary statistics.");
+  }
+
+  if (filteredRows.some((row) => row.source?.sourceType === "public_bid_tab")) {
+    notes.push("Public bid-tab rows show apparent bidder data only; apparent low is not confirmed award.");
   }
 
   return notes;

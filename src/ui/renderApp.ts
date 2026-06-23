@@ -2,6 +2,7 @@ import type { AppData, EvidenceRow, SearchQuery } from "../data/schema";
 import type { EvidenceSortKey } from "../data/schema";
 import {
   buildEvidenceResult,
+  buildEvidenceSummaryStats,
   buildEvidenceStats,
   createDefaultEvidenceFilters,
   createDefaultEvidenceSort
@@ -32,15 +33,17 @@ export function renderApp(root: HTMLElement, data: AppData): void {
   let query = { ...emptyQuery };
   let evidenceFilters = createDefaultEvidenceFilters(query);
   let evidenceSort = createDefaultEvidenceSort();
-  let evidenceFiltersExpanded = false;
+  let evidenceFiltersExpanded = true;
   let itemSearchCollapsed = false;
   let excludedSummaryRowIds = new Set<string>();
   let inflationAdjustmentEnabled = false;
+  let selectedBidderDetailKey: string | null = null;
 
   function render(): void {
     const result = buildEvidenceResult(data, query, evidenceFilters, evidenceSort);
     const includedRows = includedEvidenceRows(result.filteredRows, excludedSummaryRowIds);
     const includedStats = buildEvidenceStats(includedRows);
+    const includedSummaryStats = buildEvidenceSummaryStats(includedRows);
     const inflationAdjustedSummary = inflationAdjustmentEnabled
       ? buildInflationAdjustedSummary(includedRows, data.inflationIndexByPeriod)
       : null;
@@ -54,9 +57,6 @@ export function renderApp(root: HTMLElement, data: AppData): void {
           <div>
             <h1>Colorado Roadway Comparable Project Explorer</h1>
           </div>
-          <div class="context-bar" aria-label="Prototype scope">
-            <span>Scope: Colorado roadway</span>
-          </div>
         </header>
 
         <section class="workspace-grid ${itemSearchCollapsed ? "workspace-grid--item-search-collapsed" : ""}">
@@ -65,10 +65,13 @@ export function renderApp(root: HTMLElement, data: AppData): void {
             result,
             evidenceFiltersExpanded,
             itemSearchCollapsed,
+            data,
+            selectedBidderDetailKey,
             excludedSummaryRowIds,
             includedRows.length,
             visibleExcludedCount,
             includedStats,
+            includedSummaryStats,
             inflationAdjustmentEnabled,
             inflationAdjustedSummary,
             inflationAdjustedPriceSet?.adjustedPriceByRowId ?? null
@@ -88,7 +91,8 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       evidenceFilters = createDefaultEvidenceFilters(query);
       evidenceSort = createDefaultEvidenceSort();
       excludedSummaryRowIds = new Set<string>();
-      evidenceFiltersExpanded = false;
+      selectedBidderDetailKey = null;
+      evidenceFiltersExpanded = true;
       itemSearchCollapsed = Boolean(query.itemCode);
       render();
     });
@@ -113,13 +117,15 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       }
 
       evidenceFilters = readEvidenceFiltersFromForm(evidenceFiltersForm, evidenceFilters);
-      evidenceFiltersExpanded = false;
+      selectedBidderDetailKey = null;
+      evidenceFiltersExpanded = true;
       render();
     });
 
     root.querySelector<HTMLButtonElement>("#clear-evidence-filters")?.addEventListener("click", () => {
       evidenceFilters = createDefaultEvidenceFilters(result.query);
-      evidenceFiltersExpanded = false;
+      selectedBidderDetailKey = null;
+      evidenceFiltersExpanded = true;
       render();
     });
 
@@ -128,13 +134,15 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       evidenceFilters = createDefaultEvidenceFilters(query);
       evidenceSort = createDefaultEvidenceSort();
       excludedSummaryRowIds = new Set<string>();
-      evidenceFiltersExpanded = false;
+      selectedBidderDetailKey = null;
+      evidenceFiltersExpanded = true;
       itemSearchCollapsed = false;
       render();
     });
 
     root.querySelector<HTMLButtonElement>("#edit-item-search")?.addEventListener("click", () => {
       itemSearchCollapsed = false;
+      selectedBidderDetailKey = null;
       render();
     });
 
@@ -184,6 +192,18 @@ export function renderApp(root: HTMLElement, data: AppData): void {
             };
         render();
       });
+    });
+
+    root.querySelectorAll<HTMLButtonElement>("[data-bidder-detail-key]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedBidderDetailKey = button.dataset.bidderDetailKey ?? null;
+        render();
+      });
+    });
+
+    root.querySelector<HTMLButtonElement>("[data-close-bidder-detail]")?.addEventListener("click", () => {
+      selectedBidderDetailKey = null;
+      render();
     });
   }
 

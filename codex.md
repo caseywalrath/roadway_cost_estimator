@@ -234,14 +234,18 @@ We are working in the roadway_cost_estimator repo.
 Before making changes:
 1. Review codex.md.
 2. Review architecture_overview.md if it exists.
-3. Check git status.
-4. Confirm the current branch.
-5. Create a new branch for this session named [branch-name].
-6. Then implement the requested change.
+3. Run git fetch --all --prune before trusting local origin/main.
+4. Check git status.
+5. Confirm the current branch and whether it is behind origin/main.
+6. If local main or the current feature branch is behind origin/main, create or recreate the working branch from current origin/main before editing.
+7. Create a new branch for this session named [branch-name].
+8. Then implement the requested change.
 
 This session goal is:
 [describe the change, bug fix, or revision round]
 ```
+
+Do not implement new source changes on a branch created from stale `origin/main`. If source changes were already made on a stale branch, stash or otherwise isolate only the intended session changes, switch to a fresh branch from current `origin/main`, and replay the session changes file-by-file. Do not apply a stale full-worktree patch over newer repository files.
 
 Good branch names:
 

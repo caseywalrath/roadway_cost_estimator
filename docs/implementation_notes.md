@@ -13,7 +13,7 @@ Included:
 - Matching Projects evidence table.
 - Evidence filters, sortable table columns, and CSV export.
 - Awarded Bid Summary based on currently filtered awarded bid unit prices.
-- Source coverage and data notes.
+- Unit Price Summaries for loaded average bid and engineer estimate prices.
 - Data-package validation script.
 
 Not included:

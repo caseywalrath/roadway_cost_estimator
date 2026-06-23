@@ -1,11 +1,15 @@
 import type {
+  AppData,
+  BidderBidRecord,
+  BidderItemObservationRecord,
   EvidenceFilters,
   EvidenceResult,
   EvidenceRow,
   EvidenceSort,
   EvidenceSortKey,
   EvidenceSourceTypeFilter,
-  EvidenceStats
+  EvidenceStats,
+  EvidenceSummaryStats
 } from "../data/schema";
 import type { InflationAdjustedSummary } from "../matching/inflationAdjustment";
 
@@ -13,10 +17,13 @@ export function renderResults(
   result: EvidenceResult,
   filtersExpanded: boolean,
   itemSearchCollapsed: boolean,
+  data: AppData,
+  selectedBidderDetailKey: string | null,
   excludedSummaryRowIds: ReadonlySet<string>,
   includedRowCount: number,
   visibleExcludedCount: number,
   includedStats: EvidenceStats | null,
+  includedSummaryStats: EvidenceSummaryStats,
   inflationAdjustmentEnabled: boolean,
   inflationAdjustedSummary: InflationAdjustedSummary | null,
   adjustedPriceByRowId: ReadonlyMap<string, number> | null
@@ -31,9 +38,9 @@ export function renderResults(
         inflationAdjustmentEnabled,
         inflationAdjustedSummary
       )}
-      ${renderSourceCoverageNote(result)}
-      ${renderDataNotes(result.notes)}
+      ${renderSupplementalPriceSummaries(includedSummaryStats)}
     </section>
+    ${renderBidderDetailModal(result, data, selectedBidderDetailKey)}
   `;
 }
 
@@ -124,7 +131,8 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
           </span>
           <select name="sourceType">
             ${renderSourceTypeOption("public_cost_book", "Public CDOT cost book", result.filters.sourceType)}
-            ${renderSourceTypeOption("all", "All loaded sources", result.filters.sourceType)}
+            ${renderSourceTypeOption("public_bid_tab", "Public bid tabs", result.filters.sourceType)}
+            ${renderSourceTypeOption("all", "All evidence sources", result.filters.sourceType)}
           </select>
         </label>
 
@@ -181,14 +189,9 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
           </label>
         </fieldset>
 
-        <label class="checkbox-label">
-          <input name="requireAwardedPrice" type="checkbox" ${result.filters.requireAwardedPrice ? "checked" : ""} />
-          <span>Only rows with awarded bid price</span>
-        </label>
-
         <div class="filter-form-actions">
-          <button type="submit" class="secondary-button">Apply filters</button>
-          <button type="button" id="clear-evidence-filters" class="secondary-button">Clear Filters</button>
+          <button type="submit" class="secondary-button">Apply</button>
+          <button type="button" id="clear-evidence-filters" class="secondary-button">Clear</button>
         </div>
       </form>
     </div>
@@ -276,10 +279,10 @@ function renderEvidenceRow(row: EvidenceRow, isExcluded: boolean, adjustedAwarde
           ${isExcluded ? "checked" : ""}
         />
       </td>
-      <td>${escapeHtml(row.project?.projectNumber || "Not listed")}</td>
+      <td>${renderProjectNumberCell(row)}</td>
       <td>
         ${escapeHtml(row.project?.projectName ?? "Unknown project")}
-        ${row.project?.countyRegion ? `<div class="row-subtext">${escapeHtml(row.project.countyRegion)}</div>` : ""}
+        ${renderProjectLocationSubtext(row)}
       </td>
       <td>${escapeHtml(row.project?.district || "Not listed")}</td>
       <td>${escapeHtml(row.project?.estimateLetDate || row.dateBasis)}</td>
@@ -293,6 +296,44 @@ function renderEvidenceRow(row: EvidenceRow, isExcluded: boolean, adjustedAwarde
       <td>${formatNullableCurrency(row.engineerEstimateUnitPrice)}</td>
       <td>${escapeHtml(row.source?.sourceLabel ?? "Unknown source")}</td>
     </tr>
+  `;
+}
+
+function renderProjectLocationSubtext(row: EvidenceRow): string {
+  const countyRegion = formatProjectLocationSubtext(row);
+  return countyRegion ? `<div class="row-subtext">${escapeHtml(countyRegion)}</div>` : "";
+}
+
+function formatProjectLocationSubtext(row: EvidenceRow): string {
+  const countyRegion = row.project?.countyRegion.trim() ?? "";
+
+  if (!countyRegion) {
+    return "";
+  }
+
+  if (row.source?.sourceType === "public_cost_book") {
+    return countyRegion.replace(/\s*\/\s*CDOT District \d+\s*$/i, "").trim();
+  }
+
+  return countyRegion;
+}
+
+function renderProjectNumberCell(row: EvidenceRow): string {
+  const label = row.project?.projectNumber || "Not listed";
+
+  if (!row.hasBidderDetails) {
+    return escapeHtml(label);
+  }
+
+  return `
+    <button
+      type="button"
+      class="link-button project-detail-button"
+      data-bidder-detail-key="${escapeHtml(row.bidderDetailKey)}"
+      aria-label="Open bidder details for ${escapeHtml(label)}"
+    >
+      ${escapeHtml(label)}
+    </button>
   `;
 }
 
@@ -347,7 +388,6 @@ function renderAwardedBidSummary(
       <div class="summary-heading-row">
         <div class="panel-heading">
           <p class="eyebrow">Awarded Bid Summary</p>
-          <h3>${inflationAdjustmentEnabled ? "Statistics for NHCCI-adjusted awarded bid prices" : "Statistics for included awarded bid prices"}</h3>
         </div>
         ${inflationControl}
       </div>
@@ -371,6 +411,60 @@ function renderInflationAdjustmentControl(enabled: boolean): string {
       <input id="inflation-adjustment-toggle" type="checkbox" ${enabled ? "checked" : ""} />
       <span>Inflation Adjustment</span>
     </label>
+  `;
+}
+
+function renderSupplementalPriceSummaries(stats: EvidenceSummaryStats): string {
+  return `
+    <section class="panel-block">
+      <div class="panel-heading">
+        <p class="eyebrow">Unit Price Summaries</p>
+      </div>
+      <div class="summary-table-wrap">
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Price type</th>
+              <th>Count</th>
+              <th>Low</th>
+              <th>P25</th>
+              <th>Median</th>
+              <th>Average</th>
+              <th>P75</th>
+              <th>High</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${renderSummaryRow("Average Bid", stats.average)}
+            ${renderSummaryRow("Engineer Estimate", stats.engineer)}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  `;
+}
+
+function renderSummaryRow(label: string, stats: EvidenceStats | null): string {
+  if (!stats) {
+    return `
+      <tr>
+        <th scope="row">${escapeHtml(label)}</th>
+        <td colspan="7" class="summary-table__empty">No ${escapeHtml(label.toLowerCase())} prices available</td>
+      </tr>
+    `;
+  }
+
+  return `
+    <tr>
+      <th scope="row">${escapeHtml(label)}</th>
+      <td>${formatNumber(stats.count)}</td>
+      <td>${formatCurrency(stats.low)}</td>
+      <td>${formatCurrency(stats.p25)}</td>
+      <td>${formatCurrency(stats.median)}</td>
+      <td>${formatCurrency(stats.average)}</td>
+      <td>${formatCurrency(stats.p75)}</td>
+      <td>${formatCurrency(stats.high)}</td>
+    </tr>
   `;
 }
 
@@ -421,45 +515,6 @@ function renderAwardedBidUnitPrice(value: number | null, adjustedValue: number |
   return `${formatCurrency(value)}${adjustedLine}`;
 }
 
-function renderDataNotes(notes: string[]): string {
-  if (notes.length === 0) {
-    return "";
-  }
-
-  return `
-    <section class="panel-block">
-      <div class="panel-heading">
-        <p class="eyebrow">Data Notes</p>
-        <h3>Review before use</h3>
-      </div>
-      <ul class="guidance-list">
-        ${notes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}
-      </ul>
-    </section>
-  `;
-}
-
-function renderSourceCoverageNote(result: EvidenceResult): string {
-  if (!result.query.itemCode) {
-    return "";
-  }
-
-  return `
-    <section class="panel-block source-coverage-note">
-      <div class="panel-heading">
-        <p class="eyebrow">Source Coverage</p>
-        <h3>Public CDOT Cost Data Books</h3>
-      </div>
-      <ul class="guidance-list">
-        <li>Loaded periods: 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1.</li>
-        <li>Default evidence is exact official item-code matching only.</li>
-        <li>Optional inflation adjustment uses loaded FHWA NHCCI quarters for summary statistics and display-only row context.</li>
-        <li>Not included: private FHU data, demo project evidence, unit conversion, or a final price recommendation.</li>
-      </ul>
-    </section>
-  `;
-}
-
 function renderEmptyTableMessage(): string {
   return `<p class="muted evidence-empty">No project-item rows match the current filters.</p>`;
 }
@@ -476,8 +531,7 @@ function renderFilterChips(result: EvidenceResult): string {
       : "",
     result.filters.quantityMin !== null || result.filters.quantityMax !== null
       ? `Quantity: ${rangeLabel(result.filters.quantityMin, result.filters.quantityMax)}`
-      : "",
-    result.filters.requireAwardedPrice ? "Awarded price required" : ""
+      : ""
   ].filter(Boolean);
 
   return chips
@@ -496,7 +550,8 @@ function renderSourceTypeOption(
 function sourceTypeLabel(value: EvidenceSourceTypeFilter): string {
   const labels: Record<EvidenceSourceTypeFilter, string> = {
     public_cost_book: "Public CDOT cost book",
-    all: "All loaded sources"
+    public_bid_tab: "Public bid tabs",
+    all: "All evidence sources"
   };
 
   return labels[value];
@@ -560,16 +615,111 @@ export function readEvidenceFiltersFromForm(
 
   return {
     ...currentFilters,
-    sourceType: String(formData.get("sourceType") || "public_cost_book") as EvidenceSourceTypeFilter,
+    sourceType: String(formData.get("sourceType") || "all") as EvidenceSourceTypeFilter,
     geography: String(formData.get("geography") || ""),
     districts: formData.getAll("districts").map((value) => String(value)).filter(Boolean),
     yearMin: readOptionalNumber(formData.get("yearMin")),
     yearMax: readOptionalNumber(formData.get("yearMax")),
     quantityMin: readOptionalNumber(formData.get("quantityMin")),
     quantityMax: readOptionalNumber(formData.get("quantityMax")),
-    unit: String(formData.get("unit") || ""),
-    requireAwardedPrice: formData.get("requireAwardedPrice") === "on"
+    unit: String(formData.get("unit") || "")
   };
+}
+
+function renderBidderDetailModal(
+  result: EvidenceResult,
+  data: AppData,
+  selectedBidderDetailKey: string | null
+): string {
+  if (!selectedBidderDetailKey) {
+    return "";
+  }
+
+  const row = result.filteredRows.find((candidate) => candidate.bidderDetailKey === selectedBidderDetailKey);
+  const bidderItems = data.bidderItemsByRowKey.get(selectedBidderDetailKey) ?? [];
+
+  if (!row || bidderItems.length === 0) {
+    return "";
+  }
+
+  const bidderBids = data.bidderBidsByProjectId.get(row.project?.projectId ?? "") ?? [];
+  const bidById = new Map(bidderBids.map((bid) => [bid.bidId, bid]));
+  const apparentLowBid = bidderBids.find((bid) => bid.apparentLow) ?? null;
+
+  return `
+    <div class="modal-backdrop" role="presentation">
+      <section
+        class="bidder-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bidder-modal-title"
+      >
+        <div class="bidder-modal__header">
+          <div>
+            <p class="eyebrow">Bidder Detail</p>
+            <h3 id="bidder-modal-title">${escapeHtml(row.project?.projectNumber || "Project")} - ${escapeHtml(row.itemCode)}</h3>
+            <p class="query-line">${escapeHtml(row.project?.projectName ?? "Unknown project")} | ${escapeHtml(row.descriptionRaw)}</p>
+          </div>
+          <button type="button" class="secondary-button bidder-modal__close" data-close-bidder-detail>Close</button>
+        </div>
+        <div class="bidder-modal__summary">
+          <span>Apparent low: <strong>${escapeHtml(apparentLowBid?.bidderName ?? "Not listed")}</strong></span>
+          <span>Bid count: <strong>${formatNumber(bidderBids.length)}</strong></span>
+          <span>Source: <strong>${escapeHtml(row.source?.sourceLabel ?? "Unknown source")}</strong></span>
+        </div>
+        <div class="table-scroll bidder-detail-scroll">
+          <table class="bidder-detail-table">
+            <thead>
+              <tr>
+                <th>Bidder</th>
+                <th>Rank</th>
+                <th>Unit price</th>
+                <th>Extended price</th>
+                <th>Bid total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${bidderItems
+                .slice()
+                .sort((left, right) => compareBidderItems(left, right, bidById))
+                .map((item) => renderBidderDetailRow(item, bidById.get(item.bidId) ?? null))
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function renderBidderDetailRow(item: BidderItemObservationRecord, bid: BidderBidRecord | null): string {
+  return `
+    <tr>
+      <td>
+        ${escapeHtml(bid?.bidderName ?? item.bidId)}
+        ${bid?.apparentLow ? `<div class="row-subtext">Apparent low</div>` : ""}
+      </td>
+      <td>${bid?.bidRank ?? "Not listed"}</td>
+      <td>${formatCurrency(item.unitPrice)}</td>
+      <td>${formatCurrency(item.extendedPrice)}</td>
+      <td>${bid ? formatCurrency(bid.bidTotal) : "Not listed"}</td>
+    </tr>
+  `;
+}
+
+function compareBidderItems(
+  left: BidderItemObservationRecord,
+  right: BidderItemObservationRecord,
+  bidById: Map<string, BidderBidRecord>
+): number {
+  const leftRank = bidById.get(left.bidId)?.bidRank ?? Number.MAX_SAFE_INTEGER;
+  const rightRank = bidById.get(right.bidId)?.bidRank ?? Number.MAX_SAFE_INTEGER;
+
+  if (leftRank !== rightRank) {
+    return leftRank - rightRank;
+  }
+
+  return left.bidId.localeCompare(right.bidId);
 }
 
 function readOptionalNumber(value: FormDataEntryValue | null): number | null {
