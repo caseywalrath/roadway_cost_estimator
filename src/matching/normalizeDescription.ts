@@ -8,7 +8,39 @@ export function normalizeDescription(value: string): string {
 }
 
 export function normalizeUnit(value: string): string {
-  return value.trim().toUpperCase();
+  const raw = value.trim().toUpperCase();
+  const compact = raw.replace(/[^A-Z0-9]+/g, " ").trim();
+  const unitMap: Record<string, string> = {
+    EA: "EACH",
+    EACH: "EACH",
+    LS: "L S",
+    "L S": "L S",
+    "LUMP SUM": "L S",
+    LB: "LB",
+    POUND: "LB",
+    POUNDS: "LB",
+    SF: "SF",
+    "SQ FT": "SF",
+    "SQUARE FOOT": "SF",
+    SY: "SY",
+    "SQ YD": "SY",
+    "SQUARE YARD": "SY",
+    CY: "CY",
+    "CU YD": "CY",
+    "CUBIC YARD": "CY",
+    LF: "LF",
+    FOOT: "LF",
+    FEET: "LF",
+    AC: "ACRE",
+    ACRE: "ACRE",
+    HR: "HOUR",
+    HOUR: "HOUR",
+    HOURS: "HOUR",
+    FA: "F A",
+    "F A": "F A",
+    "F/A": "F A",
+  };
+  return unitMap[compact] ?? raw;
 }
 
 export function tokenSet(value: string): Set<string> {

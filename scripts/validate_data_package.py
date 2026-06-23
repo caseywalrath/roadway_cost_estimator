@@ -84,6 +84,28 @@ INFLATION_INDEX_FIELDS = [
     "source_url",
     "notes",
 ]
+BIDDER_BID_FIELDS = [
+    "bid_id",
+    "project_id",
+    "source_id",
+    "bidder_name",
+    "bid_total",
+    "bid_rank",
+    "apparent_low",
+]
+BIDDER_ITEM_FIELDS = [
+    "bidder_item_observation_id",
+    "bid_id",
+    "project_id",
+    "source_id",
+    "agency_item_code",
+    "description_raw",
+    "unit_raw",
+    "unit_normalized",
+    "quantity",
+    "unit_price",
+    "extended_price",
+]
 
 SOURCE_REQUIRED_VALUES = ["source_id", "source_type", "agency", "state", "source_label", "data_year"]
 PROJECT_REQUIRED_VALUES = ["project_id", "agency_owner", "state", "county_region", "work_type", "estimate_let_date", "source_id"]
@@ -115,9 +137,29 @@ INFLATION_INDEX_REQUIRED_VALUES = [
     "index_value",
     "source_url",
 ]
+BIDDER_BID_REQUIRED_VALUES = ["bid_id", "project_id", "source_id", "bidder_name", "bid_total"]
+BIDDER_ITEM_REQUIRED_VALUES = [
+    "bidder_item_observation_id",
+    "bid_id",
+    "project_id",
+    "source_id",
+    "agency_item_code",
+    "description_raw",
+    "unit_raw",
+    "unit_normalized",
+    "quantity",
+    "unit_price",
+    "extended_price",
+]
 PROJECT_OPTIONAL_METADATA = ["contractor", "district", "terrain", "bid_count", "awarded_bid_total", "award_index"]
 
-KNOWN_PRICE_TYPES = {"cdot_awarded_bid", "cdot_average_bid", "cdot_engineer_estimate"}
+KNOWN_PRICE_TYPES = {
+    "cdot_awarded_bid",
+    "cdot_average_bid",
+    "cdot_engineer_estimate",
+    "public_bid_tab_average",
+    "public_bid_tab_engineer_estimate",
+}
 DEMO_SOURCE_TYPES = {"public_demo", "internal_demo"}
 DEMO_PRICE_TYPES = {"bid_tab_demo", "engineers_estimate"}
 SMOKE_BASELINES = {
@@ -161,6 +203,8 @@ def main() -> None:
     agency_items = read_table(args.data_dir, "agency_items.csv")
     spec_sections = read_table(args.data_dir, "spec_sections.csv")
     inflation_indexes = read_table(args.data_dir, "inflation_index.csv")
+    bidder_bids = read_table(args.data_dir, "bidder_bids.csv")
+    bidder_items = read_table(args.data_dir, "bidder_item_observations.csv")
 
     validate_headers(sources, SOURCE_FIELDS, errors)
     validate_headers(projects, PROJECT_FIELDS, errors)
@@ -168,6 +212,8 @@ def main() -> None:
     validate_headers(agency_items, AGENCY_ITEM_FIELDS, errors)
     validate_headers(spec_sections, SPEC_SECTION_FIELDS, errors)
     validate_headers(inflation_indexes, INFLATION_INDEX_FIELDS, errors)
+    validate_headers(bidder_bids, BIDDER_BID_FIELDS, errors)
+    validate_headers(bidder_items, BIDDER_ITEM_FIELDS, errors)
 
     validate_required_values(sources, SOURCE_REQUIRED_VALUES, "source_id", errors)
     validate_required_values(projects, PROJECT_REQUIRED_VALUES, "project_id", errors)
@@ -175,6 +221,8 @@ def main() -> None:
     validate_required_values(agency_items, AGENCY_ITEM_REQUIRED_VALUES, "agency_item_id", errors)
     validate_required_values(spec_sections, SPEC_SECTION_REQUIRED_VALUES, "section_prefix", errors)
     validate_required_values(inflation_indexes, INFLATION_INDEX_REQUIRED_VALUES, "index_id", errors)
+    validate_required_values(bidder_bids, BIDDER_BID_REQUIRED_VALUES, "bid_id", errors)
+    validate_required_values(bidder_items, BIDDER_ITEM_REQUIRED_VALUES, "bidder_item_observation_id", errors)
 
     validate_unique_id(sources, "source_id", errors)
     validate_unique_id(projects, "project_id", errors)
@@ -182,6 +230,8 @@ def main() -> None:
     validate_unique_id(agency_items, "agency_item_id", errors)
     validate_unique_id(spec_sections, "section_prefix", errors)
     validate_unique_id(inflation_indexes, "index_id", errors)
+    validate_unique_id(bidder_bids, "bid_id", errors)
+    validate_unique_id(bidder_items, "bidder_item_observation_id", errors)
 
     source_by_id = {row["source_id"]: row for row in sources.rows}
     project_by_id = {row["project_id"]: row for row in projects.rows}
@@ -193,9 +243,11 @@ def main() -> None:
     validate_observations(observations, source_by_id, project_by_id, agency_item_codes, errors, warnings)
     validate_agency_sections(agency_items, section_prefixes, warnings)
     validate_inflation_indexes(inflation_indexes, projects, errors, warnings)
+    validate_bidder_bids(bidder_bids, source_by_id, project_by_id, errors, warnings)
+    validate_bidder_items(bidder_items, bidder_bids, source_by_id, project_by_id, agency_item_codes, errors, warnings)
     validate_smoke_items(observations, source_by_id, project_by_id, errors, warnings)
 
-    print_summary(sources, projects, observations, source_by_id, inflation_indexes)
+    print_summary(sources, projects, observations, source_by_id, inflation_indexes, bidder_bids, bidder_items)
     print_smoke_summary(observations)
     print_messages("WARNING", warnings)
     print_messages("ERROR", errors)
@@ -383,6 +435,101 @@ def validate_inflation_indexes(
             errors.append(message)
 
 
+def validate_bidder_bids(
+    table: CsvTable,
+    source_by_id: dict[str, dict[str, str]],
+    project_by_id: dict[str, dict[str, str]],
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    apparent_low_counts: Counter[str] = Counter()
+    bid_counts_by_project: Counter[str] = Counter()
+
+    for row in table.rows:
+        bid_id = row["bid_id"]
+        project_id = row["project_id"]
+        source_id = row["source_id"]
+        apparent_low = row.get("apparent_low", "").lower()
+
+        if project_id not in project_by_id:
+            errors.append(f"bidder_bids.csv {bid_id}: project_id {project_id} was not found in projects.csv.")
+        if source_id not in source_by_id:
+            errors.append(f"bidder_bids.csv {bid_id}: source_id {source_id} was not found in sources.csv.")
+        if project_id in project_by_id and source_id != project_by_id[project_id]["source_id"]:
+            errors.append(
+                f"bidder_bids.csv {bid_id}: source_id {source_id} does not match project {project_id} source_id {project_by_id[project_id]['source_id']}."
+            )
+        if is_demo_id(bid_id) or is_demo_id(source_id):
+            errors.append(f"bidder_bids.csv {bid_id}: demo bid/source ID is not allowed.")
+        if row.get("bid_total") and not is_number(row["bid_total"]):
+            errors.append(f"bidder_bids.csv {bid_id}: bid_total is not numeric.")
+        if row.get("bid_rank") and not is_number(row["bid_rank"]):
+            errors.append(f"bidder_bids.csv {bid_id}: bid_rank is not numeric.")
+        if apparent_low not in {"true", "false"}:
+            errors.append(f"bidder_bids.csv {bid_id}: apparent_low must be true or false.")
+        if apparent_low == "true":
+            apparent_low_counts[project_id] += 1
+        bid_counts_by_project[project_id] += 1
+
+    for project_id, count in sorted(apparent_low_counts.items()):
+        if count != 1:
+            errors.append(f"bidder_bids.csv project {project_id}: expected one apparent low bidder, found {count}.")
+
+    for project_id, count in sorted(bid_counts_by_project.items()):
+        project = project_by_id.get(project_id)
+        if project and project.get("bid_count") and is_number(project["bid_count"]) and int(Decimal(project["bid_count"])) != count:
+            warnings.append(f"bidder_bids.csv project {project_id}: bid_count is {project['bid_count']} but parsed bidder rows are {count}.")
+
+
+def validate_bidder_items(
+    table: CsvTable,
+    bids: CsvTable,
+    source_by_id: dict[str, dict[str, str]],
+    project_by_id: dict[str, dict[str, str]],
+    agency_item_codes: set[str],
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    bid_by_id = {row["bid_id"]: row for row in bids.rows}
+    missing_agency_codes: Counter[str] = Counter()
+
+    for row in table.rows:
+        item_id = row["bidder_item_observation_id"]
+        bid_id = row["bid_id"]
+        project_id = row["project_id"]
+        source_id = row["source_id"]
+
+        bid = bid_by_id.get(bid_id)
+        if not bid:
+            errors.append(f"bidder_item_observations.csv {item_id}: bid_id {bid_id} was not found in bidder_bids.csv.")
+        elif bid["project_id"] != project_id or bid["source_id"] != source_id:
+            errors.append(f"bidder_item_observations.csv {item_id}: bid_id {bid_id} project/source does not match item row.")
+        if project_id not in project_by_id:
+            errors.append(f"bidder_item_observations.csv {item_id}: project_id {project_id} was not found in projects.csv.")
+        if source_id not in source_by_id:
+            errors.append(f"bidder_item_observations.csv {item_id}: source_id {source_id} was not found in sources.csv.")
+        if project_id in project_by_id and source_id != project_by_id[project_id]["source_id"]:
+            errors.append(
+                f"bidder_item_observations.csv {item_id}: source_id {source_id} does not match project {project_id} source_id {project_by_id[project_id]['source_id']}."
+            )
+        if is_demo_id(item_id) or is_demo_id(source_id):
+            errors.append(f"bidder_item_observations.csv {item_id}: demo item/source ID is not allowed.")
+        for field in ["quantity", "unit_price", "extended_price"]:
+            if row.get(field) and not is_number(row[field]):
+                errors.append(f"bidder_item_observations.csv {item_id}: {field} is not numeric.")
+        if all(row.get(field) and is_number(row[field]) for field in ["quantity", "unit_price", "extended_price"]):
+            calculated = Decimal(row["quantity"]) * Decimal(row["unit_price"])
+            stored = Decimal(row["extended_price"])
+            if abs(calculated - stored) > Decimal("0.01"):
+                errors.append(f"bidder_item_observations.csv {item_id}: quantity times unit_price does not equal extended_price.")
+        if row["agency_item_code"].upper() not in agency_item_codes:
+            missing_agency_codes[row["agency_item_code"].upper()] += 1
+
+    if missing_agency_codes:
+        preview = ", ".join(f"{code} ({count})" for code, count in missing_agency_codes.most_common(20))
+        warnings.append(f"Bidder item codes missing from agency_items.csv: {preview}")
+
+
 def validate_smoke_items(
     observations: CsvTable,
     source_by_id: dict[str, dict[str, str]],
@@ -449,12 +596,16 @@ def print_summary(
     observations: CsvTable,
     source_by_id: dict[str, dict[str, str]],
     inflation_indexes: CsvTable,
+    bidder_bids: CsvTable,
+    bidder_items: CsvTable,
 ) -> None:
     print("Data package summary")
     print(f"- Sources: {len(sources.rows)}")
     print(f"- Projects: {len(projects.rows)}")
     print(f"- Observations: {len(observations.rows)}")
     print(f"- Inflation index rows: {len(inflation_indexes.rows)}")
+    print(f"- Bidder bids: {len(bidder_bids.rows)}")
+    print(f"- Bidder item observations: {len(bidder_items.rows)}")
 
     valid_index_periods = [
         period

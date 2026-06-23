@@ -2,6 +2,8 @@ import type {
   AgencyItemRecord,
   AliasRecord,
   AppData,
+  BidderBidRecord,
+  BidderItemObservationRecord,
   CanonicalItemRecord,
   InflationIndexRecord,
   ItemObservationRecord,
@@ -21,11 +23,24 @@ const dataFiles = {
   agencyItems: "agency_items.csv",
   specSections: "spec_sections.csv",
   inflationIndexes: "inflation_index.csv",
+  bidderBids: "bidder_bids.csv",
+  bidderItemObservations: "bidder_item_observations.csv",
   aliases: "aliases.csv"
 } as const;
 
 export async function loadData(): Promise<AppData> {
-  const [sources, projects, observations, canonicalItems, agencyItems, specSections, inflationIndexes, aliases] =
+  const [
+    sources,
+    projects,
+    observations,
+    canonicalItems,
+    agencyItems,
+    specSections,
+    inflationIndexes,
+    bidderBids,
+    bidderItemObservations,
+    aliases
+  ] =
     await Promise.all([
       loadCsv(dataFiles.sources, mapSource),
       loadCsv(dataFiles.projects, mapProject),
@@ -34,6 +49,8 @@ export async function loadData(): Promise<AppData> {
       loadCsv(dataFiles.agencyItems, mapAgencyItem),
       loadCsv(dataFiles.specSections, mapSpecSection),
       loadCsv(dataFiles.inflationIndexes, mapInflationIndex),
+      loadOptionalCsv(dataFiles.bidderBids, mapBidderBid),
+      loadOptionalCsv(dataFiles.bidderItemObservations, mapBidderItemObservation),
       loadCsv(dataFiles.aliases, mapAlias)
     ]);
 
@@ -46,12 +63,27 @@ export async function loadData(): Promise<AppData> {
   const specSectionByPrefix = new Map<string, SpecSectionRecord>();
   const specSectionsByDivision = new Map<string, SpecSectionRecord[]>();
   const inflationIndexByPeriod = new Map(inflationIndexes.map((index) => [index.periodLabel, index]));
+  const bidderBidsByProjectId = new Map<string, BidderBidRecord[]>();
+  const bidderItemsByRowKey = new Map<string, BidderItemObservationRecord[]>();
 
   for (const agencyItem of agencyItems) {
     const key = agencyItem.itemCode.toUpperCase();
     const existing = agencyByCode.get(key) ?? [];
     existing.push(agencyItem);
     agencyByCode.set(key, existing);
+  }
+
+  for (const bidderBid of bidderBids) {
+    const existing = bidderBidsByProjectId.get(bidderBid.projectId) ?? [];
+    existing.push(bidderBid);
+    bidderBidsByProjectId.set(bidderBid.projectId, existing);
+  }
+
+  for (const bidderItem of bidderItemObservations) {
+    const key = buildBidderItemRowKey(bidderItem);
+    const existing = bidderItemsByRowKey.get(key) ?? [];
+    existing.push(bidderItem);
+    bidderItemsByRowKey.set(key, existing);
   }
 
   for (const specSection of specSections) {
@@ -73,18 +105,37 @@ export async function loadData(): Promise<AppData> {
     specSections,
     inflationIndexes,
     aliases,
+    bidderBids,
+    bidderItemObservations,
     sourceById,
     projectById,
     canonicalById,
     agencyByCode,
     specSectionByPrefix,
     specSectionsByDivision,
-    inflationIndexByPeriod
+    inflationIndexByPeriod,
+    bidderBidsByProjectId,
+    bidderItemsByRowKey
   };
 }
 
 async function loadCsv<T>(fileName: string, mapper: (row: CsvRow) => T): Promise<T[]> {
   const response = await fetch(`${import.meta.env.BASE_URL}data/${fileName}`);
+
+  if (!response.ok) {
+    throw new Error(`Could not load ${fileName}: ${response.status} ${response.statusText}`);
+  }
+
+  const text = await response.text();
+  return parseCsv(text).map(mapper);
+}
+
+async function loadOptionalCsv<T>(fileName: string, mapper: (row: CsvRow) => T): Promise<T[]> {
+  const response = await fetch(`${import.meta.env.BASE_URL}data/${fileName}`);
+
+  if (response.status === 404) {
+    return [];
+  }
 
   if (!response.ok) {
     throw new Error(`Could not load ${fileName}: ${response.status} ${response.statusText}`);
@@ -206,6 +257,34 @@ function mapObservation(row: CsvRow): ItemObservationRecord {
   };
 }
 
+function mapBidderBid(row: CsvRow): BidderBidRecord {
+  return {
+    bidId: row.bid_id,
+    projectId: row.project_id,
+    sourceId: row.source_id,
+    bidderName: row.bidder_name,
+    bidTotal: parseRequiredNumber(row.bid_total),
+    bidRank: parseOptionalNumber(row.bid_rank ?? ""),
+    apparentLow: row.apparent_low.toLowerCase() === "true"
+  };
+}
+
+function mapBidderItemObservation(row: CsvRow): BidderItemObservationRecord {
+  return {
+    bidderItemObservationId: row.bidder_item_observation_id,
+    bidId: row.bid_id,
+    projectId: row.project_id,
+    sourceId: row.source_id,
+    agencyItemCode: row.agency_item_code.toUpperCase(),
+    descriptionRaw: row.description_raw,
+    unitRaw: row.unit_raw,
+    unitNormalized: normalizeUnit(row.unit_normalized || row.unit_raw),
+    quantity: parseRequiredNumber(row.quantity),
+    unitPrice: parseRequiredNumber(row.unit_price),
+    extendedPrice: parseRequiredNumber(row.extended_price)
+  };
+}
+
 function mapCanonicalItem(row: CsvRow): CanonicalItemRecord {
   return {
     canonicalItemId: row.canonical_item_id,
@@ -294,4 +373,15 @@ function parseOptionalNumber(value: string): number | null {
 
   const parsed = Number(value.replace(/[$,]/g, ""));
   return Number.isNaN(parsed) ? null : parsed;
+}
+
+function buildBidderItemRowKey(row: BidderItemObservationRecord): string {
+  return [
+    row.projectId,
+    row.sourceId,
+    row.agencyItemCode,
+    row.descriptionRaw,
+    row.unitNormalized,
+    row.quantity
+  ].join("|");
 }

@@ -2,7 +2,7 @@ export type SourceScope = "both" | "public" | "internal";
 
 export type PriceTypeScope = "awarded" | "average" | "engineer" | "all";
 
-export type EvidenceSourceTypeFilter = "public_cost_book" | "all";
+export type EvidenceSourceTypeFilter = "public_cost_book" | "public_bid_tab" | "all";
 
 export type MatchType = "exact_code" | "canonical_alias" | "keyword_fallback";
 
@@ -52,6 +52,30 @@ export interface ItemObservationRecord {
   discipline: string;
   priceType: string;
   dateBasis: string;
+}
+
+export interface BidderBidRecord {
+  bidId: string;
+  projectId: string;
+  sourceId: string;
+  bidderName: string;
+  bidTotal: number;
+  bidRank: number | null;
+  apparentLow: boolean;
+}
+
+export interface BidderItemObservationRecord {
+  bidderItemObservationId: string;
+  bidId: string;
+  projectId: string;
+  sourceId: string;
+  agencyItemCode: string;
+  descriptionRaw: string;
+  unitRaw: string;
+  unitNormalized: string;
+  quantity: number;
+  unitPrice: number;
+  extendedPrice: number;
 }
 
 export interface CanonicalItemRecord {
@@ -117,6 +141,8 @@ export interface AppData {
   specSections: SpecSectionRecord[];
   inflationIndexes: InflationIndexRecord[];
   aliases: AliasRecord[];
+  bidderBids: BidderBidRecord[];
+  bidderItemObservations: BidderItemObservationRecord[];
   sourceById: Map<string, SourceRecord>;
   projectById: Map<string, ProjectRecord>;
   canonicalById: Map<string, CanonicalItemRecord>;
@@ -124,6 +150,8 @@ export interface AppData {
   specSectionByPrefix: Map<string, SpecSectionRecord>;
   specSectionsByDivision: Map<string, SpecSectionRecord[]>;
   inflationIndexByPeriod: Map<string, InflationIndexRecord>;
+  bidderBidsByProjectId: Map<string, BidderBidRecord[]>;
+  bidderItemsByRowKey: Map<string, BidderItemObservationRecord[]>;
 }
 
 export interface SearchQuery {
@@ -174,7 +202,6 @@ export interface EvidenceFilters {
   quantityMin: number | null;
   quantityMax: number | null;
   unit: string;
-  requireAwardedPrice: boolean;
 }
 
 export type EvidenceSortKey =
@@ -211,6 +238,8 @@ export interface EvidenceRow {
   awardedBidUnitPrice: number | null;
   averageBidUnitPrice: number | null;
   engineerEstimateUnitPrice: number | null;
+  bidderDetailKey: string;
+  hasBidderDetails: boolean;
   observationIds: string[];
 }
 
@@ -222,6 +251,12 @@ export interface EvidenceStats {
   average: number;
   p75: number;
   high: number;
+}
+
+export interface EvidenceSummaryStats {
+  awarded: EvidenceStats | null;
+  average: EvidenceStats | null;
+  engineer: EvidenceStats | null;
 }
 
 export interface EvidenceResult {
