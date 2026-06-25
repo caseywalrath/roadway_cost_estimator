@@ -1,0 +1,140 @@
+bid_tab_item_id,source_item_code,source_item_description,unit_normalized,candidate_agency_item_code,candidate_description,candidate_unit,candidate_count,suggestion_status
+fhu_arapahoe_big_dry_creek_20210924_row_0002,201-00000,CLEARING AND GRUBBING,L S,201-00000,Clearing and Grubbing,L S,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0003,202-00003,REMOVAL OF STRUCTURE (SPECIAL),L S,202-00003,Removal of Structure (Special),L S,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0004,202-00010,REMOVAL OF TREE,EACH,202-00010,Removal of Tree,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0005,202-00019,REMOVAL OF INLET,EACH,202-00019,Removal of Inlet,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0006,202-00021,REMOVAL OF MANHOLE,EACH,202-00021,Removal of Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0007,202-00026,REMOVAL OF SLOPE AND DITCH PAVING,SY,202-00026,Removal of Slope and Ditch Paving,SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0008,202-00035,REMOVAL OF PIPE,LF,202-00035,Removal of Pipe,LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0009,202-00037,REMOVAL OF END SECTION,EACH,202-00037,Removal of End Section,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0010,202-00155,REMOVAL OF WALL,LF,202-00155,Removal of Wall,LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0011,202-00190,REMOVAL OF CONCRETE MEDIAN COVER MATERIAL,SY,202-00190,Removal of Concrete Median Cover Material,SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0012,202-00200,REMOVAL OF SIDEWALK,SY,202-00200,Removal of Sidewalk,SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0013,202-00201,REMOVAL OF CURB,LF,202-00201,Removal of Curb,LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0014,202-00202,REMOVAL OF GUTTER,LF,202-00202,Removal of Gutter,LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0015,202-00203,REMOVAL OF CURB AND GUTTER,LF,202-00203,Removal of Curb and Gutter,LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0016,202-00206,REMOVAL OF CONCRETE CURB RAMP,SY,202-00206,Removal of Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0017,202-00210,REMOVAL OF CONCRETE PAVEMENT,SY,202-00210,Removal of Concrete Pavement,SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0018,202-00220,REMOVAL OF ASPHALT MAT,SY,202-00220,Removal of Asphalt Mat,SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0019,202-00250,REMOVAL OF PAVEMENT MARKING,SF,202-00250,Removal of Pavement Marking,SF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0020,202-00400,REMOVAL OF BRIDGE,EACH,202-00400,Removal of Bridge,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0021,202-00810,REMOVAL OF GROUND SIGN,EACH,202-00810,Removal of Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0022,202-01000,REMOVAL OF FENCE,LF,202-01000,Removal of Fence,LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0023,202-01175,REMOVAL OF GUARDRAIL (SPECIAL),LF,202-01175,Removal of Guardrail (Special),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0024,202-04002,CLEAN CULVERT,EACH,202-04002,Clean Culvert,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0025,203-00060,EMBANKMENT MATERIAL (COMPLETE IN PLACE),CY,203-00060,Embankment Material (Complete In Place),CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0026,203-01597,POTHOLING,HOUR,203-01597,Potholing,HOUR,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0027,206-00000,STRUCTURE EXCAVATION,CY,206-00000,Structure Excavation,CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0028,206-00100,STRUCTURE BACKFILL (CLASS 1),CY,206-00100,Structure Backfill (Class 1),CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0029,206-00360,MECHANICAL REINFORCEMENT OF SOIL,CY,206-00360,Mechanical Reinforcement of Soil,CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0030,206-00510,FILTER MATERIAL (CLASS A),CY,206-00510,Filter Material (Class A),CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0031,206-01750,SHORING,L S,206-01750,Shoring,L S,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0032,207-00205,TOPSOIL,CY,207-00205,Topsoil,CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0034,208-00033,SEDIMENT TRAP,EACH,208-00033,Sediment Trap,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0037,208-00045,CONCRETE WASHOUT STRUCTURE,EACH,208-00045,Concrete Washout Structure,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0044,208-00207,EROSION CONTROL MANAGEMENT,DAY,208-00207,Erosion Control Management,DAY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0045,208-00521,TEMPORARY STREAM CROSSING,EACH,208-00521,Temporary Stream Crossing,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0046,210-00001,RESET STRUCTURE,EACH,210-00001,Reset Structure,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0047,210-00065,RESET MONUMENT (TYPE 3A),EACH,210-00065,Reset Monument (Type 3A),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0048,210-00810,RESET GROUND SIGN,EACH,210-00810,Reset Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0049,210-02006,RELAY PIPE (6 INCH),LF,210-02006,Relay Pipe (6 Inch),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0050,210-02900,RELAY RIPRAP,CY,210-02900,Relay Riprap,CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0051,210-04010,ADJUST MANHOLE,EACH,210-04010,Adjust Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0052,210-04015,MODIFY MANHOLE,EACH,210-04015,Modify Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0053,210-04050,ADJUST VALVE BOX,EACH,210-04050,Adjust Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0054,211-03005,DEWATERING,L S,211-03005,Dewatering,L S,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0055,212-00006,SEEDING (NATIVE),ACRE,212-00006,Seeding (Native),ACRE,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0057,212-00050,SOD,SF,212-00050,Sod,SF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0059,213-00002,MULCHING (WEED FREE HAY),ACRE,213-00002,Mulching (Weed Free Hay),ACRE,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0061,214-00225,DECIDUOUS TREE 2.5 INCH CALIPER,EACH,214-00225,Deciduous Tree (2.5 Inch Caliper),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0062,216,SOIL RETENTION BLANKET (SPECIAL),SY,216-00030,Soil Retention Blanket (Special),SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0064,217-00020,HERBICIDE TREATMENT,HOUR,217-00020,Herbicide Treatment,HOUR,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0065,240-00000,WILDLIFE BIOLOGIST,HOUR,240-00000,Wildlife Biologist,HOUR,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0066,240-00010,REMOVAL OF NESTS,HOUR,240-00010,Removal of Nests,HOUR,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0067,240-00020,NETTING,SY,240-00020,Netting,SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0068,304-06007,AGGREGATE BASE COURSE (CLASS 6),CY,304-06007,Aggregate Base Course (Class 6),CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0069,403-00720,HOT MIX ASPHALT (PATCHING)(ASPHALT),TON,403-00720,Hot Mix Asphalt (Patching) (Asphalt),TON,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0070,403-09210,STONE MATRIX ASPHALT,TON,403-09210,Stone Matrix Asphalt,TON,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0071,403-09226,STONE MATRIX ASPHALT (ASPHALT) (POLYMER MODIFIED),TON,403-09226,Stone Matrix Asphalt (Asphalt)(Polymer Modified),TON,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0072,403-33751,HOT MIX ASPHALT (GRADING S)(75)(PG 64-28),TON,403-33751,Hot Mix Asphalt (Grading S) (75) (PG 64-28),TON,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0073,411-10255,EMULSIFIED ASPHALT (SLOW-SETTING),GAL,411-10255,Emulsified Asphalt (Slow-Setting),GAL,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0074,412-01000,CONCRETE PAVEMENT (10 INCH),SY,412-01000,Concrete Pavement (10 Inch),SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0075,501-00200,STEEL SHEET PILING (TYPE II),SF,501-00200,Steel Sheet Piling (Type II),SF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0076,503-00036,DRILLED SHAFT (36 INCH),LF,503-00036,Drilled Shaft (36 Inch),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0077,503-00310,CROSSHOLE SONIC LOGGING TESTING,EACH,503-00310,Crosshole Sonic Logging Testing,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0079,506-00412,SOIL RIPRAP (12 INCH),CY,506-00412,Soil Riprap (12 Inch),CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0080,506-00700,VOID-FILLED RIPRAP,CY,506-00700,Void-Filled Riprap,CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0081,507-00000,CONCRETE SLOPE AND DITCH PAVING,CY,507-00000,Concrete Slope and Ditch Paving,CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0082,509-00001,STRUCTURAL STEEL (GALVANIZED),LB,509-00001,Structural Steel (Galvanized),LB,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0083,514-00000,PIPE RAILING,LF,514-00000,Pipe Railing,LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0084,514-00200,PEDESTRIAN RAILING (STEEL)),LF,514-00200,Pedestrian Railing (Steel),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0085,515-00120,WATERPROOFING (MEMBRANE),SY,515-00120,Waterproofing (Membrane),SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0087,601-03040,CONCRETE CLASS D  (BRIDGE),CY,601-03040,Concrete Class D (Bridge),CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0088,601-03050,CONCRETE CLASS D  (WALL),CY,601-03050,Concrete Class D (Wall),CY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0089,601-40300,STRUCTURAL CONCRETE COATING,SY,601-40300,Structural Concrete Coating,SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0090,602-00020,REINFORCING STEEL (EPOXY COATED),LB,602-00020,Reinforcing Steel (Epoxy Coated),LB,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0091,603-01185,18 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01185,18 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0092,603-01245,24 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01245,24 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0093,603-01305,30 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01305,30 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0094,603-01365,36 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01365,36 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0095,603-01425,42 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01425,42 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0096,603-01485,48 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01485,48 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0098,603-05036,36 INCH REINFORCED CONCRETE END SECTION,EACH,603-05036,36 Inch Reinforced Concrete End Section,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0099,603-05148,60x38 INCH REINFORCED CONCRETE END SECTION ELLIPTICAL,EACH,603-05148,60x38 Inch Reinforced Concrete End Section Elliptical,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0100,604-19210,INLET TYPE R L 10 (10 FOOT),EACH,604-19210,Inlet Type R L 10 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0102,604-19310,INLET TYPE R L 15 (10 FOOT),EACH,604-19310,Inlet Type R L 15 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0103,604-19315,INLET TYPE R L 15 (15 FOOT),EACH,604-19315,Inlet Type R L 15 (15 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0104,604-19410,INLET TYPE R SPECIAL (10 FOOT),EACH,604-19410,Inlet Type R Special (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0105,604-19415,INLET TYPE R SPECIAL (15 FOOT),EACH,604-19415,Inlet Type R Special (15 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0106,604-30010,MANHOLE SLAB BASE (10 FOOT),EACH,604-30010,Manhole Slab Base (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0107,604-30015,MANHOLE SLAB BASE (15 FOOT),EACH,604-30015,Manhole Slab Base (15 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0108,604-30020,MANHOLE SLAB BASE (20 FOOT),EACH,604-30020,Manhole Slab Base (20 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0109,604-30025,MANHOLE SLAB BASE (25 FOOT),EACH,604-30025,Manhole Slab Base (25 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0110,604-31015,MANHOLE BOX BASE (15 FOOT),EACH,604-31015,Manhole Box Base (15 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0111,604-31020,MANHOLE BOX BASE (20 FOOT),EACH,604-31020,Manhole Box Base (20 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0112,604-83108,8 INCH PLASTIC PIPE SEWER (POLYVINYL CHLORIDE),LF,604-83108,8 Inch Plastic Pipe Sewer (Polyvinyl Chloride),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0113,604-83110,10 INCH PLASTIC PIPE SEWER (POLYVINYL CHLORIDE),LF,604-83110,10 Inch Plastic Pipe Sewer (Polyvinyl Chloride),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0117,606-01370,TRANSITION TYPE 3G,EACH,606-01370,Transition Type 3G,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0118,606-02003,END ANCHORAGE (NONFLARED),EACH,606-02003,End Anchorage (Nonflared),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0120,607-11455,FENCE WOOD,LF,607-11455,Fence Wood,LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0121,608-00005,CONCRETE SIDEWALK (SPECIAL),SY,608-00005,Concrete Sidewalk (Special),SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0122,608-00006,CONCRETE SIDEWALK (6 INCH),SY,608-00006,Concrete Sidewalk (6 Inch),SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0123,608-00010,CONCRETE CURB RAMP,SY,608-00010,Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0124,608-00026,CONCRETE BIKEWAY (6 INCH),SY,608-00026,Concrete Bikeway (6 Inch),SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0125,608-10010,SIDEWALK DRAIN,EACH,608-10010,Sidewalk Drain,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0126,609-20010,CURB TYPE 2 (SECTION B),LF,609-20010,Curb Type 2 (Section B),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0127,609-21010,CURB AND GUTTER TYPE 2 (SECTION I-B),LF,609-21010,Curb and Gutter Type 2 (Section I-B),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0128,609-21020,CURB AND GUTTER TYPE 2 (SECTION II-B),LF,609-21020,Curb and Gutter Type 2 (Section II-B),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0129,609-24008,GUTTER TYPE 2 (8 FOOT),LF,609-24008,Gutter Type 2 (8 Foot),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0130,610-00030,MEDIAN COVER MATERIAL (CONCRETE),SF,610-00030,Median Cover Material (Concrete),SF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0131,613-00075,3/4 INCH ELECTRICAL CONDUIT (PLASTIC),LF,613-01075,3/4 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0132,613-00100,1 INCH ELECTRICAL CONDUIT,LF,613-00100,1 Inch Electrical Conduit,LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0133,613-01200,2 INCH ELECTRICAL CONDUIT (PLASTIC),LF,613-01200,2 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0135,613-10000,WIRING,L S,613-10000,Wiring,L S,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0138,613-50109,METER POWER PEDESTAL,EACH,613-50109,Meter Power Pedestal,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0139,614-00011,SIGN PANEL (CLASS I),SF,614-00011,Sign Panel (Class I),SF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0143,619-77210,RESTRAINED PLUG (SPECIAL),EACH,619-77210,Restrained Plug (Special),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0144,620-00001,FIELD OFFICE (CLASS 1),EACH,620-00001,Field Office (Class 1),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0145,620-00020,SANITARY FACILITY,EACH,620-00020,Sanitary Facility,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0146,621-00450,DETOUR PAVEMENT,SY,621-00450,Detour Pavement,SY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0147,623-09900,SPRINKLER SYSTEM,L S,623-09900,Sprinkler System,L S,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0148,625-00000,CONSTRUCTION SURVEYING,L S,625-00000,Construction Surveying,L S,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0149,626-00000,MOBILIZATION,L S,626-00000,Mobilization,L S,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0150,627-00008,MODIFIED EPOXY PAVEMENT MARKING,GAL,627-00008,Modified Epoxy Pavement Marking,GAL,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0151,627-30405,THERMOPLASTIC PAVEMENT MARKING (WORD-SYMBOL),SF,627-30205,Thermoplastic Pavement Marking (Word-Symbol),SF,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0152,630-00000,FLAGGING,HOUR,630-00000,Flagging,HOUR,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0153,630-00003,UNIFORMED TRAFFIC CONTROL,HOUR,630-00003,Uniformed Traffic Control,HOUR,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0154,630-00007,TRAFFIC CONTROL INSPECTION,DAY,630-00007,Traffic Control Inspection,DAY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0155,630-00012,TRAFFIC CONTROL MANAGEMENT,DAY,630-00012,Traffic Control Management,DAY,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0156,630-80335,BARRICADE (TYPE 3 M-A)(TEMPORARY),EACH,630-80335,Barricade (Type 3 M-A) (Temporary),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0157,630-80336,BARRICADE (TYPE 3 M-B)(TEMPORARY),EACH,630-80336,Barricade (Type 3 M-B) (Temporary),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0158,630-80341,CONSTRUCTION TRAFFIC SIGN (PANEL SIZE A),EACH,630-80341,Construction Traffic Sign (Panel Size A),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0159,630-80342,CONSTRUCTION TRAFFIC SIGN (PANEL SIZE B),EACH,630-80342,Construction Traffic Sign (Panel Size B),EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0160,630-80355,PORTABLE MESSAGE SIGN PANEL,EACH,630-80355,Portable Message Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0162,630-80360,DRUM CHANNELIZING DEVICE,EACH,630-80360,Drum Channelizing Device,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0163,630-80367,PORTABLE TRAFFIC SPEED MONITOR,EACH,630-80367,Portable Traffic Speed Monitor,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0165,630-80380,TRAFFIC CONE,EACH,630-80380,Traffic Cone,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0166,630-80384,TUBULAR MARKER,EACH,630-80384,Tubular Marker,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0167,630-85010,IMPACT ATTENUATOR,EACH,614-85001,Impact Attenuator,EACH,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0170,700-70010,F/A MINOR CONTRACT REVISIONS,F A,700-70010,F/A Minor Contract Revisions,F A,1,single_exact_description_unit_candidate
+fhu_arapahoe_big_dry_creek_20210924_row_0171,700-70072,F/A OBTAIN POWER FROM XCEL ENERGY,F A,700-70072,F/A Obtain Power from Xcel Energy,F A,1,single_exact_description_unit_candidate

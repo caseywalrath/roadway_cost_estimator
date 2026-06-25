@@ -23,10 +23,12 @@ DEFAULT_PROJECTS = Path("public/data/projects.csv")
 DEFAULT_OBSERVATIONS = Path("public/data/item_observations.csv")
 DEFAULT_BIDDER_BIDS = Path("public/data/bidder_bids.csv")
 DEFAULT_BIDDER_ITEMS = Path("public/data/bidder_item_observations.csv")
+DEFAULT_BID_TAB_ITEMS = Path("public/data/bid_tab_items.csv")
 DEFAULT_AGENCY_ITEMS = Path("public/data/agency_items.csv")
 DEFAULT_STAGING_ITEMS = Path("public/data/imports/fhu_bid_tab_watson_ave_roundabout_2021_12_16_item_unit_costs.csv")
 DEFAULT_STAGING_BIDDER_BIDS = Path("public/data/imports/fhu_bid_tab_watson_ave_roundabout_2021_12_16_bidder_bids.csv")
 DEFAULT_STAGING_BIDDER_ITEMS = Path("public/data/imports/fhu_bid_tab_watson_ave_roundabout_2021_12_16_bidder_item_observations.csv")
+DEFAULT_STAGING_MATCH_CANDIDATES = Path("public/data/imports/fhu_bid_tab_watson_ave_roundabout_2021_12_16_match_candidates.csv")
 
 ITEM_CODE_PATTERN = re.compile(r"^\d{3}-\d{5}$")
 BID_FORM_ITEM_CODE_PATTERN = re.compile(r"^(?:\d{3}-\d{5}|\d{3})$")
@@ -79,6 +81,7 @@ BIDDER_BID_FIELDS = [
 ]
 BIDDER_ITEM_FIELDS = [
     "bidder_item_observation_id",
+    "bid_tab_item_id",
     "bid_id",
     "project_id",
     "source_id",
@@ -90,11 +93,19 @@ BIDDER_ITEM_FIELDS = [
     "unit_price",
     "extended_price",
 ]
-STAGING_ITEM_FIELDS = [
+BID_TAB_ITEM_FIELDS = [
+    "bid_tab_item_id",
+    "project_id",
+    "source_id",
     "source_file",
     "sheet_name",
     "workbook_row",
     "project_number",
+    "source_item_number",
+    "source_item_code",
+    "source_item_code_system",
+    "source_spec_raw",
+    "source_item_description",
     "item_code",
     "item_description",
     "unit_raw",
@@ -102,7 +113,21 @@ STAGING_ITEM_FIELDS = [
     "quantity",
     "engineer_estimate_unit_price",
     "average_bid_unit_price",
+    "matched_agency_item_code",
+    "match_status",
     "date_basis",
+]
+STAGING_ITEM_FIELDS = BID_TAB_ITEM_FIELDS
+MATCH_CANDIDATE_FIELDS = [
+    "bid_tab_item_id",
+    "source_item_code",
+    "source_item_description",
+    "unit_normalized",
+    "candidate_agency_item_code",
+    "candidate_description",
+    "candidate_unit",
+    "candidate_count",
+    "suggestion_status",
 ]
 
 
@@ -184,6 +209,9 @@ def normalize_unit(value: object) -> str:
         "HR": "HOUR",
         "HOUR": "HOUR",
         "HOURS": "HOUR",
+        "DY": "DAY",
+        "DAY": "DAY",
+        "DAYS": "DAY",
         "FA": "F A",
         "F A": "F A",
         "F/A": "F A",
@@ -219,6 +247,74 @@ def agency_item_rows(path: Path) -> list[dict[str, str]]:
     return read_csv(path)
 
 
+def bid_tab_item_row(
+    bid_tab_item_id: str,
+    project_id: str,
+    source_id: str,
+    workbook_path: Path,
+    sheet_name: str,
+    workbook_row: int,
+    project_number: str,
+    source_item_number: str,
+    source_item_code: str,
+    source_item_code_system: str,
+    source_spec_raw: str,
+    source_item_description: str,
+    item_code: str,
+    unit_raw: str,
+    unit_normalized: str,
+    quantity: Decimal,
+    engineer_unit_price: Decimal,
+    average_unit_price: Decimal,
+    date_basis: str,
+    matched_agency_item_code: str | None = None,
+    match_status: str | None = None,
+) -> dict[str, str]:
+    normalized_item_code = item_code.strip().upper()
+    matched_code = matched_agency_item_code
+    if matched_code is None:
+        matched_code = normalized_item_code if ITEM_CODE_PATTERN.match(normalized_item_code) else ""
+    status = match_status
+    if status is None:
+        status = "matched" if matched_code else "source_cdot_prefix_only" if source_item_code_system == "CDOT" else "unmatched"
+
+    return {
+        "bid_tab_item_id": bid_tab_item_id,
+        "project_id": project_id,
+        "source_id": source_id,
+        "source_file": workbook_path.name,
+        "sheet_name": sheet_name,
+        "workbook_row": str(workbook_row),
+        "project_number": project_number,
+        "source_item_number": source_item_number,
+        "source_item_code": source_item_code,
+        "source_item_code_system": source_item_code_system,
+        "source_spec_raw": source_spec_raw,
+        "source_item_description": source_item_description,
+        "item_code": normalized_item_code,
+        "item_description": source_item_description,
+        "unit_raw": unit_raw,
+        "unit_normalized": unit_normalized,
+        "quantity": decimal_text(quantity),
+        "engineer_estimate_unit_price": decimal_text(engineer_unit_price),
+        "average_bid_unit_price": decimal_text(average_unit_price),
+        "matched_agency_item_code": matched_code,
+        "match_status": status,
+        "date_basis": date_basis,
+    }
+
+
+def source_code_system(value: str) -> str:
+    upper_value = value.strip().upper()
+    if upper_value.startswith("COA"):
+        return "COA"
+    if upper_value.startswith("CDOT") or ITEM_CODE_PATTERN.match(upper_value) or re.match(r"^\d{3}$", upper_value):
+        return "CDOT"
+    if not upper_value:
+        return "SOURCE_ONLY"
+    return "SOURCE"
+
+
 def parse_workbook(
     workbook_path: Path,
     source_id: str,
@@ -235,6 +331,18 @@ def parse_workbook(
     sheet = workbook[workbook.sheetnames[0]]
     formula_workbook = load_workbook(workbook_path, data_only=False, read_only=False)
     formula_sheet = formula_workbook[sheet.title]
+
+    results_sheet = next((candidate for candidate in workbook.worksheets if find_results_header_row(candidate)), None)
+    if results_sheet:
+        return parse_results_workbook(
+            workbook_path,
+            results_sheet,
+            formula_workbook[results_sheet.title],
+            source_id,
+            project_id,
+            row_prefix,
+            date_basis,
+        )
 
     bid_form_header = find_bid_form_header_row(sheet)
     if bid_form_header:
@@ -258,6 +366,208 @@ def parse_workbook(
         row_prefix,
         date_basis,
     )
+
+
+def parse_results_workbook(
+    workbook_path: Path,
+    sheet,
+    formula_sheet,
+    source_id: str,
+    project_id: str,
+    row_prefix: str,
+    date_basis: str,
+) -> ParsedBidTab:
+    header_row = find_results_header_row(sheet)
+    if not header_row:
+        raise ValueError("Results workbook must include No., Spec*, Item, Unit, and Quantity headers.")
+
+    column_by_header = results_column_map(sheet, header_row)
+    groups = detect_results_price_groups(sheet, header_row - 1, header_row)
+    engineer_group = next((group for group in groups if group.role == "engineer"), None)
+    bidder_groups = [group for group in groups if group.role == "bidder"]
+
+    if not engineer_group or not bidder_groups:
+        raise ValueError("Results workbook must include engineer estimate and bidder Unit Cost / Extended Cost pairs.")
+
+    item_rows: list[dict[str, str]] = []
+    observations: list[dict[str, str]] = []
+    bidder_items: list[dict[str, str]] = []
+    warnings: list[str] = []
+    bid_totals: dict[str, Decimal] = {group.name: Decimal("0.00") for group in bidder_groups}
+    engineer_total = Decimal("0.00")
+
+    project_name = "Ralston Road - Yukon Street to Garrison Street"
+    project_number = "18-ST-40"
+    total_row = find_results_total_row(sheet, column_by_header["ITEM"], header_row + 1)
+
+    for row_index in range(header_row + 1, total_row):
+        source_item_value = sheet.cell(row_index, column_by_header["NO."]).value
+        if source_item_value is None or str(source_item_value).strip() == "":
+            continue
+
+        source_item_number = normalize_source_item_number(source_item_value)
+        source_spec_raw = str(sheet.cell(row_index, column_by_header["SPEC*"]).value or "").strip()
+        description = str(sheet.cell(row_index, column_by_header["ITEM"]).value or "").strip()
+        unit_raw = str(sheet.cell(row_index, column_by_header["UNIT"]).value or "").strip()
+        unit_normalized = normalize_unit(unit_raw)
+        quantity = decimal_value(sheet.cell(row_index, column_by_header["QUANTITY"]).value)
+        engineer_unit_price = decimal_value(sheet.cell(row_index, engineer_group.unit_col).value)
+        engineer_extended_price = (quantity * engineer_unit_price).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        engineer_total += engineer_extended_price
+
+        bidder_unit_prices: list[Decimal] = []
+        row_id = f"{row_prefix}_row_{row_index:04d}"
+        source_item_code = source_spec_raw or f"No. {source_item_number}"
+        code_system = source_code_system(source_item_code)
+        reconciliation = results_reconciliation(sheet, column_by_header, row_index)
+        has_reconciliation = "CDOT ITEM CODE" in column_by_header
+        matched_item_code = reconciliation["item_code"]
+        matched_description = reconciliation["description"] or description
+        matched_unit_raw = reconciliation["unit_raw"] or unit_raw
+        matched_unit_normalized = normalize_unit(matched_unit_raw)
+        match_status = (
+            "matched"
+            if matched_item_code
+            else "unmatched"
+            if has_reconciliation
+            else "source_cdot_prefix_only"
+            if code_system == "CDOT"
+            else "unmatched"
+        )
+
+        item_rows.append(
+            bid_tab_item_row(
+                row_id,
+                project_id,
+                source_id,
+                workbook_path,
+                sheet.title,
+                row_index,
+                project_number,
+                source_item_number,
+                source_item_code,
+                code_system,
+                source_spec_raw,
+                description,
+                matched_item_code,
+                unit_raw,
+                unit_normalized,
+                quantity,
+                engineer_unit_price,
+                Decimal("0.00"),
+                date_basis,
+                matched_item_code,
+                match_status,
+            )
+        )
+
+        for bidder_group in bidder_groups:
+            unit_price = decimal_value(sheet.cell(row_index, bidder_group.unit_col).value)
+            extended_price = (quantity * unit_price).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            bid_id = f"{row_prefix}_{slugify(bidder_group.name)}"
+            bidder_unit_prices.append(unit_price)
+            bid_totals[bidder_group.name] += extended_price
+            bidder_items.append(
+                {
+                    "bidder_item_observation_id": f"{row_id}_{slugify(bidder_group.name)}",
+                    "bid_tab_item_id": row_id,
+                    "bid_id": bid_id,
+                    "project_id": project_id,
+                    "source_id": source_id,
+                    "agency_item_code": matched_item_code,
+                    "description_raw": matched_description if matched_item_code else description,
+                    "unit_raw": matched_unit_raw if matched_item_code else unit_raw,
+                    "unit_normalized": matched_unit_normalized if matched_item_code else unit_normalized,
+                    "quantity": decimal_text(quantity),
+                    "unit_price": decimal_text(unit_price),
+                    "extended_price": decimal_text(extended_price),
+                }
+            )
+            validate_line_total(
+                sheet.cell(row_index, bidder_group.total_col).value,
+                formula_sheet.cell(row_index, bidder_group.total_col).value,
+                extended_price,
+                warnings,
+                row_index,
+                bidder_group.name,
+            )
+
+        validate_line_total(
+            sheet.cell(row_index, engineer_group.total_col).value,
+            formula_sheet.cell(row_index, engineer_group.total_col).value,
+            engineer_extended_price,
+            warnings,
+            row_index,
+            "Engineer estimate",
+        )
+
+        average_unit_price = (sum(bidder_unit_prices) / Decimal(len(bidder_unit_prices))).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+        item_rows[-1]["average_bid_unit_price"] = decimal_text(average_unit_price)
+
+        if matched_item_code:
+            observations.extend(
+                [
+                    promoted_observation(
+                        f"{row_id}_engineer_estimate",
+                        project_id,
+                        source_id,
+                        matched_item_code,
+                        matched_description,
+                        matched_unit_raw,
+                        matched_unit_normalized,
+                        quantity,
+                        engineer_unit_price,
+                        "public_bid_tab_engineer_estimate",
+                        date_basis,
+                    ),
+                    promoted_observation(
+                        f"{row_id}_average",
+                        project_id,
+                        source_id,
+                        matched_item_code,
+                        matched_description,
+                        matched_unit_raw,
+                        matched_unit_normalized,
+                        quantity,
+                        average_unit_price,
+                        "public_bid_tab_average",
+                        date_basis,
+                    ),
+                ]
+            )
+
+    published_engineer_total = decimal_value(sheet.cell(total_row, engineer_group.total_col).value)
+    if abs(published_engineer_total - engineer_total) > Decimal("0.01"):
+        warnings.append(
+            f"Results total engineer estimate {published_engineer_total} differs from itemized engineer estimate total {engineer_total}"
+        )
+
+    for bidder_group in bidder_groups:
+        published_total = decimal_value(sheet.cell(total_row, bidder_group.total_col).value)
+        calculated_total = bid_totals[bidder_group.name]
+        if abs(published_total - calculated_total) > Decimal("0.01"):
+            warnings.append(
+                f"Results total {bidder_group.name} {published_total} differs from calculated total {calculated_total}"
+            )
+
+    ranked_bidders = sorted(bid_totals.items(), key=lambda item: item[1])
+    bidder_bids = [
+        {
+            "bid_id": f"{row_prefix}_{slugify(name)}",
+            "project_id": project_id,
+            "source_id": source_id,
+            "bidder_name": name,
+            "bid_total": decimal_text(total),
+            "bid_rank": str(index),
+            "apparent_low": "true" if index == 1 else "false",
+        }
+        for index, (name, total) in enumerate(ranked_bidders, start=1)
+    ]
+
+    return ParsedBidTab(project_name, project_number, item_rows, bidder_bids, bidder_items, observations, warnings)
 
 
 def parse_saq_workbook(
@@ -315,20 +625,27 @@ def parse_saq_workbook(
 
         row_id = f"{row_prefix}_row_{row_index:04d}"
         item_rows.append(
-            {
-                "source_file": workbook_path.name,
-                "sheet_name": sheet.title,
-                "workbook_row": str(row_index),
-                "project_number": project_number,
-                "item_code": item_code,
-                "item_description": description,
-                "unit_raw": unit_raw,
-                "unit_normalized": unit_normalized,
-                "quantity": decimal_text(quantity),
-                "engineer_estimate_unit_price": decimal_text(engineer_unit_price),
-                "average_bid_unit_price": decimal_text(average_unit_price),
-                "date_basis": date_basis,
-            }
+            bid_tab_item_row(
+                row_id,
+                project_id,
+                source_id,
+                workbook_path,
+                sheet.title,
+                row_index,
+                project_number,
+                "",
+                item_code,
+                "CDOT",
+                item_code,
+                description,
+                item_code,
+                unit_raw,
+                unit_normalized,
+                quantity,
+                engineer_unit_price,
+                average_unit_price,
+                date_basis,
+            )
         )
 
         observations.extend(
@@ -372,6 +689,7 @@ def parse_saq_workbook(
             bidder_items.append(
                 {
                     "bidder_item_observation_id": f"{row_id}_{slugify(bidder_group.name)}",
+                    "bid_tab_item_id": row_id,
                     "bid_id": bid_id,
                     "project_id": project_id,
                     "source_id": source_id,
@@ -479,6 +797,7 @@ def parse_bid_form_workbook(
             bidder_items.append(
                 {
                     "bidder_item_observation_id": f"{row_id}_{slugify(bidder_group.name)}",
+                    "bid_tab_item_id": row_id,
                     "bid_id": bid_id,
                     "project_id": project_id,
                     "source_id": source_id,
@@ -515,20 +834,27 @@ def parse_bid_form_workbook(
             rounding=ROUND_HALF_UP,
         )
         item_rows.append(
-            {
-                "source_file": workbook_path.name,
-                "sheet_name": sheet.title,
-                "workbook_row": str(row_index),
-                "project_number": project_number,
-                "item_code": item_code,
-                "item_description": description,
-                "unit_raw": unit_raw,
-                "unit_normalized": unit_normalized,
-                "quantity": decimal_text(quantity),
-                "engineer_estimate_unit_price": decimal_text(engineer_unit_price),
-                "average_bid_unit_price": decimal_text(average_unit_price),
-                "date_basis": date_basis,
-            }
+            bid_tab_item_row(
+                row_id,
+                project_id,
+                source_id,
+                workbook_path,
+                sheet.title,
+                row_index,
+                project_number,
+                "",
+                item_code,
+                source_code_system(item_code),
+                item_code,
+                description,
+                item_code,
+                unit_raw,
+                unit_normalized,
+                quantity,
+                engineer_unit_price,
+                average_unit_price,
+                date_basis,
+            )
         )
 
         observations.extend(
@@ -592,6 +918,56 @@ def find_header_row(sheet) -> int:
     raise ValueError("Could not find ITEM CODE header in column C.")
 
 
+def find_results_header_row(sheet) -> int | None:
+    required_headers = {"NO.", "SPEC*", "ITEM", "UNIT", "QUANTITY"}
+    for row_index in range(1, min(sheet.max_row, 25) + 1):
+        headers = {str(sheet.cell(row_index, column).value or "").strip().upper() for column in range(1, sheet.max_column + 1)}
+        if required_headers.issubset(headers):
+            return row_index
+    return None
+
+
+def results_column_map(sheet, header_row: int) -> dict[str, int]:
+    columns = {
+        str(sheet.cell(header_row, column).value or "").strip().upper(): column
+        for column in range(1, sheet.max_column + 1)
+    }
+    required_headers = ["NO.", "SPEC*", "ITEM", "UNIT", "QUANTITY"]
+    missing = [header for header in required_headers if header not in columns]
+    if missing:
+        raise ValueError(f"Results workbook missing required header(s): {', '.join(missing)}")
+    return columns
+
+
+def results_reconciliation(sheet, column_by_header: dict[str, int], row_index: int) -> dict[str, str]:
+    raw_item_code = cell_text(sheet, row_index, column_by_header.get("CDOT ITEM CODE"))
+    item_code = "" if raw_item_code.lower() == "none" else raw_item_code.upper()
+    description = cell_text(sheet, row_index, column_by_header.get("CDOT DESCRIPTION"))
+    unit_raw = cell_text(sheet, row_index, column_by_header.get("CDOT UNIT"))
+
+    if item_code and not ITEM_CODE_PATTERN.match(item_code):
+        raise ValueError(f"Row {row_index}: CDOT Item Code {item_code!r} is not shaped like ###-#####.")
+
+    return {
+        "item_code": item_code,
+        "description": "" if description.lower() == "none" else description,
+        "unit_raw": "" if unit_raw.lower() == "none" else unit_raw,
+    }
+
+
+def cell_text(sheet, row_index: int, column_index: int | None) -> str:
+    if not column_index:
+        return ""
+    return str(sheet.cell(row_index, column_index).value or "").strip()
+
+
+def find_results_total_row(sheet, item_column: int, start_row: int) -> int:
+    for row_index in range(start_row, sheet.max_row + 1):
+        if str(sheet.cell(row_index, item_column).value or "").strip().upper() == "TOTAL":
+            return row_index
+    raise ValueError("Results workbook must include a TOTAL row in the Item column.")
+
+
 def find_bid_form_header_row(sheet) -> int | None:
     required_headers = {"ITEM NO.", "ITEM DESCRIPTION", "UNIT", "QUANTITY"}
     for row_index in range(1, min(sheet.max_row, 25) + 1):
@@ -634,6 +1010,23 @@ def detect_price_groups(sheet, group_row: int, header_row: int) -> list[PriceCol
     return groups
 
 
+def detect_results_price_groups(sheet, group_row: int, header_row: int) -> list[PriceColumnGroup]:
+    groups: list[PriceColumnGroup] = []
+    for column in range(1, sheet.max_column):
+        unit_header = str(sheet.cell(header_row, column).value or "").strip().upper()
+        total_header = str(sheet.cell(header_row, column + 1).value or "").strip().upper()
+        if unit_header != "UNIT COST" or total_header != "EXTENDED COST":
+            continue
+
+        name = str(sheet.cell(group_row, column).value or "").strip()
+        if not name:
+            continue
+
+        role = "engineer" if "ENGINEER" in name.upper() else "bidder"
+        groups.append(PriceColumnGroup(name, column, column + 1, role))
+    return groups
+
+
 def detect_bid_form_price_groups(sheet, header_row: int) -> list[PriceColumnGroup]:
     groups: list[PriceColumnGroup] = []
     for column in range(1, sheet.max_column):
@@ -658,6 +1051,12 @@ def normalize_bid_form_item_code(value: object) -> str:
     if BID_FORM_ITEM_CODE_PATTERN.match(text):
         return text.upper()
     return ""
+
+
+def normalize_source_item_number(value: object) -> str:
+    if isinstance(value, (int, float)) and Decimal(str(value)) == Decimal(str(value)).to_integral_value():
+        return str(int(value))
+    return str(value).strip()
 
 
 def bid_form_summary_metadata(workbook) -> tuple[str, str, Decimal | None]:
@@ -769,6 +1168,7 @@ def validate_import(
     parsed: ParsedBidTab,
     known_item_codes: set[str],
     allow_missing_item_codes: bool = False,
+    source_only: bool = False,
 ) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings = list(parsed.warnings)
@@ -778,7 +1178,27 @@ def validate_import(
     if not parsed.bidder_bids:
         errors.append("No bidder columns were parsed.")
 
-    missing_codes = sorted({row["item_code"] for row in parsed.item_rows if row["item_code"] not in known_item_codes})
+    if source_only:
+        invalid_statuses = sorted(
+            {
+                row.get("match_status", "")
+                for row in parsed.item_rows
+                if row.get("match_status", "") not in {"matched", "unmatched", "source_cdot_prefix_only"}
+            }
+        )
+        if invalid_statuses:
+            errors.append(f"Invalid match status value(s): {', '.join(invalid_statuses)}")
+        return errors, warnings
+
+    missing_codes = sorted(
+        {
+            row["item_code"]
+            for row in parsed.item_rows
+            if row.get("match_status", "matched") == "matched"
+            and row.get("item_code", "")
+            and row["item_code"] not in known_item_codes
+        }
+    )
     if missing_codes:
         message = f"Missing agency item codes: {', '.join(missing_codes)}"
         if allow_missing_item_codes:
@@ -799,6 +1219,46 @@ def validate_import(
     return errors, warnings
 
 
+def build_match_candidates(parsed: ParsedBidTab, agency_items: list[dict[str, str]]) -> list[dict[str, str]]:
+    candidate_map: dict[tuple[str, str], list[dict[str, str]]] = {}
+    for row in agency_items:
+        unit = normalize_unit(row.get("official_unit", ""))
+        for description_field in ["official_description", "official_abbreviated_description"]:
+            description = row.get(description_field, "")
+            if not description:
+                continue
+            candidate_map.setdefault((normalize_description(description), unit), []).append(row)
+
+    candidates: list[dict[str, str]] = []
+    for row in parsed.item_rows:
+        key = (normalize_description(row.get("source_item_description") or row["item_description"]), row["unit_normalized"])
+        matches = candidate_map.get(key, [])
+        unique_matches = {
+            match["item_code"].strip().upper(): match
+            for match in matches
+            if match.get("item_code")
+        }
+        if not unique_matches:
+            continue
+
+        status = "single_exact_description_unit_candidate" if len(unique_matches) == 1 else "multiple_exact_description_unit_candidates"
+        for item_code, match in sorted(unique_matches.items()):
+            candidates.append(
+                {
+                    "bid_tab_item_id": row["bid_tab_item_id"],
+                    "source_item_code": row["source_item_code"],
+                    "source_item_description": row.get("source_item_description") or row["item_description"],
+                    "unit_normalized": row["unit_normalized"],
+                    "candidate_agency_item_code": item_code,
+                    "candidate_description": match.get("official_description", ""),
+                    "candidate_unit": normalize_unit(match.get("official_unit", "")),
+                    "candidate_count": str(len(unique_matches)),
+                    "suggestion_status": status,
+                }
+            )
+    return candidates
+
+
 def resolve_short_item_codes(parsed: ParsedBidTab, agency_items: list[dict[str, str]]) -> list[str]:
     warnings: list[str] = []
     candidate_map: dict[tuple[str, str], list[dict[str, str]]] = {}
@@ -813,6 +1273,8 @@ def resolve_short_item_codes(parsed: ParsedBidTab, agency_items: list[dict[str, 
     replacements: dict[tuple[str, str, str], str] = {}
     for row in parsed.item_rows:
         item_code = row["item_code"]
+        if not item_code or row.get("match_status") == "unmatched":
+            continue
         if "-" in item_code:
             continue
 
@@ -841,6 +1303,8 @@ def resolve_short_item_codes(parsed: ParsedBidTab, agency_items: list[dict[str, 
         replacement = replacements.get((row["item_code"], row["item_description"], row["unit_normalized"]))
         if replacement:
             row["item_code"] = replacement
+            row["matched_agency_item_code"] = replacement
+            row["match_status"] = "matched"
     for row in parsed.observations:
         replacement = replacements.get((row["agency_item_code"], row["description_raw"], row["unit_normalized"]))
         if replacement:
@@ -860,11 +1324,13 @@ def known_normal_units() -> set[str]:
 def promote(args: argparse.Namespace) -> None:
     parsed = parse_workbook(Path(args.workbook), args.source_id, args.project_id, args.row_prefix, args.date_basis)
     item_rows = agency_item_rows(args.agency_items)
-    mapping_warnings = resolve_short_item_codes(parsed, item_rows)
+    mapping_warnings = [] if args.source_only else resolve_short_item_codes(parsed, item_rows)
+    match_candidates = build_match_candidates(parsed, item_rows)
     errors, warnings = validate_import(
         parsed,
         {row["item_code"].strip().upper() for row in item_rows if row.get("item_code")},
         args.allow_missing_item_codes,
+        args.source_only,
     )
     warnings = mapping_warnings + warnings
 
@@ -879,28 +1345,34 @@ def promote(args: argparse.Namespace) -> None:
         print(f"Parsed {len(parsed.item_rows)} item rows.")
         print(f"Parsed {len(parsed.bidder_bids)} bidder bids.")
         print(f"Parsed {len(parsed.bidder_items)} bidder item rows.")
+        print(f"Parsed {len(match_candidates)} match candidate rows.")
         return
 
     write_csv(args.staging_items, parsed.item_rows, STAGING_ITEM_FIELDS)
     write_csv(args.staging_bidder_bids, parsed.bidder_bids, BIDDER_BID_FIELDS)
     write_csv(args.staging_bidder_items, parsed.bidder_items, BIDDER_ITEM_FIELDS)
+    write_csv(args.staging_match_candidates, match_candidates, MATCH_CANDIDATE_FIELDS)
 
     existing_sources = [row for row in normalize_existing_rows(read_csv(args.sources), SOURCE_FIELDS) if row["source_id"] != args.source_id]
     existing_projects = [row for row in normalize_existing_rows(read_csv(args.projects), PROJECT_FIELDS) if row["source_id"] != args.source_id]
     existing_observations = [row for row in normalize_existing_rows(read_csv(args.observations), OBSERVATION_FIELDS) if row["source_id"] != args.source_id]
     existing_bids = [row for row in normalize_existing_rows(read_csv(args.bidder_bids), BIDDER_BID_FIELDS) if row["source_id"] != args.source_id]
     existing_bidder_items = [row for row in normalize_existing_rows(read_csv(args.bidder_items), BIDDER_ITEM_FIELDS) if row["source_id"] != args.source_id]
+    existing_bid_tab_items = [row for row in normalize_existing_rows(read_csv(args.bid_tab_items), BID_TAB_ITEM_FIELDS) if row["source_id"] != args.source_id]
 
     write_csv(args.sources, existing_sources + [source_row(args)], SOURCE_FIELDS)
     write_csv(args.projects, existing_projects + [project_row(args, parsed)], PROJECT_FIELDS)
-    write_csv(args.observations, existing_observations + parsed.observations, OBSERVATION_FIELDS)
+    write_csv(args.observations, existing_observations + ([] if args.source_only else parsed.observations), OBSERVATION_FIELDS)
     write_csv(args.bidder_bids, existing_bids + parsed.bidder_bids, BIDDER_BID_FIELDS)
     write_csv(args.bidder_items, existing_bidder_items + parsed.bidder_items, BIDDER_ITEM_FIELDS)
+    write_csv(args.bid_tab_items, existing_bid_tab_items + parsed.item_rows, BID_TAB_ITEM_FIELDS)
 
     print(f"Wrote {len(parsed.item_rows)} staging item rows.")
-    print(f"Wrote {len(parsed.observations)} promoted item observations.")
+    print(f"Wrote {0 if args.source_only else len(parsed.observations)} promoted item observations.")
     print(f"Wrote {len(parsed.bidder_bids)} bidder bids.")
     print(f"Wrote {len(parsed.bidder_items)} bidder item observations.")
+    print(f"Wrote {len(parsed.item_rows)} bid tab item rows.")
+    print(f"Wrote {len(match_candidates)} match candidate rows.")
 
 
 def main() -> None:
@@ -923,11 +1395,14 @@ def main() -> None:
     parser.add_argument("--observations", default=DEFAULT_OBSERVATIONS, type=Path)
     parser.add_argument("--bidder-bids", default=DEFAULT_BIDDER_BIDS, type=Path)
     parser.add_argument("--bidder-items", default=DEFAULT_BIDDER_ITEMS, type=Path)
+    parser.add_argument("--bid-tab-items", default=DEFAULT_BID_TAB_ITEMS, type=Path)
     parser.add_argument("--agency-items", default=DEFAULT_AGENCY_ITEMS, type=Path)
     parser.add_argument("--staging-items", default=DEFAULT_STAGING_ITEMS, type=Path)
     parser.add_argument("--staging-bidder-bids", default=DEFAULT_STAGING_BIDDER_BIDS, type=Path)
     parser.add_argument("--staging-bidder-items", default=DEFAULT_STAGING_BIDDER_ITEMS, type=Path)
+    parser.add_argument("--staging-match-candidates", default=DEFAULT_STAGING_MATCH_CANDIDATES, type=Path)
     parser.add_argument("--allow-missing-item-codes", action="store_true")
+    parser.add_argument("--source-only", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 

@@ -3,6 +3,7 @@ import type {
   AliasRecord,
   AppData,
   BidderBidRecord,
+  BidTabItemRecord,
   BidderItemObservationRecord,
   CanonicalItemRecord,
   InflationIndexRecord,
@@ -25,6 +26,7 @@ const dataFiles = {
   inflationIndexes: "inflation_index.csv",
   bidderBids: "bidder_bids.csv",
   bidderItemObservations: "bidder_item_observations.csv",
+  bidTabItems: "bid_tab_items.csv",
   aliases: "aliases.csv"
 } as const;
 
@@ -39,6 +41,7 @@ export async function loadData(): Promise<AppData> {
     inflationIndexes,
     bidderBids,
     bidderItemObservations,
+    bidTabItems,
     aliases
   ] =
     await Promise.all([
@@ -51,6 +54,7 @@ export async function loadData(): Promise<AppData> {
       loadCsv(dataFiles.inflationIndexes, mapInflationIndex),
       loadOptionalCsv(dataFiles.bidderBids, mapBidderBid),
       loadOptionalCsv(dataFiles.bidderItemObservations, mapBidderItemObservation),
+      loadCsv(dataFiles.bidTabItems, mapBidTabItem),
       loadCsv(dataFiles.aliases, mapAlias)
     ]);
 
@@ -65,6 +69,8 @@ export async function loadData(): Promise<AppData> {
   const inflationIndexByPeriod = new Map(inflationIndexes.map((index) => [index.periodLabel, index]));
   const bidderBidsByProjectId = new Map<string, BidderBidRecord[]>();
   const bidderItemsByRowKey = new Map<string, BidderItemObservationRecord[]>();
+  const bidTabItemsByProjectId = new Map<string, BidTabItemRecord[]>();
+  const bidderItemsByBidTabItemId = new Map<string, BidderItemObservationRecord[]>();
 
   for (const agencyItem of agencyItems) {
     const key = agencyItem.itemCode.toUpperCase();
@@ -84,6 +90,18 @@ export async function loadData(): Promise<AppData> {
     const existing = bidderItemsByRowKey.get(key) ?? [];
     existing.push(bidderItem);
     bidderItemsByRowKey.set(key, existing);
+
+    if (bidderItem.bidTabItemId) {
+      const bidTabItems = bidderItemsByBidTabItemId.get(bidderItem.bidTabItemId) ?? [];
+      bidTabItems.push(bidderItem);
+      bidderItemsByBidTabItemId.set(bidderItem.bidTabItemId, bidTabItems);
+    }
+  }
+
+  for (const bidTabItem of bidTabItems) {
+    const existing = bidTabItemsByProjectId.get(bidTabItem.projectId) ?? [];
+    existing.push(bidTabItem);
+    bidTabItemsByProjectId.set(bidTabItem.projectId, existing);
   }
 
   for (const specSection of specSections) {
@@ -107,6 +125,7 @@ export async function loadData(): Promise<AppData> {
     aliases,
     bidderBids,
     bidderItemObservations,
+    bidTabItems,
     sourceById,
     projectById,
     canonicalById,
@@ -115,7 +134,9 @@ export async function loadData(): Promise<AppData> {
     specSectionsByDivision,
     inflationIndexByPeriod,
     bidderBidsByProjectId,
-    bidderItemsByRowKey
+    bidderItemsByRowKey,
+    bidTabItemsByProjectId,
+    bidderItemsByBidTabItemId
   };
 }
 
@@ -272,6 +293,7 @@ function mapBidderBid(row: CsvRow): BidderBidRecord {
 function mapBidderItemObservation(row: CsvRow): BidderItemObservationRecord {
   return {
     bidderItemObservationId: row.bidder_item_observation_id,
+    bidTabItemId: row.bid_tab_item_id ?? "",
     bidId: row.bid_id,
     projectId: row.project_id,
     sourceId: row.source_id,
@@ -282,6 +304,37 @@ function mapBidderItemObservation(row: CsvRow): BidderItemObservationRecord {
     quantity: parseRequiredNumber(row.quantity),
     unitPrice: parseRequiredNumber(row.unit_price),
     extendedPrice: parseRequiredNumber(row.extended_price)
+  };
+}
+
+function mapBidTabItem(row: CsvRow): BidTabItemRecord {
+  const matchStatus = row.match_status === "matched" || row.match_status === "source_cdot_prefix_only"
+    ? row.match_status
+    : "unmatched";
+
+  return {
+    bidTabItemId: row.bid_tab_item_id,
+    projectId: row.project_id,
+    sourceId: row.source_id,
+    sourceFile: row.source_file,
+    sheetName: row.sheet_name,
+    workbookRow: parseRequiredNumber(row.workbook_row),
+    projectNumber: row.project_number ?? "",
+    sourceItemNumber: row.source_item_number ?? "",
+    sourceItemCode: row.source_item_code,
+    sourceItemCodeSystem: row.source_item_code_system,
+    sourceSpecRaw: row.source_spec_raw ?? "",
+    sourceItemDescription: row.source_item_description || row.item_description,
+    itemCode: row.item_code.toUpperCase(),
+    itemDescription: row.item_description || row.source_item_description,
+    unitRaw: row.unit_raw,
+    unitNormalized: normalizeUnit(row.unit_normalized || row.unit_raw),
+    quantity: parseRequiredNumber(row.quantity),
+    engineerEstimateUnitPrice: parseRequiredNumber(row.engineer_estimate_unit_price),
+    averageBidUnitPrice: parseRequiredNumber(row.average_bid_unit_price),
+    matchedAgencyItemCode: row.matched_agency_item_code.toUpperCase(),
+    matchStatus,
+    dateBasis: row.date_basis
   };
 }
 

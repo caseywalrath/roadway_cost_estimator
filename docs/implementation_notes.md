@@ -14,6 +14,7 @@ Included:
 - Evidence filters, sortable table columns, and CSV export.
 - Awarded Bid Summary based on currently filtered awarded bid unit prices.
 - Unit Price Summaries for loaded average bid and engineer estimate prices.
+- Source-only public bid-tab project review for imported rows that do not have reviewed CDOT matches.
 - Data-package validation script.
 
 Not included:
@@ -28,6 +29,7 @@ Not included:
 - Server or hosted database.
 - Chat layer.
 - General-purpose PDF or spreadsheet parsing.
+- Automatic fuzzy matching from source specifications to CDOT item codes.
 
 ## Local Commands
 
@@ -197,6 +199,30 @@ Run promotion fixture tests:
 ```text
 python scripts/test_promote_cdot_cost_data_book.py
 ```
+
+## Public Bid Tab Workbook Import
+
+The bid-tab importer is a narrow parser for reviewed public FHU-curated bid tab workbook layouts. It preserves source item identity in `public/data/bid_tab_items.csv` and bidder-level prices in `public/data/bidder_bids.csv` and `public/data/bidder_item_observations.csv`.
+
+Supported layouts:
+
+- Watson SAQ-style workbook.
+- Arapahoe bid-form workbook.
+- Ralston `Results` sheet workbook.
+
+Run importer tests:
+
+```text
+python -m unittest scripts.test_import_bid_tab_workbook
+```
+
+The Ralston reconciliation workbook imports reviewed CDOT matches from columns `CDOT Item Code`, `CDOT Description`, `CDOT Unit`, and `Confidence`. Rows with a nonblank CDOT item code are promoted into exact-code public bid-tab evidence; rows with blank or `None` CDOT item code remain source-only:
+
+```text
+python scripts/import_bid_tab_workbook.py --workbook "C:\Users\Casey.Walrath\Downloads\Ralston_Rd_CDOT_reconciliation.xlsx" --source-id fhu_bid_tab_ralston_yukon_garrison_2021_02_05 --source-label "FHU Civil Group Bid Tabs - Ralston Road Yukon to Garrison" --source-year 2021 --project-id fhu_bid_tab_ralston_yukon_garrison_2021_02_05_18_st_40 --row-prefix fhu_ralston_yukon_garrison_20210205 --date-basis 2021-02-05 --agency-owner "City of Arvada" --county-region "Jefferson County / Arvada"
+```
+
+The current Ralston output is 235 source bid-tab item rows, 210 matched rows promoted into 420 exact-code observations, 25 unmatched rows left out of exact-code evidence, and 1,410 bidder item rows. The source City of Arvada item codes remain in `bid_tab_items.csv`; Matching Projects and Unit Price Summaries use reviewed CDOT item codes only.
 
 ## GitHub Pages
 

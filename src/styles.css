@@ -1030,6 +1030,7 @@ th {
 }
 
 .bidder-modal {
+  position: relative;
   width: min(960px, 100%);
   max-height: min(760px, calc(100vh - 36px));
   overflow: auto;
@@ -1045,10 +1046,36 @@ th {
   justify-content: space-between;
   gap: 16px;
   align-items: flex-start;
+  padding-right: 42px;
 }
 
 .bidder-modal__close {
   flex: 0 0 auto;
+}
+
+.modal-icon-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #c9d6e1;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #263544;
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(24, 37, 51, 0.14);
+  z-index: 2;
+}
+
+.modal-icon-close:hover,
+.modal-icon-close:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .bidder-modal__summary {
@@ -1066,6 +1093,85 @@ th {
 
 .bidder-detail-table {
   min-width: 760px;
+}
+
+.bid-tab-projects-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.bid-tab-project-list {
+  display: grid;
+  gap: 8px;
+}
+
+.bid-tab-project-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(120px, auto) auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-alt);
+  padding: 10px;
+}
+
+.bid-tab-project-row strong,
+.bid-tab-project-row span,
+.bid-tab-project-row small {
+  display: block;
+}
+
+.bid-tab-project-row strong {
+  color: var(--heading);
+  line-height: 1.2;
+}
+
+.bid-tab-project-row span,
+.bid-tab-project-row small,
+.bid-tab-project-meta {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.bid-tab-project-meta {
+  display: grid;
+  gap: 2px;
+  min-width: 150px;
+  justify-self: end;
+  text-align: right;
+}
+
+.bid-tab-open-button {
+  min-height: 36px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.bid-tab-modal {
+  width: min(1240px, 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bid-tab-modal .bidder-detail-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.bid-tab-detail-table {
+  min-width: 1380px;
+}
+
+.bid-tab-detail-table td:nth-child(3) {
+  min-width: 260px;
+}
+
+.bid-tab-detail-table td:nth-child(9) {
+  min-width: 320px;
 }
 
 td:nth-child(2),
@@ -1147,6 +1253,10 @@ tbody tr:last-child td {
 
   .matching-projects-actions {
     justify-content: flex-start;
+  }
+
+  .bid-tab-project-row {
+    grid-template-columns: 1fr;
   }
 
   .summary-heading-row {

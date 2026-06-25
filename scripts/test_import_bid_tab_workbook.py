@@ -14,6 +14,7 @@ from import_bid_tab_workbook import (
     DEFAULT_ROW_PREFIX,
     DEFAULT_SOURCE_ID,
     DEFAULT_WORKBOOK,
+    agency_item_rows,
     normalize_unit,
     parse_workbook,
     resolve_short_item_codes,
@@ -28,6 +29,7 @@ class BidTabWorkbookImportTests(unittest.TestCase):
         self.assertEqual("LB", normalize_unit("POUNDS"))
         self.assertEqual("SY", normalize_unit("Sq Yd"))
         self.assertEqual("HOUR", normalize_unit("HR"))
+        self.assertEqual("DAY", normalize_unit("DY"))
         self.assertEqual("ACRE", normalize_unit("AC"))
         self.assertEqual("F A", normalize_unit("F/A"))
 
@@ -57,6 +59,8 @@ class BidTabWorkbookImportTests(unittest.TestCase):
 
         repeated_code_rows = [row for row in parsed.item_rows if row["item_code"] == "619-00000"]
         self.assertEqual(2, len(repeated_code_rows))
+        self.assertEqual("sample_prefix_row_0019", parsed.item_rows[0]["bid_tab_item_id"])
+        self.assertEqual("sample_prefix_row_0019", parsed.bidder_items[0]["bid_tab_item_id"])
         observation_ids = {row["observation_id"] for row in parsed.observations}
         self.assertIn("sample_prefix_row_0020_average", observation_ids)
         self.assertIn("sample_prefix_row_0021_average", observation_ids)
@@ -90,6 +94,7 @@ class BidTabWorkbookImportTests(unittest.TestCase):
 
         first_average = next(row for row in parsed.item_rows if row["workbook_row"] == "2")
         self.assertEqual("14.00", first_average["average_bid_unit_price"])
+        self.assertEqual("sample_bid_form_row_0002", first_average["bid_tab_item_id"])
         self.assertEqual("HOUR", parsed.item_rows[1]["unit_normalized"])
         self.assertEqual("F A", parsed.item_rows[2]["unit_normalized"])
         self.assertIn("Sheet1 engineer estimate 90.00 differs from itemized engineer estimate total 100.00", parsed.warnings)
@@ -170,6 +175,83 @@ class BidTabWorkbookImportTests(unittest.TestCase):
             "Sheet1 engineer estimate 7000000.00 differs from itemized engineer estimate total 7085062.75",
             parsed.warnings,
         )
+
+    @unittest.skipUnless(
+        Path(r"C:\Users\Casey.Walrath\Downloads\2021 02 05 Ralston Rd Yukon to Garrison Bid Tab.xlsx").exists(),
+        "Ralston workbook is not present on this machine.",
+    )
+    def test_real_ralston_workbook_parse_contract(self) -> None:
+        parsed = parse_workbook(
+            Path(r"C:\Users\Casey.Walrath\Downloads\2021 02 05 Ralston Rd Yukon to Garrison Bid Tab.xlsx"),
+            "fhu_bid_tab_ralston_yukon_garrison_2021_02_05",
+            "fhu_bid_tab_ralston_yukon_garrison_2021_02_05_18_st_40",
+            "fhu_ralston_yukon_garrison_20210205",
+            "2021-02-05",
+        )
+
+        self.assertEqual("Ralston Road - Yukon Street to Garrison Street", parsed.project_name)
+        self.assertEqual("18-ST-40", parsed.project_number)
+        self.assertEqual(235, len(parsed.item_rows))
+        self.assertEqual(6, len(parsed.bidder_bids))
+        self.assertEqual(1410, len(parsed.bidder_items))
+        self.assertEqual([], parsed.observations)
+
+        totals = {row["bidder_name"]: row["bid_total"] for row in parsed.bidder_bids}
+        self.assertEqual("12360000.00", totals["Hamon Infrastructure"])
+        self.assertEqual("13360995.50", totals["Edge Contracting"])
+        self.assertEqual("14079260.56", totals["Brannan Sand & Gravel Co"])
+        self.assertEqual("14115478.07", totals["Concrete Works of Colorado, Inc."])
+        self.assertEqual("14789252.31", totals["Flatiron Constructors, Inc."])
+        self.assertEqual("15041491.00", totals["American Civil Constructors, Inc"])
+        self.assertEqual("Hamon Infrastructure", parsed.bidder_bids[0]["bidder_name"])
+        self.assertEqual("true", parsed.bidder_bids[0]["apparent_low"])
+
+        blank_spec_rows = [row for row in parsed.item_rows if not row["source_spec_raw"]]
+        self.assertEqual(9, len(blank_spec_rows))
+        units = {row["unit_raw"]: row["unit_normalized"] for row in parsed.item_rows}
+        self.assertEqual("DAY", units["DY"])
+        self.assertEqual("HOUR", units["HR"])
+        self.assertEqual("F A", units["FA"])
+        self.assertEqual("ACRE", units["AC"])
+        self.assertTrue(all(row["match_status"] != "matched" for row in parsed.item_rows))
+
+    @unittest.skipUnless(
+        Path(r"C:\Users\Casey.Walrath\Downloads\Ralston_Rd_CDOT_reconciliation.xlsx").exists(),
+        "Ralston reconciliation workbook is not present on this machine.",
+    )
+    def test_real_ralston_reconciliation_workbook_parse_contract(self) -> None:
+        parsed = parse_workbook(
+            Path(r"C:\Users\Casey.Walrath\Downloads\Ralston_Rd_CDOT_reconciliation.xlsx"),
+            "fhu_bid_tab_ralston_yukon_garrison_2021_02_05",
+            "fhu_bid_tab_ralston_yukon_garrison_2021_02_05_18_st_40",
+            "fhu_ralston_yukon_garrison_20210205",
+            "2021-02-05",
+        )
+
+        matched_rows = [row for row in parsed.item_rows if row["match_status"] == "matched"]
+        unmatched_rows = [row for row in parsed.item_rows if row["match_status"] == "unmatched"]
+        agency_codes = {
+            row["item_code"].strip().upper()
+            for row in agency_item_rows(Path("public/data/agency_items.csv"))
+            if row.get("item_code")
+        }
+
+        self.assertEqual(235, len(parsed.item_rows))
+        self.assertEqual(210, len(matched_rows))
+        self.assertEqual(25, len(unmatched_rows))
+        self.assertEqual(420, len(parsed.observations))
+        self.assertTrue(all(row["item_code"] in agency_codes for row in matched_rows))
+        self.assertEqual("COA 3.2", parsed.item_rows[0]["source_item_code"])
+        self.assertEqual("201-00000", parsed.item_rows[0]["matched_agency_item_code"])
+        self.assertEqual("matched", parsed.item_rows[0]["match_status"])
+
+        first_observation = next(row for row in parsed.observations if row["observation_id"].endswith("_average"))
+        self.assertEqual("201-00000", first_observation["agency_item_code"])
+        self.assertEqual("Clearing and Grubbing", first_observation["description_raw"])
+        self.assertEqual("L S", first_observation["unit_normalized"])
+
+        self.assertTrue(all(row["matched_agency_item_code"] == "" for row in unmatched_rows))
+        self.assertTrue(all(row["agency_item_code"] == "" for row in parsed.bidder_items if row["bid_tab_item_id"] in {item["bid_tab_item_id"] for item in unmatched_rows}))
 
     def test_short_item_code_resolver_only_applies_exact_compatible_matches(self) -> None:
         parsed = parse_workbook(
