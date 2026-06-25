@@ -643,8 +643,7 @@ function renderPublicBidTabProjects(data: AppData): string {
   return `
     <section class="panel-block bid-tab-projects-panel">
       <div class="panel-heading">
-        <p class="eyebrow">Public Bid Tab Projects</p>
-        <h3>Source item review</h3>
+        <p class="eyebrow">Source Review</p>
       </div>
       <div class="bid-tab-project-list">
         ${projects
@@ -652,12 +651,16 @@ function renderPublicBidTabProjects(data: AppData): string {
             const source = data.sourceById.get(project.sourceId) ?? null;
             const itemCount = data.bidTabItemsByProjectId.get(project.projectId)?.length ?? 0;
             const apparentLow = (data.bidderBidsByProjectId.get(project.projectId) ?? []).find((bid) => bid.apparentLow);
+            const projectTitle = [
+              project.projectName,
+              project.projectNumber,
+              project.estimateLetDate
+            ].filter(Boolean).join(" - ");
             return `
               <article class="bid-tab-project-row">
                 <div>
-                  <strong>${escapeHtml(project.projectNumber || project.projectName)}</strong>
-                  <span>${escapeHtml(project.projectName)}</span>
-                  <small>${escapeHtml(source?.sourceLabel ?? "Unknown source")} | ${escapeHtml(project.estimateLetDate)}</small>
+                  <strong>${escapeHtml(projectTitle)}</strong>
+                  <small>${escapeHtml(source?.sourceLabel ?? "FHU Civil Group Bid Tabs")}</small>
                 </div>
                 <div class="bid-tab-project-meta">
                   <span>${formatNumber(itemCount)} source items</span>
@@ -668,7 +671,7 @@ function renderPublicBidTabProjects(data: AppData): string {
                   class="secondary-button bid-tab-open-button"
                   data-bid-tab-project-id="${escapeHtml(project.projectId)}"
                 >
-                  Open bid tab
+                  Review
                 </button>
               </article>
             `;
@@ -710,7 +713,7 @@ function renderBidTabProjectModal(data: AppData, selectedProjectId: string | nul
             <h3 id="bid-tab-modal-title">${escapeHtml(project.projectNumber || "Project")} - ${escapeHtml(project.projectName)}</h3>
             <p class="query-line">${escapeHtml(source?.sourceLabel ?? "Unknown source")}</p>
           </div>
-          <button type="button" class="secondary-button bidder-modal__close" data-close-bid-tab-project>Close</button>
+          <button type="button" class="modal-icon-close" data-close-bid-tab-project aria-label="Close bid tab review">×</button>
         </div>
         <div class="bidder-modal__summary">
           <span>Apparent low: <strong>${escapeHtml(apparentLowBid?.bidderName ?? "Not listed")}</strong></span>

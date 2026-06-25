@@ -1030,6 +1030,7 @@ th {
 }
 
 .bidder-modal {
+  position: relative;
   width: min(960px, 100%);
   max-height: min(760px, calc(100vh - 36px));
   overflow: auto;
@@ -1049,6 +1050,32 @@ th {
 
 .bidder-modal__close {
   flex: 0 0 auto;
+}
+
+.modal-icon-close {
+  position: sticky;
+  top: 0;
+  margin-top: -4px;
+  margin-right: -4px;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #c9d6e1;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #263544;
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(24, 37, 51, 0.14);
+  z-index: 2;
+}
+
+.modal-icon-close:hover,
+.modal-icon-close:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .bidder-modal__summary {
