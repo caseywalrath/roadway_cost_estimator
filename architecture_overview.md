@@ -13,7 +13,7 @@ The primary deliverable is the project-item evidence table. Awarded bid statisti
 - Hosting target: GitHub Pages.
 - Frontend stack: Vite + TypeScript.
 - Runtime model: static files only; no server and no database.
-- Data model: browser-loaded CSV files in `public/data`, including item observations, bidder-level bid-tab details, agency item mappings, CDOT section metadata, and FHWA NHCCI inflation index values.
+- Data model: browser-loaded CSV files in `public/data`, including exact-code item observations, source-preserving bid-tab items, bidder-level bid-tab details, agency item mappings, CDOT section metadata, and FHWA NHCCI inflation index values.
 - Evidence model: deterministic TypeScript grouping and filtering rules in `src/matching`.
 - Deployment path: GitHub Actions validates the app-loaded CSV package, builds the Vite app, and publishes `dist` to GitHub Pages from `main`.
 
@@ -27,7 +27,7 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 4. `src/matching/buildEvidenceResult.ts` groups exact item-code observations into project-item evidence rows.
 5. `src/matching/buildEvidenceResult.ts` applies explicit evidence filters and calculates awarded, average bid, and engineer estimate summary statistics for the filtered table.
 6. Prior comparable scoring modules remain in the repository for reference, but the primary UI no longer uses hidden top-five relevance selection.
-7. `src/ui` renders the fixed prototype scope, item search, evidence filters, sortable evidence table, row-level summary exclusions, CSV export, unit price summaries, optional NHCCI awarded-bid summary adjustment, and public bid-tab bidder details.
+7. `src/ui` renders the fixed prototype scope, item search, evidence filters, sortable evidence table, row-level summary exclusions, CSV export, unit price summaries, optional NHCCI awarded-bid summary adjustment, exact-code public bid-tab bidder details, and source-only public bid-tab project review.
 
 ## Data Governance
 
@@ -37,7 +37,7 @@ Do not commit private FHU estimate data to a public GitHub Pages repository. Rea
 
 The repository can generate staging CSVs from public CDOT Cost Data Book PDFs, validate them against project-list pages and agency item codes, and promote them into app-loaded source, project, and observation CSVs. The current promoted public CDOT cost-book sources are `cdot_cost_data_book_2022_q4`, `cdot_cost_data_book_2023_q4`, `cdot_cost_data_book_2024_q4`, `cdot_cost_data_book_2025_q4`, and `cdot_cost_data_book_2026_q1`.
 
-The repository can also import reviewed public FHU-curated bid tab workbooks as `public_bid_tab` evidence. The current importer supports the Watson SAQ-style workbook layout and the Arapahoe bid-form layout with itemized engineer estimate and bidder columns. Bid-tab imports preserve average bid and engineer estimate unit prices in `item_observations.csv` and preserve bidder-level item prices in `bidder_bids.csv` and `bidder_item_observations.csv`. Bid-tab imports do not populate awarded contractor, awarded bid total, award index, or awarded bid unit price unless a separate confirmed award source is added later.
+The repository can also import reviewed public FHU-curated bid tab workbooks as `public_bid_tab` sources. The current importer supports the Watson SAQ-style workbook layout, the Arapahoe bid-form layout with itemized engineer estimate and bidder columns, and the Ralston `Results` sheet layout with source specification references such as COA and CDOT prefixes. Bid-tab imports preserve source item identity in `bid_tab_items.csv`, preserve bidder-level item prices in `bidder_bids.csv` and `bidder_item_observations.csv`, and promote rows into `item_observations.csv` only when a reviewed exact agency item code is available. Ralston includes reviewed CDOT reconciliation columns; matched rows participate in exact-code Matching Projects and Unit Price Summaries using public bid-tab average and engineer estimate observations, while unmatched rows remain source-only bid-tab detail. Bid-tab imports do not populate awarded contractor, awarded bid total, award index, or awarded bid unit price unless a separate confirmed award source is added later.
 
 The app-loaded CSV package is checked by `scripts/validate_data_package.py`. The validator fails deployment for broken source/project/observation relationships, duplicate IDs, invalid required values, invalid numeric/date fields, malformed NHCCI rows, app-loaded demo evidence leakage, and missing smoke-test evidence for `304-06007`. Lookup gaps, optional metadata gaps, and evidence quarters newer than the latest loaded official NHCCI quarter are reported as warnings.
 
@@ -53,7 +53,8 @@ The Phase 1 evidence browser rules are intentionally visible and simple:
 - Use exact agency item-code matches as the default definition of relevant evidence.
 - Resolve official item descriptions and units from agency item-code records when possible.
 - Group separate awarded bid, average bid, and engineer estimate observations into one project-item row when they describe the same project, item, unit, quantity, and date.
-- Link project numbers to bidder-detail modals when bidder-level bid-tab rows exist.
+- Link exact-code project numbers to bidder-detail modals when bidder-level bid-tab rows exist.
+- Show source-only public bid-tab projects in a separate project review panel without mixing unmatched source items into Matching Projects.
 - Show same-unit rows by default.
 - Track unit-mismatch counts internally instead of mixing units in the default table.
 - Apply source, geography, district, year, quantity, and unit filters as hard filters.

@@ -102,10 +102,10 @@ One row per bidder, item, and bid-tab source.
 Required columns:
 
 - `bidder_item_observation_id`
+- `bid_tab_item_id`
 - `bid_id`
 - `project_id`
 - `source_id`
-- `agency_item_code`
 - `description_raw`
 - `unit_raw`
 - `unit_normalized`
@@ -113,7 +113,38 @@ Required columns:
 - `unit_price`
 - `extended_price`
 
-The app uses these rows only for project-number bidder detail modals.
+`agency_item_code` is optional for source-only bid-tab rows. When a bid-tab row has a reviewed CDOT match, bidder item rows use the matched CDOT code so exact-code Matching Projects can open bidder detail. The app also uses `bid_tab_item_id` to show every original source row, including unmatched rows, in public bid-tab project review.
+
+### `bid_tab_items.csv`
+
+One row per source workbook item row from a public bid-tab source.
+
+Required columns:
+
+- `bid_tab_item_id`
+- `project_id`
+- `source_id`
+- `source_file`
+- `sheet_name`
+- `workbook_row`
+- `project_number`
+- `source_item_number`
+- `source_item_code`
+- `source_item_code_system`
+- `source_spec_raw`
+- `source_item_description`
+- `item_code`
+- `item_description`
+- `unit_raw`
+- `unit_normalized`
+- `quantity`
+- `engineer_estimate_unit_price`
+- `average_bid_unit_price`
+- `matched_agency_item_code`
+- `match_status`
+- `date_basis`
+
+`match_status` values are `matched`, `unmatched`, and `source_cdot_prefix_only`. Only rows with a reviewed `matched_agency_item_code` should be promoted into `item_observations.csv` for exact-code Matching Projects. For reconciled Ralston rows, `item_code` and `matched_agency_item_code` store the reviewed CDOT code while `source_item_code`, `source_spec_raw`, `source_item_description`, and `unit_raw` preserve the City of Arvada/source workbook identity. Source-only rows remain visible through the public bid-tab project review UI.
 
 ### `canonical_items.csv`
 
@@ -372,7 +403,9 @@ Required columns match the extended `projects.csv` columns.
 
 Review staging rows extracted from public FHU-curated bid tab workbooks.
 
-Required columns:
+Required columns match `bid_tab_items.csv`.
+
+Older staging rows used these core identity and price columns:
 
 - `source_file`
 - `sheet_name`
@@ -393,6 +426,25 @@ Supported layout families:
 
 - Watson SAQ-style workbooks with project metadata, engineer estimate, bidder, and average bid column groups.
 - Arapahoe bid-form workbooks with `ITEM NO.`, `ITEM DESCRIPTION`, `UNIT`, `QUANTITY`, itemized engineer estimate columns, and bidder unit/total column pairs. Average bid unit prices are calculated from bidder unit prices during import.
+- Ralston `Results` sheet workbooks with `No.`, `Spec*`, `Item`, `Unit`, `Quantity`, paired bidder `Unit Cost` / `Extended Cost` columns, and optional reviewed reconciliation columns `CDOT Item Code`, `CDOT Description`, `CDOT Unit`, and `Confidence`. Rows with reviewed CDOT item codes are promoted into exact-code evidence; blank or `None` CDOT item codes remain source-only.
+
+### `imports/fhu_bid_tab_*_match_candidates.csv`
+
+Review staging rows for exact description/unit candidate matches from public FHU-curated bid tab workbooks.
+
+Required columns:
+
+- `bid_tab_item_id`
+- `source_item_code`
+- `source_item_description`
+- `unit_normalized`
+- `candidate_agency_item_code`
+- `candidate_description`
+- `candidate_unit`
+- `candidate_count`
+- `suggestion_status`
+
+Candidate rows are suggestions only. They are not promoted to exact-code evidence unless reviewed.
 
 ### `imports/fhu_bid_tab_*_bidder_bids.csv`
 
@@ -417,9 +469,12 @@ Required columns match `bidder_item_observations.csv`.
 - Public CDOT Cost Data Book rows use one `sources.csv` row and separate `price_type` values for awarded bid, average bid, and engineer estimate.
 - Public CDOT Cost Data Book imports use one source row per period, with stable period-specific IDs such as `cdot_cost_data_book_2022_q4`, `cdot_cost_data_book_2023_q4`, `cdot_cost_data_book_2024_q4`, `cdot_cost_data_book_2025_q4`, and `cdot_cost_data_book_2026_q1`.
 - Public FHU-curated bid tab rows use `source_type` `public_bid_tab` and preserve bidder details without implying award status.
+- Public bid-tab imports preserve source item identity in `bid_tab_items.csv` before any exact-code promotion.
+- Source-only bid-tab rows can have blank `agency_item_code` in `bidder_item_observations.csv`; their source identity is carried by `bid_tab_item_id`.
+- Reviewed CDOT matches are required before a source bid-tab row appears in `item_observations.csv`, Matching Projects, or Unit Price Summaries. Reconciliation `Confidence` values are review metadata only and are not used in app logic.
 - Public bid-tab projects leave `contractor`, `awarded_bid_total`, and `award_index` blank unless confirmed award evidence is added.
 - Public bid-tab item summaries use `public_bid_tab_average` and `public_bid_tab_engineer_estimate`; they never use `cdot_awarded_bid`.
-- Unit normalization maps `EA` and `EACH` to `EACH`; `LS`, `L S`, and `LUMP SUM` to `L S`; `LB`, `POUND`, and `POUNDS` to `LB`; `SF`, `SQ FT`, and `SQUARE FOOT` to `SF`; `SY`, `SQ YD`, and `SQUARE YARD` to `SY`; `CY`, `CU YD`, and `CUBIC YARD` to `CY`; `LF`, `FOOT`, and `FEET` to `LF`; `HR`, `HOUR`, and `HOURS` to `HOUR`; `AC` and `ACRE` to `ACRE`; and `FA`, `F A`, and `F/A` to `F A`.
+- Unit normalization maps `EA` and `EACH` to `EACH`; `LS`, `L S`, and `LUMP SUM` to `L S`; `LB`, `POUND`, and `POUNDS` to `LB`; `SF`, `SQ FT`, and `SQUARE FOOT` to `SF`; `SY`, `SQ YD`, and `SQUARE YARD` to `SY`; `CY`, `CU YD`, and `CUBIC YARD` to `CY`; `LF`, `FOOT`, and `FEET` to `LF`; `HR`, `HOUR`, and `HOURS` to `HOUR`; `DY`, `DAY`, and `DAYS` to `DAY`; `AC` and `ACRE` to `ACRE`; and `FA`, `F A`, and `F/A` to `F A`.
 - Public bid-tab imports attempt exact short item-code resolution against `agency_items.csv` by normalized description and compatible unit. Ambiguous or missing matches are preserved as workbook item codes and reported as validation warnings.
 - Unknown units are preserved uppercase and reported by import validation. No unit conversions are performed.
 - Every loaded agency item should have a matching section prefix in `spec_sections.csv` when the picker needs to expose that item.
@@ -446,6 +501,8 @@ Validation errors fail the command when the data package has:
 - observation rows that reference missing projects or sources
 - observation source IDs that do not match the referenced project source IDs
 - bidder rows that reference missing projects, sources, or bids
+- bid-tab item rows that reference missing projects or sources
+- bidder item rows that reference missing bids or bid-tab items
 - bidder item rows where quantity times unit price does not equal extended price within cent tolerance
 - blank required relationship or evidence fields
 - nonnumeric numeric fields
@@ -456,6 +513,7 @@ Validation errors fail the command when the data package has:
 Validation warnings do not fail the command when the data package has:
 
 - observation item codes that are not present in the current `agency_items.csv`
+- matched bid-tab item codes that are not present in the current `agency_items.csv`
 - agency item prefixes that are not present in `spec_sections.csv`
 - blank optional project metadata
 - smoke-test item counts that change from the current baseline

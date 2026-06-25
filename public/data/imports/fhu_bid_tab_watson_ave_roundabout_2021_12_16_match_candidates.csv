@@ -1,0 +1,145 @@
+bid_tab_item_id,source_item_code,source_item_description,unit_normalized,candidate_agency_item_code,candidate_description,candidate_unit,candidate_count,suggestion_status
+fhu_watson_20211216_row_0019,201-00000,CLEARING AND GRUBBING,L S,201-00000,Clearing and Grubbing,L S,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0020,202-00031,REMOVAL OF FIRE HYDRANT,EACH,202-00031,Removal of Fire Hydrant,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0022,202-00035,REMOVAL OF PIPE,LF,202-00035,Removal of Pipe,LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0023,202-00200,REMOVAL OF SIDEWALK,SY,202-00200,Removal of Sidewalk,SY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0024,202-00202,REMOVAL OF GUTTER,LF,202-00202,Removal of Gutter,LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0025,202-00203,REMOVAL OF CURB AND GUTTER,LF,202-00203,Removal of Curb and Gutter,LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0026,202-00206,REMOVAL OF CONCRETE CURB RAMP,SY,202-00206,Removal of Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0027,202-00220,REMOVAL OF ASPHALT MAT,SY,202-00220,Removal of Asphalt Mat,SY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0028,202-00240,REMOVAL OF ASPHALT MAT (PLANING),SY,202-00240,Removal of Asphalt Mat (Planing),SY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0029,202-00250,REMOVAL OF PAVEMENT MARKING,SF,202-00250,Removal of Pavement Marking,SF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0030,202-00700,REMOVAL OF LIGHT STANDARD,EACH,202-00700,Removal of Light Standard,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0031,202-00705,REMOVAL OF LIGHT STANDARD FOUNDATION,EACH,202-00705,Removal of Light Standard Foundation,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0032,202-00810,REMOVAL OF GROUND SIGN,EACH,202-00810,Removal of Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0033,202-00821,REMOVAL OF SIGN PANEL,EACH,202-00821,Removal of Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0034,202-00827,REMOVAL OF PULL BOX,EACH,202-00827,Removal of Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0035,202-01130,REMOVAL OF GUARDRAIL TYPE 3,LF,202-01130,Removal of Guardrail Type 3,LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0036,202-01300,REMOVAL OF END ANCHORAGE,EACH,202-01300,Removal of End Anchorage,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0037,202-04002,CLEAN CULVERT,EACH,202-04002,Clean Culvert,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0038,202-04005,CLEAN VALVE BOX,EACH,202-04005,Clean Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0039,202-05026,SAWING ASPHALT MATERIAL (6 INCH),LF,202-05026,Sawing Asphalt Material (6 Inch),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0040,203-00010,UNCLASSIFIED EXCAVATION (COMPLETE IN PLACE),CY,203-00010,Unclassified Excavation (Complete In Place),CY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0041,203-00100,MUCK EXCAVATION,CY,203-00100,Muck Excavation,CY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0042,203-01597,POTHOLING,HOUR,203-01597,Potholing,HOUR,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0043,206-00530,FILTER MATERIAL (CLASS C),CY,206-00530,Filter Material (Class C),CY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0044,207-00205,TOPSOIL,CY,207-00205,Topsoil,CY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0045,208-00002,EROSION LOG TYPE 1 (12 INCH),LF,208-00002,Erosion Log Type 1 (12 Inch),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0046,208-00009,EROSION LOG TYPE 2 (18 INCH),LF,208-00009,Erosion Log Type 2 (18 Inch),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0047,208-00035,AGGREGATE BAG,LF,208-00035,Aggregate Bag,LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0048,208-00046,PRE-FABRICATED CONCRETE WASHOUT STRUCTURE (TYPE 1),EACH,208-00046,Pre-fabricated Concrete Washout Structure (Type 1),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0049,208-00051,STORM DRAIN INLET PROTECTION (TYPE I),LF,208-00051,Storm Drain Inlet Protection (Type I),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0050,208-00052,STORM DRAIN INLET PROTECTION (TYPE II),LF,208-00052,Storm Drain Inlet Protection (Type II),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0051,208-00075,PRE-FABRICATED VEHICLE TRACKING PAD,EACH,208-00075,Pre-fabricated Vehicle Tracking Pad,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0052,208-00103,REMOVAL AND DISPOSAL OF SEDIMENT (LABOR),HOUR,208-00103,Removal and Disposal of Sediment (Labor),HOUR,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0053,208-00105,REMOVAL AND DISPOSAL OF SEDIMENT (EQUIPMENT),HOUR,208-00105,Removal and Disposal of Sediment (Equipment),HOUR,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0054,208-00106,SWEEPING (SEDIMENT REMOVAL),HOUR,208-00106,Sweeping (Sediment Removal),HOUR,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0055,208-00107,REMOVAL OF TRASH,HOUR,208-00107,Removal of Trash,HOUR,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0056,208-00207,EROSION CONTROL MANAGEMENT,DAY,208-00207,Erosion Control Management,DAY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0057,208-00400,WATER CONTROL,L S,208-00400,Water Control,L S,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0058,210-00750,RESET LIGHT STANDARD,EACH,210-00750,Reset Light Standard,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0059,210-00810,RESET GROUND SIGN,EACH,210-00810,Reset Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0060,210-00815,RESET SIGN PANEL,EACH,210-00815,Reset Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0061,210-00827,RESET PULL BOX,EACH,210-00827,Reset Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0062,210-04050,ADJUST VALVE BOX,EACH,210-04050,Adjust Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0063,210-04010,ADJUST MANHOLE,EACH,210-04010,Adjust Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0065,212-00032,SOIL CONDITIONING,ACRE,212-00032,Soil Conditioning,ACRE,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0067,212-00701,COMPOST (MECHANICALLY APPLIED),CY,212-00701,Compost (Mechanically Applied),CY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0068,212-00703,HUMATE,LB,212-00703,Humate,LB,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0069,212-00704,MYCORRHIZAE,LB,212-00704,Mycorrhizae,LB,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0070,212-00706,SEEDING (NATIVE) DRILL,ACRE,212-00706,Seeding (Native) Drill,ACRE,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0071,213-00003,MULCHING (WEED FREE),ACRE,213-00003,Mulching (Weed Free),ACRE,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0074,213-00462,METAL LANDSCAPE BORDER (3/16 X 5-1/2 INCH),LF,213-00462,Metal Landscape Border (3/16 X 5-1/2 Inch),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0076,214-00220,DECIDUOUS TREE (2 INCH CALIPER),EACH,214-00220,Deciduous Tree (2 Inch Caliper),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0077,214-00225,DECIDUOUS TREE (2.5 INCH CALIPER),EACH,214-00225,Deciduous Tree (2.5 Inch Caliper),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0079,214-00508,EVERGREEN TREE (8 FOOT) (BALL AND BURLAP),EACH,214-00508,Evergreen Tree (8 Foot) (Ball and Burlap),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0080,214-00512,EVERGREEN TREE (12 FOOT) (BALL AND BURLAP),EACH,214-00512,Evergreen Tree (12 Foot) (Ball and Burlap),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0084,217-00020,HERBICIDE TREATMENT,HOUR,217-00020,Herbicide Treatment,HOUR,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0085,240-00000,WILDLIFE BIOLOGIST,HOUR,240-00000,Wildlife Biologist,HOUR,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0086,304-01005,AGGREGATE BASE COURSE (CLASS 1),CY,304-01005,Aggregate Base Course (Class 1),CY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0087,304-06007,AGGREGATE BASE COURSE (CLASS 6),CY,304-06007,Aggregate Base Course (Class 6),CY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0089,403-34721,HOT MIX ASPHALT (GRADING SX) (75) (PG 58-34),TON,403-34731,Hot Mix Asphalt (Grading SX) (75) (PG 58-34),TON,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0090,411-10253,EMULSIFIED ASPHALT (CSS-1H),GAL,411-10253,Emulsified Asphalt (CSS-1H),GAL,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0091,412-00801,CONCRETE PAVEMENT (8 INCH) (SPECIAL),SY,412-00801,Concrete Pavement (8 Inch) (Special),SY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0095,508-00520,INSULATION MATERIAL (2 INCH),SF,508-00520,Insulation Material (2 Inch),SF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0101,604-00310,INLET TYPE C (10 FOOT),EACH,604-00310,Inlet Type C (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0103,604-16510,INLET TYPE 16 (DOUBLE) (10 FOOT),EACH,604-16510,Inlet Type 16 (Double) (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0104,604-16610,INLET TYPE 16 (TRIPLE) (10 FOOT),EACH,604-16610,Inlet Type 16 (Triple) (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0105,604-19110,INLET TYPE R L 5 (10 FOOT),EACH,604-19110,Inlet Type R L 5 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0108,604-30010,MANHOLE SLAB BASE (10 FOOT),EACH,604-30010,Manhole Slab Base (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0109,604-30015,MANHOLE SLAB BASE (15 FOOT),EACH,604-30015,Manhole Slab Base (15 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0110,604-39000,MANHOLE (SPECIAL),EACH,604-39000,Manhole Special,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0111,606-00302,GUARDRAIL TYPE 3 (31 INCH MIDWEST GUARDRAIL SYSTEM),LF,606-00302,Guardrail Type 3 (31 Inch Midwest Guardrail System),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0112,606-01340,END ANCHORAGE TYPE 3D,EACH,606-01340,End Anchorage Type 3D,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0113,606-02003,END ANCHORAGE (NONFLARED),EACH,606-02003,End Anchorage (Nonflared),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0114,607-11525,FENCE (PLASTIC),LF,607-11525,Fence (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0115,608-00000,CONCRETE SIDEWALK,SY,608-00000,Concrete Sidewalk,SY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0116,608-00005,CONCRETE SIDEWALK (SPECIAL),SY,608-00005,Concrete Sidewalk (Special),SY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0117,608-00010,CONCRETE CURB RAMP,SY,608-00010,Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0118,608-00015,DETECTABLE WARNINGS,SF,608-00015,Detectable Warnings,SF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0119,609-21010,CURB AND GUTTER TYPE 2 (SECTION I-B),LF,609-21010,Curb and Gutter Type 2 (Section I-B),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0120,609-21011,CURB AND GUTTER TYPE 2 (SECTION I-M),LF,609-21011,Curb and Gutter Type 2 (Section I-M),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0121,609-21013,CURB AND GUTTER TYPE 2 (SECTION I-M) (SPECIAL),LF,609-21013,Curb and Gutter Type 2 (Section I-M) (Special),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0122,609-21020,CURB AND GUTTER TYPE 2 (SECTION II-B),LF,609-21020,Curb and Gutter Type 2 (Section II-B),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0123,609-24006,GUTTER TYPE 2 (6 FOOT),LF,609-24006,Gutter Type 2 (6 Foot),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0124,610-00035,MEDIAN COVER MATERIAL (CONCRETE) (SPECIAL),SF,610-00035,Median Cover Material (Concrete)(Special),SF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0125,612-00001,DELINEATOR (TYPE I),EACH,612-00001,Delineator (Type I),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0126,612-00003,DELINEATOR (TYPE III),EACH,612-00003,Delineator (Type III),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0127,613-01100,1 INCH ELECTRICAL CONDUIT (PLASTIC),LF,613-01100,1 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0128,613-01200,2 INCH ELECTRICAL CONDUIT (PLASTIC),LF,613-01200,2 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0129,613-01202,2 INCH ELECTRICAL CONDUIT (PLASTIC) (INSTALL ONLY),LF,613-01202,2 Inch Electrical Conduit (Plastic) (Install Only),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0130,613-01300,3 INCH ELECTRICAL CONDUIT (PLASTIC),LF,613-01300,3 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0131,613-07002,TYPE TWO PULL BOX,EACH,613-07002,Type Two Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0132,613-07023,"PULL BOX (24""X36""X24"")",EACH,613-07023,"Pull Box (24""x36""x24"")",EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0133,613-07199,PULL BOX (INSTALL ONLY),EACH,613-07199,Pull Box (Install Only),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0134,613-10000,WIRING,L S,613-10000,Wiring,L S,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0135,613-13008,"LUMINAIRE (LED) (8,000 LUMENS)",EACH,613-13008,"Luminaire (LED) (8,000 Lumens)",EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0136,613-20000,LIGHT STANDARD AND LUMINAIRE (INSTALL ONLY),EACH,613-20000,Light Standard and Luminaire (Install Only),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0137,613-34250,LIGHT STANDARD METAL (25 FOOT),EACH,613-34250,Light Standard Metal (25 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0138,613-40000,CONCRETE FOUNDATION PAD,EACH,613-40000,Concrete Foundation Pad,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0139,613-40010,LIGHT STANDARD FOUNDATION,EACH,613-40010,Light Standard Foundation,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0140,613-40012,LIGHT STANDARD FOUNDATION (SPECIAL),EACH,613-40012,Light Standard Foundation Special,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0141,613-50100,LIGHTING CONTROL CENTER,EACH,613-50100,Lighting Control Center,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0143,614-00011,SIGN PANEL (CLASS I),SF,614-00011,Sign Panel (Class I),SF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0144,614-00012,SIGN PANEL (CLASS II),SF,614-00012,Sign Panel (Class II),SF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0145,614-01512,STEEL SIGN SUPPORT (2-INCH ROUND) (POST),LF,614-01512,Steel Sign Support (2-Inch Round)(Post),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0146,614-01522,STEEL SIGN SUPPORT (2-INCH ROUND) (SOCKET),EACH,614-01522,Steel Sign Support (2-Inch Round)(Socket),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0147,614-01575,STEEL SIGN SUPPORT (2-1/2 INCH ROUND NP-40) (POST),LF,614-01575,Steel Sign Support (2-1/2 Inch Round NP-40)(Post),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0148,614-01578,STEEL SIGN SUPPORT (2-1/2 INCH ROUND NP-40) (SLIPBASE),EACH,614-01578,Steel Sign Support (2-1/2 Inch Round NP- 40)(Slipbase),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0149,614-80385,RUMBLE STRIP,LF,614-80385,Rumble Strip,LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0152,619-00007,CONNECT TO EXISTING WATERLINE,EACH,619-00007,Connect To Existing Waterline,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0153,619-06060,6 INCH DUCTILE IRON PIPE,LF,603-82006,6 Inch Ductile Iron Pipe,LF,2,multiple_exact_description_unit_candidates
+fhu_watson_20211216_row_0153,619-06060,6 INCH DUCTILE IRON PIPE,LF,619-06060,6 Inch Ductile Iron Pipe,LF,2,multiple_exact_description_unit_candidates
+fhu_watson_20211216_row_0154,619-75048,6 INCH GATE VALVE,EACH,619-75048,6 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_watson_20211216_row_0154,619-75048,6 INCH GATE VALVE,EACH,623-05048,6 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_watson_20211216_row_0155,619-77210,RESTRAINED PLUG (SPECIAL),EACH,619-77210,Restrained Plug (Special),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0156,619-78048,6 INCH FIRE HYDRANT,EACH,619-78048,6 Inch Fire Hydrant,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0157,620-00020,SANITARY FACILITY,EACH,620-00020,Sanitary Facility,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0158,621-00450,DETOUR PAVEMENT,SY,621-00450,Detour Pavement,SY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0160,623-00164,DRIP EMITTER,EACH,623-00164,Drip Emitter,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0161,623-00184,1/2 INCH FLUSH UNIT,EACH,623-00184,1/2 Inch Flush Unit,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0163,623-00212,12 INCH POP UP SPRAY SPRINKLER,EACH,623-00212,12 Inch Pop-Up Spray Sprinkler,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0168,623-00604,3 INCH PLASTIC PIPE (IRRIGATION/SLEEVE),LF,623-00603,3 Inch Plastic Pipe (Irrigation/Sleeve),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0170,623-03108,1 INCH AUTOMATIC CONTROL VALVE,EACH,623-03108,1 Inch Automatic Control Valve,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0172,623-05008,1 INCH GATE VALVE,EACH,619-75008,1 Inch Gate Valve,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0173,623-05012,1-1/2 INCH GATE VALVE,EACH,619-75012,1-1/2 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_watson_20211216_row_0173,623-05012,1-1/2 INCH GATE VALVE,EACH,623-05012,1-1/2 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_watson_20211216_row_0174,625-00000,CONSTRUCTION SURVEYING,L S,625-00000,Construction Surveying,L S,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0175,626-00000,MOBILIZATION,L S,626-00000,Mobilization,L S,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0176,627-00005,EPOXY PAVEMENT MARKING,GAL,627-00005,Epoxy Pavement Marking,GAL,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0177,627-00070,PREFORMED THERMOPLASTIC PAVEMENT MARKING,SF,627-00070,Preformed Thermoplastic Pavement Marking,SF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0178,627-30110,THERMOPLASTIC PAVEMENT MARKING (XWALK-STOPLINE),SF,627-30210,Thermoplastic Pavement Marking (Xwalk-Stopline),SF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0179,627-30205,THERMOPLASTIC PAVEMENT MARKING (WORD-SYMBOL),SF,627-30205,Thermoplastic Pavement Marking (Word-Symbol),SF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0180,630-00000,FLAGGING,HOUR,630-00000,Flagging,HOUR,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0181,630-00007,TRAFFIC CONTROL INSPECTION,DAY,630-00007,Traffic Control Inspection,DAY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0182,630-00012,TRAFFIC CONTROL MANAGEMENT,DAY,630-00012,Traffic Control Management,DAY,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0183,630-80335,BARRICADE (TYPE 3 M-A) (TEMPORARY),EACH,630-80335,Barricade (Type 3 M-A) (Temporary),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0184,630-80341,CONSTRUCTION TRAFFIC SIGN (PANEL SIZE A),EACH,630-80341,Construction Traffic Sign (Panel Size A),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0185,630-80342,CONSTRUCTION TRAFFIC SIGN (PANEL SIZE B),EACH,630-80342,Construction Traffic Sign (Panel Size B),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0186,630-80355,PORTABLE MESSAGE SIGN PANEL,EACH,630-80355,Portable Message Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0187,630-80360,DRUM CHANNELIZING DEVICE,EACH,630-80360,Drum Channelizing Device,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0188,630-80372,CONCRETE BARRIER (TEMPORARY) (FURNISH AND INSTALL),LF,630-80372,Concrete Barrier (Temporary) (Furnish and Install),LF,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0189,630-80380,TRAFFIC CONE,EACH,630-80380,Traffic Cone,EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0190,630-85010,IMPACT ATTENUATOR (TEMPORARY),EACH,630-85010,Impact Attenuator (Temporary),EACH,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0191,700-70010,F/A MINOR CONTRACT REVISIONS,F A,700-70010,F/A Minor Contract Revisions,F A,1,single_exact_description_unit_candidate
+fhu_watson_20211216_row_0193,700-70380,F/A EROSION CONTROL,F A,700-70380,F/A Erosion Control,F A,1,single_exact_description_unit_candidate

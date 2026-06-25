@@ -1,6 +1,7 @@
 import type {
   AppData,
   BidderBidRecord,
+  BidTabItemRecord,
   BidderItemObservationRecord,
   EvidenceFilters,
   EvidenceResult,
@@ -19,6 +20,7 @@ export function renderResults(
   itemSearchCollapsed: boolean,
   data: AppData,
   selectedBidderDetailKey: string | null,
+  selectedBidTabProjectId: string | null,
   excludedSummaryRowIds: ReadonlySet<string>,
   includedRowCount: number,
   visibleExcludedCount: number,
@@ -39,8 +41,10 @@ export function renderResults(
         inflationAdjustedSummary
       )}
       ${renderSupplementalPriceSummaries(includedSummaryStats)}
+      ${renderPublicBidTabProjects(data)}
     </section>
     ${renderBidderDetailModal(result, data, selectedBidderDetailKey)}
+    ${renderBidTabProjectModal(data, selectedBidTabProjectId)}
   `;
 }
 
@@ -624,6 +628,165 @@ export function readEvidenceFiltersFromForm(
     quantityMax: readOptionalNumber(formData.get("quantityMax")),
     unit: String(formData.get("unit") || "")
   };
+}
+
+function renderPublicBidTabProjects(data: AppData): string {
+  const projects = data.projects
+    .filter((project) => data.sourceById.get(project.sourceId)?.sourceType === "public_bid_tab")
+    .filter((project) => (data.bidTabItemsByProjectId.get(project.projectId) ?? []).length > 0)
+    .sort((left, right) => (right.estimateLetDate || "").localeCompare(left.estimateLetDate || ""));
+
+  if (projects.length === 0) {
+    return "";
+  }
+
+  return `
+    <section class="panel-block bid-tab-projects-panel">
+      <div class="panel-heading">
+        <p class="eyebrow">Public Bid Tab Projects</p>
+        <h3>Source item review</h3>
+      </div>
+      <div class="bid-tab-project-list">
+        ${projects
+          .map((project) => {
+            const source = data.sourceById.get(project.sourceId) ?? null;
+            const itemCount = data.bidTabItemsByProjectId.get(project.projectId)?.length ?? 0;
+            const apparentLow = (data.bidderBidsByProjectId.get(project.projectId) ?? []).find((bid) => bid.apparentLow);
+            return `
+              <article class="bid-tab-project-row">
+                <div>
+                  <strong>${escapeHtml(project.projectNumber || project.projectName)}</strong>
+                  <span>${escapeHtml(project.projectName)}</span>
+                  <small>${escapeHtml(source?.sourceLabel ?? "Unknown source")} | ${escapeHtml(project.estimateLetDate)}</small>
+                </div>
+                <div class="bid-tab-project-meta">
+                  <span>${formatNumber(itemCount)} source items</span>
+                  <span>Low: ${escapeHtml(apparentLow?.bidderName ?? "Not listed")}</span>
+                </div>
+                <button
+                  type="button"
+                  class="secondary-button bid-tab-open-button"
+                  data-bid-tab-project-id="${escapeHtml(project.projectId)}"
+                >
+                  Open bid tab
+                </button>
+              </article>
+            `;
+          })
+          .join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderBidTabProjectModal(data: AppData, selectedProjectId: string | null): string {
+  if (!selectedProjectId) {
+    return "";
+  }
+
+  const project = data.projectById.get(selectedProjectId) ?? null;
+  const source = project ? data.sourceById.get(project.sourceId) ?? null : null;
+  const items = project ? data.bidTabItemsByProjectId.get(project.projectId) ?? [] : [];
+
+  if (!project || items.length === 0) {
+    return "";
+  }
+
+  const bidderBids = data.bidderBidsByProjectId.get(project.projectId) ?? [];
+  const bidById = new Map(bidderBids.map((bid) => [bid.bidId, bid]));
+  const apparentLowBid = bidderBids.find((bid) => bid.apparentLow) ?? null;
+
+  return `
+    <div class="modal-backdrop" role="presentation">
+      <section
+        class="bidder-modal bid-tab-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bid-tab-modal-title"
+      >
+        <div class="bidder-modal__header">
+          <div>
+            <p class="eyebrow">Public Bid Tab Detail</p>
+            <h3 id="bid-tab-modal-title">${escapeHtml(project.projectNumber || "Project")} - ${escapeHtml(project.projectName)}</h3>
+            <p class="query-line">${escapeHtml(source?.sourceLabel ?? "Unknown source")}</p>
+          </div>
+          <button type="button" class="secondary-button bidder-modal__close" data-close-bid-tab-project>Close</button>
+        </div>
+        <div class="bidder-modal__summary">
+          <span>Apparent low: <strong>${escapeHtml(apparentLowBid?.bidderName ?? "Not listed")}</strong></span>
+          <span>Bid count: <strong>${formatNumber(bidderBids.length)}</strong></span>
+          <span>Source items: <strong>${formatNumber(items.length)}</strong></span>
+        </div>
+        <div class="table-scroll bidder-detail-scroll">
+          <table class="bid-tab-detail-table">
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Source code</th>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Engineer</th>
+                <th>Average</th>
+                <th>Status</th>
+                <th>Bidder unit prices</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items
+                .slice()
+                .sort((left, right) => left.workbookRow - right.workbookRow)
+                .map((item) => renderBidTabItemRow(item, data.bidderItemsByBidTabItemId.get(item.bidTabItemId) ?? [], bidById))
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function renderBidTabItemRow(
+  item: BidTabItemRecord,
+  bidderItems: BidderItemObservationRecord[],
+  bidById: Map<string, BidderBidRecord>
+): string {
+  const codeLabel = item.sourceSpecRaw || item.sourceItemCode;
+  const bidderPrices = bidderItems
+    .slice()
+    .sort((left, right) => compareBidderItems(left, right, bidById))
+    .map((bidderItem) => {
+      const bid = bidById.get(bidderItem.bidId) ?? null;
+      const apparentLowText = bid?.apparentLow ? " (low)" : "";
+      return `${bid?.bidderName ?? bidderItem.bidId}${apparentLowText}: ${formatCurrency(bidderItem.unitPrice)}`;
+    });
+
+  return `
+    <tr>
+      <td>${escapeHtml(item.sourceItemNumber || String(item.workbookRow))}</td>
+      <td>
+        ${escapeHtml(codeLabel)}
+        ${item.matchedAgencyItemCode ? `<div class="row-subtext">Matched: ${escapeHtml(item.matchedAgencyItemCode)}</div>` : ""}
+      </td>
+      <td>${escapeHtml(item.sourceItemDescription)}</td>
+      <td>${formatNumber(item.quantity)}</td>
+      <td>${escapeHtml(item.unitNormalized)}</td>
+      <td>${formatCurrency(item.engineerEstimateUnitPrice)}</td>
+      <td>${formatCurrency(item.averageBidUnitPrice)}</td>
+      <td>${escapeHtml(matchStatusLabel(item.matchStatus))}</td>
+      <td>${bidderPrices.length > 0 ? escapeHtml(bidderPrices.join("; ")) : "Not listed"}</td>
+    </tr>
+  `;
+}
+
+function matchStatusLabel(status: BidTabItemRecord["matchStatus"]): string {
+  const labels: Record<BidTabItemRecord["matchStatus"], string> = {
+    matched: "Matched",
+    unmatched: "Unmatched",
+    source_cdot_prefix_only: "CDOT prefix only"
+  };
+
+  return labels[status];
 }
 
 function renderBidderDetailModal(

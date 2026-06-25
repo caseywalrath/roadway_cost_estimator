@@ -1068,6 +1068,74 @@ th {
   min-width: 760px;
 }
 
+.bid-tab-projects-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.bid-tab-project-list {
+  display: grid;
+  gap: 8px;
+}
+
+.bid-tab-project-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-alt);
+  padding: 10px;
+}
+
+.bid-tab-project-row strong,
+.bid-tab-project-row span,
+.bid-tab-project-row small {
+  display: block;
+}
+
+.bid-tab-project-row strong {
+  color: var(--heading);
+  line-height: 1.2;
+}
+
+.bid-tab-project-row span,
+.bid-tab-project-row small,
+.bid-tab-project-meta {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.bid-tab-project-meta {
+  display: grid;
+  gap: 2px;
+  min-width: 150px;
+}
+
+.bid-tab-open-button {
+  min-height: 36px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.bid-tab-modal {
+  width: min(1240px, 100%);
+}
+
+.bid-tab-detail-table {
+  min-width: 1380px;
+}
+
+.bid-tab-detail-table td:nth-child(3) {
+  min-width: 260px;
+}
+
+.bid-tab-detail-table td:nth-child(9) {
+  min-width: 320px;
+}
+
 td:nth-child(2),
 td:nth-child(8),
 td:nth-child(9),
@@ -1147,6 +1215,10 @@ tbody tr:last-child td {
 
   .matching-projects-actions {
     justify-content: flex-start;
+  }
+
+  .bid-tab-project-row {
+    grid-template-columns: 1fr;
   }
 
   .summary-heading-row {

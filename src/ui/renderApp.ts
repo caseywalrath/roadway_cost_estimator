@@ -38,6 +38,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
   let excludedSummaryRowIds = new Set<string>();
   let inflationAdjustmentEnabled = false;
   let selectedBidderDetailKey: string | null = null;
+  let selectedBidTabProjectId: string | null = null;
 
   function render(): void {
     const result = buildEvidenceResult(data, query, evidenceFilters, evidenceSort);
@@ -67,6 +68,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
             itemSearchCollapsed,
             data,
             selectedBidderDetailKey,
+            selectedBidTabProjectId,
             excludedSummaryRowIds,
             includedRows.length,
             visibleExcludedCount,
@@ -92,6 +94,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       evidenceSort = createDefaultEvidenceSort();
       excludedSummaryRowIds = new Set<string>();
       selectedBidderDetailKey = null;
+      selectedBidTabProjectId = null;
       evidenceFiltersExpanded = true;
       itemSearchCollapsed = Boolean(query.itemCode);
       render();
@@ -118,6 +121,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
 
       evidenceFilters = readEvidenceFiltersFromForm(evidenceFiltersForm, evidenceFilters);
       selectedBidderDetailKey = null;
+      selectedBidTabProjectId = null;
       evidenceFiltersExpanded = true;
       render();
     });
@@ -125,6 +129,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     root.querySelector<HTMLButtonElement>("#clear-evidence-filters")?.addEventListener("click", () => {
       evidenceFilters = createDefaultEvidenceFilters(result.query);
       selectedBidderDetailKey = null;
+      selectedBidTabProjectId = null;
       evidenceFiltersExpanded = true;
       render();
     });
@@ -135,6 +140,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       evidenceSort = createDefaultEvidenceSort();
       excludedSummaryRowIds = new Set<string>();
       selectedBidderDetailKey = null;
+      selectedBidTabProjectId = null;
       evidenceFiltersExpanded = true;
       itemSearchCollapsed = false;
       render();
@@ -143,6 +149,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     root.querySelector<HTMLButtonElement>("#edit-item-search")?.addEventListener("click", () => {
       itemSearchCollapsed = false;
       selectedBidderDetailKey = null;
+      selectedBidTabProjectId = null;
       render();
     });
 
@@ -197,12 +204,26 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     root.querySelectorAll<HTMLButtonElement>("[data-bidder-detail-key]").forEach((button) => {
       button.addEventListener("click", () => {
         selectedBidderDetailKey = button.dataset.bidderDetailKey ?? null;
+        selectedBidTabProjectId = null;
+        render();
+      });
+    });
+
+    root.querySelectorAll<HTMLButtonElement>("[data-bid-tab-project-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedBidTabProjectId = button.dataset.bidTabProjectId ?? null;
+        selectedBidderDetailKey = null;
         render();
       });
     });
 
     root.querySelector<HTMLButtonElement>("[data-close-bidder-detail]")?.addEventListener("click", () => {
       selectedBidderDetailKey = null;
+      render();
+    });
+
+    root.querySelector<HTMLButtonElement>("[data-close-bid-tab-project]")?.addEventListener("click", () => {
+      selectedBidTabProjectId = null;
       render();
     });
   }

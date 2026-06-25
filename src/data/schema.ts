@@ -66,6 +66,7 @@ export interface BidderBidRecord {
 
 export interface BidderItemObservationRecord {
   bidderItemObservationId: string;
+  bidTabItemId: string;
   bidId: string;
   projectId: string;
   sourceId: string;
@@ -76,6 +77,33 @@ export interface BidderItemObservationRecord {
   quantity: number;
   unitPrice: number;
   extendedPrice: number;
+}
+
+export type BidTabMatchStatus = "matched" | "unmatched" | "source_cdot_prefix_only";
+
+export interface BidTabItemRecord {
+  bidTabItemId: string;
+  projectId: string;
+  sourceId: string;
+  sourceFile: string;
+  sheetName: string;
+  workbookRow: number;
+  projectNumber: string;
+  sourceItemNumber: string;
+  sourceItemCode: string;
+  sourceItemCodeSystem: string;
+  sourceSpecRaw: string;
+  sourceItemDescription: string;
+  itemCode: string;
+  itemDescription: string;
+  unitRaw: string;
+  unitNormalized: string;
+  quantity: number;
+  engineerEstimateUnitPrice: number;
+  averageBidUnitPrice: number;
+  matchedAgencyItemCode: string;
+  matchStatus: BidTabMatchStatus;
+  dateBasis: string;
 }
 
 export interface CanonicalItemRecord {
@@ -143,6 +171,7 @@ export interface AppData {
   aliases: AliasRecord[];
   bidderBids: BidderBidRecord[];
   bidderItemObservations: BidderItemObservationRecord[];
+  bidTabItems: BidTabItemRecord[];
   sourceById: Map<string, SourceRecord>;
   projectById: Map<string, ProjectRecord>;
   canonicalById: Map<string, CanonicalItemRecord>;
@@ -152,6 +181,8 @@ export interface AppData {
   inflationIndexByPeriod: Map<string, InflationIndexRecord>;
   bidderBidsByProjectId: Map<string, BidderBidRecord[]>;
   bidderItemsByRowKey: Map<string, BidderItemObservationRecord[]>;
+  bidTabItemsByProjectId: Map<string, BidTabItemRecord[]>;
+  bidderItemsByBidTabItemId: Map<string, BidderItemObservationRecord[]>;
 }
 
 export interface SearchQuery {

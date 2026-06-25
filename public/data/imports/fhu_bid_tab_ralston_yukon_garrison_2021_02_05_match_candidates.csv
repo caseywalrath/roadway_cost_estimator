@@ -1,0 +1,97 @@
+bid_tab_item_id,source_item_code,source_item_description,unit_normalized,candidate_agency_item_code,candidate_description,candidate_unit,candidate_count,suggestion_status
+fhu_ralston_yukon_garrison_20210205_row_0008,COA 3.2,CLEARING AND GRUBBING,L S,201-00000,Clearing and Grubbing,L S,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0009,COA 3.5,REMOVAL OF TREE,EACH,202-00010,Removal of Tree,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0010,COA 3.5,REMOVAL OF INLET,EACH,202-00019,Removal of Inlet,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0011,COA 3.5,REMOVAL OF MANHOLE,EACH,202-00021,Removal of Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0012,COA 3.5,REMOVAL OF FIRE HYDRANT,EACH,202-00031,Removal of Fire Hydrant,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0013,COA 3.5,REMOVAL OF VALVE,EACH,202-00032,Removal of Valve,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0015,COA 3.5,REMOVAL OF FIBER OPTIC CABLE,LF,202-00055,Removal of Fiber Optic Cable,LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0016,COA 3.5,REMOVAL OF WALL,LF,202-00155,Removal of Wall,LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0017,COA 3.5,REMOVAL OF CONCRETE MEDIAN COVER MATERIAL,SY,202-00190,Removal of Concrete Median Cover Material,SY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0018,COA 3.5,REMOVAL OF SIDEWALK,SY,202-00200,Removal of Sidewalk,SY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0019,COA 3.5,REMOVAL OF CURB,LF,202-00201,Removal of Curb,LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0020,COA 3.5,REMOVAL OF GUTTER,LF,202-00202,Removal of Gutter,LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0021,COA 3.5,REMOVAL OF CURB AND GUTTER,LF,202-00203,Removal of Curb and Gutter,LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0022,COA 3.5,REMOVAL OF CONCRETE CURB RAMP,SY,202-00206,Removal of Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0023,COA 3.5,REMOVAL OF BRICK PAVERS,SY,202-00207,Removal of Brick Pavers,SY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0024,COA 3.5,REMOVAL OF CONCRETE PAVEMENT,SY,202-00210,Removal of Concrete Pavement,SY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0025,COA 3.5,REMOVAL OF ASPHALT MAT,SY,202-00220,Removal of Asphalt Mat,SY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0026,COA 3.5,REMOVAL OF PAVEMENT MARKING,SF,202-00250,Removal of Pavement Marking,SF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0027,COA 3.5,REMOVAL OF LIGHT STANDARD,EACH,202-00700,Removal of Light Standard,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0028,COA 3.5,REMOVAL OF LIGHT STANDARD FOUNDATION,EACH,202-00705,Removal of Light Standard Foundation,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0029,COA 3.5,REMOVAL OF LUMINAIRE,EACH,202-00750,Removal of Luminaire,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0031,COA 3.5,REMOVAL OF GROUND SIGN,EACH,202-00810,Removal of Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0032,COA 3.5,REMOVAL OF SIGN PANEL,EACH,202-00821,Removal of Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0033,COA 3.5,REMOVAL OF TRAFFIC SIGNAL EQUIPMENT,L S,202-00828,Removal of Traffic Signal Equipment,L S,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0034,COA 3.5,REMOVAL OF FENCE,LF,202-01000,Removal of Fence,LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0044,COA 3.33,UNCLASSIFIED EXCAVATION (COMPLETE IN PLACE),CY,203-00010,Unclassified Excavation (Complete In Place),CY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0049,CDOT 206,STRUCTURE BACKFILL (FLOW-FILL),CY,206-00065,Structure Backfill (Flow-Fill),CY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0050,COA 3.52,TOPSOIL,CY,207-00205,Topsoil,CY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0053,COA 5.7.2,AGGREGATE BAG,LF,208-00035,Aggregate Bag,LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0054,COA 5.7.2,PRE-FABRICATED CONCRETE WASHOUT STRUCTURE (TYPE 1),EACH,208-00046,Pre-fabricated Concrete Washout Structure (Type 1),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0058,COA 5.7.2,PRE-FABRICATED VEHICLE TRACKING PAD,EACH,208-00075,Pre-fabricated Vehicle Tracking Pad,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0060,COA 3.6,RESET BRICK PAVERS,SY,210-00300,Reset Brick Pavers,SY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0063,COA 3.6,RESET GROUND SIGN,EACH,210-00810,Reset Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0064,COA 3.6,RESET SIGN PANEL,EACH,210-00815,Reset Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0067,COA 3.6,RESET FIRE PREEMPTION UNIT AND TIMER,EACH,210-00866,Reset Fire Preemption Unit and Timer,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0068,COA 3.6,ADJUST MANHOLE,EACH,210-04010,Adjust Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0069,COA 3.6,MODIFY MANHOLE,EACH,210-04015,Modify Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0070,COA 3.6,MODIFY INLET,EACH,210-04020,Modify Inlet,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0071,COA 3.6,MODIFY STRUCTURE (SPECIAL),EACH,210-04027,Modify Structure (Special),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0072,COA 3.15,CLEAN CULVERT,EACH,202-04002,Clean Culvert,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0082,COA 3.50,TREE GRATE,EACH,213-00500,Tree Grate,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0092,CDOT 240,WILDLIFE BIOLOGIST,HOUR,240-00000,Wildlife Biologist,HOUR,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0093,CDOT 240,REMOVAL OF NESTS,HOUR,240-00010,Removal of Nests,HOUR,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0095,CDOT 250,ENVIRONMENTAL HEALTH AND SAFETY,L S,250-00100,Environmental Health and Safety,L S,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0096,COA 3.37,AGGREGATE BASE COURSE (CLASS 6),CY,304-06007,Aggregate Base Course (Class 6),CY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0097,COA 3.37,HOT MIX ASPHALT (GRADING S)(100)(PG 64-22),TON,403-33841,Hot Mix Asphalt (Grading S) (100) (PG 64-22),TON,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0098,COA 3.37,HOT MIX ASPHALT (GRADING SX)(100)(PG 76-28),TON,403-34871,Hot Mix Asphalt (Grading SX) (100) (PG 76-28),TON,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0100,COA 3.38,EMULSIFIED ASPHALT (SLOW-SETTING),GAL,411-10255,Emulsified Asphalt (Slow-Setting),GAL,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0101,COA 3.21,CONCRETE PAVEMENT (6 INCH),SY,412-00600,Concrete Pavement (6 Inch),SY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0110,COA 3.22,INLET TYPE 13 (5 FOOT),EACH,604-13005,Inlet Type 13 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0111,COA 3.22,INLET TYPE C (5 FOOT),EACH,604-00305,Inlet Type C (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0112,COA 3.22,INLET TYPE 16 (5 FOOT),EACH,604-16005,Inlet Type 16 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0113,COA 3.22,INLET TYPE 16 (10 FOOT),EACH,604-16010,Inlet Type 16 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0114,COA 3.22,INLET TYPE 16 (DOUBLE) (5 FOOT),EACH,604-16505,Inlet Type 16 (Double) (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0115,COA 3.22,INLET TYPE 16 (TRIPLE) (5 FOOT),EACH,604-16605,Inlet Type 16 (Triple) (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0117,COA 3.22,INLET TYPE R L 5 (5 FOOT),EACH,604-19105,Inlet Type R L 5 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0118,COA 3.22,INLET TYPE R L 10 (5 FOOT),EACH,604-19205,Inlet Type R L 10 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0119,COA 3.22,INLET TYPE R L 10 (10 FOOT),EACH,604-19210,Inlet Type R L 10 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0120,COA 25.2.6,MANHOLE SLAB BASE (5 FOOT),EACH,604-30005,Manhole Slab Base (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0121,COA 25.2.6,MANHOLE SLAB BASE (10 FOOT),EACH,604-30010,Manhole Slab Base (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0122,COA 25.2.6,MANHOLE BOX BASE (5 FOOT),EACH,604-31005,Manhole Box Base (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0139,COA 3.32,FENCE (PLASTIC),LF,607-11525,Fence (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0140,COA 3.21,CONCRETE SIDEWALK (6 INCH),SY,608-00006,Concrete Sidewalk (6 Inch),SY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0143,COA 3.21,CONCRETE CURB RAMP,SY,608-00010,Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0156,CDOT 613,2 INCH ELECTRICAL CONDUIT (BORED),LF,613-00206,2 Inch Electrical Conduit (Bored),LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0157,CDOT 613,3 INCH ELECTRICAL CONDUIT (BORED),LF,613-00306,3 Inch Electrical Conduit (Bored),LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0158,CDOT 613,1 INCH ELECTRICAL CONDUIT (PLASTIC),LF,613-01100,1 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0159,CDOT 613,2 INCH ELECTRICAL CONDUIT (PLASTIC),LF,613-01200,2 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0160,CDOT 613,3 INCH ELECTRICAL CONDUIT (PLASTIC),LF,613-01300,3 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0164,CDOT 613,WIRING,L S,613-10000,Wiring,L S,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0167,CDOT 613,LIGHT STANDARD FOUNDATION,EACH,613-40010,Light Standard Foundation,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0168,CDOT 613,LIGHT STANDARD FOUNDATION (SPECIAL),EACH,613-40012,Light Standard Foundation Special,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0169,CDOT 613,LIGHTING CONTROL CENTER,EACH,613-50100,Lighting Control Center,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0170,CDOT 613,SERVICE METER CABINET,EACH,613-80130,Service Meter Cabinet,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0171,COA 3.47,SIGN PANEL (CLASS I),SF,614-00011,Sign Panel (Class I),SF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0173,COA 3.47,SIGNAL HEAD BACKPLATES,EACH,614-10160,Signal Head Backplates,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0174,COA 3.47,PEDESTRIAN SIGNAL FACE (16) (COUNTDOWN),EACH,614-70150,Pedestrian Signal Face (16) (Countdown),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0175,COA 3.47,TRAFFIC SIGNAL FACE (12-12-12),EACH,614-70336,Traffic Signal Face (12-12-12),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0176,COA 3.47,TRAFFIC SIGNAL FACE (12-12-12-12),EACH,614-70448,Traffic Signal Face (12-12-12-12),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0177,COA 3.47,TRAFFIC SIGNAL FACE (12-12-12-12-12),EACH,614-70560,Traffic Signal Face (12-12-12-12-12),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0179,COA 3.47,PEDESTRIAN PUSH BUTTON POST ASSEMBLY,EACH,614-72863,Pedestrian Push Button Post Assembly,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0181,COA 3.47,MICROWAVE VEHICLE RADAR DETECTOR,EACH,614-72887,Microwave Vehicle Radar Detector,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0182,COA 3.47,TRAFFIC SIGNAL CONTROLLER (INSTALL ONLY),EACH,614-75840,Traffic Signal Controller (Install Only),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0189,COA 3.47,TRAFFIC SIGNAL PEDESTAL POLE STEEL,EACH,614-84000,Traffic Signal Pedestal Pole Steel,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0191,COA 50.2.10,UNINTERRUPTED POWER SUPPLY,EACH,614-86800,Uninterrupted Power Supply,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0192,COA 3.47,CLOSED CIRCUIT TELEVISION CAMERA (TRAFFIC SURVEILLANCE),EACH,614-87333,Closed Circuit Television Camera (Traffic Surveillance),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0193,CDOT 614,FIBER OPTIC CABLE (SINGLE MODE) (12 FIBER),LF,614-87010,Fiber Optic Cable (Single Mode) (12 Fiber),LF,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0194,CDOT 614,TEST FIBER OPTIC CABLE,L S,614-87350,Test Fiber Optic Cable,L S,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0195,CDOT 614,TERMINATE FIBER OPTIC CABLE (12 STRAND),EACH,614-87612,Terminate Fiber Optic Cable (12 Strand),EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0196,CDOT 614,ETHERNET SWITCH,EACH,614-87690,Ethernet Switch,EACH,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0225,CDOT 625,CONSTRUCTION SURVEYING,L S,625-00000,Construction Surveying,L S,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0226,COA 3.49,MOBILIZATION,L S,626-00000,Mobilization,L S,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0227,COA 50.4.7,MODIFIED EPOXY PAVEMENT MARKING,GAL,627-00008,Modified Epoxy Pavement Marking,GAL,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0230,CDOT 630,UNIFORMED TRAFFIC CONTROL,HOUR,630-00003,Uniformed Traffic Control,HOUR,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0232,CDOT 626,PUBLIC INFORMATION SERVICES (TIER III),L S,626-01103,Public Information Services (Tier III),L S,1,single_exact_description_unit_candidate
+fhu_ralston_yukon_garrison_20210205_row_0233,COA 3.48 & CDOT 620,SANITARY FACILITY,EACH,620-00020,Sanitary Facility,EACH,1,single_exact_description_unit_candidate
