@@ -650,7 +650,7 @@ function renderPublicBidTabProjects(data: AppData): string {
           .map((project) => {
             const source = data.sourceById.get(project.sourceId) ?? null;
             const itemCount = data.bidTabItemsByProjectId.get(project.projectId)?.length ?? 0;
-            const apparentLow = (data.bidderBidsByProjectId.get(project.projectId) ?? []).find((bid) => bid.apparentLow);
+            const sourceLabel = source?.sourceLabel.split(" - ")[0] ?? "FHU Civil Group Bid Tabs";
             const projectTitle = [
               project.projectName,
               project.projectNumber,
@@ -660,11 +660,10 @@ function renderPublicBidTabProjects(data: AppData): string {
               <article class="bid-tab-project-row">
                 <div>
                   <strong>${escapeHtml(projectTitle)}</strong>
-                  <small>${escapeHtml(source?.sourceLabel ?? "FHU Civil Group Bid Tabs")}</small>
+                  <small>${escapeHtml(sourceLabel)}</small>
                 </div>
                 <div class="bid-tab-project-meta">
                   <span>${formatNumber(itemCount)} source items</span>
-                  <span>Low: ${escapeHtml(apparentLow?.bidderName ?? "Not listed")}</span>
                 </div>
                 <button
                   type="button"
@@ -713,7 +712,7 @@ function renderBidTabProjectModal(data: AppData, selectedProjectId: string | nul
             <h3 id="bid-tab-modal-title">${escapeHtml(project.projectNumber || "Project")} - ${escapeHtml(project.projectName)}</h3>
             <p class="query-line">${escapeHtml(source?.sourceLabel ?? "Unknown source")}</p>
           </div>
-          <button type="button" class="modal-icon-close" data-close-bid-tab-project aria-label="Close bid tab review">×</button>
+          <button type="button" class="modal-icon-close" data-close-bid-tab-project aria-label="Close bid tab review">X</button>
         </div>
         <div class="bidder-modal__summary">
           <span>Apparent low: <strong>${escapeHtml(apparentLowBid?.bidderName ?? "Not listed")}</strong></span>
