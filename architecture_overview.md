@@ -6,7 +6,7 @@ This repository contains a static-first prototype for a Colorado roadway bid-ite
 
 The first product is not a chatbot, not a full project estimator, and not an automatic price recommendation tool. It is a structured evidence tool that helps a user identify one official roadway bid item and review the project records where that exact item appears.
 
-The primary deliverable is the project-item evidence table. Awarded bid statistics are secondary aids that summarize the currently filtered evidence rows that the user has not excluded from summary. Average bid and engineer estimate statistics are also shown when those price types are loaded. Awarded bid statistics can optionally be adjusted with loaded FHWA National Highway Construction Cost Index quarters. Included Matching Projects rows can be exported to CSV for external review.
+The primary deliverable is the project-item evidence table. Awarded bid statistics are secondary aids that summarize the currently filtered evidence rows that the user has not excluded from summary. Average bid and engineer estimate statistics are also shown when those price types are loaded. Awarded, average bid, and engineer estimate statistics can optionally be adjusted with loaded FHWA National Highway Construction Cost Index quarters. Included Matching Projects rows can be exported to CSV for external review.
 
 ## Application Shape
 
@@ -27,7 +27,7 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 4. `src/matching/buildEvidenceResult.ts` groups exact item-code observations into project-item evidence rows.
 5. `src/matching/buildEvidenceResult.ts` applies explicit evidence filters and calculates awarded, average bid, and engineer estimate summary statistics for the filtered table.
 6. Prior comparable scoring modules remain in the repository for reference, but the primary UI no longer uses hidden top-five relevance selection.
-7. `src/ui` renders the fixed prototype scope, item search, evidence filters, sortable evidence table, row-level summary exclusions, CSV export, unit price summaries, optional NHCCI awarded-bid summary adjustment, exact-code public bid-tab bidder details, and source-only public bid-tab project review.
+7. `src/ui` renders the fixed prototype scope, item search, evidence filters, sortable evidence table, row-level summary exclusions, CSV export, unit price summaries, optional NHCCI unit-price summary adjustment, exact-code public bid-tab bidder details, and source-only public bid-tab project review.
 
 ## Data Governance
 
@@ -37,7 +37,7 @@ Do not commit private FHU estimate data to a public GitHub Pages repository. Rea
 
 The repository can generate staging CSVs from public CDOT Cost Data Book PDFs, validate them against project-list pages and agency item codes, and promote them into app-loaded source, project, and observation CSVs. The current promoted public CDOT cost-book sources are `cdot_cost_data_book_2022_q4`, `cdot_cost_data_book_2023_q4`, `cdot_cost_data_book_2024_q4`, `cdot_cost_data_book_2025_q4`, and `cdot_cost_data_book_2026_q1`.
 
-The repository can also import reviewed public FHU-curated bid tab workbooks as `public_bid_tab` sources. The current importer supports the Watson SAQ-style workbook layout, the Arapahoe bid-form layout with itemized engineer estimate and bidder columns, and the Ralston `Results` sheet layout with source specification references such as COA and CDOT prefixes. Bid-tab imports preserve source item identity in `bid_tab_items.csv`, preserve bidder-level item prices in `bidder_bids.csv` and `bidder_item_observations.csv`, and promote rows into `item_observations.csv` only when a reviewed exact agency item code is available. Ralston includes reviewed CDOT reconciliation columns; matched rows participate in exact-code Matching Projects and Unit Price Summaries using public bid-tab average and engineer estimate observations, while unmatched rows remain source-only bid-tab detail. Bid-tab imports do not populate awarded contractor, awarded bid total, award index, or awarded bid unit price unless a separate confirmed award source is added later.
+The repository can also import reviewed public FHU-curated bid tab workbooks as `public_bid_tab` sources. The current importer supports the Watson SAQ-style workbook layout, the Arapahoe bid-form layout with itemized engineer estimate and bidder columns, the Kipling/Bowles split-header tabulation layout, and the Ralston `Results` sheet layout with source specification references such as COA and CDOT prefixes. Bid-tab imports preserve source item identity in `bid_tab_items.csv`, preserve bidder-level item prices in `bidder_bids.csv` and `bidder_item_observations.csv`, and promote rows into `item_observations.csv` only when a reviewed exact agency item code is available. Ralston includes reviewed CDOT reconciliation columns; matched rows participate in exact-code Matching Projects and Unit Price Summaries using public bid-tab average and engineer estimate observations, while unmatched rows remain source-only bid-tab detail. Bid-tab imports do not populate awarded contractor, awarded bid total, award index, or awarded bid unit price unless a separate confirmed award source is added later.
 
 The app-loaded CSV package is checked by `scripts/validate_data_package.py`. The validator fails deployment for broken source/project/observation relationships, duplicate IDs, invalid required values, invalid numeric/date fields, malformed NHCCI rows, app-loaded demo evidence leakage, and missing smoke-test evidence for `304-06007`. Lookup gaps, optional metadata gaps, and evidence quarters newer than the latest loaded official NHCCI quarter are reported as warnings.
 
@@ -63,7 +63,7 @@ The Phase 1 evidence browser rules are intentionally visible and simple:
 - Export the currently filtered and non-excluded Matching Projects rows to CSV with the displayed table columns and useful project/source metadata.
 - Calculate awarded summary statistics from included awarded bid unit prices only.
 - Calculate average bid and engineer estimate summary statistics from the corresponding included rows.
-- Let users toggle inflation adjustment with loaded FHWA NHCCI quarters. Matching Projects table awarded bid prices stay in original dollars and show secondary adjusted values for transparency when rounded adjusted dollars differ. CSV export stays in original awarded-bid dollars.
+- Let users toggle inflation adjustment with loaded FHWA NHCCI quarters. Matching Projects table awarded bid, average bid, and engineer estimate prices stay in original dollars as the primary values and show secondary adjusted values for transparency when rounded adjusted dollars differ. CSV export stays in original dollars.
 
 Alias, keyword, and description fallback matching should return only in a later explicit review mode. They are not part of the default evidence table.
 

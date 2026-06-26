@@ -76,7 +76,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
             includedSummaryStats,
             inflationAdjustmentEnabled,
             inflationAdjustedSummary,
-            inflationAdjustedPriceSet?.adjustedPriceByRowId ?? null
+            inflationAdjustedPriceSet
           )}
         </section>
       </main>

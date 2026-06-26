@@ -12,7 +12,7 @@ import type {
   EvidenceStats,
   EvidenceSummaryStats
 } from "../data/schema";
-import type { InflationAdjustedSummary } from "../matching/inflationAdjustment";
+import type { InflationAdjustedPriceSet, InflationAdjustedSummary } from "../matching/inflationAdjustment";
 
 export function renderResults(
   result: EvidenceResult,
@@ -28,11 +28,11 @@ export function renderResults(
   includedSummaryStats: EvidenceSummaryStats,
   inflationAdjustmentEnabled: boolean,
   inflationAdjustedSummary: InflationAdjustedSummary | null,
-  adjustedPriceByRowId: ReadonlyMap<string, number> | null
+  inflationAdjustedPriceSet: InflationAdjustedPriceSet | null
 ): string {
   return `
     <section class="results-panel">
-      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, adjustedPriceByRowId)}
+      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, inflationAdjustedPriceSet)}
       ${renderAwardedBidSummary(
         inflationAdjustmentEnabled ? inflationAdjustedSummary?.stats ?? null : includedStats,
         result.filteredRows.length,
@@ -40,7 +40,7 @@ export function renderResults(
         inflationAdjustmentEnabled,
         inflationAdjustedSummary
       )}
-      ${renderSupplementalPriceSummaries(includedSummaryStats)}
+      ${renderSupplementalPriceSummaries(inflationAdjustmentEnabled ? inflationAdjustedSummary?.summaryStats ?? includedSummaryStats : includedSummaryStats)}
       ${renderPublicBidTabProjects(data)}
     </section>
     ${renderBidderDetailModal(result, data, selectedBidderDetailKey)}
@@ -55,7 +55,7 @@ function renderEvidenceTable(
   excludedSummaryRowIds: ReadonlySet<string>,
   includedRowCount: number,
   visibleExcludedCount: number,
-  adjustedPriceByRowId: ReadonlyMap<string, number> | null
+  inflationAdjustedPriceSet: InflationAdjustedPriceSet | null
 ): string {
   if (!result.query.itemCode) {
     return `
@@ -70,7 +70,7 @@ function renderEvidenceTable(
     <section class="panel-block panel-block--table">
       ${renderMatchingProjectsHeader(result, itemSearchCollapsed, includedRowCount)}
       ${renderEvidenceControls(result, filtersExpanded, visibleExcludedCount)}
-      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows, result.sort, excludedSummaryRowIds, adjustedPriceByRowId)}
+      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows, result.sort, excludedSummaryRowIds, inflationAdjustedPriceSet)}
     </section>
   `;
 }
@@ -135,8 +135,8 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
           </span>
           <select name="sourceType">
             ${renderSourceTypeOption("public_cost_book", "Public CDOT cost book", result.filters.sourceType)}
-            ${renderSourceTypeOption("public_bid_tab", "Public bid tabs", result.filters.sourceType)}
-            ${renderSourceTypeOption("all", "All evidence sources", result.filters.sourceType)}
+            ${renderSourceTypeOption("public_bid_tab", "FHU Bid Tabs", result.filters.sourceType)}
+            ${renderSourceTypeOption("all", "All Sources", result.filters.sourceType)}
           </select>
         </label>
 
@@ -227,7 +227,7 @@ function renderTable(
   rows: EvidenceRow[],
   sort: EvidenceSort,
   excludedSummaryRowIds: ReadonlySet<string>,
-  adjustedPriceByRowId: ReadonlyMap<string, number> | null
+  inflationAdjustedPriceSet: InflationAdjustedPriceSet | null
 ): string {
   return `
     <div class="table-scroll-shell">
@@ -241,7 +241,7 @@ function renderTable(
             </tr>
           </thead>
           <tbody>
-            ${rows.map((row) => renderEvidenceRow(row, excludedSummaryRowIds.has(row.rowId), adjustedPriceByRowId?.get(row.rowId) ?? null)).join("")}
+            ${rows.map((row) => renderEvidenceRow(row, excludedSummaryRowIds.has(row.rowId), inflationAdjustedPriceSet)).join("")}
           </tbody>
         </table>
       </div>
@@ -269,8 +269,15 @@ function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): strin
   `;
 }
 
-function renderEvidenceRow(row: EvidenceRow, isExcluded: boolean, adjustedAwardedBidUnitPrice: number | null): string {
+function renderEvidenceRow(
+  row: EvidenceRow,
+  isExcluded: boolean,
+  inflationAdjustedPriceSet: InflationAdjustedPriceSet | null
+): string {
   const projectLabel = row.project?.projectNumber || row.project?.projectName || row.project?.projectLocationRaw || row.itemCode;
+  const adjustedAwardedBidUnitPrice = inflationAdjustedPriceSet?.awardedBidUnitPriceByRowId.get(row.rowId) ?? null;
+  const adjustedAverageBidUnitPrice = inflationAdjustedPriceSet?.averageBidUnitPriceByRowId.get(row.rowId) ?? null;
+  const adjustedEngineerEstimateUnitPrice = inflationAdjustedPriceSet?.engineerEstimateUnitPriceByRowId.get(row.rowId) ?? null;
 
   return `
     <tr class="${isExcluded ? "evidence-row--excluded" : ""}">
@@ -295,9 +302,9 @@ function renderEvidenceRow(row: EvidenceRow, isExcluded: boolean, adjustedAwarde
       <td>${formatNumber(row.quantity)}</td>
       <td>${escapeHtml(row.unit)}</td>
       <td>${escapeHtml(row.descriptionRaw)}</td>
-      <td>${renderAwardedBidUnitPrice(row.awardedBidUnitPrice, adjustedAwardedBidUnitPrice)}</td>
-      <td>${formatNullableCurrency(row.averageBidUnitPrice)}</td>
-      <td>${formatNullableCurrency(row.engineerEstimateUnitPrice)}</td>
+      <td>${renderUnitPrice(row.awardedBidUnitPrice, adjustedAwardedBidUnitPrice)}</td>
+      <td>${renderUnitPrice(row.averageBidUnitPrice, adjustedAverageBidUnitPrice)}</td>
+      <td>${renderUnitPrice(row.engineerEstimateUnitPrice, adjustedEngineerEstimateUnitPrice)}</td>
       <td>${escapeHtml(row.source?.sourceLabel ?? "Unknown source")}</td>
     </tr>
   `;
@@ -485,13 +492,13 @@ function renderInflationAdjustmentNote(
   }
 
   const missingNote = summary.missingIndexCount > 0
-    ? ` ${formatNumber(summary.missingIndexCount)} included awarded bid row(s) could not be adjusted because no NHCCI value is loaded for their source quarter.`
+    ? ` ${formatNumber(summary.missingIndexCount)} included unit price value(s) could not be adjusted because no NHCCI value is loaded for their source quarter.`
     : "";
 
   return `
     <p class="summary-adjustment-note">
-      Inflation Adjustment is on. Awarded bid unit prices are adjusted with FHWA NHCCI to ${escapeHtml(summary.targetPeriod.periodLabel)}.
-      Original Matching Projects prices and CSV export are unchanged.${missingNote}
+      Inflation Adjustment is on. Awarded bid, average bid, and engineer estimate unit prices are adjusted with FHWA NHCCI to ${escapeHtml(summary.targetPeriod.periodLabel)}.
+      Original Matching Projects prices stay primary and CSV export is unchanged.${missingNote}
     </p>
   `;
 }
@@ -505,7 +512,7 @@ function renderStatMetric(label: string, value: number, currency: boolean): stri
   `;
 }
 
-function renderAwardedBidUnitPrice(value: number | null, adjustedValue: number | null): string {
+function renderUnitPrice(value: number | null, adjustedValue: number | null): string {
   if (value === null) {
     return "Not listed";
   }
@@ -554,8 +561,8 @@ function renderSourceTypeOption(
 function sourceTypeLabel(value: EvidenceSourceTypeFilter): string {
   const labels: Record<EvidenceSourceTypeFilter, string> = {
     public_cost_book: "Public CDOT cost book",
-    public_bid_tab: "Public bid tabs",
-    all: "All evidence sources"
+    public_bid_tab: "FHU Bid Tabs",
+    all: "All Sources"
   };
 
   return labels[value];

@@ -253,6 +253,44 @@ class BidTabWorkbookImportTests(unittest.TestCase):
         self.assertTrue(all(row["matched_agency_item_code"] == "" for row in unmatched_rows))
         self.assertTrue(all(row["agency_item_code"] == "" for row in parsed.bidder_items if row["bid_tab_item_id"] in {item["bid_tab_item_id"] for item in unmatched_rows}))
 
+    @unittest.skipUnless(
+        Path(r"C:\Users\Casey.Walrath\Downloads\2022 03 10 Contractor Bids Kipling at Bowles(1).xlsx").exists(),
+        "Kipling/Bowles workbook is not present on this machine.",
+    )
+    def test_real_kipling_bowles_workbook_parse_contract(self) -> None:
+        parsed = parse_workbook(
+            Path(r"C:\Users\Casey.Walrath\Downloads\2022 03 10 Contractor Bids Kipling at Bowles(1).xlsx"),
+            "fhu_bid_tab_kipling_bowles_2022_03_10",
+            "fhu_bid_tab_kipling_bowles_2022_03_10_5_69_15_4005",
+            "fhu_kipling_bowles_20220310",
+            "2022-03-10",
+        )
+
+        agency_codes = {
+            row["item_code"].strip().upper()
+            for row in agency_item_rows(Path("public/data/agency_items.csv"))
+            if row.get("item_code")
+        }
+        totals = {row["bidder_name"]: row["bid_total"] for row in parsed.bidder_bids}
+
+        self.assertEqual("S Kipling Pkwy Improvement Project at W Bowles Ave", parsed.project_name)
+        self.assertEqual("5-69-15-4005", parsed.project_number)
+        self.assertEqual(108, len(parsed.item_rows))
+        self.assertEqual(4, len(parsed.bidder_bids))
+        self.assertEqual(432, len(parsed.bidder_items))
+        self.assertEqual(216, len(parsed.observations))
+        self.assertEqual([], parsed.warnings)
+        self.assertEqual("SEMA", parsed.bidder_bids[0]["bidder_name"])
+        self.assertEqual("true", parsed.bidder_bids[0]["apparent_low"])
+        self.assertEqual("2387458.90", totals["SEMA"])
+        self.assertEqual("2487594.00", totals["American West"])
+        self.assertEqual("2540424.10", totals["CEI"])
+        self.assertEqual("2629502.45", totals["EDGE"])
+        self.assertEqual("60357.50", parsed.item_rows[0]["average_bid_unit_price"])
+        self.assertEqual("700-70380", parsed.item_rows[-1]["item_code"])
+        self.assertTrue(all(row["item_code"] in agency_codes for row in parsed.item_rows))
+        self.assertFalse(any(int(row["workbook_row"]) >= 120 for row in parsed.item_rows))
+
     def test_short_item_code_resolver_only_applies_exact_compatible_matches(self) -> None:
         parsed = parse_workbook(
             self.write_bid_form_sample_workbook(),

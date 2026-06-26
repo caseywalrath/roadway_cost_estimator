@@ -179,7 +179,7 @@ Required columns:
 
 Rows with a blank `canonical_item_id` can appear when the row is present only to support item-code lookup and has not been mapped to a comparable item family yet. Exact-code pricing still requires matching rows in `item_observations.csv`.
 
-The current `agency_items.csv` is generated from the public CDOT 2026 Item Code Book Excel file linked from CDOT's Item Code Book by Year page. The generated file includes all valid item-code rows found in the workbook. The raw workbook is not committed.
+The current `agency_items.csv` is generated from the public CDOT 2026 Item Code Book Excel file linked from CDOT's Item Code Book by Year page. The generated file includes all valid item-code rows found in the workbook. Two reviewed Kipling/Bowles bid-tab lookup rows, `625-01000` Utility Surveying and `626-01100` Public Information Services, are also included so those exact CDOT-coded bid-tab rows remain searchable. The raw workbook is not committed.
 
 ### `spec_sections.csv`
 
@@ -200,7 +200,7 @@ The current file is generated with `scripts/import_cdot_item_code_book.py` from 
 
 ### `inflation_index.csv`
 
-Static FHWA National Highway Construction Cost Index values used only when the user turns on Inflation Adjustment in the Awarded Bid Summary.
+Static FHWA National Highway Construction Cost Index values used only when the user turns on Inflation Adjustment for displayed unit-price summaries.
 
 Required columns:
 
@@ -215,9 +215,9 @@ Required columns:
 - `source_url`
 - `notes`
 
-The current file is generated with `scripts/refresh_nhcci_index.py` from the DOT public data endpoint for FHWA NHCCI. The app uses the unadjusted quarterly NHCCI value and adjusts awarded bid unit prices from each evidence row's let-date quarter to the latest loaded NHCCI quarter. Matching Projects table prices and CSV export remain original awarded-bid evidence.
+The current file is generated with `scripts/refresh_nhcci_index.py` from the DOT public data endpoint for FHWA NHCCI. The app uses the unadjusted quarterly NHCCI value and adjusts awarded bid, average bid, and engineer estimate unit prices from each evidence row's let-date quarter to the latest loaded NHCCI quarter. Matching Projects table prices keep original evidence as the primary value and CSV export remains original evidence.
 
-If evidence contains quarters newer than the latest loaded official NHCCI value, validation reports a warning and the adjusted summary excludes those awarded bid rows when Inflation Adjustment is on. The app does not interpolate or fabricate missing index values.
+If evidence contains quarters newer than the latest loaded official NHCCI value, validation reports a warning and the adjusted summaries exclude those unit-price values when Inflation Adjustment is on. The app does not interpolate or fabricate missing index values.
 
 ### `aliases.csv`
 
@@ -426,6 +426,7 @@ Supported layout families:
 
 - Watson SAQ-style workbooks with project metadata, engineer estimate, bidder, and average bid column groups.
 - Arapahoe bid-form workbooks with `ITEM NO.`, `ITEM DESCRIPTION`, `UNIT`, `QUANTITY`, itemized engineer estimate columns, and bidder unit/total column pairs. Average bid unit prices are calculated from bidder unit prices during import.
+- Kipling/Bowles split-header tabulation workbooks with `ITEM` / `NO.`, item descriptions, unit, quantity, engineer estimate columns, bidder unit/extended cost pairs, and an `Average Bid Price` reference group. The importer parses the base bid schedule only and ignores blank/error alternate rows.
 - Ralston `Results` sheet workbooks with `No.`, `Spec*`, `Item`, `Unit`, `Quantity`, paired bidder `Unit Cost` / `Extended Cost` columns, and optional reviewed reconciliation columns `CDOT Item Code`, `CDOT Description`, `CDOT Unit`, and `Confidence`. Rows with reviewed CDOT item codes are promoted into exact-code evidence; blank or `None` CDOT item codes remain source-only.
 
 ### `imports/fhu_bid_tab_*_match_candidates.csv`
