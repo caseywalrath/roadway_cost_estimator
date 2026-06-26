@@ -489,7 +489,7 @@ Required columns match `bidder_item_observations.csv`.
 Run the committed CSV package validator before promoting new app-loaded data or deploying the site:
 
 ```text
-npm run validate:data
+python scripts/validate_data_package.py
 ```
 
 The validator uses only Python standard library modules and reads the app-loaded CSV files from `public/data`.
