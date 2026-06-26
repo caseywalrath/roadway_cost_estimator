@@ -16,178 +16,73 @@ Codex should ask the user to manually run terminal commands only when there is a
 
 ## Communication Requirements
 
-Use literal, direct, non-empathic, and highly structured language.
+Use literal, direct, non-empathic, and highly structured language. Explain what is happening and why in plain English.
 
-Explain what is happening and why in plain English.
+When giving the user instructions, distinguish: (1) what Codex will do, (2) what the user must do, (3) why the step is necessary, (4) what result to expect. Do not provide unexplained command lists.
 
-When giving instructions to the user, distinguish between:
+## Canonical Local Commands
 
-1. What Codex will do.
-2. What the user must do.
-3. Why the step is necessary.
-4. What result to expect.
+This repo runs in a OneDrive-synced folder with portable Node, inside the Codex sandbox. That
+combination causes the **same failures almost every session**. The commands below already bake
+in the known workaround — **use them as the default, do not attempt the naive form first, watch
+it fail, then retry.** This is the single biggest source of wasted turns.
 
-Do not provide unexplained command lists.
+Portable Node lives at `C:\Users\Casey.Walrath\Tools\node`. Call Node and the local package
+binaries directly; do not rely on `npm` / `node` being on PATH (they often are not), and do not
+use `npm run` for verification.
 
-Do not ask the user to run terminal commands manually unless necessary.
+| Need | Use this directly | Why / what it avoids |
+|---|---|---|
+| Typecheck (default code check) | `node ./node_modules/typescript/bin/tsc` | `tsconfig` sets `noEmit`, so this is a full typecheck that writes nothing — fast, never touches `dist`, never hits the OneDrive lock |
+| Production build (only when bundle matters) | `node ./node_modules/vite/bin/vite.js build --outDir dist-check --configLoader native` | `--outDir dist-check` avoids the OneDrive `dist` lock; `--configLoader native` avoids the `require is not defined` config-load failure. Run it **with escalation** — `spawn EPERM` is expected without it |
+| Local UI preview (only for visual checks) | serve built `dist-check` as a static server on `http://127.0.0.1:4174/` | `npm run dev` / `Start-Process` is unstable here (PATH-duplication, port never binds). The static preview on :4174 is the method that works |
+| Data validation | `python scripts/validate_data_package.py` | — |
 
-## Terminal And Git Command Policy
+### Git writes (fetch / branch / add / commit / push)
 
-Codex should run safe commands itself from the workspace whenever possible.
+On this OneDrive repo, Git writes **will** fail to create lock files inside `.git` on the first
+unprivileged attempt (`.git/index.lock`, `.git/config.lock`, `.git/FETCH_HEAD`,
+`could not lock`, `Permission denied`). This is a metadata-permission issue, not a broken repo.
 
-Examples of commands Codex should usually run:
+**Request approval/escalation on the first attempt** rather than running unprivileged, observing
+the lock error, and retrying. `git push` additionally needs network approval in the sandbox —
+expect that on the first push too.
 
-```text
-git status
-git branch
-git checkout -b branch-name
-git add
-git commit
-git log
-git diff
-git remote -v
-```
+If a write still fails after the escalated attempt, a *specific* stale lock file (e.g.
+`.git/index.lock`) may be removed after confirming it is safe. Never remove the full `.git`
+folder unless the user explicitly requests reinitialization and understands the consequence.
+Avoid broad process-kill or destructive cleanup.
 
-Codex may need user approval, authentication, or manual action for:
+### Pull requests
 
-```text
-git pull
-git push
-gh auth login
-gh pr create
-```
+`gh` is **not available** in this environment — do not spend a turn re-checking for it. Use the
+GitHub connector directly for PR creation. If the connector is also unavailable, push the branch
+and give the user the direct URL: `https://github.com/caseywalrath/roadway_cost_estimator/pull/new/[branch-name]`.
 
-Codex must be cautious and explicit before using:
+### Generated folders
 
-```text
-git reset
-git clean
-git rebase
-git push --force
-```
+`dist-check/` and `__pycache__/` are gitignored. **Leave them in place** — OneDrive denies
+deletion, and there is no reason to delete them. Do not retry cleanup of these folders.
 
-If Codex cannot run a command itself, Codex must explain:
+### Browser automation
 
-1. The exact command that needs to run.
-2. Why Codex cannot run it.
-3. Whether the blocker is authentication, permission, safety, or missing local setup.
-4. The exact manual action required from the user.
+The in-app browser is unreliable here and **cannot perform file downloads at all** — never
+attempt download-event verification. When the browser runtime fails to initialize, fall back to
+source inspection and direct CSV/DOM data checks rather than claiming browser verification
+occurred. Reserve browser checks for genuine UI/visual changes (see Verification by Change Type).
 
-Preferred user-facing response when terminal commands are suggested unnecessarily:
+### Stale remote-tracking refs
 
-```text
-I am not using a separate terminal workflow unless absolutely necessary.
+Local `origin/main` can lag what GitHub web shows. Always `git fetch --all --prune` before
+concluding a file is missing or before branching, so feature branches start from current
+`origin/main`. If a branch was created from stale `origin/main`, recreate or fast-forward it
+from current `origin/main` before making source changes. If an untracked local file duplicates a
+newly fetched tracked file, verify matching content before deleting the duplicate.
 
-Please run the command yourself from the workspace.
+### Caution before destructive Git
 
-If you cannot, explain the blocker in plain English and ask for the specific approval or manual action needed.
-```
-
-## Known Local Environment Lessons
-
-This project is stored inside a OneDrive-synced folder.
-
-OneDrive and Windows file permissions can interfere with Git metadata writes inside the `.git` folder.
-
-Symptoms may include errors involving:
-
-```text
-.git/config.lock
-.git/index.lock
-.git/refs/heads/[branch-name].lock
-Permission denied
-could not lock config file
-Unable to create index.lock
-```
-
-These errors do not necessarily mean the project files are broken.
-
-They usually mean Git could not write temporary lock files inside `.git`.
-
-Codex should handle this as follows:
-
-1. Explain that the blocker is local Git metadata permissions.
-2. Retry the same Git operation with the proper Codex approval request when appropriate.
-3. Avoid asking the user to run the command manually unless approval-based retry fails.
-4. Inspect the Git state after the retry.
-5. Avoid broad process-kill or destructive cleanup commands.
-
-If a stale Git lock file exists after a failed Git command, Codex may remove only the specific stale lock file after confirming it is safe.
-
-Codex must not remove the full `.git` folder unless the user explicitly requests a full Git reinitialization and understands the consequence.
-
-Node.js is available through a portable ZIP install, not a standard system install.
-
-Known working path:
-
-```text
-C:\Users\Casey.Walrath\Tools\node
-```
-
-Known working commands should call Node or npm from that folder:
-
-```text
-C:\Users\Casey.Walrath\Tools\node\node.exe
-C:\Users\Casey.Walrath\Tools\node\npm.cmd
-```
-
-When running npm scripts, Codex may need to prefix `PATH` so scripts resolve to portable Node instead of the Codex desktop bundled Node:
-
-```text
-$env:PATH='C:\Users\Casey.Walrath\Tools\node;' + $env:PATH
-```
-
-If this is not done, symptoms may include:
-
-```text
-Access is denied
-spawn EPERM
-```
-
-Vite builds may fail locally when OneDrive locks existing output files in `dist`.
-
-Symptoms may include:
-
-```text
-EPERM, Permission denied: ...\dist\data
-EBUSY: resource busy or locked
-```
-
-For verification, Codex may build to a temporary output folder instead of `dist`:
-
-```text
-C:\Users\Casey.Walrath\Tools\node\node.exe .\node_modules\vite\bin\vite.js build --outDir dist-check
-```
-
-After verification, remove only the specific temporary build folder after checking that the resolved path is inside the workspace.
-
-The GitHub CLI may not be installed or may not respond in this environment.
-
-If `gh` is unavailable, Codex should still use local Git for branch, commit, and push operations when possible, then provide the direct GitHub pull request URL:
-
-```text
-https://github.com/caseywalrath/roadway_cost_estimator/pull/new/[branch-name]
-```
-
-Browser automation through the in-app browser may fail because the Node REPL reports local Node access errors. If that happens, Codex should use source inspection, local HTTP checks, and user visual confirmation rather than claiming browser automation verification occurred.
-
-Local remote-tracking refs can be stale even when GitHub web already shows newer files on `main`.
-
-Symptoms may include:
-
-```text
-GitHub web shows a file on main.
-Local `git ls-tree origin/main` does not show the file.
-Local `git status` reports the branch is behind or appears inconsistent with GitHub web.
-```
-
-Codex should handle this as follows:
-
-1. Run `git fetch --all --prune` before concluding that a file is missing from GitHub.
-2. Compare the local `origin/main` commit with the GitHub web commit shown in the browser when the user provides a screenshot or commit reference.
-3. If a feature branch was created from stale `origin/main`, fast-forward or recreate it from current `origin/main` before making source changes.
-4. If an untracked local copy of a file duplicates a newly fetched tracked file, verify matching content before deleting the duplicate.
-5. Explain the stale-ref issue plainly so the user does not mistake it for conflicting project versions.
+Be explicit and confirm before `git reset`, `git clean`, `git rebase`, or `git push --force`.
+Force push is not used for this project unless the user explicitly requests overwriting history.
 
 ## First Push And Existing Remote History
 
@@ -275,27 +170,22 @@ Use one branch per meaningful unit of work.
 
 Merge back to `main` only after the change has been tested and reviewed.
 
-## Local Testing Workflow
+## Verification By Change Type
 
-Before committing, Codex should run the most relevant local check available.
+Scale verification to the risk of the change. Do **not** run the full build + browser loop for
+every change — most changes need far less. Browser verification is **opt-in**, reserved for
+UI/visual changes. Use the Canonical Local Commands above for each check.
 
-For a static web app, this may include:
+| Change type | Required check | Skip |
+|---|---|---|
+| Markdown / docs / comments only | proofread; no command needed | build, validate, browser |
+| Python importer / validator / parser | the specific `python -m unittest ...` or script run, plus `validate_data_package.py` if data changed | vite build, browser |
+| CSV data only | `python scripts/validate_data_package.py` + a direct row-count check | vite build, browser |
+| TypeScript logic, non-visual | `tsc` typecheck | vite build, browser (unless requested) |
+| UI / CSS / visual | `tsc`, then vite build to `dist-check`, then optional static preview on :4174 | download-event check (impossible in-app browser) |
 
-1. Opening or serving `index.html`.
-2. Starting a local development server.
-3. Checking that the page loads.
-4. Checking that the changed user interface works.
-5. Checking for obvious console or runtime errors when possible.
-
-Codex should give the user the local URL when a local server is running.
-
-Example local URLs:
-
-```text
-http://localhost:3000
-http://localhost:5173
-http://127.0.0.1:5500
-```
+When a static preview server is running, give the user the local URL
+(`http://127.0.0.1:4174/`).
 
 ## Commit And Push Workflow
 
@@ -348,15 +238,9 @@ https://[username].github.io/[repo-name]/
 
 ## Project Documentation Policy
 
-This file, `codex.md`, contains workflow, user context, and Codex operating rules.
+`codex.md` holds workflow, user context, and Codex operating rules. The repository also contains `architecture_overview.md` plus `docs/data_schema.md`, `docs/implementation_notes.md`, `project_roadmap.md`, and `user_workflow.md`.
 
-The project may later use a separate `architecture_overview.md` file for application architecture.
-
-If `architecture_overview.md` exists, Codex must review it before making session plans or code changes.
-
-If architecture, file structure, deployment behavior, data flow, or major app behavior changes, Codex should update the relevant documentation.
-
-Minor copy edits, small visual tweaks, and narrow bug fixes do not require architecture documentation updates unless they change how the app works.
+Codex must review `architecture_overview.md` before new session plans or code changes. Update `architecture_overview.md` (and the related docs above) when architecture, file structure, deployment behavior, data flow, or major app behavior changes. Minor copy edits, small visual tweaks, and narrow bug fixes do not require documentation updates unless they change how the app works.
 
 ## Session Closeout Checklist
 
@@ -369,20 +253,3 @@ Before closing a session, Codex should:
 5. Commit the work if requested or appropriate.
 6. Push the branch if requested and possible.
 7. Tell the user the next manual GitHub step, if any.
-
-## Current Documentation State
-
-This repository contains `architecture_overview.md`.
-
-Codex must review `architecture_overview.md` before new session plans or code changes.
-
-Codex should update `architecture_overview.md` when architecture, file structure, deployment behavior, data flow, or major app behavior changes.
-
-Current product documentation also includes:
-
-```text
-docs/data_schema.md
-docs/implementation_notes.md
-project_roadmap.md
-user_workflow.md
-```

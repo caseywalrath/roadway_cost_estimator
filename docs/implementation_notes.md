@@ -33,70 +33,37 @@ Not included:
 
 ## Local Commands
 
-Install dependencies:
+The canonical local commands for the Codex sandbox/OneDrive/portable-Node environment — and
+which check to run for which kind of change — live in `codex.md` ("Canonical Local Commands"
+and "Verification By Change Type"). Use those directly; the naive `npm run ...` forms are
+unreliable here. The essentials:
+
+Validate the app-loaded CSV data package (fails on structural/relationship/numeric/date errors
+and demo-evidence leakage; warns on missing optional metadata, lookup gaps, and smoke-count
+changes):
 
 ```text
-npm install
+python scripts/validate_data_package.py
 ```
 
-Validate the app-loaded CSV data package:
+Typecheck (the everyday "does it compile" check — `tsconfig` sets `noEmit`, so this writes
+nothing and never hits the OneDrive `dist` lock):
 
 ```text
-npm run validate:data
+node ./node_modules/typescript/bin/tsc
 ```
 
-This runs `scripts/validate_data_package.py` against `public/data`. It fails on structural data problems, relationship errors, invalid numeric/date values, and app-loaded demo evidence leakage. It warns on missing optional metadata, lookup coverage gaps, and smoke-test count changes.
-
-Run a local development server:
+Production build, only when the bundle itself matters (run with escalation; `spawn EPERM` is
+expected otherwise). It targets `dist-check` to avoid the OneDrive `dist` lock and uses the
+native config loader:
 
 ```text
-npm run dev
+node ./node_modules/vite/bin/vite.js build --outDir dist-check --configLoader native
 ```
 
-If Node.js is installed as a portable ZIP, run npm through the extracted folder:
-
-```text
-C:\Users\Casey.Walrath\Tools\node\npm.cmd run dev
-```
-
-If an npm script resolves to the Codex desktop bundled Node instead of the portable Node install, prefix `PATH` before running the command:
-
-```text
-$env:PATH='C:\Users\Casey.Walrath\Tools\node;' + $env:PATH
-C:\Users\Casey.Walrath\Tools\node\npm.cmd run dev
-```
-
-Build the static site:
-
-```text
-npm run build
-```
-
-If using portable Node:
-
-```text
-C:\Users\Casey.Walrath\Tools\node\npm.cmd run build
-```
-
-Local builds may fail if OneDrive locks existing files in `dist`. If that happens, use a temporary output folder to verify the TypeScript and Vite bundle:
-
-```text
-C:\Users\Casey.Walrath\Tools\node\node.exe .\node_modules\vite\bin\vite.js build --outDir dist-check
-```
-
-Delete the temporary output folder after verification. Do not commit `dist`, `dist-check`, or other generated build folders.
-
-Preview the production build:
-
-```text
-npm run preview
-```
-
-Known current local test URL:
-
-```text
-http://127.0.0.1:5173/
-```
+`dist-check/` is gitignored — leave it in place; do not commit or attempt to delete it. For a
+local UI preview, serve the built `dist-check` as a static server on `http://127.0.0.1:4174/`
+rather than `npm run dev`, which does not reliably bind a port in this environment.
 
 ## CDOT Item Code Book Import
 
@@ -137,11 +104,9 @@ Run the parser with the default 2026 Q1 repo-root PDF:
 python scripts/parse_cdot_cost_data_book.py
 ```
 
-For another promoted period, pass the source PDF, output path, source period, and item-section marker explicitly:
-
-```text
-python scripts/parse_cdot_cost_data_book.py --source CDOTRM_EEMA_Cost_Data_Book_-_2023_-_4th_Qtr_-_4-9-2026.pdf --output public/data/imports/cdot_cost_data_book_2023_q4_item_unit_costs.csv --source-period "2023 Q4" --item-section-marker "Item Unit Costs by Projects -- 2023 Cost Data"
-```
+For another promoted period, pass the source PDF, output path, source period, and item-section
+marker explicitly (run `python scripts/parse_cdot_cost_data_book.py --help` for the exact flags;
+prior period invocations are in git history).
 
 To use the Codex bundled Python runtime, replace `python` with the bundled Python executable returned by the workspace dependency loader.
 
@@ -169,11 +134,9 @@ Promote reviewed staging rows into app-loaded CSVs:
 python scripts/promote_cdot_cost_data_book.py
 ```
 
-For another promoted period, pass the period-specific source metadata explicitly:
-
-```text
-python scripts/promote_cdot_cost_data_book.py --source-pdf CDOTRM_EEMA_Cost_Data_Book_-_2023_-_4th_Qtr_-_4-9-2026.pdf --staging-items public/data/imports/cdot_cost_data_book_2023_q4_item_unit_costs.csv --project-lookup-output public/data/imports/cdot_cost_data_book_2023_q4_projects.csv --source-id cdot_cost_data_book_2023_q4 --source-label "CDOT 2023 Q4 Cost Data Book" --source-year 2023 --source-notes "Public CDOT Cost Data Book 2023 Q4 item-level project rows promoted from reviewed staging CSV." --row-prefix cdot_2023q4
-```
+For another promoted period, pass the period-specific source metadata explicitly (see
+`python scripts/promote_cdot_cost_data_book.py --help`; prior period invocations are in git
+history).
 
 The promotion script parses project-list pages from the PDF, writes a project staging lookup, validates item rows, and rewrites:
 
@@ -186,13 +149,7 @@ public/data/item_observations.csv
 
 It preserves other promoted cost-book periods and removes any old app-loaded demo evidence rows if they are present in the CSV package. Each cost-book item row becomes separate awarded-bid, average-bid, and engineer-estimate observations. The app defaults to awarded-bid evidence.
 
-After promotion, run:
-
-```text
-npm run validate:data
-```
-
-Review any warnings before committing promoted data.
+After promotion, run `python scripts/validate_data_package.py` and review any warnings before committing promoted data.
 
 Run promotion fixture tests:
 
@@ -225,13 +182,14 @@ python scripts/import_bid_tab_workbook.py --workbook "C:\Users\Casey.Walrath\Dow
 
 The current Ralston output is 235 source bid-tab item rows, 210 matched rows promoted into 420 exact-code observations, 25 unmatched rows left out of exact-code evidence, and 1,410 bidder item rows. The source City of Arvada item codes remain in `bid_tab_items.csv`; Matching Projects and Unit Price Summaries use reviewed CDOT item codes only.
 
-The Kipling/Bowles workbook uses CDOT item codes directly and promotes every base bid schedule row into exact-code public bid-tab evidence:
-
-```text
-python scripts/import_bid_tab_workbook.py --workbook "C:\Users\Casey.Walrath\Downloads\2022 03 10 Contractor Bids Kipling at Bowles(1).xlsx" --source-id fhu_bid_tab_kipling_bowles_2022_03_10 --source-label "FHU Civil Group Bid Tabs - S Kipling Pkwy at W Bowles Ave" --source-year 2022 --project-id fhu_bid_tab_kipling_bowles_2022_03_10_5_69_15_4005 --row-prefix fhu_kipling_bowles_20220310 --date-basis 2022-03-10 --agency-owner "Jefferson County" --county-region "Jefferson County" --staging-items public/data/imports/fhu_bid_tab_kipling_bowles_2022_03_10_item_unit_costs.csv --staging-bidder-bids public/data/imports/fhu_bid_tab_kipling_bowles_2022_03_10_bidder_bids.csv --staging-bidder-items public/data/imports/fhu_bid_tab_kipling_bowles_2022_03_10_bidder_item_observations.csv --staging-match-candidates public/data/imports/fhu_bid_tab_kipling_bowles_2022_03_10_match_candidates.csv
-```
-
-The current Kipling/Bowles output is 108 source bid-tab item rows, 216 exact-code observations, 4 bidder bids, and 432 bidder item rows. Two reviewed CDOT lookup rows, `625-01000` and `626-01100`, are carried in `agency_items.csv` so every Kipling/Bowles bid-tab item remains searchable through the item picker.
+Other supported workbooks (e.g. Kipling/Bowles, which uses CDOT item codes directly and promotes
+every base bid schedule row into exact-code evidence) follow the same importer with workbook- and
+project-specific flags plus optional `--staging-*` paths. Run
+`python scripts/import_bid_tab_workbook.py --help` for the full flag set; prior per-workbook
+invocations are in git history. The current Kipling/Bowles output is 108 source bid-tab item rows,
+216 exact-code observations, 4 bidder bids, and 432 bidder item rows. Two reviewed CDOT lookup
+rows, `625-01000` and `626-01100`, are carried in `agency_items.csv` so every Kipling/Bowles
+bid-tab item remains searchable through the item picker.
 
 ## GitHub Pages
 
