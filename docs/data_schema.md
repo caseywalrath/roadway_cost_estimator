@@ -200,7 +200,7 @@ The current file is generated with `scripts/import_cdot_item_code_book.py` from 
 
 ### `inflation_index.csv`
 
-Static FHWA National Highway Construction Cost Index values used only when the user turns on Inflation Adjustment in the Awarded Bid Summary.
+Static FHWA National Highway Construction Cost Index values used only when the user turns on Inflation Adjustment for displayed unit-price summaries.
 
 Required columns:
 
@@ -215,9 +215,9 @@ Required columns:
 - `source_url`
 - `notes`
 
-The current file is generated with `scripts/refresh_nhcci_index.py` from the DOT public data endpoint for FHWA NHCCI. The app uses the unadjusted quarterly NHCCI value and adjusts awarded bid unit prices from each evidence row's let-date quarter to the latest loaded NHCCI quarter. Matching Projects table prices and CSV export remain original awarded-bid evidence.
+The current file is generated with `scripts/refresh_nhcci_index.py` from the DOT public data endpoint for FHWA NHCCI. The app uses the unadjusted quarterly NHCCI value and adjusts awarded bid, average bid, and engineer estimate unit prices from each evidence row's let-date quarter to the latest loaded NHCCI quarter. Matching Projects table prices keep original evidence as the primary value and CSV export remains original evidence.
 
-If evidence contains quarters newer than the latest loaded official NHCCI value, validation reports a warning and the adjusted summary excludes those awarded bid rows when Inflation Adjustment is on. The app does not interpolate or fabricate missing index values.
+If evidence contains quarters newer than the latest loaded official NHCCI value, validation reports a warning and the adjusted summaries exclude those unit-price values when Inflation Adjustment is on. The app does not interpolate or fabricate missing index values.
 
 ### `aliases.csv`
 
