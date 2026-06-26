@@ -1,0 +1,98 @@
+bid_tab_item_id,source_item_code,source_item_description,unit_normalized,candidate_agency_item_code,candidate_description,candidate_unit,candidate_count,suggestion_status
+fhu_kipling_bowles_20220310_row_0009,201-00000,Clearing and Grubbing,L S,201-00000,Clearing and Grubbing,L S,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0010,202-00019,Removal of Inlet,EACH,202-00019,Removal of Inlet,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0011,202-00032,Removal of Valve,EACH,202-00032,Removal of Valve,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0012,202-00035,Removal of Pipe,LF,202-00035,Removal of Pipe,LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0013,202-00195,Removal of Median Cover,SY,202-00195,Removal of Median Cover,SY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0014,202-00200,Removal of Sidewalk,SY,202-00200,Removal of Sidewalk,SY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0015,202-00202,Removal of Gutter,LF,202-00202,Removal of Gutter,LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0016,202-00203,Removal of Curb and Gutter,LF,202-00203,Removal of Curb and Gutter,LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0017,202-00206,Removal of Concrete Curb Ramp,SY,202-00206,Removal of Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0018,202-00220,Removal of Asphalt Mat,SY,202-00220,Removal of Asphalt Mat,SY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0019,202-00240,Removal of Asphalt Mat (Planing),SY,202-00240,Removal of Asphalt Mat (Planing),SY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0020,202-00250,Removal of Pavement Marking,SF,202-00250,Removal of Pavement Marking,SF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0021,202-00810,Removal of Ground Sign,EACH,202-00810,Removal of Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0022,202-00821,Removal of Sign Panel,EACH,202-00821,Removal of Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0023,202-00828,Removal of Traffic Signal Equipment,L S,202-00828,Removal of Traffic Signal Equipment,L S,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0025,202-04002,Clean Culvert,EACH,202-04002,Clean Culvert,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0026,203-00010,Unclassified Excavation (Complete in Place),CY,203-00010,Unclassified Excavation (Complete In Place),CY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0027,203-01597,Potholing,HOUR,203-01597,Potholing,HOUR,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0028,206-00065,Structure Backfill (Flow-fill),CY,206-00065,Structure Backfill (Flow-Fill),CY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0029,207-00205,Topsoil,CY,207-00205,Topsoil,CY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0030,207-00210,Stockpile Topsoil,CY,207-00210,Stockpile Topsoil,CY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0031,208-00012,Erosion Log Type 1 (9 Inch),LF,208-00012,Erosion Log Type 1 (9 Inch),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0032,208-00035,Aggregate Bag,LF,208-00035,Aggregate Bag,LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0034,208-00051,Storm Drain Inlet Protection (Type I),LF,208-00051,Storm Drain Inlet Protection (Type I),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0035,208-00052,Storm Drain Inlet Protection (Type II),LF,208-00052,Storm Drain Inlet Protection (Type II),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0036,208-00103,Removal and Disposal of Sediment (Labor),HOUR,208-00103,Removal and Disposal of Sediment (Labor),HOUR,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0037,208-00105,Removal and Disposal of Sediment (Equipment),HOUR,208-00105,Removal and Disposal of Sediment (Equipment),HOUR,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0038,208-00106,Sweeping (Sediment Removal),HOUR,208-00106,Sweeping (Sediment Removal),HOUR,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0039,208-00107,Removal of Trash,HOUR,208-00107,Removal of Trash,HOUR,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0041,210-00015,Reset End Section,EACH,210-00015,Reset End Section,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0042,210-00040,Reset Water Line,L S,210-00040,Reset Water Line,L S,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0043,210-00479,Reset Radio Communication Antenna,EACH,210-00479,Reset Radio Communication Antenna,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0044,210-00810,Reset Ground Sign,EACH,210-00810,Reset Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0045,210-00815,Reset Sign Panel,EACH,210-00815,Reset Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0046,210-00867,Reset Fire Preemption Unit,EACH,210-00867,Reset Fire Preemption Unit,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0047,210-02806,Grinding: Slope Correction,SF,210-02806,Grinding: Slope Correction,SF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0048,212-00032,Soil Conditioning,ACRE,212-00032,Soil Conditioning,ACRE,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0049,212-00050,Sod,SF,212-00050,Sod,SF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0050,212-00708,Seeding (Native) Broadcast,ACRE,212-00708,Seeding (Native) Broadcast,ACRE,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0051,213-00003,Mulching (Weed Free Hay),ACRE,213-00002,Mulching (Weed Free Hay),ACRE,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0052,213-00067,Rock Mulch (Weed Free),SF,213-00067,Rock Mulch (Weed Free),SF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0053,403-00720,Hot Mix Asphalt (Patching) (Asphalt),TON,403-00720,Hot Mix Asphalt (Patching) (Asphalt),TON,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0056,411-10255,Emulsified Asphalt (Slow-Setting),GAL,411-10255,Emulsified Asphalt (Slow-Setting),GAL,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0057,503-00048,Drilled Shaft (48 Inch),LF,503-00048,Drilled Shaft (48 Inch),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0058,603-01185,18 Inch Reinforced Concrete Pipe (Complete in Place),LF,603-01185,18 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0059,603-01365,36 Inch Reinforced Concrete Pipe (Complete in Place),LF,603-01365,36 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0060,603-05036,36 Inch Reinforced Concrete End Section,EACH,603-05036,36 Inch Reinforced Concrete End Section,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0061,604-16005,Inlet Type 16 (5 Foot),EACH,604-16005,Inlet Type 16 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0062,604-19205,Inlet Type R L 10 (5 Foot),EACH,604-19205,Inlet Type R L 10 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0063,604-19210,Inlet Type R L 10 (10 Foot),EACH,604-19210,Inlet Type R L 10 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0064,604-30005,Manhole Slab Base (5 Foot),EACH,604-30005,Manhole Slab Base (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0065,604-30010,Manhole Slab Base (10 Foot),EACH,604-30010,Manhole Slab Base (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0066,607-11525,Fence (Plastic),LF,607-11525,Fence (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0068,608-00006,Concrete Sidewalk (6 Inch),SY,608-00006,Concrete Sidewalk (6 Inch),SY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0069,608-00010,Concrete Curb Ramp,SY,608-00010,Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0070,609-21010,Curb and Gutter Type 2 (Section I-B),LF,609-21010,Curb and Gutter Type 2 (Section I-B),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0071,609-21020,Curb and Gutter Type 2 (Section II-B),LF,609-21020,Curb and Gutter Type 2 (Section II-B),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0072,609-24004,Gutter Type 2 (4 Foot),LF,609-24004,Gutter Type 2 (4 Foot),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0073,610-00020,Median Cover Material (Patterned Concrete),SF,610-00020,Median Cover Material (Patterned Concrete),SF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0074,610-00100,Median Edging (Patterned Concrete),LF,610-00100,Median Edging (Patterned Concrete),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0076,613-00206,2 Inch Electrical Conduit (Bored),LF,613-00206,2 Inch Electrical Conduit (Bored),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0077,613-00306,3 Inch Electrical Conduit (Bored),LF,613-00306,3 Inch Electrical Conduit (Bored),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0078,613-01200,2 Inch Electrical Conduit (Plastic),LF,613-01200,2 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0079,613-01300,3 Inch Electrical Conduit (Plastic),LF,613-01300,3 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0080,613-07001,Type One Pull Box,EACH,613-07001,Type One Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0081,613-07003,Type Three Pull Box,EACH,613-07003,Type Three Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0082,613-10000,Wiring,L S,613-10000,Wiring,L S,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0083,613-50150,Secondary Service Pedestal,EACH,613-50150,Secondary Service Pedestal,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0084,614-00011,Sign Panel (Class I),SF,614-00011,Sign Panel (Class I),SF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0086,614-70150,Pedestrian Signal Face (16)(Countdown),EACH,614-70150,Pedestrian Signal Face (16) (Countdown),EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0087,614-70336,Traffic Signal Face (12-12-12),EACH,614-70336,Traffic Signal Face (12-12-12),EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0088,614-72860,Pedestrian Push Button,EACH,614-72860,Pedestrian Push Button,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0089,614-72863,Pedestrian Push Button Post Assembly,EACH,614-72863,Pedestrian Push Button Post Assembly,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0091,614-81011,Traffic Signal-Light Pole Steel (1 Mast Arm) (Install Only),EACH,614-81011,Traffic Signal-Light Pole Steel (1 Mast Arm) (Install Only),EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0092,620-00020,Sanitary Facility,EACH,620-00020,Sanitary Facility,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0093,623-00602,2 Inch Plastic Pipe (Irrigation / Sleeve),LF,623-00602,2 Inch Plastic Pipe (Irrigation/Sleeve),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0094,623-00606,6 Inch Plastic Pipe (Irrigation / Sleeve),LF,623-00606,6 Inch Plastic Pipe (Irrigation/Sleeve),LF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0096,625-01000,Utility Surveying,EACH,625-01000,Utility Surveying,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0097,626-00000,Mobilization,L S,626-00000,Mobilization,L S,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0098,626-01100,Public Information Services,L S,626-01100,Public Information Services,L S,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0099,627-00008,Modified Epoxy Pavement Marking,GAL,627-00008,Modified Epoxy Pavement Marking,GAL,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0100,627-02010,Preformed Plastic Pavement Marking (Type I)(Inlaid),SF,627-01010,Preformed Plastic Pavement Marking (Type I)(Inlaid),SF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0101,627-30405,Preformed Thermoplastic Pavement Marking (Word-Symbol),SF,627-30405,Preformed Thermoplastic Pavement Marking (Word- Symbol),SF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0102,627-30410,Preformed Thermoplastic Pavement Marking (XWalk-Stop Line),SF,627-30410,Preformed Thermoplastic Pavement Marking (Xwalk- Stop Line),SF,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0103,630-00000,Flagging,HOUR,630-00000,Flagging,HOUR,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0104,630-00003,Uniformed Traffic Control,HOUR,630-00003,Uniformed Traffic Control,HOUR,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0105,630-00007,Traffic Control Inspection,DAY,630-00007,Traffic Control Inspection,DAY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0106,630-00012,Traffic Control Management,DAY,630-00012,Traffic Control Management,DAY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0107,630-80335,Barricade (Type 3 M-A)(Temporary),EACH,630-80335,Barricade (Type 3 M-A) (Temporary),EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0108,630-80341,Construction Traffic Sign (Panel Size A),EACH,630-80341,Construction Traffic Sign (Panel Size A),EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0109,630-80342,Construction Traffic Sign (Panel Size B),EACH,630-80342,Construction Traffic Sign (Panel Size B),EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0110,630-80359,Portable Message Sign Panel,DAY,630-80359,Portable Message Sign Panel,DAY,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0112,630-80360,Drum Channelizing Device,EACH,630-80360,Drum Channelizing Device,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0113,630-80380,Traffic Cone,EACH,630-80380,Traffic Cone,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0114,630-80384,Tubular Marker,EACH,630-80384,Tubular Marker,EACH,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0115,700-70010,F/A Minor Contract Revisions,F A,700-70010,F/A Minor Contract Revisions,F A,1,single_exact_description_unit_candidate
+fhu_kipling_bowles_20220310_row_0116,700-70380,F/A Erosion Control,F A,700-70380,F/A Erosion Control,F A,1,single_exact_description_unit_candidate

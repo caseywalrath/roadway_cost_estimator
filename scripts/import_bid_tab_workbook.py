@@ -344,6 +344,20 @@ def parse_workbook(
             date_basis,
         )
 
+    split_header = find_split_bid_tab_header_rows(sheet)
+    if split_header:
+        return parse_split_header_bid_tab_workbook(
+            workbook_path,
+            sheet,
+            formula_sheet,
+            source_id,
+            project_id,
+            row_prefix,
+            date_basis,
+            split_header[0],
+            split_header[1],
+        )
+
     bid_form_header = find_bid_form_header_row(sheet)
     if bid_form_header:
         return parse_bid_form_workbook(
@@ -738,6 +752,180 @@ def parse_saq_workbook(
     return ParsedBidTab(project_name, project_number, item_rows, bidder_bids, bidder_items, observations, warnings)
 
 
+def parse_split_header_bid_tab_workbook(
+    workbook_path: Path,
+    sheet,
+    formula_sheet,
+    source_id: str,
+    project_id: str,
+    row_prefix: str,
+    date_basis: str,
+    group_row: int,
+    header_row: int,
+) -> ParsedBidTab:
+    project_name = str(sheet["B1"].value or "").strip()
+    project_number = split_header_project_number(str(sheet["B2"].value or "").strip())
+    if not project_name or not project_number:
+        raise ValueError("Split-header bid tab workbook must include project name in B1 and project number in B2.")
+
+    groups = detect_split_header_price_groups(sheet, group_row, header_row)
+    engineer_group = next((group for group in groups if group.role == "engineer"), None)
+    average_group = next((group for group in groups if group.role == "average"), None)
+    bidder_groups = [group for group in groups if group.role == "bidder"]
+
+    if not engineer_group or not average_group:
+        raise ValueError("Split-header bid tab workbook must include engineer estimate and average bid price groups.")
+    if not bidder_groups:
+        raise ValueError("Split-header bid tab workbook must include at least one bidder price group.")
+
+    total_row = find_split_header_total_row(sheet, header_row + 1)
+    item_rows: list[dict[str, str]] = []
+    observations: list[dict[str, str]] = []
+    bidder_items: list[dict[str, str]] = []
+    bid_totals: dict[str, Decimal] = {group.name: Decimal("0.00") for group in bidder_groups}
+    engineer_total = Decimal("0.00")
+    warnings: list[str] = []
+
+    for row_index in range(header_row + 1, total_row):
+        item_code = normalize_bid_form_item_code(sheet.cell(row_index, 1).value)
+        if not item_code:
+            continue
+
+        description = str(sheet.cell(row_index, 2).value or "").strip()
+        unit_raw = str(sheet.cell(row_index, 3).value or "").strip()
+        unit_normalized = normalize_unit(unit_raw)
+        quantity = decimal_value(sheet.cell(row_index, 4).value)
+        engineer_unit_price = decimal_value(sheet.cell(row_index, engineer_group.unit_col).value)
+        engineer_extended_price = (quantity * engineer_unit_price).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        engineer_total += engineer_extended_price
+        row_id = f"{row_prefix}_row_{row_index:04d}"
+
+        bidder_unit_prices: list[Decimal] = []
+        for bidder_group in bidder_groups:
+            unit_price = decimal_value(sheet.cell(row_index, bidder_group.unit_col).value)
+            extended_price = (quantity * unit_price).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            bid_id = f"{row_prefix}_{slugify(bidder_group.name)}"
+            bidder_unit_prices.append(unit_price)
+            bid_totals[bidder_group.name] += extended_price
+            bidder_items.append(
+                {
+                    "bidder_item_observation_id": f"{row_id}_{slugify(bidder_group.name)}",
+                    "bid_tab_item_id": row_id,
+                    "bid_id": bid_id,
+                    "project_id": project_id,
+                    "source_id": source_id,
+                    "agency_item_code": item_code,
+                    "description_raw": description,
+                    "unit_raw": unit_raw,
+                    "unit_normalized": unit_normalized,
+                    "quantity": decimal_text(quantity),
+                    "unit_price": decimal_text(unit_price),
+                    "extended_price": decimal_text(extended_price),
+                }
+            )
+            validate_line_total(
+                sheet.cell(row_index, bidder_group.total_col).value,
+                formula_sheet.cell(row_index, bidder_group.total_col).value,
+                extended_price,
+                warnings,
+                row_index,
+                bidder_group.name,
+            )
+
+        validate_line_total(
+            sheet.cell(row_index, engineer_group.total_col).value,
+            formula_sheet.cell(row_index, engineer_group.total_col).value,
+            engineer_extended_price,
+            warnings,
+            row_index,
+            "Engineer estimate",
+        )
+
+        average_unit_price = (sum(bidder_unit_prices) / Decimal(len(bidder_unit_prices))).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP,
+        )
+        workbook_average = decimal_value(sheet.cell(row_index, average_group.unit_col).value)
+        if abs(average_unit_price - workbook_average) > Decimal("0.01"):
+            warnings.append(
+                f"Row {row_index}: average bid {workbook_average} differs from bidder average {average_unit_price}"
+            )
+
+        item_rows.append(
+            bid_tab_item_row(
+                row_id,
+                project_id,
+                source_id,
+                workbook_path,
+                sheet.title,
+                row_index,
+                project_number,
+                "",
+                item_code,
+                "CDOT",
+                item_code,
+                description,
+                item_code,
+                unit_raw,
+                unit_normalized,
+                quantity,
+                engineer_unit_price,
+                average_unit_price,
+                date_basis,
+            )
+        )
+        observations.extend(
+            [
+                promoted_observation(
+                    f"{row_id}_engineer_estimate",
+                    project_id,
+                    source_id,
+                    item_code,
+                    description,
+                    unit_raw,
+                    unit_normalized,
+                    quantity,
+                    engineer_unit_price,
+                    "public_bid_tab_engineer_estimate",
+                    date_basis,
+                ),
+                promoted_observation(
+                    f"{row_id}_average",
+                    project_id,
+                    source_id,
+                    item_code,
+                    description,
+                    unit_raw,
+                    unit_normalized,
+                    quantity,
+                    average_unit_price,
+                    "public_bid_tab_average",
+                    date_basis,
+                ),
+            ]
+        )
+
+    validate_published_total(sheet, total_row, engineer_group, engineer_total, warnings)
+    for bidder_group in bidder_groups:
+        validate_published_total(sheet, total_row, bidder_group, bid_totals[bidder_group.name], warnings)
+
+    ranked_bidders = sorted(bid_totals.items(), key=lambda item: item[1])
+    bidder_bids = [
+        {
+            "bid_id": f"{row_prefix}_{slugify(name)}",
+            "project_id": project_id,
+            "source_id": source_id,
+            "bidder_name": name,
+            "bid_total": decimal_text(total),
+            "bid_rank": str(index),
+            "apparent_low": "true" if index == 1 else "false",
+        }
+        for index, (name, total) in enumerate(ranked_bidders, start=1)
+    ]
+
+    return ParsedBidTab(project_name, project_number, item_rows, bidder_bids, bidder_items, observations, warnings)
+
+
 def parse_bid_form_workbook(
     workbook_path: Path,
     workbook,
@@ -975,6 +1163,73 @@ def find_bid_form_header_row(sheet) -> int | None:
         if required_headers.issubset(headers):
             return row_index
     return None
+
+
+def find_split_bid_tab_header_rows(sheet) -> tuple[int, int] | None:
+    if str(sheet.cell(4, 2).value or "").strip().upper() != "TABULATION OF BIDS":
+        return None
+
+    for row_index in range(1, min(sheet.max_row, 25)):
+        if (
+            str(sheet.cell(row_index, 1).value or "").strip().upper() == "ITEM"
+            and str(sheet.cell(row_index + 1, 1).value or "").strip().upper() == "NO."
+            and str(sheet.cell(row_index + 1, 2).value or "").strip().upper() == "ITEM"
+            and str(sheet.cell(row_index + 1, 3).value or "").strip().upper() == "UNIT"
+            and str(sheet.cell(row_index + 1, 4).value or "").strip().upper() == "QUANTITY"
+        ):
+            return row_index - 2, row_index + 1
+    return None
+
+
+def split_header_project_number(value: str) -> str:
+    match = re.search(r"PROJECT\s+NO\.\s*(?P<value>.+)$", value, re.IGNORECASE)
+    return match.group("value").strip() if match else value.strip()
+
+
+def detect_split_header_price_groups(sheet, group_row: int, header_row: int) -> list[PriceColumnGroup]:
+    groups: list[PriceColumnGroup] = []
+    for column in range(1, sheet.max_column):
+        unit_header = str(sheet.cell(header_row - 1, column).value or "").strip().upper()
+        total_header = str(sheet.cell(header_row - 1, column + 1).value or "").strip().upper()
+        unit_subheader = str(sheet.cell(header_row, column).value or "").strip().upper()
+        total_subheader = str(sheet.cell(header_row, column + 1).value or "").strip().upper()
+        if unit_header != "UNIT" or total_header != "EXTENDED" or unit_subheader != "PRICE" or total_subheader != "COST":
+            continue
+
+        name = str(sheet.cell(group_row, column).value or "").strip()
+        if not name:
+            continue
+
+        upper_name = name.upper()
+        if "ENGINEER" in upper_name:
+            role = "engineer"
+        elif "AVERAGE" in upper_name:
+            role = "average"
+        else:
+            role = "bidder"
+        groups.append(PriceColumnGroup("Engineer Estimate" if role == "engineer" else name, column, column + 1, role))
+    return groups
+
+
+def find_split_header_total_row(sheet, start_row: int) -> int:
+    for row_index in range(start_row, sheet.max_row + 1):
+        if str(sheet.cell(row_index, 2).value or "").strip().upper() == "BID SCHEDULE TOTAL":
+            return row_index
+    raise ValueError("Split-header bid tab workbook must include a BID SCHEDULE TOTAL row.")
+
+
+def validate_published_total(
+    sheet,
+    total_row: int,
+    group: PriceColumnGroup,
+    calculated_total: Decimal,
+    warnings: list[str],
+) -> None:
+    published_total = decimal_value(sheet.cell(total_row, group.total_col).value)
+    if abs(published_total - calculated_total) > Decimal("0.01"):
+        warnings.append(
+            f"Bid schedule total {group.name} {published_total} differs from calculated total {calculated_total}"
+        )
 
 
 def bid_form_column_map(sheet, header_row: int) -> dict[str, int]:

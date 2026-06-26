@@ -208,6 +208,7 @@ Supported layouts:
 
 - Watson SAQ-style workbook.
 - Arapahoe bid-form workbook.
+- Kipling/Bowles split-header tabulation workbook.
 - Ralston `Results` sheet workbook.
 
 Run importer tests:
@@ -223,6 +224,14 @@ python scripts/import_bid_tab_workbook.py --workbook "C:\Users\Casey.Walrath\Dow
 ```
 
 The current Ralston output is 235 source bid-tab item rows, 210 matched rows promoted into 420 exact-code observations, 25 unmatched rows left out of exact-code evidence, and 1,410 bidder item rows. The source City of Arvada item codes remain in `bid_tab_items.csv`; Matching Projects and Unit Price Summaries use reviewed CDOT item codes only.
+
+The Kipling/Bowles workbook uses CDOT item codes directly and promotes every base bid schedule row into exact-code public bid-tab evidence:
+
+```text
+python scripts/import_bid_tab_workbook.py --workbook "C:\Users\Casey.Walrath\Downloads\2022 03 10 Contractor Bids Kipling at Bowles(1).xlsx" --source-id fhu_bid_tab_kipling_bowles_2022_03_10 --source-label "FHU Civil Group Bid Tabs - S Kipling Pkwy at W Bowles Ave" --source-year 2022 --project-id fhu_bid_tab_kipling_bowles_2022_03_10_5_69_15_4005 --row-prefix fhu_kipling_bowles_20220310 --date-basis 2022-03-10 --agency-owner "Jefferson County" --county-region "Jefferson County" --staging-items public/data/imports/fhu_bid_tab_kipling_bowles_2022_03_10_item_unit_costs.csv --staging-bidder-bids public/data/imports/fhu_bid_tab_kipling_bowles_2022_03_10_bidder_bids.csv --staging-bidder-items public/data/imports/fhu_bid_tab_kipling_bowles_2022_03_10_bidder_item_observations.csv --staging-match-candidates public/data/imports/fhu_bid_tab_kipling_bowles_2022_03_10_match_candidates.csv
+```
+
+The current Kipling/Bowles output is 108 source bid-tab item rows, 216 exact-code observations, 4 bidder bids, and 432 bidder item rows. Two reviewed CDOT lookup rows, `625-01000` and `626-01100`, are carried in `agency_items.csv` so every Kipling/Bowles bid-tab item remains searchable through the item picker.
 
 ## GitHub Pages
 
