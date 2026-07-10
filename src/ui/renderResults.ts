@@ -28,7 +28,8 @@ export function renderResults(
   includedSummaryStats: EvidenceSummaryStats,
   inflationAdjustmentEnabled: boolean,
   inflationAdjustedSummary: InflationAdjustedSummary | null,
-  inflationAdjustedPriceSet: InflationAdjustedPriceSet | null
+  inflationAdjustedPriceSet: InflationAdjustedPriceSet | null,
+  addToProjectPanelHtml: string
 ): string {
   return `
     <section class="results-panel">
@@ -40,6 +41,7 @@ export function renderResults(
         inflationAdjustmentEnabled,
         inflationAdjustedSummary
       )}
+      ${addToProjectPanelHtml}
       ${renderSupplementalPriceSummaries(inflationAdjustmentEnabled ? inflationAdjustedSummary?.summaryStats ?? includedSummaryStats : includedSummaryStats)}
       ${renderPublicBidTabProjects(data)}
     </section>

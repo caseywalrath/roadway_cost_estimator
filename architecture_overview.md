@@ -6,7 +6,7 @@ This repository contains a static-first prototype for a Colorado roadway bid-ite
 
 The first product is not a chatbot, not a full project estimator, and not an automatic price recommendation tool. It is a structured evidence tool that helps a user identify one official roadway bid item and review the project records where that exact item appears.
 
-The primary deliverable is the project-item evidence table. Awarded bid statistics are secondary aids that summarize the currently filtered evidence rows that the user has not excluded from summary. Average bid and engineer estimate statistics are also shown when those price types are loaded. Awarded, average bid, and engineer estimate statistics can optionally be adjusted with loaded FHWA National Highway Construction Cost Index quarters. Included Matching Projects rows can be exported to CSV for external review.
+The primary deliverable is the project-item evidence table. Awarded bid statistics are secondary aids that summarize the currently filtered evidence rows that the user has not excluded from summary. Average bid and engineer estimate statistics are also shown when those price types are loaded. Awarded, average bid, and engineer estimate statistics can optionally be adjusted with loaded FHWA National Highway Construction Cost Index quarters. Included Matching Projects rows can be exported to CSV for external review. A browser-local Project workspace lets the user save selected official items with user-entered quantity, preferred unit cost, notes, and evidence context for a simple project-line CSV export.
 
 ## Application Shape
 
@@ -15,6 +15,7 @@ The primary deliverable is the project-item evidence table. Awarded bid statisti
 - Runtime model: static files only; no server and no database.
 - Data model: browser-loaded CSV files in `public/data`, including exact-code item observations, source-preserving bid-tab items, bidder-level bid-tab details, agency item mappings, CDOT section metadata, and FHWA NHCCI inflation index values.
 - Evidence model: deterministic TypeScript grouping and filtering rules in `src/matching`.
+- Project workspace model: browser-local `localStorage` state under `roadway-cost-estimator:projects:v1`, with a versioned schema and recoverable load/save warnings.
 - Deployment path: GitHub Actions validates the app-loaded CSV package, builds the Vite app, and publishes `dist` to GitHub Pages from `main`.
 
 The app loads the CSV package at startup, builds in-memory lookup maps, and runs all filtering and scoring in the browser.
@@ -26,8 +27,9 @@ The app loads the CSV package at startup, builds in-memory lookup maps, and runs
 3. `src/data/schema.ts` defines app-facing data structures, including `SpecSectionRecord` for CDOT section/prefix labels and abbreviated agency item descriptions.
 4. `src/matching/buildEvidenceResult.ts` groups exact item-code observations into project-item evidence rows.
 5. `src/matching/buildEvidenceResult.ts` applies explicit evidence filters and calculates awarded, average bid, and engineer estimate summary statistics for the filtered table.
-6. Prior comparable scoring modules remain in the repository for reference, but the primary UI no longer uses hidden top-five relevance selection.
-7. `src/ui` renders the fixed prototype scope, item search, evidence filters, sortable evidence table, row-level summary exclusions, CSV export, unit price summaries, optional NHCCI unit-price summary adjustment, exact-code public bid-tab bidder details, and source-only public bid-tab project review.
+6. `src/projects/projectWorkspace.ts` loads, validates, updates, and saves browser-local Project workspace state.
+7. Prior comparable scoring modules remain in the repository for reference, but the primary UI no longer uses hidden top-five relevance selection.
+8. `src/ui` renders the fixed prototype scope, Explorer and Project tabs, item search, evidence filters, sortable evidence table, row-level summary exclusions, Matching Projects CSV export, Add to Project controls, Project item table, Project CSV export, unit price summaries, optional NHCCI unit-price summary adjustment, exact-code public bid-tab bidder details, and source-only public bid-tab project review.
 
 ## Data Governance
 
@@ -64,8 +66,24 @@ The Phase 1 evidence browser rules are intentionally visible and simple:
 - Calculate awarded summary statistics from included awarded bid unit prices only.
 - Calculate average bid and engineer estimate summary statistics from the corresponding included rows.
 - Let users toggle inflation adjustment with loaded FHWA NHCCI quarters. Matching Projects table awarded bid, average bid, and engineer estimate prices stay in original dollars as the primary values and show secondary adjusted values for transparency when rounded adjusted dollars differ. CSV export stays in original dollars.
+- Let users save an official selected item into the browser-local Project workspace only as a user-controlled line item with quantity, preferred unit cost, cost basis, notes, and evidence context. This is not an app-generated recommendation.
 
 Alias, keyword, and description fallback matching should return only in a later explicit review mode. They are not part of the default evidence table.
+
+## Project Workspace Rules
+
+The Project workspace is an early limited estimate-workspace slice:
+
+- Support one active browser-local project in the UI while storing state as a versioned projects array for later multiple-project support.
+- Require project name and location before adding item lines.
+- Store project notes and line notes as plain text.
+- Require quantity and preferred unit cost for each saved project line.
+- Compute extended cost at render/export time from quantity and preferred unit cost instead of storing it as source state.
+- Preserve evidence context when a line is added, including current query, filters, sort, included evidence row count, included observation IDs, summary snapshot, inflation state, and cost source.
+- Treat quick-filled unit costs as user-selected values from currently included summary statistics.
+- If inflation adjustment is on, quick-fill values use the visible adjusted summary statistics and record the target NHCCI period in the cost basis.
+- Prompt before adding a duplicate official item code so the user can add a separate line, update an existing line, or cancel.
+- Export Project rows to CSV only. XLSX generation, import, shared persistence, accounts, collaboration, and private-data storage are deferred.
 
 ## Item Code Search Funnel
 
@@ -98,6 +116,6 @@ The submitted `SearchQuery` shape did not change. The visible item search is lim
 - Add validation coverage for future CDOT cost-book quarters before promotion.
 - Add more reviewed public bid-tab workbook imports after the importer layout detection is validated on each workbook family.
 - Add reviewed private FHU data only through an approved private-data workflow.
-- Add estimate workspace rows after the item explorer is trusted.
+- Expand the browser-local Project workspace after the item explorer and first-line export workflow are trusted.
 - Add CSV/XLSX import only after schema mapping rules are validated.
 - Consider DuckDB-WASM or SQLite-in-browser only when CSV filtering becomes too slow or relationship validation becomes difficult.
