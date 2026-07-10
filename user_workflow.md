@@ -4,7 +4,7 @@
 
 This document describes the intended end-user workflow for the Roadway Cost Comparable Explorer prototype.
 
-The prototype is a project evidence browser. It is not an automatic estimator, a chatbot, or a replacement for roadway engineering judgment.
+The prototype is a project evidence browser with a browser-local Project workspace. It is not an automatic estimator, a chatbot, or a replacement for roadway engineering judgment.
 
 The near-term user is expected to be a project manager, planner, estimator, or roadway reviewer who needs to gather and review historical project evidence for one roadway bid item.
 
@@ -31,9 +31,12 @@ The first screen should show:
 - fixed prototype scope bar
 - prototype warning
 - prototype review guide
+- Explorer and Project tabs
 - item search form
 - project evidence browser
 - awarded bid summary panel
+- Add to Project panel after an official item is selected
+- Project workspace table for saved local line items
 - source coverage note
 - data notes when filters exclude relevant rows
 
@@ -58,7 +61,7 @@ Current prototype default:
 Colorado roadway public CDOT cost-book evidence
 ```
 
-Project context can be partial. Missing context should leave fields blank or produce data notes rather than blocking the item search.
+Evidence search context can be partial. Missing context should leave fields blank or produce data notes rather than blocking the item search. Project workspace line items require project name and location before saved items can be added.
 
 ## 3. Enter one roadway bid item
 
@@ -192,7 +195,86 @@ Reviewer interpretation:
 - A small count should trigger more evidence review.
 - Inflation-adjusted values are an index-based review aid, not a final escalated estimate.
 
-## 7. Review source coverage
+## 7. Add the selected item to Project
+
+After selecting an official item and reviewing evidence, the user can save the item as a Project line from the Add to Project panel.
+
+Required project setup:
+
+- Project name
+- Project location
+
+Required line-item fields:
+
+- Quantity
+- Preferred unit cost
+
+Optional line-item field:
+
+- Line notes
+
+How to use it:
+
+- Open the Project tab and enter project name, location, and optional project notes.
+- Return to Explorer.
+- Select an official item and review the Matching Projects table and summaries.
+- Enter quantity and preferred unit cost manually, or use a quick-fill button from the current included summary statistics.
+- Click Add to Project.
+
+Quick-fill behavior:
+
+- Awarded low, median, average, and high quick-fill buttons appear when awarded summary values are available.
+- Average bid average and engineer estimate average quick-fill buttons appear when those summaries are available.
+- Rows checked in `Exclude from Summary` are not included in the quick-fill summary values or saved evidence context.
+- If `Inflation Adjustment` is on, quick-fill values use the visible adjusted summary values and record the target FHWA NHCCI period in the cost basis.
+- Quick-fill values are user-selected starting points, not recommendations.
+
+Duplicate item behavior:
+
+- If the same official item code already exists in the active Project, the app asks whether to add a separate line, update an existing line, or cancel.
+- Separate lines are allowed so the same bid item can appear in more than one work area or alternate.
+
+Saved evidence context:
+
+- Current query
+- Current evidence filters and sort
+- Included evidence row count
+- Included observation IDs
+- Summary snapshot
+- Inflation-adjustment state
+- Manual or quick-fill cost source
+
+## 8. Review the Project workspace
+
+The Project tab stores one active browser-local project.
+
+Project fields:
+
+- Name
+- Location
+- Notes
+
+Project line table columns:
+
+- Item code
+- Description
+- Quantity
+- Unit
+- Preferred unit cost
+- Extended cost
+- Cost basis
+- Notes
+- Actions
+
+How to use it:
+
+- Edit quantity, preferred unit cost, cost basis, and notes directly in the table.
+- Remove lines that should not remain in the project.
+- Review the line count and project subtotal.
+- Treat the Project workspace as local browser storage. Clearing browser data can remove saved projects.
+- If local storage is unavailable or malformed, the app shows a recoverable warning and keeps the evidence browser usable.
+
+## 9. Review source coverage
 
 The user reviews the Source Coverage panel after an item is selected.
 
@@ -210,11 +292,11 @@ How to use it:
 - Use the Matching Projects table and CSV export for review, not as a final estimating recommendation.
 - Final pricing judgment happens outside the app.
 
-## 8. Export filtered evidence
+## 10. Export CSV files
 
 The user can download the currently filtered and sorted Matching Projects rows as a CSV after selecting an official item code.
 
-How to use it:
+Matching Projects export:
 
 - Click Download CSV above the Matching Projects table.
 - The export includes all displayed table columns plus project/source metadata.
@@ -223,7 +305,17 @@ How to use it:
 - The button is disabled when current filters produce zero rows or all current rows are excluded from summary.
 - Use the CSV for reviewer discussion, basis-of-estimate support, or external analysis.
 
-## 9. Review data notes
+Project export:
+
+- Open the Project tab.
+- Click Download Project CSV.
+- The export includes one row per saved project line.
+- Extended cost is calculated from quantity times preferred unit cost.
+- Exported rows include project name, project location, project notes, item details, cost basis, line notes, evidence row count, included observation IDs, and timestamps.
+- The Project CSV button is disabled when the Project has no line items.
+- XLSX export and project import are deferred.
+
+## 11. Review data notes
 
 Data notes may identify:
 
@@ -259,11 +351,13 @@ Recommended meeting flow:
 6. Apply source, geography, district, year, unit, and quantity filters when relevant.
 7. Review the awarded bid summary after reviewing rows.
 8. Review source coverage and data notes.
-9. Download the CSV if external review is needed.
-10. Ask which rows are useful evidence and which rows should be excluded later.
-11. Ask which filters or fields are missing.
-12. Ask what source data should be added first.
-13. Record feedback as implementation notes for the coding agent.
+9. Add one reviewed item to Project when a preferred unit cost is selected.
+10. Open the Project tab and review the saved line.
+11. Download the CSV if external review is needed.
+12. Ask which rows are useful evidence and which rows should be excluded later.
+13. Ask which filters or fields are missing.
+14. Ask what source data should be added first.
+15. Record feedback as implementation notes for the coding agent.
 
 Key questions for roadway engineers:
 
@@ -278,7 +372,7 @@ Key questions for roadway engineers:
 
 ## Intended Later Workflow
 
-The current prototype supports one-item lookup only.
+The current prototype supports one-item lookup and one active browser-local Project assembled one item at a time.
 
 The intended later workflow is:
 

@@ -1,4 +1,4 @@
-import type { AppData, EvidenceRow, SearchQuery } from "../data/schema";
+import type { AppData, EvidenceRow, EvidenceStats, EvidenceSummaryStats, SearchQuery } from "../data/schema";
 import type { EvidenceSortKey } from "../data/schema";
 import {
   buildEvidenceResult,
@@ -8,12 +8,38 @@ import {
   createDefaultEvidenceSort
 } from "../matching/buildEvidenceResult";
 import { buildInflationAdjustedPriceSet, buildInflationAdjustedSummary } from "../matching/inflationAdjustment";
+import type { InflationAdjustedSummary } from "../matching/inflationAdjustment";
+import type {
+  ProjectEvidenceContext,
+  ProjectLineItem,
+  ProjectWorkspaceState,
+  UserProject
+} from "../projects/projectWorkspace";
+import {
+  addProjectLineItem,
+  createProjectLineItem,
+  ensureActiveProject,
+  getActiveProject,
+  hasRequiredProjectMetadata,
+  loadProjectWorkspaceState,
+  removeProjectLineItem,
+  replaceProjectLineItem,
+  saveProjectWorkspaceState,
+  updateActiveProjectMetadata,
+  updateProjectLineItem
+} from "../projects/projectWorkspace";
 import { downloadEvidenceCsv } from "./exportEvidenceCsv";
+import { downloadProjectCsv } from "./exportProjectCsv";
 import {
   bindItemPicker,
   readQueryFromForm,
   renderExplorer
 } from "./renderExplorer";
+import {
+  renderAddToProjectPanel,
+  renderProjectWorkspace
+} from "./renderProjectWorkspace";
+import type { PendingDuplicateProjectLine } from "./renderProjectWorkspace";
 import { readEvidenceFiltersFromForm, renderResults } from "./renderResults";
 
 const emptyQuery: SearchQuery = {
@@ -29,7 +55,12 @@ const emptyQuery: SearchQuery = {
   quantity: null
 };
 
+type AppView = "explorer" | "project";
+
 export function renderApp(root: HTMLElement, data: AppData): void {
+  const loadedProjectState = loadProjectWorkspaceState();
+  let projectState: ProjectWorkspaceState = ensureActiveProject(loadedProjectState.state);
+  let projectStorageWarning = loadedProjectState.warning;
   let query = { ...emptyQuery };
   let evidenceFilters = createDefaultEvidenceFilters(query);
   let evidenceSort = createDefaultEvidenceSort();
@@ -39,6 +70,12 @@ export function renderApp(root: HTMLElement, data: AppData): void {
   let inflationAdjustmentEnabled = false;
   let selectedBidderDetailKey: string | null = null;
   let selectedBidTabProjectId: string | null = null;
+  let activeView: AppView = "explorer";
+  let pendingDuplicateLine: PendingDuplicateProjectLine | null = null;
+
+  if (projectState !== loadedProjectState.state) {
+    projectStorageWarning = saveProjectWorkspaceState(projectState) ?? projectStorageWarning;
+  }
 
   function render(): void {
     const result = buildEvidenceResult(data, query, evidenceFilters, evidenceSort);
@@ -52,35 +89,72 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       ? buildInflationAdjustedPriceSet(result.filteredRows, data.inflationIndexByPeriod)
       : null;
     const visibleExcludedCount = result.filteredRows.length - includedRows.length;
+    const activeProject = getActiveProject(projectState);
+    const addToProjectPanelHtml = renderAddToProjectPanel(
+      result,
+      activeProject,
+      includedStats,
+      includedSummaryStats,
+      inflationAdjustmentEnabled,
+      inflationAdjustedSummary,
+      pendingDuplicateLine
+    );
+
     root.innerHTML = `
       <main class="app-shell">
         <header class="app-header">
           <div>
             <h1>Colorado Roadway Comparable Project Explorer</h1>
           </div>
+          <nav class="app-view-tabs" aria-label="Primary views">
+            ${renderViewTab("explorer", "Explorer", activeView)}
+            ${renderViewTab("project", `Project (${activeProject?.lineItems.length ?? 0})`, activeView)}
+          </nav>
         </header>
 
-        <section class="workspace-grid ${itemSearchCollapsed ? "workspace-grid--item-search-collapsed" : ""}">
-          ${itemSearchCollapsed ? "" : renderExplorer(query, data.agencyItems, data.specSections)}
-          ${renderResults(
-            result,
-            evidenceFiltersExpanded,
-            itemSearchCollapsed,
-            data,
-            selectedBidderDetailKey,
-            selectedBidTabProjectId,
-            excludedSummaryRowIds,
-            includedRows.length,
-            visibleExcludedCount,
-            includedStats,
-            includedSummaryStats,
-            inflationAdjustmentEnabled,
-            inflationAdjustedSummary,
-            inflationAdjustedPriceSet
-          )}
-        </section>
+        ${projectStorageWarning ? `<p class="storage-warning">${escapeHtml(projectStorageWarning)}</p>` : ""}
+
+        ${activeView === "explorer"
+          ? `
+            <section class="workspace-grid ${itemSearchCollapsed ? "workspace-grid--item-search-collapsed" : ""}">
+              ${itemSearchCollapsed ? "" : renderExplorer(query, data.agencyItems, data.specSections)}
+              ${renderResults(
+                result,
+                evidenceFiltersExpanded,
+                itemSearchCollapsed,
+                data,
+                selectedBidderDetailKey,
+                selectedBidTabProjectId,
+                excludedSummaryRowIds,
+                includedRows.length,
+                visibleExcludedCount,
+                includedStats,
+                includedSummaryStats,
+                inflationAdjustmentEnabled,
+                inflationAdjustedSummary,
+                inflationAdjustedPriceSet,
+                addToProjectPanelHtml
+              )}
+            </section>
+          `
+          : renderProjectWorkspace(activeProject)}
       </main>
     `;
+
+    root.querySelectorAll<HTMLButtonElement>("[data-app-view]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const nextView = button.dataset.appView;
+
+        if (nextView !== "explorer" && nextView !== "project") {
+          return;
+        }
+
+        activeView = nextView;
+        selectedBidderDetailKey = null;
+        selectedBidTabProjectId = null;
+        render();
+      });
+    });
 
     const form = root.querySelector<HTMLFormElement>("#explorer-form");
     if (form) {
@@ -226,13 +300,334 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       selectedBidTabProjectId = null;
       render();
     });
+
+    bindAddToProjectForm(
+      root,
+      result,
+      includedRows,
+      includedStats,
+      includedSummaryStats,
+      inflationAdjustmentEnabled,
+      inflationAdjustedSummary
+    );
+    bindDuplicateProjectActions(root);
+    bindProjectWorkspace(root);
+  }
+
+  function persistProjectState(nextState: ProjectWorkspaceState, renderAfterSave: boolean): void {
+    const previousWarning = projectStorageWarning;
+    projectState = nextState;
+    projectStorageWarning = saveProjectWorkspaceState(nextState);
+
+    if (renderAfterSave || (!previousWarning && projectStorageWarning)) {
+      render();
+    }
+  }
+
+  function bindAddToProjectForm(
+    rootElement: HTMLElement,
+    result: ReturnType<typeof buildEvidenceResult>,
+    includedRows: EvidenceRow[],
+    includedStats: EvidenceStats | null,
+    includedSummaryStats: EvidenceSummaryStats,
+    inflationAdjustmentEnabled: boolean,
+    inflationAdjustedSummary: InflationAdjustedSummary | null
+  ): void {
+    const addForm = rootElement.querySelector<HTMLFormElement>("#add-project-item-form");
+
+    if (!addForm) {
+      return;
+    }
+
+    const costInput = addForm.elements.namedItem("preferredUnitCost") as HTMLInputElement | null;
+    const costBasisInput = addForm.elements.namedItem("costBasis") as HTMLInputElement | null;
+    const costSourceInput = addForm.elements.namedItem("costSource") as HTMLInputElement | null;
+    const costBasisPreview = rootElement.querySelector<HTMLElement>("#project-cost-basis-preview");
+
+    costInput?.addEventListener("input", () => {
+      if (costBasisInput) {
+        costBasisInput.value = "Manual entry";
+      }
+      if (costSourceInput) {
+        costSourceInput.value = "manual";
+      }
+      if (costBasisPreview) {
+        costBasisPreview.textContent = "Manual entry";
+      }
+    });
+
+    addForm.querySelectorAll<HTMLButtonElement>("[data-project-cost-value]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const costValue = readOptionalFormNumber(button.dataset.projectCostValue ?? "");
+        const costBasis = button.dataset.projectCostBasis || "Manual entry";
+
+        if (costValue === null || !costInput) {
+          return;
+        }
+
+        costInput.value = String(costValue);
+        if (costBasisInput) {
+          costBasisInput.value = costBasis;
+        }
+        if (costSourceInput) {
+          costSourceInput.value = "quick_fill";
+        }
+        if (costBasisPreview) {
+          costBasisPreview.textContent = costBasis;
+        }
+      });
+    });
+
+    addForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const activeProject = getActiveProject(projectState);
+
+      if (!activeProject || !hasRequiredProjectMetadata(activeProject)) {
+        activeView = "project";
+        render();
+        return;
+      }
+
+      const quantityInput = addForm.elements.namedItem("quantity") as HTMLInputElement | null;
+      const preferredUnitCostInput = addForm.elements.namedItem("preferredUnitCost") as HTMLInputElement | null;
+      const notesInput = addForm.elements.namedItem("notes") as HTMLTextAreaElement | null;
+      const quantity = readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero.");
+      const preferredUnitCost = readRequiredPositiveNumber(preferredUnitCostInput, "Enter a preferred unit cost greater than zero.");
+
+      if (quantity === null || preferredUnitCost === null || !result.query.itemCode) {
+        return;
+      }
+
+      const costBasis = String(costBasisInput?.value || "Manual entry");
+      const costSource = costSourceInput?.value === "quick_fill" ? "quick_fill" : "manual";
+      const lineItem = createProjectLineItem({
+        itemCode: result.query.itemCode,
+        description: result.interpretedDescription,
+        unit: result.query.unit,
+        quantity,
+        preferredUnitCost,
+        costBasis,
+        notes: notesInput?.value ?? "",
+        evidenceContext: buildProjectEvidenceContext(
+          result,
+          includedRows,
+          includedStats,
+          includedSummaryStats,
+          inflationAdjustmentEnabled,
+          inflationAdjustedSummary,
+          costSource,
+          costBasis
+        )
+      });
+      const matchingLineIds = activeProject.lineItems
+        .filter((candidate) => candidate.itemCode === lineItem.itemCode)
+        .map((candidate) => candidate.lineItemId);
+
+      if (matchingLineIds.length > 0) {
+        pendingDuplicateLine = {
+          lineItem,
+          matchingLineIds
+        };
+        render();
+        return;
+      }
+
+      pendingDuplicateLine = null;
+      persistProjectState(addProjectLineItem(projectState, activeProject.projectId, lineItem), true);
+    });
+  }
+
+  function bindDuplicateProjectActions(rootElement: HTMLElement): void {
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-duplicate-project-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const action = button.dataset.duplicateProjectAction;
+        const activeProject = getActiveProject(projectState);
+
+        if (!pendingDuplicateLine || !activeProject) {
+          return;
+        }
+
+        if (action === "cancel") {
+          pendingDuplicateLine = null;
+          render();
+          return;
+        }
+
+        if (action === "add") {
+          const lineItem = pendingDuplicateLine.lineItem;
+          pendingDuplicateLine = null;
+          persistProjectState(addProjectLineItem(projectState, activeProject.projectId, lineItem), true);
+          return;
+        }
+
+        if (action === "update") {
+          const form = rootElement.querySelector<HTMLFormElement>("#duplicate-project-item-form");
+          const formData = form ? new FormData(form) : null;
+          const selectedLineItemId = String(formData?.get("lineItemId") || "");
+
+          if (!selectedLineItemId) {
+            return;
+          }
+
+          const lineItem = pendingDuplicateLine.lineItem;
+          pendingDuplicateLine = null;
+          persistProjectState(
+            replaceProjectLineItem(projectState, activeProject.projectId, selectedLineItemId, lineItem),
+            true
+          );
+        }
+      });
+    });
+  }
+
+  function bindProjectWorkspace(rootElement: HTMLElement): void {
+    const metadataForm = rootElement.querySelector<HTMLFormElement>("#project-metadata-form");
+
+    metadataForm?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input, textarea").forEach((input) => {
+      input.addEventListener("input", () => {
+        const formData = new FormData(metadataForm);
+        persistProjectState(
+          updateActiveProjectMetadata(projectState, {
+            name: String(formData.get("name") || ""),
+            location: String(formData.get("location") || ""),
+            notes: String(formData.get("notes") || "")
+          }),
+          false
+        );
+      });
+    });
+
+    rootElement.querySelector<HTMLButtonElement>("#download-project-csv")?.addEventListener("click", () => {
+      const activeProject = getActiveProject(projectState);
+
+      if (activeProject) {
+        downloadProjectCsv(activeProject);
+      }
+    });
+
+    rootElement.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-project-line-field]").forEach((input) => {
+      input.addEventListener("change", () => {
+        const lineItemId = input.dataset.projectLineId ?? "";
+        const activeProject = getActiveProject(projectState);
+        const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId) ?? null;
+        const row = input.closest("tr");
+
+        if (!activeProject || !lineItem || !row) {
+          return;
+        }
+
+        const quantityInput = row.querySelector<HTMLInputElement>('[data-project-line-field="quantity"]');
+        const preferredUnitCostInput = row.querySelector<HTMLInputElement>('[data-project-line-field="preferredUnitCost"]');
+        const costBasisInput = row.querySelector<HTMLInputElement>('[data-project-line-field="costBasis"]');
+        const notesInput = row.querySelector<HTMLTextAreaElement>('[data-project-line-field="notes"]');
+        const quantity = readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero.");
+        const preferredUnitCost = readRequiredPositiveNumber(preferredUnitCostInput, "Enter a preferred unit cost greater than zero.");
+
+        if (quantity === null || preferredUnitCost === null) {
+          return;
+        }
+
+        persistProjectState(
+          updateProjectLineItem(projectState, activeProject.projectId, lineItemId, {
+            quantity,
+            preferredUnitCost,
+            costBasis: costBasisInput?.value.trim() || "Manual entry",
+            notes: notesInput?.value ?? ""
+          }),
+          true
+        );
+      });
+    });
+
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-remove-project-line-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const activeProject = getActiveProject(projectState);
+        const lineItemId = button.dataset.removeProjectLineId ?? "";
+
+        if (!activeProject || !lineItemId) {
+          return;
+        }
+
+        persistProjectState(removeProjectLineItem(projectState, activeProject.projectId, lineItemId), true);
+      });
+    });
   }
 
   render();
 }
 
+function renderViewTab(view: AppView, label: string, activeView: AppView): string {
+  const isActive = view === activeView;
+
+  return `
+    <button
+      type="button"
+      class="app-view-tab ${isActive ? "app-view-tab--active" : ""}"
+      data-app-view="${view}"
+      aria-current="${isActive ? "page" : "false"}"
+    >
+      ${escapeHtml(label)}
+    </button>
+  `;
+}
+
 function includedEvidenceRows(rows: EvidenceRow[], excludedRowIds: ReadonlySet<string>): EvidenceRow[] {
   return rows.filter((row) => !excludedRowIds.has(row.rowId));
+}
+
+function buildProjectEvidenceContext(
+  result: ReturnType<typeof buildEvidenceResult>,
+  includedRows: EvidenceRow[],
+  includedStats: EvidenceStats | null,
+  includedSummaryStats: EvidenceSummaryStats,
+  inflationAdjustmentEnabled: boolean,
+  inflationAdjustedSummary: InflationAdjustedSummary | null,
+  costSource: ProjectEvidenceContext["costSource"],
+  costSourceLabel: string
+): ProjectEvidenceContext {
+  const summaryStats = inflationAdjustmentEnabled
+    ? inflationAdjustedSummary?.summaryStats ?? { awarded: null, average: null, engineer: null }
+    : includedSummaryStats;
+  const inflationTargetPeriodLabel = inflationAdjustedSummary?.targetPeriod?.periodLabel ?? null;
+
+  return {
+    query: { ...result.query },
+    filters: {
+      ...result.filters,
+      districts: [...result.filters.districts]
+    },
+    sort: { ...result.sort },
+    includedRowCount: includedRows.length,
+    includedObservationIds: uniqueValues(includedRows.flatMap((row) => row.observationIds)),
+    summarySnapshot: {
+      awarded: inflationAdjustmentEnabled ? inflationAdjustedSummary?.stats ?? null : includedStats,
+      average: summaryStats.average,
+      engineer: summaryStats.engineer,
+      inflationAdjustmentEnabled,
+      inflationTargetPeriodLabel,
+      valuesAreInflationAdjusted: inflationAdjustmentEnabled && Boolean(inflationTargetPeriodLabel)
+    },
+    costSource,
+    costSourceLabel
+  };
+}
+
+function readRequiredPositiveNumber(input: HTMLInputElement | null, message: string): number | null {
+  if (!input) {
+    return null;
+  }
+
+  input.setCustomValidity("");
+  const value = readOptionalFormNumber(input.value);
+
+  if (value === null || value <= 0) {
+    input.setCustomValidity(message);
+    input.reportValidity();
+    return null;
+  }
+
+  return value;
 }
 
 function validateQuantityRange(form: HTMLFormElement): boolean {
@@ -285,4 +680,22 @@ function defaultSortDirection(sortKey: EvidenceSortKey): "asc" | "desc" {
   return sortKey === "letDate" || sortKey.endsWith("Price") || sortKey === "quantity" || sortKey === "bidCount"
     ? "desc"
     : "asc";
+}
+
+function uniqueValues(values: string[]): string[] {
+  return [...new Set(values)];
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => {
+    const replacements: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    };
+
+    return replacements[char];
+  });
 }

@@ -34,7 +34,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -64,6 +65,10 @@ select {
 }
 
 .app-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
   margin-bottom: 14px;
 }
 
@@ -88,6 +93,53 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.app-view-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 4px;
+  box-shadow: var(--shadow);
+}
+
+.app-view-tab {
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #2a3a49;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.app-view-tab:hover,
+.app-view-tab:focus-visible {
+  border-color: #c4d3df;
+  background: #eef3f7;
+}
+
+.app-view-tab--active {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.storage-warning,
+.project-warning {
+  margin: 0 0 12px;
+  border: 1px solid #e3c084;
+  border-radius: 6px;
+  background: #fff8e8;
+  color: #604100;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  font-weight: 800;
 }
 
 .workspace-grid {
@@ -208,6 +260,126 @@ select {
   line-height: 1.45;
 }
 
+.add-project-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.add-project-heading,
+.project-workspace-heading,
+.project-lines-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.project-tab-shortcut {
+  min-height: 36px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.add-project-form {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.85fr) minmax(170px, 0.95fr) minmax(220px, 1.3fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.add-project-form label {
+  gap: 4px;
+  font-size: 0.86rem;
+}
+
+.add-project-form input,
+.add-project-form textarea {
+  min-height: 36px;
+  padding-block: 6px;
+}
+
+.add-project-notes-field {
+  min-width: 0;
+}
+
+.quick-fill-group {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.quick-fill-button {
+  min-height: 32px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.quick-fill-empty,
+.cost-basis-preview {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.cost-basis-preview {
+  grid-column: 1 / -2;
+  color: var(--text-muted);
+}
+
+.add-project-submit {
+  min-height: 36px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.duplicate-project-panel {
+  border-color: #c7d9e8;
+}
+
+.duplicate-project-form,
+.duplicate-line-list {
+  display: grid;
+  gap: 10px;
+}
+
+.duplicate-line-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-alt);
+  padding: 10px;
+}
+
+.duplicate-line-option input {
+  width: 18px;
+  min-height: 18px;
+  margin-top: 2px;
+}
+
+.duplicate-line-option strong,
+.duplicate-line-option small {
+  display: block;
+}
+
+.duplicate-line-option small {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.duplicate-project-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .summary-table-wrap {
   margin-top: 12px;
   overflow-x: auto;
@@ -243,7 +415,8 @@ label span {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   min-height: 42px;
   border: 1px solid #bdc9d5;
@@ -251,6 +424,10 @@ select {
   background: #ffffff;
   color: #182633;
   padding: 8px 10px;
+}
+
+textarea {
+  resize: vertical;
 }
 
 .search-panel input,
@@ -261,7 +438,8 @@ select {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   outline: 3px solid rgba(39, 95, 143, 0.22);
   border-color: var(--accent);
 }
@@ -409,6 +587,72 @@ input[readonly] {
   display: grid;
   gap: 16px;
   min-width: 0;
+}
+
+.project-workspace {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.project-detail-panel,
+.project-lines-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.project-metadata-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.project-metadata-form label {
+  gap: 4px;
+  font-size: 0.86rem;
+}
+
+.project-metadata-form input,
+.project-metadata-form textarea {
+  min-height: 38px;
+  padding-block: 7px;
+}
+
+.project-notes-field {
+  grid-column: 1 / -1;
+}
+
+.project-subtotal {
+  flex: 0 0 auto;
+  min-width: 160px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-alt);
+  padding: 10px 12px;
+  text-align: right;
+}
+
+.project-subtotal span,
+.project-subtotal strong {
+  display: block;
+}
+
+.project-subtotal span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.project-subtotal strong {
+  color: var(--heading);
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.project-empty {
+  margin: 0;
 }
 
 .decision-card {
@@ -879,6 +1123,22 @@ table {
   min-width: 1660px;
 }
 
+.project-line-table {
+  min-width: 1320px;
+}
+
+.project-line-table td:nth-child(2) {
+  min-width: 220px;
+}
+
+.project-line-table td:nth-child(7) {
+  min-width: 260px;
+}
+
+.project-line-table td:nth-child(8) {
+  min-width: 220px;
+}
+
 th,
 td {
   padding: 10px 11px;
@@ -980,6 +1240,33 @@ th {
   min-height: 18px;
   margin: 0;
   cursor: pointer;
+}
+
+.project-line-number-input,
+.project-line-basis-input,
+.project-line-notes-input {
+  min-height: 34px;
+  padding: 6px 8px;
+  font-size: 0.84rem;
+}
+
+.project-line-number-input {
+  min-width: 110px;
+  text-align: right;
+}
+
+.project-line-basis-input {
+  min-width: 240px;
+}
+
+.project-line-notes-input {
+  min-width: 200px;
+}
+
+.project-line-remove-button {
+  min-height: 34px;
+  padding: 6px 10px;
+  white-space: nowrap;
 }
 
 .evidence-row--excluded {
@@ -1213,6 +1500,10 @@ tbody tr:last-child td {
     grid-template-columns: 1fr;
   }
 
+  .app-header {
+    flex-direction: column;
+  }
+
   .search-panel {
     position: static;
   }
@@ -1223,6 +1514,19 @@ tbody tr:last-child td {
 
   .evidence-filter-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .add-project-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .add-project-notes-field,
+  .cost-basis-preview {
+    grid-column: 1 / -1;
+  }
+
+  .add-project-submit {
+    grid-column: 1 / -1;
   }
 }
 
@@ -1235,9 +1539,19 @@ tbody tr:last-child td {
   .item-result-button,
   .evidence-table-heading,
   .evidence-filter-form,
+  .add-project-form,
+  .project-metadata-form,
   .metric-grid,
   .distribution-grid {
     grid-template-columns: 1fr;
+  }
+
+  .app-view-tabs {
+    width: 100%;
+  }
+
+  .app-view-tab {
+    flex: 1 1 0;
   }
 
   .item-result-button strong,
@@ -1262,5 +1576,19 @@ tbody tr:last-child td {
   .summary-heading-row {
     flex-direction: column;
     gap: 10px;
+  }
+
+  .add-project-heading,
+  .project-workspace-heading,
+  .project-lines-heading {
+    flex-direction: column;
+  }
+
+  .duplicate-project-actions {
+    justify-content: stretch;
+  }
+
+  .duplicate-project-actions button {
+    width: 100%;
   }
 }
