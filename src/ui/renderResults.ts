@@ -31,18 +31,26 @@ export function renderResults(
   inflationAdjustedPriceSet: InflationAdjustedPriceSet | null,
   addToProjectPanelHtml: string
 ): string {
+  const displayedSummaryStats = inflationAdjustmentEnabled
+    ? inflationAdjustedSummary?.summaryStats ?? includedSummaryStats
+    : includedSummaryStats;
+  const displayedStats: EvidenceSummaryStats = {
+    awarded: inflationAdjustmentEnabled ? inflationAdjustedSummary?.stats ?? null : includedStats,
+    average: displayedSummaryStats.average,
+    engineer: displayedSummaryStats.engineer
+  };
+
   return `
     <section class="results-panel">
       ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, inflationAdjustedPriceSet)}
-      ${renderAwardedBidSummary(
-        inflationAdjustmentEnabled ? inflationAdjustedSummary?.stats ?? null : includedStats,
+      ${renderUnitPriceSummaryPanel(
+        displayedStats,
         result.filteredRows.length,
         includedRowCount,
         inflationAdjustmentEnabled,
-        inflationAdjustedSummary
+        inflationAdjustedSummary,
+        addToProjectPanelHtml
       )}
-      ${addToProjectPanelHtml}
-      ${renderSupplementalPriceSummaries(inflationAdjustmentEnabled ? inflationAdjustedSummary?.summaryStats ?? includedSummaryStats : includedSummaryStats)}
       ${renderPublicBidTabProjects(data)}
     </section>
     ${renderBidderDetailModal(result, data, selectedBidderDetailKey)}
@@ -350,89 +358,35 @@ function renderProjectNumberCell(row: EvidenceRow): string {
   `;
 }
 
-function renderAwardedBidSummary(
-  stats: EvidenceStats | null,
+function renderUnitPriceSummaryPanel(
+  stats: EvidenceSummaryStats,
   filteredRowCount: number,
   includedRowCount: number,
   inflationAdjustmentEnabled: boolean,
-  inflationAdjustedSummary: InflationAdjustedSummary | null
+  inflationAdjustedSummary: InflationAdjustedSummary | null,
+  addToProjectPanelHtml: string
 ): string {
   const inflationControl = renderInflationAdjustmentControl(inflationAdjustmentEnabled);
   const inflationNote = renderInflationAdjustmentNote(inflationAdjustmentEnabled, inflationAdjustedSummary);
-
-  if (filteredRowCount > 0 && includedRowCount === 0) {
-    return `
-      <section class="panel-block">
-        <div class="summary-heading-row">
-          <div class="panel-heading">
-            <p class="eyebrow">Awarded Bid Summary</p>
-            <h3>No included rows in summary</h3>
-          </div>
-          ${inflationControl}
-        </div>
-        <p class="muted">All current evidence rows are excluded from the Awarded Bid Summary.</p>
-        ${inflationNote}
-      </section>
-    `;
-  }
-
-  if (!stats) {
-    const noStatsMessage = inflationAdjustmentEnabled && (inflationAdjustedSummary?.awardedRowCount ?? 0) > 0
-      ? "No included awarded bid rows could be adjusted because their source quarters are not loaded in the FHWA NHCCI table."
-      : "The included evidence rows do not include awarded bid unit prices.";
-
-    return `
-      <section class="panel-block">
-        <div class="summary-heading-row">
-          <div class="panel-heading">
-            <p class="eyebrow">Awarded Bid Summary</p>
-            <h3>No awarded bid statistics available</h3>
-          </div>
-          ${inflationControl}
-        </div>
-        <p class="muted">${noStatsMessage}</p>
-        ${inflationNote}
-      </section>
-    `;
-  }
+  const allRowsExcludedMessage = filteredRowCount > 0 && includedRowCount === 0
+    ? `<p class="muted summary-status-note">All current evidence rows are excluded from the Unit Price Summary.</p>`
+    : "";
+  const noAdjustedAwardedMessage = inflationAdjustmentEnabled
+    && !stats.awarded
+    && (inflationAdjustedSummary?.awardedRowCount ?? 0) > 0
+    ? `<p class="muted summary-status-note">No included awarded bid rows could be adjusted because their source quarters are not loaded in the FHWA NHCCI table.</p>`
+    : "";
 
   return `
-    <section class="panel-block">
+    <section class="panel-block unit-price-summary-panel">
       <div class="summary-heading-row">
         <div class="panel-heading">
-          <p class="eyebrow">Awarded Bid Summary</p>
+          <p class="eyebrow">Unit Price Summary</p>
         </div>
         ${inflationControl}
       </div>
-      <div class="distribution-grid evidence-stats-grid">
-        ${renderStatMetric("Count", stats.count, false)}
-        ${renderStatMetric("Low", stats.low, true)}
-        ${renderStatMetric("P25", stats.p25, true)}
-        ${renderStatMetric("Median", stats.median, true)}
-        ${renderStatMetric("Average", stats.average, true)}
-        ${renderStatMetric("P75", stats.p75, true)}
-        ${renderStatMetric("High", stats.high, true)}
-      </div>
-      ${inflationNote}
-    </section>
-  `;
-}
-
-function renderInflationAdjustmentControl(enabled: boolean): string {
-  return `
-    <label class="summary-toggle">
-      <input id="inflation-adjustment-toggle" type="checkbox" ${enabled ? "checked" : ""} />
-      <span>Inflation Adjustment</span>
-    </label>
-  `;
-}
-
-function renderSupplementalPriceSummaries(stats: EvidenceSummaryStats): string {
-  return `
-    <section class="panel-block">
-      <div class="panel-heading">
-        <p class="eyebrow">Unit Price Summaries</p>
-      </div>
+      ${allRowsExcludedMessage}
+      ${noAdjustedAwardedMessage}
       <div class="summary-table-wrap">
         <table class="summary-table">
           <thead>
@@ -448,11 +402,14 @@ function renderSupplementalPriceSummaries(stats: EvidenceSummaryStats): string {
             </tr>
           </thead>
           <tbody>
+            ${renderSummaryRow("Awarded Bid", stats.awarded)}
             ${renderSummaryRow("Average Bid", stats.average)}
             ${renderSummaryRow("Engineer Estimate", stats.engineer)}
           </tbody>
         </table>
       </div>
+      ${inflationNote}
+      ${addToProjectPanelHtml}
     </section>
   `;
 }
@@ -471,13 +428,41 @@ function renderSummaryRow(label: string, stats: EvidenceStats | null): string {
     <tr>
       <th scope="row">${escapeHtml(label)}</th>
       <td>${formatNumber(stats.count)}</td>
-      <td>${formatCurrency(stats.low)}</td>
-      <td>${formatCurrency(stats.p25)}</td>
-      <td>${formatCurrency(stats.median)}</td>
-      <td>${formatCurrency(stats.average)}</td>
-      <td>${formatCurrency(stats.p75)}</td>
-      <td>${formatCurrency(stats.high)}</td>
+      <td>${renderSummaryPriceControl(label, "Low", stats.low)}</td>
+      <td>${renderSummaryPriceControl(label, "P25", stats.p25)}</td>
+      <td>${renderSummaryPriceControl(label, "Median", stats.median)}</td>
+      <td>${renderSummaryPriceControl(label, "Average", stats.average)}</td>
+      <td>${renderSummaryPriceControl(label, "P75", stats.p75)}</td>
+      <td>${renderSummaryPriceControl(label, "High", stats.high)}</td>
     </tr>
+  `;
+}
+
+function renderSummaryPriceControl(
+  priceTypeLabel: string,
+  metricLabel: string,
+  value: number
+): string {
+  const formattedValue = formatCurrency(value);
+
+  return `
+    <button
+      type="button"
+      class="summary-price-button"
+      data-project-cost-value="${value}"
+      aria-label="Use ${escapeHtml(priceTypeLabel)} ${escapeHtml(metricLabel)} ${escapeHtml(formattedValue)} as preferred unit cost"
+    >
+      ${formattedValue}
+    </button>
+  `;
+}
+
+function renderInflationAdjustmentControl(enabled: boolean): string {
+  return `
+    <label class="summary-toggle">
+      <input id="inflation-adjustment-toggle" type="checkbox" ${enabled ? "checked" : ""} />
+      <span>Inflation Adjustment</span>
+    </label>
   `;
 }
 
@@ -502,15 +487,6 @@ function renderInflationAdjustmentNote(
       Inflation Adjustment is on. Awarded bid, average bid, and engineer estimate unit prices are adjusted with FHWA NHCCI to ${escapeHtml(summary.targetPeriod.periodLabel)}.
       Original Matching Projects prices stay primary and CSV export is unchanged.${missingNote}
     </p>
-  `;
-}
-
-function renderStatMetric(label: string, value: number, currency: boolean): string {
-  return `
-    <div class="distribution-metric">
-      <span>${escapeHtml(label)}</span>
-      <strong>${currency ? formatCurrency(value) : formatNumber(value)}</strong>
-    </div>
   `;
 }
 

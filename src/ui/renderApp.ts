@@ -93,10 +93,6 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     const addToProjectPanelHtml = renderAddToProjectPanel(
       result,
       activeProject,
-      includedStats,
-      includedSummaryStats,
-      inflationAdjustmentEnabled,
-      inflationAdjustedSummary,
       pendingDuplicateLine
     );
 
@@ -340,40 +336,25 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     }
 
     const costInput = addForm.elements.namedItem("preferredUnitCost") as HTMLInputElement | null;
-    const costBasisInput = addForm.elements.namedItem("costBasis") as HTMLInputElement | null;
     const costSourceInput = addForm.elements.namedItem("costSource") as HTMLInputElement | null;
-    const costBasisPreview = rootElement.querySelector<HTMLElement>("#project-cost-basis-preview");
 
     costInput?.addEventListener("input", () => {
-      if (costBasisInput) {
-        costBasisInput.value = "Manual entry";
-      }
       if (costSourceInput) {
         costSourceInput.value = "manual";
       }
-      if (costBasisPreview) {
-        costBasisPreview.textContent = "Manual entry";
-      }
     });
 
-    addForm.querySelectorAll<HTMLButtonElement>("[data-project-cost-value]").forEach((button) => {
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-project-cost-value]").forEach((button) => {
       button.addEventListener("click", () => {
         const costValue = readOptionalFormNumber(button.dataset.projectCostValue ?? "");
-        const costBasis = button.dataset.projectCostBasis || "Manual entry";
 
         if (costValue === null || !costInput) {
           return;
         }
 
-        costInput.value = String(costValue);
-        if (costBasisInput) {
-          costBasisInput.value = costBasis;
-        }
+        costInput.value = formatDecimalInput(roundToHundredth(costValue));
         if (costSourceInput) {
           costSourceInput.value = "quick_fill";
-        }
-        if (costBasisPreview) {
-          costBasisPreview.textContent = costBasis;
         }
       });
     });
@@ -399,7 +380,6 @@ export function renderApp(root: HTMLElement, data: AppData): void {
         return;
       }
 
-      const costBasis = String(costBasisInput?.value || "Manual entry");
       const costSource = costSourceInput?.value === "quick_fill" ? "quick_fill" : "manual";
       const lineItem = createProjectLineItem({
         itemCode: result.query.itemCode,
@@ -407,7 +387,6 @@ export function renderApp(root: HTMLElement, data: AppData): void {
         unit: result.query.unit,
         quantity,
         preferredUnitCost,
-        costBasis,
         notes: notesInput?.value ?? "",
         evidenceContext: buildProjectEvidenceContext(
           result,
@@ -416,8 +395,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
           includedSummaryStats,
           inflationAdjustmentEnabled,
           inflationAdjustedSummary,
-          costSource,
-          costBasis
+          costSource
         )
       });
       const matchingLineIds = activeProject.lineItems
@@ -519,8 +497,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
 
         const quantityInput = row.querySelector<HTMLInputElement>('[data-project-line-field="quantity"]');
         const preferredUnitCostInput = row.querySelector<HTMLInputElement>('[data-project-line-field="preferredUnitCost"]');
-        const costBasisInput = row.querySelector<HTMLInputElement>('[data-project-line-field="costBasis"]');
-        const notesInput = row.querySelector<HTMLTextAreaElement>('[data-project-line-field="notes"]');
+        const notesInput = row.querySelector<HTMLInputElement>('[data-project-line-field="notes"]');
         const quantity = readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero.");
         const preferredUnitCost = readRequiredPositiveNumber(preferredUnitCostInput, "Enter a preferred unit cost greater than zero.");
 
@@ -532,7 +509,6 @@ export function renderApp(root: HTMLElement, data: AppData): void {
           updateProjectLineItem(projectState, activeProject.projectId, lineItemId, {
             quantity,
             preferredUnitCost,
-            costBasis: costBasisInput?.value.trim() || "Manual entry",
             notes: notesInput?.value ?? ""
           }),
           true
@@ -546,6 +522,10 @@ export function renderApp(root: HTMLElement, data: AppData): void {
         const lineItemId = button.dataset.removeProjectLineId ?? "";
 
         if (!activeProject || !lineItemId) {
+          return;
+        }
+
+        if (!window.confirm("Remove this project line? This cannot be undone.")) {
           return;
         }
 
@@ -583,8 +563,7 @@ function buildProjectEvidenceContext(
   includedSummaryStats: EvidenceSummaryStats,
   inflationAdjustmentEnabled: boolean,
   inflationAdjustedSummary: InflationAdjustedSummary | null,
-  costSource: ProjectEvidenceContext["costSource"],
-  costSourceLabel: string
+  costSource: ProjectEvidenceContext["costSource"]
 ): ProjectEvidenceContext {
   const summaryStats = inflationAdjustmentEnabled
     ? inflationAdjustedSummary?.summaryStats ?? { awarded: null, average: null, engineer: null }
@@ -608,8 +587,7 @@ function buildProjectEvidenceContext(
       inflationTargetPeriodLabel,
       valuesAreInflationAdjusted: inflationAdjustmentEnabled && Boolean(inflationTargetPeriodLabel)
     },
-    costSource,
-    costSourceLabel
+    costSource
   };
 }
 
@@ -674,6 +652,14 @@ function readOptionalFormNumber(value: string): number | null {
 
   const numberValue = Number(trimmedValue);
   return Number.isFinite(numberValue) && numberValue >= 0 ? numberValue : null;
+}
+
+function roundToHundredth(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function formatDecimalInput(value: number): string {
+  return value.toFixed(2).replace(/\.?0+$/, "");
 }
 
 function defaultSortDirection(sortKey: EvidenceSortKey): "asc" | "desc" {

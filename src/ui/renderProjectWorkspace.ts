@@ -1,9 +1,4 @@
-import type {
-  EvidenceResult,
-  EvidenceStats,
-  EvidenceSummaryStats
-} from "../data/schema";
-import type { InflationAdjustedSummary } from "../matching/inflationAdjustment";
+import type { EvidenceResult } from "../data/schema";
 import type { ProjectLineItem, UserProject } from "../projects/projectWorkspace";
 import { hasRequiredProjectMetadata } from "../projects/projectWorkspace";
 
@@ -12,19 +7,9 @@ export interface PendingDuplicateProjectLine {
   matchingLineIds: string[];
 }
 
-interface QuickFillOption {
-  label: string;
-  value: number;
-  costBasis: string;
-}
-
 export function renderAddToProjectPanel(
   result: EvidenceResult,
   activeProject: UserProject | null,
-  includedStats: EvidenceStats | null,
-  includedSummaryStats: EvidenceSummaryStats,
-  inflationAdjustmentEnabled: boolean,
-  inflationAdjustedSummary: InflationAdjustedSummary | null,
   pendingDuplicateLine: PendingDuplicateProjectLine | null
 ): string {
   if (!result.query.itemCode || !activeProject) {
@@ -36,45 +21,31 @@ export function renderAddToProjectPanel(
   }
 
   const projectReady = hasRequiredProjectMetadata(activeProject);
-  const quickFillOptions = buildQuickFillOptions(
-    includedStats,
-    includedSummaryStats,
-    inflationAdjustmentEnabled,
-    inflationAdjustedSummary
-  );
 
   return `
-    <section class="panel-block add-project-panel">
+    <section class="add-project-panel">
       <div class="panel-heading add-project-heading">
         <div>
-          <p class="eyebrow">Project Workspace</p>
-          <h3>Add ${escapeHtml(result.query.itemCode)} to Project</h3>
+          <h3>Add Item to Project</h3>
           <p class="query-line">${escapeHtml(activeProject.name.trim() || "Unnamed project")} | ${escapeHtml(activeProject.location.trim() || "Location required")}</p>
         </div>
         <button type="button" class="secondary-button project-tab-shortcut" data-app-view="project">Project</button>
       </div>
       ${projectReady ? "" : `<p class="project-warning">Project name and location are required before adding items.</p>`}
       <form id="add-project-item-form" class="add-project-form">
-        <input type="hidden" name="costBasis" value="Manual entry" />
         <input type="hidden" name="costSource" value="manual" />
+        <label class="add-project-cost-field">
+          <span>Preferred unit cost</span>
+          <input name="preferredUnitCost" type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" required />
+        </label>
         <label>
           <span>Quantity</span>
           <input name="quantity" type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" required />
-        </label>
-        <label>
-          <span>Preferred unit cost</span>
-          <input name="preferredUnitCost" type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" required />
         </label>
         <label class="add-project-notes-field">
           <span>Line notes</span>
           <textarea name="notes" rows="2"></textarea>
         </label>
-        <div class="quick-fill-group" aria-label="Quick-fill preferred unit cost">
-          ${quickFillOptions.length > 0
-            ? quickFillOptions.map(renderQuickFillButton).join("")
-            : `<p class="muted quick-fill-empty">No included summary values are available.</p>`}
-        </div>
-        <p id="project-cost-basis-preview" class="cost-basis-preview">Manual entry</p>
         <button type="submit" class="primary-button add-project-submit" ${projectReady ? "" : "disabled"}>Add to Project</button>
       </form>
     </section>
@@ -95,7 +66,7 @@ export function renderProjectWorkspace(project: UserProject | null): string {
     `;
   }
 
-  const subtotal = project.lineItems.reduce(
+  const totalProjectCost = project.lineItems.reduce(
     (sum, lineItem) => sum + lineItem.quantity * lineItem.preferredUnitCost,
     0
   );
@@ -134,9 +105,9 @@ export function renderProjectWorkspace(project: UserProject | null): string {
             <p class="eyebrow">Project Items</p>
             <h3>${formatNumber(project.lineItems.length)} line${project.lineItems.length === 1 ? "" : "s"}</h3>
           </div>
-          <div class="project-subtotal">
-            <span>Subtotal</span>
-            <strong>${formatCurrency(subtotal)}</strong>
+          <div class="project-total">
+            <span>Total Project Cost</span>
+            <strong>${formatCurrency(totalProjectCost)}</strong>
           </div>
         </div>
         ${project.lineItems.length === 0 ? renderEmptyProjectTable() : renderProjectLineTable(project)}
@@ -154,9 +125,8 @@ function renderDuplicateProjectLinePanel(
   );
 
   return `
-    <section class="panel-block add-project-panel duplicate-project-panel">
+    <section class="add-project-panel duplicate-project-panel">
       <div class="panel-heading">
-        <p class="eyebrow">Project Workspace</p>
         <h3>${escapeHtml(pendingDuplicateLine.lineItem.itemCode)} already exists in Project</h3>
       </div>
       <form id="duplicate-project-item-form" class="duplicate-project-form">
@@ -193,8 +163,7 @@ function renderProjectLineTable(project: UserProject): string {
               <th>Quantity</th>
               <th>Unit</th>
               <th>Preferred unit cost</th>
-              <th>Extended cost</th>
-              <th>Cost basis</th>
+              <th>Total Item Cost</th>
               <th>Notes</th>
               <th>Actions</th>
             </tr>
@@ -237,24 +206,26 @@ function renderProjectLineRow(lineItem: ProjectLineItem): string {
       <td>${formatCurrency(lineItem.quantity * lineItem.preferredUnitCost)}</td>
       <td>
         <input
-          name="costBasis"
-          class="project-line-basis-input"
-          data-project-line-id="${escapeHtml(lineItem.lineItemId)}"
-          data-project-line-field="costBasis"
-          value="${escapeHtml(lineItem.costBasis)}"
-        />
-      </td>
-      <td>
-        <textarea
           name="notes"
           class="project-line-notes-input"
           data-project-line-id="${escapeHtml(lineItem.lineItemId)}"
           data-project-line-field="notes"
-          rows="2"
-        >${escapeHtml(lineItem.notes)}</textarea>
+          value="${escapeHtml(lineItem.notes)}"
+        />
       </td>
       <td>
-        <button type="button" class="secondary-button project-line-remove-button" data-remove-project-line-id="${escapeHtml(lineItem.lineItemId)}">Remove</button>
+        <button
+          type="button"
+          class="project-line-remove-button"
+          data-remove-project-line-id="${escapeHtml(lineItem.lineItemId)}"
+          aria-label="Remove ${escapeHtml(lineItem.itemCode)} from project"
+          title="Remove line"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M9 3h6l1 2h4v2H4V5h4l1-2Z" />
+            <path d="M6 9h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Zm4 0v8h2v-8h-2Z" />
+          </svg>
+        </button>
       </td>
     </tr>
   `;
@@ -262,63 +233,6 @@ function renderProjectLineRow(lineItem: ProjectLineItem): string {
 
 function renderEmptyProjectTable(): string {
   return `<p class="muted project-empty">No project items have been added.</p>`;
-}
-
-function buildQuickFillOptions(
-  includedStats: EvidenceStats | null,
-  includedSummaryStats: EvidenceSummaryStats,
-  inflationAdjustmentEnabled: boolean,
-  inflationAdjustedSummary: InflationAdjustedSummary | null
-): QuickFillOption[] {
-  const options: QuickFillOption[] = [];
-  const targetPeriod = inflationAdjustedSummary?.targetPeriod?.periodLabel ?? null;
-  const basisSuffix = inflationAdjustmentEnabled && targetPeriod
-    ? `, FHWA NHCCI adjusted to ${targetPeriod}`
-    : "";
-  const awardedStats = inflationAdjustmentEnabled ? inflationAdjustedSummary?.stats ?? null : includedStats;
-  const summaryStats = inflationAdjustmentEnabled
-    ? inflationAdjustedSummary?.summaryStats ?? { awarded: null, average: null, engineer: null }
-    : includedSummaryStats;
-
-  if (awardedStats) {
-    options.push(
-      quickFillOption("Awarded low", awardedStats.low, basisSuffix),
-      quickFillOption("Awarded median", awardedStats.median, basisSuffix),
-      quickFillOption("Awarded average", awardedStats.average, basisSuffix),
-      quickFillOption("Awarded high", awardedStats.high, basisSuffix)
-    );
-  }
-
-  if (summaryStats.average) {
-    options.push(quickFillOption("Average bid average", summaryStats.average.average, basisSuffix));
-  }
-
-  if (summaryStats.engineer) {
-    options.push(quickFillOption("Engineer estimate average", summaryStats.engineer.average, basisSuffix));
-  }
-
-  return options;
-}
-
-function quickFillOption(label: string, value: number, basisSuffix: string): QuickFillOption {
-  return {
-    label,
-    value,
-    costBasis: `${label}${basisSuffix} from current included evidence`
-  };
-}
-
-function renderQuickFillButton(option: QuickFillOption): string {
-  return `
-    <button
-      type="button"
-      class="secondary-button quick-fill-button"
-      data-project-cost-value="${option.value}"
-      data-project-cost-basis="${escapeHtml(option.costBasis)}"
-    >
-      ${escapeHtml(option.label)} ${formatCurrency(option.value)}
-    </button>
-  `;
 }
 
 function formatCurrency(value: number): string {

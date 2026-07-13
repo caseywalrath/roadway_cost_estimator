@@ -15,8 +15,7 @@ const projectCsvColumns: ProjectCsvColumn[] = [
   { header: "Quantity", value: (_project, lineItem) => lineItem.quantity },
   { header: "Unit", value: (_project, lineItem) => lineItem.unit },
   { header: "Preferred Unit Cost", value: (_project, lineItem) => lineItem.preferredUnitCost },
-  { header: "Extended Cost", value: (_project, lineItem) => lineItem.quantity * lineItem.preferredUnitCost },
-  { header: "Cost Basis", value: (_project, lineItem) => lineItem.costBasis },
+  { header: "Total Item Cost", value: (_project, lineItem) => lineItem.quantity * lineItem.preferredUnitCost },
   { header: "Line Notes", value: (_project, lineItem) => lineItem.notes },
   { header: "Evidence Row Count", value: (_project, lineItem) => lineItem.evidenceContext.includedRowCount },
   {

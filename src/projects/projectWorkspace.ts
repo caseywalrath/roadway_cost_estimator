@@ -5,11 +5,12 @@ import type {
   SearchQuery
 } from "../data/schema";
 
-export const PROJECT_WORKSPACE_STORAGE_KEY = "roadway-cost-estimator:projects:v1";
-export const PROJECT_WORKSPACE_SCHEMA_VERSION = 1;
+export const PROJECT_WORKSPACE_STORAGE_KEY = "roadway-cost-estimator:projects:v2";
+const LEGACY_PROJECT_WORKSPACE_STORAGE_KEY = "roadway-cost-estimator:projects:v1";
+export const PROJECT_WORKSPACE_SCHEMA_VERSION = 2;
 
 export interface ProjectWorkspaceState {
-  schemaVersion: 1;
+  schemaVersion: 2;
   activeProjectId: string | null;
   projects: UserProject[];
 }
@@ -31,7 +32,6 @@ export interface ProjectLineItem {
   unit: string;
   quantity: number;
   preferredUnitCost: number;
-  costBasis: string;
   notes: string;
   evidenceContext: ProjectEvidenceContext;
   createdAt: string;
@@ -46,7 +46,6 @@ export interface ProjectEvidenceContext {
   includedObservationIds: string[];
   summarySnapshot: ProjectEvidenceSummarySnapshot;
   costSource: "manual" | "quick_fill";
-  costSourceLabel: string;
 }
 
 export interface ProjectEvidenceSummarySnapshot {
@@ -69,7 +68,6 @@ export interface CreateProjectLineItemInput {
   unit: string;
   quantity: number;
   preferredUnitCost: number;
-  costBasis: string;
   notes: string;
   evidenceContext: ProjectEvidenceContext;
 }
@@ -86,26 +84,47 @@ export function loadProjectWorkspaceState(): ProjectWorkspaceLoadResult {
   try {
     const rawValue = window.localStorage.getItem(PROJECT_WORKSPACE_STORAGE_KEY);
 
-    if (!rawValue) {
+    if (rawValue) {
+      const parsedValue: unknown = JSON.parse(rawValue);
+      const state = parseProjectWorkspaceState(parsedValue, PROJECT_WORKSPACE_SCHEMA_VERSION);
+
+      if (!state) {
+        return {
+          state: createEmptyProjectWorkspaceState(),
+          warning: "Saved project data was not readable. The Project workspace started with a clean local draft."
+        };
+      }
+
+      return {
+        state,
+        warning: null
+      };
+    }
+
+    const legacyRawValue = window.localStorage.getItem(LEGACY_PROJECT_WORKSPACE_STORAGE_KEY);
+
+    if (!legacyRawValue) {
       return {
         state: createEmptyProjectWorkspaceState(),
         warning: null
       };
     }
 
-    const parsedValue: unknown = JSON.parse(rawValue);
-    const state = parseProjectWorkspaceState(parsedValue);
+    const legacyParsedValue: unknown = JSON.parse(legacyRawValue);
+    const migratedState = parseProjectWorkspaceState(legacyParsedValue, 1);
 
-    if (!state) {
+    if (!migratedState) {
       return {
         state: createEmptyProjectWorkspaceState(),
         warning: "Saved project data was not readable. The Project workspace started with a clean local draft."
       };
     }
 
+    const migrationWarning = saveProjectWorkspaceState(migratedState);
+
     return {
-      state,
-      warning: null
+      state: migratedState,
+      warning: migrationWarning
     };
   } catch {
     return {
@@ -179,7 +198,6 @@ export function createProjectLineItem(input: CreateProjectLineItemInput): Projec
     unit: input.unit,
     quantity: input.quantity,
     preferredUnitCost: input.preferredUnitCost,
-    costBasis: input.costBasis,
     notes: input.notes,
     evidenceContext: input.evidenceContext,
     createdAt: now,
@@ -239,7 +257,7 @@ export function updateProjectLineItem(
   state: ProjectWorkspaceState,
   projectId: string,
   lineItemId: string,
-  fields: Pick<ProjectLineItem, "quantity" | "preferredUnitCost" | "costBasis" | "notes">
+  fields: Pick<ProjectLineItem, "quantity" | "preferredUnitCost" | "notes">
 ): ProjectWorkspaceState {
   const project = state.projects.find((candidate) => candidate.projectId === projectId);
 
@@ -257,7 +275,6 @@ export function updateProjectLineItem(
             ...lineItem,
             quantity: fields.quantity,
             preferredUnitCost: fields.preferredUnitCost,
-            costBasis: fields.costBasis,
             notes: fields.notes,
             updatedAt: now
           }
@@ -313,8 +330,8 @@ function updateProject(
   };
 }
 
-function parseProjectWorkspaceState(value: unknown): ProjectWorkspaceState | null {
-  if (!isRecord(value) || value.schemaVersion !== PROJECT_WORKSPACE_SCHEMA_VERSION) {
+function parseProjectWorkspaceState(value: unknown, schemaVersion: 1 | 2): ProjectWorkspaceState | null {
+  if (!isRecord(value) || value.schemaVersion !== schemaVersion) {
     return null;
   }
 
@@ -378,7 +395,6 @@ function parseProjectLineItem(value: unknown): ProjectLineItem | null {
     unit: stringValue(value.unit),
     quantity,
     preferredUnitCost,
-    costBasis: stringValue(value.costBasis) || "Manual entry",
     notes: stringValue(value.notes),
     evidenceContext,
     createdAt: stringValue(value.createdAt) || currentTimestamp(),
@@ -406,8 +422,7 @@ function parseProjectEvidenceContext(value: unknown): ProjectEvidenceContext | n
       ? value.includedObservationIds.map((item) => String(item)).filter(Boolean)
       : [],
     summarySnapshot,
-    costSource: value.costSource === "quick_fill" ? "quick_fill" : "manual",
-    costSourceLabel: stringValue(value.costSourceLabel) || "Manual entry"
+    costSource: value.costSource === "quick_fill" ? "quick_fill" : "manual"
   };
 }
 

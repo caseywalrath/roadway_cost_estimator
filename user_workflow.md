@@ -34,8 +34,7 @@ The first screen should show:
 - Explorer and Project tabs
 - item search form
 - project evidence browser
-- awarded bid summary panel
-- Add to Project panel after an official item is selected
+- Unit Price Summary panel with integrated Add to Project controls after an official item is selected
 - Project workspace table for saved local line items
 - source coverage note
 - data notes when filters exclude relevant rows
@@ -162,14 +161,15 @@ How to use it:
 - Click Apply filters to update the table. The drawer closes after filters are applied.
 - Click Clear Filters to restore default public CDOT, selected-unit, awarded-price filters while clearing geography, district, year, and quantity filters.
 
-## 6. Review the awarded bid summary
+## 6. Review the Unit Price Summary
 
-The user checks the Awarded Bid Summary panel after reviewing table rows. Rows checked in `Exclude from Summary` stay visible in Matching Projects but are removed from the summary statistics.
+The user checks the Unit Price Summary panel after reviewing table rows. Rows checked in `Exclude from Summary` stay visible in Matching Projects but are removed from the summary statistics.
 
-The user can turn on `Inflation Adjustment` to recalculate the summary statistics with loaded FHWA National Highway Construction Cost Index values. When it is on, Matching Projects awarded bid unit prices also show a second parenthetical adjusted value when the rounded adjusted dollar differs from the rounded original dollar.
+The user can turn on `Inflation Adjustment` in the Unit Price Summary header to recalculate awarded bid, average bid, and engineer estimate summary statistics with loaded FHWA National Highway Construction Cost Index values. When it is on, Matching Projects awarded bid unit prices also show a second parenthetical adjusted value when the rounded adjusted dollar differs from the rounded original dollar.
 
 Current summary fields:
 
+- Price type
 - Count
 - Low
 - P25
@@ -178,13 +178,20 @@ Current summary fields:
 - P75
 - High
 
+Current price type rows:
+
+- Awarded Bid
+- Average Bid
+- Engineer Estimate
+
 How to use it:
 
-- Treat the statistics as a summary of currently filtered awarded bid unit prices that have not been excluded.
+- Treat the statistics as a summary of currently filtered unit prices that have not been excluded.
 - Leave Inflation Adjustment off when reviewing original awarded bid dollars.
 - Turn Inflation Adjustment on when a quick summary normalized to the latest loaded NHCCI quarter is useful.
 - Treat parenthetical adjusted unit prices in Matching Projects as display-only context; the primary table value remains the original awarded bid unit price.
 - Do not treat the summary as a suggested unit price.
+- Click an available Low, P25, Median, Average, P75, or High value only when the user wants to copy that visible value into the Project preferred unit cost field.
 - Refilter the evidence table when the summary appears to be driven by rows the engineer would not use.
 - Check `Exclude from Summary` for rows that should remain visible but should not affect the summary.
 
@@ -197,7 +204,7 @@ Reviewer interpretation:
 
 ## 7. Add the selected item to Project
 
-After selecting an official item and reviewing evidence, the user can save the item as a Project line from the Add to Project panel.
+After selecting an official item and reviewing evidence, the user can save the item as a Project line from the Add Item to Project controls inside the Unit Price Summary panel.
 
 Required project setup:
 
@@ -217,17 +224,18 @@ How to use it:
 
 - Open the Project tab and enter project name, location, and optional project notes.
 - Return to Explorer.
-- Select an official item and review the Matching Projects table and summaries.
-- Enter quantity and preferred unit cost manually, or use a quick-fill button from the current included summary statistics.
+- Select an official item and review the Matching Projects table and Unit Price Summary.
+- Enter quantity and preferred unit cost manually, or click an available Unit Price Summary value to fill the preferred unit cost.
 - Click Add to Project.
 
-Quick-fill behavior:
+Summary value selection behavior:
 
-- Awarded low, median, average, and high quick-fill buttons appear when awarded summary values are available.
-- Average bid average and engineer estimate average quick-fill buttons appear when those summaries are available.
-- Rows checked in `Exclude from Summary` are not included in the quick-fill summary values or saved evidence context.
-- If `Inflation Adjustment` is on, quick-fill values use the visible adjusted summary values and record the target FHWA NHCCI period in the cost basis.
-- Quick-fill values are user-selected starting points, not recommendations.
+- Available Low, P25, Median, Average, P75, and High cells in the Unit Price Summary table can fill the preferred unit cost.
+- Selected summary values are rounded to the nearest hundredth when copied into the preferred unit cost field.
+- Count cells do not fill the preferred unit cost because they are not unit prices.
+- Rows checked in `Exclude from Summary` are not included in the selectable summary values or saved evidence context.
+- If `Inflation Adjustment` is on, selected summary values use the visible adjusted summary values.
+- Selected summary values are user-selected starting points, not recommendations.
 
 Duplicate item behavior:
 
@@ -242,7 +250,7 @@ Saved evidence context:
 - Included observation IDs
 - Summary snapshot
 - Inflation-adjustment state
-- Manual or quick-fill cost source
+- Manual or summary-selected cost source
 
 ## 8. Review the Project workspace
 
@@ -261,16 +269,15 @@ Project line table columns:
 - Quantity
 - Unit
 - Preferred unit cost
-- Extended cost
-- Cost basis
+- Total item cost
 - Notes
 - Actions
 
 How to use it:
 
-- Edit quantity, preferred unit cost, cost basis, and notes directly in the table.
-- Remove lines that should not remain in the project.
-- Review the line count and project subtotal.
+- Edit quantity, preferred unit cost, and notes directly in the table.
+- Remove lines that should not remain in the project, then confirm the removal prompt.
+- Review the line count and total project cost.
 - Treat the Project workspace as local browser storage. Clearing browser data can remove saved projects.
 - If local storage is unavailable or malformed, the app shows a recoverable warning and keeps the evidence browser usable.
 
@@ -310,8 +317,8 @@ Project export:
 - Open the Project tab.
 - Click Download Project CSV.
 - The export includes one row per saved project line.
-- Extended cost is calculated from quantity times preferred unit cost.
-- Exported rows include project name, project location, project notes, item details, cost basis, line notes, evidence row count, included observation IDs, and timestamps.
+- Total item cost is calculated from quantity times preferred unit cost.
+- Exported rows include project name, project location, project notes, item details, line notes, evidence row count, included observation IDs, and timestamps.
 - The Project CSV button is disabled when the Project has no line items.
 - XLSX export and project import are deferred.
 
@@ -349,7 +356,7 @@ Recommended meeting flow:
 4. Use the left-panel steps to find an item, select the official item, enter quantity, and review evidence.
 5. Review the project evidence table.
 6. Apply source, geography, district, year, unit, and quantity filters when relevant.
-7. Review the awarded bid summary after reviewing rows.
+7. Review the Unit Price Summary after reviewing rows.
 8. Review source coverage and data notes.
 9. Add one reviewed item to Project when a preferred unit cost is selected.
 10. Open the Project tab and review the saved line.
