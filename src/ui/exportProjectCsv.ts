@@ -6,10 +6,13 @@ interface ProjectCsvColumn {
 }
 
 const projectCsvColumns: ProjectCsvColumn[] = [
+  { header: "State", value: (project) => project.state },
   { header: "Project Name", value: (project) => project.name },
   { header: "Project Location", value: (project) => project.location },
   { header: "Project Notes", value: (project) => project.notes },
   { header: "Line Number", value: (_project, _lineItem, lineNumber) => lineNumber },
+  { header: "Agency ID", value: (_project, lineItem) => lineItem.agencyId },
+  { header: "Agency Item ID", value: (_project, lineItem) => lineItem.agencyItemId },
   { header: "Item Code", value: (_project, lineItem) => lineItem.itemCode },
   { header: "Description", value: (_project, lineItem) => lineItem.description },
   { header: "Quantity", value: (_project, lineItem) => lineItem.quantity },

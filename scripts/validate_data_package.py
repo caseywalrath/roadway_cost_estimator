@@ -2,807 +2,342 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 from collections import Counter, defaultdict
-from dataclasses import dataclass
-from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 
-DATA_DIR = Path("public/data")
-
-SOURCE_FIELDS = [
-    "source_id",
-    "source_type",
-    "agency",
-    "state",
-    "source_label",
-    "data_year",
-    "notes",
-]
-PROJECT_FIELDS = [
-    "project_id",
-    "project_name",
-    "agency_owner",
-    "state",
-    "county_region",
-    "work_type",
-    "estimate_let_date",
-    "source_id",
-    "project_number",
-    "project_location_raw",
-    "contractor",
-    "district",
-    "terrain",
-    "bid_count",
-    "awarded_bid_total",
-    "award_index",
-]
-OBSERVATION_FIELDS = [
-    "observation_id",
-    "project_id",
-    "source_id",
-    "agency_item_code",
-    "description_raw",
-    "description_normalized",
-    "unit_raw",
-    "unit_normalized",
-    "quantity",
-    "unit_price",
-    "extended_price",
-    "discipline",
-    "price_type",
-    "date_basis",
-]
-AGENCY_ITEM_FIELDS = [
-    "agency_item_id",
-    "state",
-    "agency",
-    "item_code",
-    "official_description",
-    "official_abbreviated_description",
-    "official_unit",
-    "canonical_item_id",
-]
-SPEC_SECTION_FIELDS = [
-    "section_prefix",
-    "division_prefix",
-    "division_title",
-    "section_title",
-    "source_year",
-    "source_url",
-]
-INFLATION_INDEX_FIELDS = [
-    "index_id",
-    "index_name",
-    "period_year",
-    "period_quarter",
-    "period_label",
-    "period_start_date",
-    "period_end_date",
-    "index_value",
-    "source_url",
-    "notes",
-]
-BIDDER_BID_FIELDS = [
-    "bid_id",
-    "project_id",
-    "source_id",
-    "bidder_name",
-    "bid_total",
-    "bid_rank",
-    "apparent_low",
-]
-BIDDER_ITEM_FIELDS = [
-    "bidder_item_observation_id",
-    "bid_tab_item_id",
-    "bid_id",
-    "project_id",
-    "source_id",
-    "agency_item_code",
-    "description_raw",
-    "unit_raw",
-    "unit_normalized",
-    "quantity",
-    "unit_price",
-    "extended_price",
-]
-BID_TAB_ITEM_FIELDS = [
-    "bid_tab_item_id",
-    "project_id",
-    "source_id",
-    "source_file",
-    "sheet_name",
-    "workbook_row",
-    "project_number",
-    "source_item_number",
-    "source_item_code",
-    "source_item_code_system",
-    "source_spec_raw",
-    "source_item_description",
-    "item_code",
-    "item_description",
-    "unit_raw",
-    "unit_normalized",
-    "quantity",
-    "engineer_estimate_unit_price",
-    "average_bid_unit_price",
-    "matched_agency_item_code",
-    "match_status",
-    "date_basis",
-]
-
-SOURCE_REQUIRED_VALUES = ["source_id", "source_type", "agency", "state", "source_label", "data_year"]
-PROJECT_REQUIRED_VALUES = ["project_id", "agency_owner", "state", "county_region", "work_type", "estimate_let_date", "source_id"]
-OBSERVATION_REQUIRED_VALUES = [
-    "observation_id",
-    "project_id",
-    "source_id",
-    "agency_item_code",
-    "description_raw",
-    "unit_raw",
-    "unit_normalized",
-    "quantity",
-    "unit_price",
-    "extended_price",
-    "discipline",
-    "price_type",
-    "date_basis",
-]
-AGENCY_ITEM_REQUIRED_VALUES = ["agency_item_id", "state", "agency", "item_code", "official_description", "official_unit"]
-SPEC_SECTION_REQUIRED_VALUES = ["section_prefix", "division_prefix", "division_title", "section_title", "source_year", "source_url"]
-INFLATION_INDEX_REQUIRED_VALUES = [
-    "index_id",
-    "index_name",
-    "period_year",
-    "period_quarter",
-    "period_label",
-    "period_start_date",
-    "period_end_date",
-    "index_value",
-    "source_url",
-]
-BIDDER_BID_REQUIRED_VALUES = ["bid_id", "project_id", "source_id", "bidder_name", "bid_total"]
-BIDDER_ITEM_REQUIRED_VALUES = [
-    "bidder_item_observation_id",
-    "bid_tab_item_id",
-    "bid_id",
-    "project_id",
-    "source_id",
-    "description_raw",
-    "unit_raw",
-    "unit_normalized",
-    "quantity",
-    "unit_price",
-    "extended_price",
-]
-BID_TAB_ITEM_REQUIRED_VALUES = [
-    "bid_tab_item_id",
-    "project_id",
-    "source_id",
-    "source_file",
-    "sheet_name",
-    "workbook_row",
-    "source_item_code",
-    "source_item_code_system",
-    "source_item_description",
-    "unit_raw",
-    "unit_normalized",
-    "quantity",
-    "engineer_estimate_unit_price",
-    "average_bid_unit_price",
-    "match_status",
-    "date_basis",
-]
-PROJECT_OPTIONAL_METADATA = ["contractor", "district", "terrain", "bid_count", "awarded_bid_total", "award_index"]
-
-KNOWN_PRICE_TYPES = {
-    "cdot_awarded_bid",
-    "cdot_average_bid",
-    "cdot_engineer_estimate",
-    "public_bid_tab_average",
-    "public_bid_tab_engineer_estimate",
-}
-DEMO_SOURCE_TYPES = {"public_demo", "internal_demo"}
-DEMO_PRICE_TYPES = {"bid_tab_demo", "engineers_estimate"}
-SMOKE_BASELINES = {
-    "304-06007": 151,
-    "626-00000": 422,
-    "630-80341": 420,
-    "630-00012": 415,
-    "630-80342": 411,
-    "630-00000": 396,
+FILE_KEYS = {
+    "sources": "sources.csv",
+    "lettings": "lettings.csv",
+    "contracts": "contracts.csv",
+    "contractProjects": "contract_projects.csv",
+    "contractItems": "contract_items.csv",
+    "bids": "bids.csv",
+    "bidItemPrices": "bid_item_prices.csv",
+    "agencyItems": "agency_items.csv",
+    "agencyItemVersions": "agency_item_versions.csv",
+    "itemTaxonomy": "item_taxonomy.csv",
+    "itemMappings": "item_mappings.csv",
+    "observations": "item_observations.csv",
 }
 
+ID_FIELDS = {
+    "sources": "source_id",
+    "lettings": "letting_id",
+    "contracts": "contract_id",
+    "contractProjects": "contract_project_id",
+    "contractItems": "contract_item_id",
+    "bids": "bid_id",
+    "bidItemPrices": "bid_item_price_id",
+    "agencyItems": "agency_item_id",
+    "agencyItemVersions": "agency_item_version_id",
+    "itemTaxonomy": "taxonomy_id",
+    "itemMappings": "mapping_id",
+    "observations": "observation_id",
+}
 
-@dataclass
-class CsvTable:
-    name: str
-    path: Path
-    headers: list[str]
-    rows: list[dict[str, str]]
+REQUIRED = {
+    "sources": ["source_id", "source_type", "agency_id", "agency_name", "state", "source_label", "sha256", "parser_name", "parser_version"],
+    "lettings": ["letting_id", "source_id", "state", "agency_id", "letting_date"],
+    "contracts": ["contract_id", "letting_id", "source_id", "state", "agency_id"],
+    "contractProjects": ["contract_project_id", "contract_id"],
+    "contractItems": ["contract_item_id", "contract_id", "source_id", "line_number", "source_item_code", "description_raw", "quantity", "unit_raw", "source_locator"],
+    "bids": ["bid_id", "contract_id", "source_id", "bidder_name", "bid_rank", "bid_total"],
+    "bidItemPrices": ["bid_item_price_id", "contract_item_id", "bid_id", "contract_id", "source_id", "unit_price", "extended_price", "source_locator"],
+    "agencyItems": ["agency_item_id", "state", "agency_id", "item_code", "current_version_id", "item_status"],
+    "agencyItemVersions": ["agency_item_version_id", "agency_item_id", "official_description", "official_unit", "source_id", "is_current"],
+    "itemTaxonomy": ["taxonomy_id", "state", "agency_id", "taxonomy_level", "taxonomy_code", "taxonomy_label", "match_prefix"],
+    "itemMappings": ["mapping_id", "state", "source_agency_id", "source_item_code", "target_agency_item_id", "match_status"],
+    "observations": ["observation_id", "contract_id", "source_id", "agency_item_id", "agency_item_code", "description_raw", "unit_raw", "unit_normalized", "quantity", "unit_price", "extended_price", "price_type", "date_basis", "derivation_method"],
+}
+
+PRICE_TYPES = {"awarded_bid", "average_bid", "engineer_estimate"}
+INFLATION_FIELDS = ["index_id", "index_name", "period_year", "period_quarter", "period_label", "period_start_date", "period_end_date", "index_value", "source_url"]
 
 
-def read_table(data_dir: Path, name: str) -> CsvTable:
-    path = data_dir / name
+def read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     with path.open(newline="", encoding="utf-8") as source:
         reader = csv.DictReader(source)
-        headers = reader.fieldnames or []
-        rows = [{key: (value or "").strip() for key, value in row.items() if key is not None} for row in reader]
-    return CsvTable(name=name, path=path, headers=headers, rows=rows)
+        return reader.fieldnames or [], [
+            {key: (value or "").strip() for key, value in row.items() if key is not None}
+            for row in reader
+        ]
+
+
+def number(value: str) -> Decimal | None:
+    if not value:
+        return None
+    try:
+        return Decimal(value.replace("$", "").replace(",", "").replace("%", ""))
+    except InvalidOperation:
+        return None
+
+
+def truth(value: str) -> bool:
+    return value.lower() in {"1", "true", "yes", "y"}
+
+
+def normalized_vendor(value: str) -> tuple[str, ...]:
+    words = "".join(character if character.isalnum() else " " for character in value.lower()).split()
+    ignored = {"inc", "llc", "co", "company", "corp", "corporation", "the"}
+    return tuple(sorted(word for word in words if word not in ignored))
+
+
+def add(error_list: list[str], state: str, table: str, message: str) -> None:
+    error_list.append(f"{state}/{table}: {message}")
+
+
+def validate_state(data_dir: Path, config: dict, errors: list[str], warnings: list[str]) -> dict[str, list[dict[str, str]]]:
+    state = config["code"]
+    tables: dict[str, list[dict[str, str]]] = {}
+    headers_by_key: dict[str, list[str]] = {}
+
+    for key, expected_name in FILE_KEYS.items():
+        relative = config["files"].get(key)
+        if not relative:
+            if key == "bidItemPrices":
+                tables[key] = []
+                headers_by_key[key] = []
+                continue
+            add(errors, state, expected_name, "file is not declared in manifest")
+            continue
+        path = data_dir / relative
+        if not path.exists():
+            add(errors, state, expected_name, f"declared file does not exist: {relative}")
+            continue
+        headers, rows = read_csv(path)
+        headers_by_key[key] = headers
+        tables[key] = rows
+        missing_headers = [field for field in REQUIRED[key] if field not in headers]
+        if missing_headers:
+            add(errors, state, expected_name, f"missing columns: {', '.join(missing_headers)}")
+        identifier = ID_FIELDS[key]
+        ids = [row.get(identifier, "") for row in rows]
+        duplicates = [value for value, count in Counter(ids).items() if value and count > 1]
+        for value in duplicates[:20]:
+            add(errors, state, expected_name, f"duplicate {identifier} {value}")
+        for index, row in enumerate(rows, 2):
+            missing = [field for field in REQUIRED[key] if not row.get(field)]
+            if missing:
+                add(errors, state, expected_name, f"line {index} has blank required fields: {', '.join(missing)}")
+
+    if any(key not in tables for key in FILE_KEYS):
+        return tables
+
+    sources = {row["source_id"]: row for row in tables["sources"]}
+    lettings = {row["letting_id"]: row for row in tables["lettings"]}
+    contracts = {row["contract_id"]: row for row in tables["contracts"]}
+    contract_items = {row["contract_item_id"]: row for row in tables["contractItems"]}
+    bids = {row["bid_id"]: row for row in tables["bids"]}
+    agency_items = {row["agency_item_id"]: row for row in tables["agencyItems"]}
+    versions = {row["agency_item_version_id"]: row for row in tables["agencyItemVersions"]}
+    taxonomy = {row["taxonomy_id"]: row for row in tables["itemTaxonomy"]}
+
+    for row in tables["lettings"]:
+        if row["source_id"] not in sources:
+            add(errors, state, "lettings.csv", f"{row['letting_id']} references missing source {row['source_id']}")
+    for row in tables["contracts"]:
+        if row["letting_id"] not in lettings:
+            add(errors, state, "contracts.csv", f"{row['contract_id']} references missing letting {row['letting_id']}")
+        if row["source_id"] not in sources:
+            add(errors, state, "contracts.csv", f"{row['contract_id']} references missing source {row['source_id']}")
+    for row in tables["contractProjects"]:
+        if row["contract_id"] not in contracts:
+            add(errors, state, "contract_projects.csv", f"{row['contract_project_id']} references missing contract {row['contract_id']}")
+    for row in tables["contractItems"]:
+        if row["contract_id"] not in contracts or row["source_id"] not in sources:
+            add(errors, state, "contract_items.csv", f"{row['contract_item_id']} has a broken contract/source relationship")
+        if row.get("agency_item_id") and row["agency_item_id"] not in agency_items:
+            add(errors, state, "contract_items.csv", f"{row['contract_item_id']} references missing agency item {row['agency_item_id']}")
+        for field in ("quantity",):
+            if number(row[field]) is None:
+                add(errors, state, "contract_items.csv", f"{row['contract_item_id']} has malformed {field}")
+        if row.get("source_page") and number(row["source_page"]) is None:
+            add(errors, state, "contract_items.csv", f"{row['contract_item_id']} has malformed source_page")
+
+    ranks_by_contract: dict[str, list[int]] = defaultdict(list)
+    apparent_by_contract: Counter[str] = Counter()
+    awarded_by_contract: Counter[str] = Counter()
+    for row in tables["bids"]:
+        rank = number(row["bid_rank"])
+        if row["contract_id"] not in contracts or row["source_id"] not in sources:
+            add(errors, state, "bids.csv", f"{row['bid_id']} has a broken contract/source relationship")
+        if rank is None or rank != rank.to_integral_value():
+            add(errors, state, "bids.csv", f"{row['bid_id']} has a bidder header without an integer rank")
+        else:
+            ranks_by_contract[row["contract_id"]].append(int(rank))
+        if number(row["bid_total"]) is None:
+            add(errors, state, "bids.csv", f"{row['bid_id']} has malformed bid_total")
+        apparent_by_contract[row["contract_id"]] += truth(row.get("is_apparent_low", ""))
+        awarded_by_contract[row["contract_id"]] += truth(row.get("is_awarded", ""))
+    for contract_id, ranks in ranks_by_contract.items():
+        if len(ranks) != len(set(ranks)):
+            add(errors, state, "bids.csv", f"{contract_id} has duplicate ranks")
+        if apparent_by_contract[contract_id] != 1:
+            add(errors, state, "bids.csv", f"{contract_id} has {apparent_by_contract[contract_id]} apparent-low bidders")
+
+    price_sums: defaultdict[str, Decimal] = defaultdict(Decimal)
+    price_counts: Counter[str] = Counter()
+    prices_by_item: defaultdict[str, list[Decimal]] = defaultdict(list)
+    for row in tables["bidItemPrices"]:
+        item = contract_items.get(row["contract_item_id"])
+        bid = bids.get(row["bid_id"])
+        unit_price = number(row["unit_price"])
+        extended = number(row["extended_price"])
+        if not item or not bid or row["contract_id"] not in contracts or row["source_id"] not in sources:
+            add(errors, state, "bid_item_prices.csv", f"{row['bid_item_price_id']} has a broken relationship")
+            continue
+        if item["contract_id"] != row["contract_id"] or bid["contract_id"] != row["contract_id"]:
+            add(errors, state, "bid_item_prices.csv", f"{row['bid_item_price_id']} crosses contracts")
+        quantity = number(item["quantity"])
+        if quantity is None or unit_price is None or extended is None:
+            add(errors, state, "bid_item_prices.csv", f"{row['bid_item_price_id']} has malformed numerics")
+            continue
+        if abs(quantity * unit_price - extended) > Decimal("0.02"):
+            add(errors, state, "bid_item_prices.csv", f"{row['bid_item_price_id']} quantity x unit price does not reconcile")
+        price_sums[row["bid_id"]] += extended
+        price_counts[row["bid_id"]] += 1
+        prices_by_item[row["contract_item_id"]].append(unit_price)
+
+    if state == "IA":
+        for bid_id, bid in bids.items():
+            total = number(bid["bid_total"])
+            if total is not None and abs(price_sums[bid_id] - total) > Decimal("0.02"):
+                add(errors, state, "bids.csv", f"{bid_id} item total differs from reported bid total by {price_sums[bid_id] - total}")
+
+    for row in tables["agencyItems"]:
+        if row["current_version_id"] not in versions:
+            add(errors, state, "agency_items.csv", f"{row['agency_item_id']} references missing current version")
+        if row["item_status"] not in {"current", "historical"}:
+            add(errors, state, "agency_items.csv", f"{row['agency_item_id']} has unsupported status {row['item_status']}")
+    for row in tables["agencyItemVersions"]:
+        if row["agency_item_id"] not in agency_items or row["source_id"] not in sources:
+            add(errors, state, "agency_item_versions.csv", f"{row['agency_item_version_id']} has a broken agency-item/source relationship")
+    for row in tables["itemTaxonomy"]:
+        parent = row.get("parent_taxonomy_id")
+        if parent and parent not in taxonomy:
+            add(errors, state, "item_taxonomy.csv", f"{row['taxonomy_id']} references missing parent {parent}")
+    for row in tables["itemMappings"]:
+        if row["target_agency_item_id"] not in agency_items:
+            add(errors, state, "item_mappings.csv", f"{row['mapping_id']} references missing target agency item")
+
+    observations_by_item_type: dict[tuple[str, str], dict[str, str]] = {}
+    for row in tables["observations"]:
+        if row["contract_id"] not in contracts or row["source_id"] not in sources or row["agency_item_id"] not in agency_items:
+            add(errors, state, "item_observations.csv", f"{row['observation_id']} has a broken contract/source/agency-item relationship")
+        if row["price_type"] not in PRICE_TYPES:
+            add(errors, state, "item_observations.csv", f"{row['observation_id']} has unsupported price_type {row['price_type']}")
+        for field in ("quantity", "unit_price", "extended_price"):
+            if number(row[field]) is None:
+                add(errors, state, "item_observations.csv", f"{row['observation_id']} has malformed {field}")
+        key = (row["observation_id"].rsplit("_", 1)[0], row["price_type"])
+        observations_by_item_type[key] = row
+
+    for contract_id, contract in contracts.items():
+        contract_bids = [bid for bid in bids.values() if bid["contract_id"] == contract_id]
+        if not contract_bids:
+            continue
+        if contract.get("letting_status", "").upper() == "AWARDED":
+            if awarded_by_contract[contract_id] != 1:
+                add(errors, state, "contracts.csv", f"{contract_id} has {awarded_by_contract[contract_id]} awarded bidders")
+            awarded = [bid for bid in contract_bids if truth(bid.get("is_awarded", ""))]
+            if awarded and normalized_vendor(awarded[0]["bidder_name"]) != normalized_vendor(contract.get("awarded_vendor", "")):
+                add(errors, state, "contracts.csv", f"{contract_id} awarded vendor does not resolve uniquely to awarded bidder")
+            if awarded and contract.get("awarded_amount"):
+                difference = abs((number(contract["awarded_amount"]) or Decimal()) - (number(awarded[0]["bid_total"]) or Decimal()))
+                if difference > Decimal("0.02"):
+                    add(errors, state, "contracts.csv", f"{contract_id} award amount differs from awarded bid by {difference}")
+                elif difference:
+                    warnings.append(f"{state}/contracts.csv: {contract_id} preserves a reported award/bid rounding difference of {difference}")
+
+    return tables
+
+
+def validate_iowa_acceptance(data_dir: Path, config: dict, tables: dict[str, list[dict[str, str]]], errors: list[str]) -> None:
+    expected = {
+        "agencyItems": 3727,
+        "contracts": 25,
+        "contractProjects": 26,
+        "bids": 90,
+        "contractItems": 576,
+    }
+    for key, count in expected.items():
+        if len(tables.get(key, [])) != count:
+            add(errors, "IA", FILE_KEYS[key], f"pilot acceptance requires {count} rows; found {len(tables.get(key, []))}")
+    codes = [row["item_code"] for row in tables.get("agencyItems", [])]
+    if len(codes) != len(set(codes)):
+        add(errors, "IA", "agency_items.csv", "catalog item codes are not unique")
+    if max((int(row["bid_rank"]) for row in tables.get("bids", [])), default=0) != 7:
+        add(errors, "IA", "bids.csv", "seven-bidder grouped layout was not preserved")
+    project_counts = Counter(row["contract_id"] for row in tables.get("contractProjects", []))
+    if sum(count > 1 for count in project_counts.values()) != 1:
+        add(errors, "IA", "contract_projects.csv", "expected exactly one two-project contract")
+    if not any(row.get("alternate_set") == "AA" and row.get("alternate_member") for row in tables.get("contractItems", [])):
+        add(errors, "IA", "contract_items.csv", "alternate set AA members were not preserved")
+    native_path = data_dir.parent.parent / "data" / "staging" / "ia" / "item_catalog_native.csv"
+    if native_path.exists():
+        _, native = read_csv(native_path)
+        if {row["item_code"] for row in native} != set(codes):
+            add(errors, "IA", "item_catalog_native.csv", "TXT/PDF promoted code set does not match native staging")
+
+
+def validate_common(data_dir: Path, manifest: dict, errors: list[str]) -> None:
+    relative = manifest.get("common", {}).get("inflationIndexes", "")
+    path = data_dir / relative
+    if not relative or not path.exists():
+        errors.append("manifest.json: common inflation index file is missing")
+        return
+    headers, rows = read_csv(path)
+    missing = [field for field in INFLATION_FIELDS if field not in headers]
+    if missing:
+        errors.append(f"common/inflation_index.csv: missing columns: {', '.join(missing)}")
+    ids = [row.get("index_id", "") for row in rows]
+    periods = [row.get("period_label", "") for row in rows]
+    if len(ids) != len(set(ids)):
+        errors.append("common/inflation_index.csv: duplicate index_id")
+    if len(periods) != len(set(periods)):
+        errors.append("common/inflation_index.csv: duplicate period_label")
+    for index, row in enumerate(rows, 2):
+        for field in INFLATION_FIELDS:
+            if not row.get(field):
+                errors.append(f"common/inflation_index.csv: line {index} has blank {field}")
+        for field in ("period_year", "period_quarter", "index_value"):
+            value = number(row.get(field, ""))
+            if value is None or value <= 0:
+                errors.append(f"common/inflation_index.csv: line {index} has malformed {field}")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Validate the app-loaded public data CSV package.")
-    parser.add_argument("--data-dir", default=DATA_DIR, type=Path)
+    parser = argparse.ArgumentParser(description="Validate manifest-driven multi-state schema-v2 data.")
+    parser.add_argument("--data-dir", type=Path, default=Path("public/data"))
     args = parser.parse_args()
-
+    manifest_path = args.data_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     errors: list[str] = []
     warnings: list[str] = []
+    if manifest.get("schemaVersion") != 2:
+        errors.append("manifest.json: schemaVersion must be 2")
+    if not manifest.get("states"):
+        errors.append("manifest.json: no states are enabled")
+    validate_common(args.data_dir, manifest, errors)
 
-    sources = read_table(args.data_dir, "sources.csv")
-    projects = read_table(args.data_dir, "projects.csv")
-    observations = read_table(args.data_dir, "item_observations.csv")
-    agency_items = read_table(args.data_dir, "agency_items.csv")
-    spec_sections = read_table(args.data_dir, "spec_sections.csv")
-    inflation_indexes = read_table(args.data_dir, "inflation_index.csv")
-    bidder_bids = read_table(args.data_dir, "bidder_bids.csv")
-    bidder_items = read_table(args.data_dir, "bidder_item_observations.csv")
-    bid_tab_items = read_table(args.data_dir, "bid_tab_items.csv")
+    summaries = []
+    for config in manifest.get("states", []):
+        tables = validate_state(args.data_dir, config, errors, warnings)
+        if config["code"] == "IA":
+            validate_iowa_acceptance(args.data_dir, config, tables, errors)
+        summaries.append({key: len(rows) for key, rows in tables.items()})
+        print(f"{config['code']}: " + ", ".join(f"{key}={len(rows):,}" for key, rows in tables.items()))
 
-    validate_headers(sources, SOURCE_FIELDS, errors)
-    validate_headers(projects, PROJECT_FIELDS, errors)
-    validate_headers(observations, OBSERVATION_FIELDS, errors)
-    validate_headers(agency_items, AGENCY_ITEM_FIELDS, errors)
-    validate_headers(spec_sections, SPEC_SECTION_FIELDS, errors)
-    validate_headers(inflation_indexes, INFLATION_INDEX_FIELDS, errors)
-    validate_headers(bidder_bids, BIDDER_BID_FIELDS, errors)
-    validate_headers(bidder_items, BIDDER_ITEM_FIELDS, errors)
-    validate_headers(bid_tab_items, BID_TAB_ITEM_FIELDS, errors)
-
-    validate_required_values(sources, SOURCE_REQUIRED_VALUES, "source_id", errors)
-    validate_required_values(projects, PROJECT_REQUIRED_VALUES, "project_id", errors)
-    validate_required_values(observations, OBSERVATION_REQUIRED_VALUES, "observation_id", errors)
-    validate_required_values(agency_items, AGENCY_ITEM_REQUIRED_VALUES, "agency_item_id", errors)
-    validate_required_values(spec_sections, SPEC_SECTION_REQUIRED_VALUES, "section_prefix", errors)
-    validate_required_values(inflation_indexes, INFLATION_INDEX_REQUIRED_VALUES, "index_id", errors)
-    validate_required_values(bidder_bids, BIDDER_BID_REQUIRED_VALUES, "bid_id", errors)
-    validate_required_values(bidder_items, BIDDER_ITEM_REQUIRED_VALUES, "bidder_item_observation_id", errors)
-    validate_required_values(bid_tab_items, BID_TAB_ITEM_REQUIRED_VALUES, "bid_tab_item_id", errors)
-
-    validate_unique_id(sources, "source_id", errors)
-    validate_unique_id(projects, "project_id", errors)
-    validate_unique_id(observations, "observation_id", errors)
-    validate_unique_id(agency_items, "agency_item_id", errors)
-    validate_unique_id(spec_sections, "section_prefix", errors)
-    validate_unique_id(inflation_indexes, "index_id", errors)
-    validate_unique_id(bidder_bids, "bid_id", errors)
-    validate_unique_id(bidder_items, "bidder_item_observation_id", errors)
-    validate_unique_id(bid_tab_items, "bid_tab_item_id", errors)
-
-    source_by_id = {row["source_id"]: row for row in sources.rows}
-    project_by_id = {row["project_id"]: row for row in projects.rows}
-    agency_item_codes = {row["item_code"].upper() for row in agency_items.rows if row.get("item_code")}
-    section_prefixes = {row["section_prefix"] for row in spec_sections.rows if row.get("section_prefix")}
-
-    validate_sources(sources, errors)
-    validate_projects(projects, source_by_id, errors, warnings)
-    validate_observations(observations, source_by_id, project_by_id, agency_item_codes, errors, warnings)
-    validate_agency_sections(agency_items, section_prefixes, warnings)
-    validate_inflation_indexes(inflation_indexes, projects, errors, warnings)
-    validate_bidder_bids(bidder_bids, source_by_id, project_by_id, errors, warnings)
-    validate_bid_tab_items(bid_tab_items, source_by_id, project_by_id, agency_item_codes, errors, warnings)
-    validate_bidder_items(bidder_items, bidder_bids, bid_tab_items, source_by_id, project_by_id, agency_item_codes, errors, warnings)
-    validate_smoke_items(observations, source_by_id, project_by_id, errors, warnings)
-
-    print_summary(sources, projects, observations, source_by_id, inflation_indexes, bidder_bids, bidder_items, bid_tab_items)
-    print_smoke_summary(observations)
-    print_messages("WARNING", warnings)
-    print_messages("ERROR", errors)
-
+    for warning in warnings:
+        print(f"WARNING: {warning}")
+    for error in errors:
+        print(f"ERROR: {error}")
     if errors:
         raise SystemExit(1)
-
-    print("\nPASS: Data package validation completed with no errors.")
-
-
-def validate_headers(table: CsvTable, expected: list[str], errors: list[str]) -> None:
-    missing = [field for field in expected if field not in table.headers]
-    if missing:
-        errors.append(f"{table.name}: missing required column(s): {', '.join(missing)}")
-
-
-def validate_required_values(table: CsvTable, fields: list[str], id_field: str, errors: list[str]) -> None:
-    for index, row in enumerate(table.rows, start=2):
-        row_id = row.get(id_field) or f"line {index}"
-        missing = [field for field in fields if not row.get(field, "").strip()]
-        if missing:
-            errors.append(f"{table.name} {row_id}: blank required field(s): {', '.join(missing)}")
-
-
-def validate_unique_id(table: CsvTable, id_field: str, errors: list[str]) -> None:
-    counts = Counter(row.get(id_field, "") for row in table.rows if row.get(id_field, ""))
-    duplicates = sorted(value for value, count in counts.items() if count > 1)
-    for value in duplicates[:20]:
-        errors.append(f"{table.name}: duplicate {id_field}: {value}")
-    if len(duplicates) > 20:
-        errors.append(f"{table.name}: {len(duplicates) - 20} additional duplicate {id_field} value(s).")
-
-
-def validate_sources(table: CsvTable, errors: list[str]) -> None:
-    for row in table.rows:
-        source_id = row["source_id"]
-        source_type = row["source_type"]
-        if is_demo_id(source_id) or source_type in DEMO_SOURCE_TYPES:
-            errors.append(f"sources.csv {source_id}: demo source is not allowed in the app-loaded package.")
-        if row.get("data_year") and not is_number(row["data_year"]):
-            errors.append(f"sources.csv {source_id}: data_year is not numeric.")
-
-
-def validate_projects(
-    table: CsvTable,
-    source_by_id: dict[str, dict[str, str]],
-    errors: list[str],
-    warnings: list[str],
-) -> None:
-    blank_optional_counts: Counter[str] = Counter()
-
-    for row in table.rows:
-        project_id = row["project_id"]
-        source_id = row["source_id"]
-        if source_id not in source_by_id:
-            errors.append(f"projects.csv {project_id}: source_id {source_id} was not found in sources.csv.")
-        if is_demo_id(project_id) or is_demo_id(source_id):
-            errors.append(f"projects.csv {project_id}: demo project/source ID is not allowed.")
-        if row.get("estimate_let_date") and not is_iso_date(row["estimate_let_date"]):
-            errors.append(f"projects.csv {project_id}: estimate_let_date is not YYYY-MM-DD.")
-        for field in ["bid_count", "awarded_bid_total", "award_index"]:
-            if row.get(field) and not is_number(row[field]):
-                errors.append(f"projects.csv {project_id}: {field} is not numeric.")
-        for field in PROJECT_OPTIONAL_METADATA:
-            if not row.get(field):
-                blank_optional_counts[field] += 1
-
-    add_optional_metadata_warnings("projects.csv", len(table.rows), blank_optional_counts, warnings)
-
-
-def validate_observations(
-    table: CsvTable,
-    source_by_id: dict[str, dict[str, str]],
-    project_by_id: dict[str, dict[str, str]],
-    agency_item_codes: set[str],
-    errors: list[str],
-    warnings: list[str],
-) -> None:
-    missing_agency_codes: Counter[str] = Counter()
-
-    for row in table.rows:
-        observation_id = row["observation_id"]
-        project_id = row["project_id"]
-        source_id = row["source_id"]
-        price_type = row["price_type"]
-
-        if project_id not in project_by_id:
-            errors.append(f"item_observations.csv {observation_id}: project_id {project_id} was not found in projects.csv.")
-        if source_id not in source_by_id:
-            errors.append(f"item_observations.csv {observation_id}: source_id {source_id} was not found in sources.csv.")
-        if project_id in project_by_id and source_id != project_by_id[project_id]["source_id"]:
-            errors.append(
-                f"item_observations.csv {observation_id}: source_id {source_id} does not match project {project_id} source_id {project_by_id[project_id]['source_id']}."
-            )
-        if is_demo_id(observation_id) or is_demo_id(source_id):
-            errors.append(f"item_observations.csv {observation_id}: demo observation/source ID is not allowed.")
-        if price_type in DEMO_PRICE_TYPES:
-            errors.append(f"item_observations.csv {observation_id}: legacy demo price_type {price_type} is not allowed.")
-        if price_type not in KNOWN_PRICE_TYPES:
-            warnings.append(f"item_observations.csv {observation_id}: unexpected price_type {price_type}.")
-        if row.get("date_basis") and not is_iso_date(row["date_basis"]):
-            errors.append(f"item_observations.csv {observation_id}: date_basis is not YYYY-MM-DD.")
-        for field in ["quantity", "unit_price", "extended_price"]:
-            if row.get(field) and not is_number(row[field]):
-                errors.append(f"item_observations.csv {observation_id}: {field} is not numeric.")
-        if row["agency_item_code"].upper() not in agency_item_codes:
-            missing_agency_codes[row["agency_item_code"].upper()] += 1
-
-    if missing_agency_codes:
-        preview = ", ".join(f"{code} ({count})" for code, count in missing_agency_codes.most_common(20))
-        warnings.append(f"Observation item codes missing from agency_items.csv: {preview}")
-
-
-def validate_agency_sections(
-    agency_items: CsvTable,
-    section_prefixes: set[str],
-    warnings: list[str],
-) -> None:
-    missing_prefixes = sorted(
-        {
-            row["item_code"].split("-", 1)[0]
-            for row in agency_items.rows
-            if row.get("item_code") and row["item_code"].split("-", 1)[0] not in section_prefixes
-        }
-    )
-    if missing_prefixes:
-        warnings.append(f"Agency item prefixes missing from spec_sections.csv: {', '.join(missing_prefixes[:30])}")
-
-
-def validate_inflation_indexes(
-    inflation_indexes: CsvTable,
-    projects: CsvTable,
-    errors: list[str],
-    warnings: list[str],
-) -> None:
-    period_counts: Counter[str] = Counter()
-    index_periods: set[tuple[int, int]] = set()
-
-    for row in inflation_indexes.rows:
-        index_id = row["index_id"]
-        period_label = row["period_label"]
-        period_counts[period_label] += 1
-
-        period = parse_period(row.get("period_year", ""), row.get("period_quarter", ""))
-        label_period = parse_period_label(period_label)
-        if period is None:
-            errors.append(f"inflation_index.csv {index_id}: period_year/period_quarter are invalid.")
-            continue
-        if label_period is None:
-            errors.append(f"inflation_index.csv {index_id}: period_label is not shaped like YYYY Qn.")
-        elif label_period != period:
-            errors.append(f"inflation_index.csv {index_id}: period_label does not match period_year/period_quarter.")
-
-        index_periods.add(period)
-
-        if row.get("index_value") and not is_number(row["index_value"]):
-            errors.append(f"inflation_index.csv {index_id}: index_value is not numeric.")
-        elif row.get("index_value") and Decimal(row["index_value"].replace("$", "").replace(",", "")) <= 0:
-            errors.append(f"inflation_index.csv {index_id}: index_value must be greater than zero.")
-        for field in ["period_start_date", "period_end_date"]:
-            if row.get(field) and not is_iso_date(row[field]):
-                errors.append(f"inflation_index.csv {index_id}: {field} is not YYYY-MM-DD.")
-
-    for period_label, count in sorted(period_counts.items()):
-        if count > 1:
-            errors.append(f"inflation_index.csv: duplicate period_label {period_label}.")
-
-    if not index_periods:
-        errors.append("inflation_index.csv: no valid NHCCI periods loaded.")
-        return
-
-    latest_index_period = max(index_periods)
-    project_periods = {
-        period
-        for period in (period_from_date(row.get("estimate_let_date", "")) for row in projects.rows)
-        if period is not None
-    }
-    missing_project_periods = sorted(project_periods - index_periods)
-
-    for period in missing_project_periods:
-        message = f"NHCCI index missing project evidence quarter {format_period(period)}."
-        if period > latest_index_period:
-            warnings.append(f"{message} Latest loaded NHCCI quarter is {format_period(latest_index_period)}.")
-        else:
-            errors.append(message)
-
-
-def validate_bidder_bids(
-    table: CsvTable,
-    source_by_id: dict[str, dict[str, str]],
-    project_by_id: dict[str, dict[str, str]],
-    errors: list[str],
-    warnings: list[str],
-) -> None:
-    apparent_low_counts: Counter[str] = Counter()
-    bid_counts_by_project: Counter[str] = Counter()
-
-    for row in table.rows:
-        bid_id = row["bid_id"]
-        project_id = row["project_id"]
-        source_id = row["source_id"]
-        apparent_low = row.get("apparent_low", "").lower()
-
-        if project_id not in project_by_id:
-            errors.append(f"bidder_bids.csv {bid_id}: project_id {project_id} was not found in projects.csv.")
-        if source_id not in source_by_id:
-            errors.append(f"bidder_bids.csv {bid_id}: source_id {source_id} was not found in sources.csv.")
-        if project_id in project_by_id and source_id != project_by_id[project_id]["source_id"]:
-            errors.append(
-                f"bidder_bids.csv {bid_id}: source_id {source_id} does not match project {project_id} source_id {project_by_id[project_id]['source_id']}."
-            )
-        if is_demo_id(bid_id) or is_demo_id(source_id):
-            errors.append(f"bidder_bids.csv {bid_id}: demo bid/source ID is not allowed.")
-        if row.get("bid_total") and not is_number(row["bid_total"]):
-            errors.append(f"bidder_bids.csv {bid_id}: bid_total is not numeric.")
-        if row.get("bid_rank") and not is_number(row["bid_rank"]):
-            errors.append(f"bidder_bids.csv {bid_id}: bid_rank is not numeric.")
-        if apparent_low not in {"true", "false"}:
-            errors.append(f"bidder_bids.csv {bid_id}: apparent_low must be true or false.")
-        if apparent_low == "true":
-            apparent_low_counts[project_id] += 1
-        bid_counts_by_project[project_id] += 1
-
-    for project_id, count in sorted(apparent_low_counts.items()):
-        if count != 1:
-            errors.append(f"bidder_bids.csv project {project_id}: expected one apparent low bidder, found {count}.")
-
-    for project_id, count in sorted(bid_counts_by_project.items()):
-        project = project_by_id.get(project_id)
-        if project and project.get("bid_count") and is_number(project["bid_count"]) and int(Decimal(project["bid_count"])) != count:
-            warnings.append(f"bidder_bids.csv project {project_id}: bid_count is {project['bid_count']} but parsed bidder rows are {count}.")
-
-
-def validate_bid_tab_items(
-    table: CsvTable,
-    source_by_id: dict[str, dict[str, str]],
-    project_by_id: dict[str, dict[str, str]],
-    agency_item_codes: set[str],
-    errors: list[str],
-    warnings: list[str],
-) -> None:
-    invalid_statuses: Counter[str] = Counter()
-    missing_matches: Counter[str] = Counter()
-
-    for row in table.rows:
-        item_id = row["bid_tab_item_id"]
-        project_id = row["project_id"]
-        source_id = row["source_id"]
-        match_status = row.get("match_status", "")
-
-        if project_id not in project_by_id:
-            errors.append(f"bid_tab_items.csv {item_id}: project_id {project_id} was not found in projects.csv.")
-        if source_id not in source_by_id:
-            errors.append(f"bid_tab_items.csv {item_id}: source_id {source_id} was not found in sources.csv.")
-        if project_id in project_by_id and source_id != project_by_id[project_id]["source_id"]:
-            errors.append(
-                f"bid_tab_items.csv {item_id}: source_id {source_id} does not match project {project_id} source_id {project_by_id[project_id]['source_id']}."
-            )
-        if is_demo_id(item_id) or is_demo_id(source_id):
-            errors.append(f"bid_tab_items.csv {item_id}: demo item/source ID is not allowed.")
-        for field in ["workbook_row", "quantity", "engineer_estimate_unit_price", "average_bid_unit_price"]:
-            if row.get(field) and not is_number(row[field]):
-                errors.append(f"bid_tab_items.csv {item_id}: {field} is not numeric.")
-        if row.get("date_basis") and not is_iso_date(row["date_basis"]):
-            errors.append(f"bid_tab_items.csv {item_id}: date_basis is not YYYY-MM-DD.")
-        if match_status not in {"matched", "unmatched", "source_cdot_prefix_only"}:
-            invalid_statuses[match_status] += 1
-        if match_status == "matched":
-            matched_code = row.get("matched_agency_item_code", "").upper()
-            if not matched_code:
-                errors.append(f"bid_tab_items.csv {item_id}: matched row has blank matched_agency_item_code.")
-            elif matched_code not in agency_item_codes:
-                missing_matches[matched_code] += 1
-
-    if invalid_statuses:
-        preview = ", ".join(f"{status or '(blank)'} ({count})" for status, count in invalid_statuses.most_common(20))
-        errors.append(f"bid_tab_items.csv: invalid match_status value(s): {preview}.")
-    if missing_matches:
-        preview = ", ".join(f"{code} ({count})" for code, count in missing_matches.most_common(20))
-        warnings.append(f"Bid-tab matched item codes missing from agency_items.csv: {preview}")
-
-
-def validate_bidder_items(
-    table: CsvTable,
-    bids: CsvTable,
-    bid_tab_items: CsvTable,
-    source_by_id: dict[str, dict[str, str]],
-    project_by_id: dict[str, dict[str, str]],
-    agency_item_codes: set[str],
-    errors: list[str],
-    warnings: list[str],
-) -> None:
-    bid_by_id = {row["bid_id"]: row for row in bids.rows}
-    bid_tab_item_by_id = {row["bid_tab_item_id"]: row for row in bid_tab_items.rows}
-    missing_agency_codes: Counter[str] = Counter()
-
-    for row in table.rows:
-        item_id = row["bidder_item_observation_id"]
-        bid_tab_item_id = row["bid_tab_item_id"]
-        bid_id = row["bid_id"]
-        project_id = row["project_id"]
-        source_id = row["source_id"]
-
-        bid = bid_by_id.get(bid_id)
-        if not bid:
-            errors.append(f"bidder_item_observations.csv {item_id}: bid_id {bid_id} was not found in bidder_bids.csv.")
-        elif bid["project_id"] != project_id or bid["source_id"] != source_id:
-            errors.append(f"bidder_item_observations.csv {item_id}: bid_id {bid_id} project/source does not match item row.")
-        if project_id not in project_by_id:
-            errors.append(f"bidder_item_observations.csv {item_id}: project_id {project_id} was not found in projects.csv.")
-        if source_id not in source_by_id:
-            errors.append(f"bidder_item_observations.csv {item_id}: source_id {source_id} was not found in sources.csv.")
-        if project_id in project_by_id and source_id != project_by_id[project_id]["source_id"]:
-            errors.append(
-                f"bidder_item_observations.csv {item_id}: source_id {source_id} does not match project {project_id} source_id {project_by_id[project_id]['source_id']}."
-            )
-        bid_tab_item = bid_tab_item_by_id.get(bid_tab_item_id)
-        if not bid_tab_item:
-            errors.append(f"bidder_item_observations.csv {item_id}: bid_tab_item_id {bid_tab_item_id} was not found in bid_tab_items.csv.")
-        elif bid_tab_item["project_id"] != project_id or bid_tab_item["source_id"] != source_id:
-            errors.append(f"bidder_item_observations.csv {item_id}: bid_tab_item_id {bid_tab_item_id} project/source does not match bidder item row.")
-        if is_demo_id(item_id) or is_demo_id(source_id):
-            errors.append(f"bidder_item_observations.csv {item_id}: demo item/source ID is not allowed.")
-        for field in ["quantity", "unit_price", "extended_price"]:
-            if row.get(field) and not is_number(row[field]):
-                errors.append(f"bidder_item_observations.csv {item_id}: {field} is not numeric.")
-        if all(row.get(field) and is_number(row[field]) for field in ["quantity", "unit_price", "extended_price"]):
-            calculated = Decimal(row["quantity"]) * Decimal(row["unit_price"])
-            stored = Decimal(row["extended_price"])
-            if abs(calculated - stored) > Decimal("0.01"):
-                errors.append(f"bidder_item_observations.csv {item_id}: quantity times unit_price does not equal extended_price.")
-        if row["agency_item_code"] and row["agency_item_code"].upper() not in agency_item_codes:
-            missing_agency_codes[row["agency_item_code"].upper()] += 1
-
-    if missing_agency_codes:
-        preview = ", ".join(f"{code} ({count})" for code, count in missing_agency_codes.most_common(20))
-        warnings.append(f"Bidder item codes missing from agency_items.csv: {preview}")
-
-
-def validate_smoke_items(
-    observations: CsvTable,
-    source_by_id: dict[str, dict[str, str]],
-    project_by_id: dict[str, dict[str, str]],
-    errors: list[str],
-    warnings: list[str],
-) -> None:
-    awarded_by_item: dict[str, list[dict[str, str]]] = defaultdict(list)
-    for row in observations.rows:
-        if row["price_type"] == "cdot_awarded_bid":
-            awarded_by_item[row["agency_item_code"].upper()].append(row)
-
-    for item_code, baseline_count in SMOKE_BASELINES.items():
-        rows = awarded_by_item.get(item_code, [])
-        if not rows:
-            errors.append(f"Smoke item {item_code}: no cdot_awarded_bid observations found.")
-            continue
-        if len(rows) != baseline_count:
-            warnings.append(
-                f"Smoke item {item_code}: awarded-bid count changed from baseline {baseline_count} to {len(rows)}."
-            )
-        missing_source_count = 0
-        missing_project_count = 0
-        wrong_source_type_counts: Counter[str] = Counter()
-        demo_evidence_count = 0
-        for row in rows:
-            source = source_by_id.get(row["source_id"])
-            project = project_by_id.get(row["project_id"])
-            if not source:
-                missing_source_count += 1
-                continue
-            if not project:
-                missing_project_count += 1
-                continue
-            if source["source_type"] != "public_cost_book":
-                wrong_source_type_counts[source["source_type"]] += 1
-            if row["price_type"] in DEMO_PRICE_TYPES or is_demo_id(row["observation_id"]) or is_demo_id(row["source_id"]):
-                demo_evidence_count += 1
-
-        if missing_source_count:
-            errors.append(f"Smoke item {item_code}: {missing_source_count} awarded-bid observation(s) have missing sources.")
-        if missing_project_count:
-            errors.append(f"Smoke item {item_code}: {missing_project_count} awarded-bid observation(s) have missing projects.")
-        for source_type, count in sorted(wrong_source_type_counts.items()):
-            errors.append(f"Smoke item {item_code}: {count} awarded-bid observation(s) use source_type {source_type}.")
-        if demo_evidence_count:
-            errors.append(f"Smoke item {item_code}: {demo_evidence_count} awarded-bid observation(s) use demo evidence.")
-
-
-def add_optional_metadata_warnings(
-    table_name: str,
-    row_count: int,
-    blank_counts: Counter[str],
-    warnings: list[str],
-) -> None:
-    for field, count in sorted(blank_counts.items()):
-        if count:
-            warnings.append(f"{table_name}: {count} of {row_count} row(s) have blank optional metadata field {field}.")
-
-
-def print_summary(
-    sources: CsvTable,
-    projects: CsvTable,
-    observations: CsvTable,
-    source_by_id: dict[str, dict[str, str]],
-    inflation_indexes: CsvTable,
-    bidder_bids: CsvTable,
-    bidder_items: CsvTable,
-    bid_tab_items: CsvTable,
-) -> None:
-    print("Data package summary")
-    print(f"- Sources: {len(sources.rows)}")
-    print(f"- Projects: {len(projects.rows)}")
-    print(f"- Observations: {len(observations.rows)}")
-    print(f"- Inflation index rows: {len(inflation_indexes.rows)}")
-    print(f"- Bidder bids: {len(bidder_bids.rows)}")
-    print(f"- Bidder item observations: {len(bidder_items.rows)}")
-
-    valid_index_periods = [
-        period
-        for period in (parse_period(row.get("period_year", ""), row.get("period_quarter", "")) for row in inflation_indexes.rows)
-        if period is not None
-    ]
-    if valid_index_periods:
-        print(f"- Latest inflation index period: {format_period(max(valid_index_periods))}")
-
-    project_counts = Counter(row["source_id"] for row in projects.rows)
-    observation_counts = Counter(row["source_id"] for row in observations.rows)
-    bid_tab_item_counts = Counter(row["source_id"] for row in bid_tab_items.rows)
-    print("\nCounts by source")
-    for source_id in sorted(source_by_id):
-        source = source_by_id[source_id]
-        print(
-            f"- {source_id}: {source['source_label']}; "
-            f"projects={project_counts[source_id]}, observations={observation_counts[source_id]}, "
-            f"bid_tab_items={bid_tab_item_counts[source_id]}"
-        )
-
-
-def print_smoke_summary(observations: CsvTable) -> None:
-    awarded_counts = Counter(
-        row["agency_item_code"].upper()
-        for row in observations.rows
-        if row["price_type"] == "cdot_awarded_bid"
-    )
-    print("\nSmoke-test awarded-bid counts")
-    for item_code, baseline_count in SMOKE_BASELINES.items():
-        print(f"- {item_code}: {awarded_counts[item_code]} (baseline {baseline_count})")
-
-
-def print_messages(label: str, messages: list[str]) -> None:
-    if not messages:
-        print(f"\n{label}: none")
-        return
-
-    print(f"\n{label}:")
-    for message in messages:
-        print(f"- {message}")
-
-
-def is_demo_id(value: str) -> bool:
-    return value.startswith("demo_")
-
-
-def is_number(value: str) -> bool:
-    try:
-        Decimal(value.replace("$", "").replace(",", ""))
-    except InvalidOperation:
-        return False
-    return True
-
-
-def is_iso_date(value: str) -> bool:
-    try:
-        datetime.strptime(value, "%Y-%m-%d")
-    except ValueError:
-        return False
-    return True
-
-
-def period_from_date(value: str) -> tuple[int, int] | None:
-    try:
-        parsed = datetime.strptime(value, "%Y-%m-%d")
-    except ValueError:
-        return None
-    return parsed.year, ((parsed.month - 1) // 3) + 1
-
-
-def parse_period(year_value: str, quarter_value: str) -> tuple[int, int] | None:
-    try:
-        year = int(year_value)
-        quarter = int(quarter_value)
-    except ValueError:
-        return None
-    if quarter < 1 or quarter > 4:
-        return None
-    return year, quarter
-
-
-def parse_period_label(value: str) -> tuple[int, int] | None:
-    parts = value.split()
-    if len(parts) != 2 or not parts[1].startswith("Q"):
-        return None
-    return parse_period(parts[0], parts[1][1:])
-
-
-def format_period(period: tuple[int, int]) -> str:
-    return f"{period[0]} Q{period[1]}"
+    print("PASS: schema-v2 multi-state data validation completed with no errors.")
 
 
 if __name__ == "__main__":

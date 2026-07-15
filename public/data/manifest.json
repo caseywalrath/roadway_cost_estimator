@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 2,
+  "productTitle": "Roadway Bid Item Evidence Explorer",
+  "common": {
+    "inflationIndexes": "common/inflation_index.csv"
+  },
+  "states": [
+    {
+      "code": "CO",
+      "name": "Colorado",
+      "defaultAgencyId": "co_cdot",
+      "defaultAgencyName": "Colorado Department of Transportation",
+      "divisionLabel": "Division",
+      "sectionLabel": "Section / prefix",
+      "sectionPrefixLength": 3,
+      "capabilities": {
+        "districtFilter": true,
+        "engineerEstimate": true,
+        "bidderDetail": true
+      },
+      "sourceTypeLabels": {
+        "cost_book": "Public CDOT cost book",
+        "bid_tab": "Public bid tabs"
+      },
+      "files": {
+        "sources": "states/co/sources.csv",
+        "lettings": "states/co/lettings.csv",
+        "contracts": "states/co/contracts.csv",
+        "contractProjects": "states/co/contract_projects.csv",
+        "contractItems": "states/co/contract_items.csv",
+        "bids": "states/co/bids.csv",
+        "bidItemPrices": "states/co/bid_item_prices.csv",
+        "agencyItems": "states/co/agency_items.csv",
+        "agencyItemVersions": "states/co/agency_item_versions.csv",
+        "itemTaxonomy": "states/co/item_taxonomy.csv",
+        "itemMappings": "states/co/item_mappings.csv",
+        "observations": "states/co/item_observations.csv",
+        "canonicalItems": "states/co/canonical_items.csv",
+        "aliases": "states/co/aliases.csv"
+      }
+    },
+    {
+      "code": "IA",
+      "name": "Iowa",
+      "defaultAgencyId": "ia_idot",
+      "defaultAgencyName": "Iowa Department of Transportation",
+      "divisionLabel": "Division",
+      "sectionLabel": "Specification section",
+      "sectionPrefixLength": 4,
+      "capabilities": {
+        "districtFilter": false,
+        "engineerEstimate": false,
+        "bidderDetail": true
+      },
+      "sourceTypeLabels": {
+        "item_catalog": "Iowa DOT item catalog",
+        "bid_tab": "Iowa DOT bid tabulations"
+      },
+      "files": {
+        "sources": "states/ia/sources.csv",
+        "lettings": "states/ia/lettings.csv",
+        "contracts": "states/ia/contracts.csv",
+        "contractProjects": "states/ia/contract_projects.csv",
+        "contractItems": "states/ia/contract_items.csv",
+        "bids": "states/ia/bids.csv",
+        "bidItemPrices": "states/ia/bid_item_prices.csv",
+        "agencyItems": "states/ia/agency_items.csv",
+        "agencyItemVersions": "states/ia/agency_item_versions.csv",
+        "itemTaxonomy": "states/ia/item_taxonomy.csv",
+        "itemMappings": "states/ia/item_mappings.csv",
+        "observations": "states/ia/item_observations.csv"
+      }
+    }
+  ]
+}
