@@ -1,0 +1,110 @@
+taxonomy_id,state,agency_id,taxonomy_level,taxonomy_code,parent_taxonomy_id,taxonomy_label,match_prefix,source_year,source_url
+co_cdot_div_000,CO,co_cdot,division,000,,Other CDOT item prefixes,000,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_000,CO,co_cdot,section,000,co_cdot_div_000,Prefix 000,000,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_div_200,CO,co_cdot,division,200,,Earthwork,200,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_201,CO,co_cdot,section,201,co_cdot_div_200,Clearing and Grubbing,201,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_202,CO,co_cdot,section,202,co_cdot_div_200,Removal of Structures and Obstructions,202,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_203,CO,co_cdot,section,203,co_cdot_div_200,Excavation and Embankment,203,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_204,CO,co_cdot,section,204,co_cdot_div_200,Prefix 204,204,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_206,CO,co_cdot,section,206,co_cdot_div_200,Excavation and Backfill for Structures,206,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_207,CO,co_cdot,section,207,co_cdot_div_200,Topsoil,207,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_208,CO,co_cdot,section,208,co_cdot_div_200,Erosion Control,208,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_209,CO,co_cdot,section,209,co_cdot_div_200,Watering and Dust Palliative,209,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_210,CO,co_cdot,section,210,co_cdot_div_200,Reset Structures,210,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_211,CO,co_cdot,section,211,co_cdot_div_200,Prefix 211,211,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_212,CO,co_cdot,section,212,co_cdot_div_200,"Seeding, Fertilizing, Soil Conditioner and Sodding",212,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_213,CO,co_cdot,section,213,co_cdot_div_200,Mulching,213,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_214,CO,co_cdot,section,214,co_cdot_div_200,Planting,214,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_215,CO,co_cdot,section,215,co_cdot_div_200,Transplanting,215,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_216,CO,co_cdot,section,216,co_cdot_div_200,Soil Retention Covering,216,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_217,CO,co_cdot,section,217,co_cdot_div_200,Herbicide Treatment,217,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_218,CO,co_cdot,section,218,co_cdot_div_200,Prefix 218,218,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_240,CO,co_cdot,section,240,co_cdot_div_200,Prefix 240,240,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_250,CO,co_cdot,section,250,co_cdot_div_200,"Environmental, Health and Safety Management",250,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_251,CO,co_cdot,section,251,co_cdot_div_200,Prefix 251,251,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_div_300,CO,co_cdot,division,300,,Other CDOT item prefixes,300,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_301,CO,co_cdot,section,301,co_cdot_div_300,Prefix 301,301,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_304,CO,co_cdot,section,304,co_cdot_div_300,Aggregate Base Course,304,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_306,CO,co_cdot,section,306,co_cdot_div_300,Reconditioning,306,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_307,CO,co_cdot,section,307,co_cdot_div_300,Lime Treated Subgrade,307,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_308,CO,co_cdot,section,308,co_cdot_div_300,Prefix 308,308,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_310,CO,co_cdot,section,310,co_cdot_div_300,Prefix 310,310,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_div_400,CO,co_cdot,division,400,,Pavements,400,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_403,CO,co_cdot,section,403,co_cdot_div_400,Hot Mix Asphalt,403,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_405,CO,co_cdot,section,405,co_cdot_div_400,Heating and Scarifying Treatment,405,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_406,CO,co_cdot,section,406,co_cdot_div_400,Cold Asphalt Pavement (Recycle),406,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_407,CO,co_cdot,section,407,co_cdot_div_400,"Prime Coat, Tack Coat and Rejuvenating Agent",407,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_408,CO,co_cdot,section,408,co_cdot_div_400,Joint and Crack Sealer,408,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_409,CO,co_cdot,section,409,co_cdot_div_400,Chip Seal,409,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_410,CO,co_cdot,section,410,co_cdot_div_400,Prefix 410,410,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_411,CO,co_cdot,section,411,co_cdot_div_400,Asphalt Materials,411,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_412,CO,co_cdot,section,412,co_cdot_div_400,Portland Cement Concrete Pavement,412,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_420,CO,co_cdot,section,420,co_cdot_div_400,Geosynthetics,420,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_div_500,CO,co_cdot,division,500,,Structures,500,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_501,CO,co_cdot,section,501,co_cdot_div_500,Steel Sheet Piling,501,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_502,CO,co_cdot,section,502,co_cdot_div_500,Piling,502,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_503,CO,co_cdot,section,503,co_cdot_div_500,Drilled Shafts,503,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_504,CO,co_cdot,section,504,co_cdot_div_500,Walls,504,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_506,CO,co_cdot,section,506,co_cdot_div_500,Riprap,506,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_507,CO,co_cdot,section,507,co_cdot_div_500,Slope and Ditch Paving,507,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_508,CO,co_cdot,section,508,co_cdot_div_500,Timber Structures,508,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_509,CO,co_cdot,section,509,co_cdot_div_500,Steel Structures,509,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_510,CO,co_cdot,section,510,co_cdot_div_500,Structural Plate Structures,510,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_511,CO,co_cdot,section,511,co_cdot_div_500,Prefix 511,511,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_512,CO,co_cdot,section,512,co_cdot_div_500,Bearing Device,512,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_513,CO,co_cdot,section,513,co_cdot_div_500,Prefix 513,513,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_514,CO,co_cdot,section,514,co_cdot_div_500,Pedestrian and Bikeway Railing,514,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_515,CO,co_cdot,section,515,co_cdot_div_500,Waterproofing Membrane,515,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_516,CO,co_cdot,section,516,co_cdot_div_500,Dampproofing,516,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_517,CO,co_cdot,section,517,co_cdot_div_500,Waterproofing,517,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_518,CO,co_cdot,section,518,co_cdot_div_500,Waterstops and Expansion Joints,518,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_519,CO,co_cdot,section,519,co_cdot_div_500,Prefix 519,519,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_520,CO,co_cdot,section,520,co_cdot_div_500,Prefix 520,520,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_521,CO,co_cdot,section,521,co_cdot_div_500,Prefix 521,521,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_522,CO,co_cdot,section,522,co_cdot_div_500,Prefix 522,522,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_div_600,CO,co_cdot,division,600,,Miscellaneous Construction,600,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_601,CO,co_cdot,section,601,co_cdot_div_600,Structural Concrete,601,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_602,CO,co_cdot,section,602,co_cdot_div_600,Reinforcing Steel,602,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_603,CO,co_cdot,section,603,co_cdot_div_600,Culverts and Sewers,603,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_604,CO,co_cdot,section,604,co_cdot_div_600,"Manholes, Inlets and Meter Vaults",604,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_605,CO,co_cdot,section,605,co_cdot_div_600,Subsurface Drains,605,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_606,CO,co_cdot,section,606,co_cdot_div_600,Guardrail,606,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_607,CO,co_cdot,section,607,co_cdot_div_600,Fences,607,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_608,CO,co_cdot,section,608,co_cdot_div_600,Sidewalks and Bikeways,608,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_609,CO,co_cdot,section,609,co_cdot_div_600,Curb and Gutter,609,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_610,CO,co_cdot,section,610,co_cdot_div_600,Median Cover Material,610,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_611,CO,co_cdot,section,611,co_cdot_div_600,Cattle Guards,611,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_612,CO,co_cdot,section,612,co_cdot_div_600,Delineators and Reflectors,612,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_613,CO,co_cdot,section,613,co_cdot_div_600,Lighting,613,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_614,CO,co_cdot,section,614,co_cdot_div_600,Traffic Control Devices,614,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_615,CO,co_cdot,section,615,co_cdot_div_600,Water Control Devices,615,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_616,CO,co_cdot,section,616,co_cdot_div_600,Siphons,616,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_618,CO,co_cdot,section,618,co_cdot_div_600,Prestressed Concrete,618,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_619,CO,co_cdot,section,619,co_cdot_div_600,Water Lines,619,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_620,CO,co_cdot,section,620,co_cdot_div_600,Field Facilities,620,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_621,CO,co_cdot,section,621,co_cdot_div_600,Prefix 621,621,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_622,CO,co_cdot,section,622,co_cdot_div_600,Rest Areas and Buildings,622,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_623,CO,co_cdot,section,623,co_cdot_div_600,Irrigation System,623,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_624,CO,co_cdot,section,624,co_cdot_div_600,Drainage Pipe,624,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_625,CO,co_cdot,section,625,co_cdot_div_600,Construction Surveying,625,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_626,CO,co_cdot,section,626,co_cdot_div_600,Mobilization,626,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_627,CO,co_cdot,section,627,co_cdot_div_600,Pavement Marking,627,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_628,CO,co_cdot,section,628,co_cdot_div_600,Prefix 628,628,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_629,CO,co_cdot,section,629,co_cdot_div_600,Survey Monumentation,629,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_630,CO,co_cdot,section,630,co_cdot_div_600,Construction Zone Traffic Control,630,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_631,CO,co_cdot,section,631,co_cdot_div_600,Prefix 631,631,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_632,CO,co_cdot,section,632,co_cdot_div_600,Prefix 632,632,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_637,CO,co_cdot,section,637,co_cdot_div_600,Prefix 637,637,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_641,CO,co_cdot,section,641,co_cdot_div_600,Shotcrete,641,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_642,CO,co_cdot,section,642,co_cdot_div_600,Prefix 642,642,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_660,CO,co_cdot,section,660,co_cdot_div_600,Prefix 660,660,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_670,CO,co_cdot,section,670,co_cdot_div_600,Prefix 670,670,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_680,CO,co_cdot,section,680,co_cdot_div_600,Prefix 680,680,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_699,CO,co_cdot,section,699,co_cdot_div_600,Prefix 699,699,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_div_700,CO,co_cdot,division,700,,Other CDOT item prefixes,700,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_700,CO,co_cdot,section,700,co_cdot_div_700,Prefix 700,700,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_div_800,CO,co_cdot,division,800,,Other CDOT item prefixes,800,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_800,CO,co_cdot,section,800,co_cdot_div_800,Prefix 800,800,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_div_900,CO,co_cdot,division,900,,Other CDOT item prefixes,900,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_900,CO,co_cdot,section,900,co_cdot_div_900,Prefix 900,900,2026,https://www.codot.gov/business/eema/itemcodebook
+co_cdot_sec_950,CO,co_cdot,section,950,co_cdot_div_900,Prefix 950,950,2026,https://www.codot.gov/business/eema/itemcodebook

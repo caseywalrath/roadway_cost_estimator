@@ -2,120 +2,113 @@
 
 ## Current Product
 
-This repository contains a static-first prototype for a Colorado roadway bid-item evidence browser.
+This repository contains **Roadway Bid Item Evidence Explorer**, a static multi-state roadway bid-item evidence application. Colorado and Iowa are enabled. A user must select a state on first visit; the browser remembers that choice. Search results never combine states.
 
-The first product is not a chatbot, not a full project estimator, and not an automatic price recommendation tool. It is a structured evidence tool that helps a user identify one official roadway bid item and review the project records where that exact item appears.
-
-The primary deliverable is the project-item evidence table. Unit price summary statistics are secondary aids that summarize the currently filtered evidence rows that the user has not excluded from summary. Awarded bid, average bid, and engineer estimate statistics are shown when those price types are loaded and can optionally be adjusted with loaded FHWA National Highway Construction Cost Index quarters. Included Matching Projects rows can be exported to CSV for external review. A browser-local Project workspace lets the user save selected official items with user-entered quantity, preferred unit cost, notes, and evidence context for a simple project-line CSV export.
+The app is an evidence browser and limited local project workspace. It is not an automatic estimating recommendation system. Its primary output is a contract-item evidence table with source prices and provenance. Summary statistics, inflation adjustment, bidder detail, CSV export, and saved project lines support user review.
 
 ## Application Shape
 
-- Hosting target: GitHub Pages.
-- Frontend stack: Vite + TypeScript.
-- Runtime model: static files only; no server and no database.
-- Data model: browser-loaded CSV files in `public/data`, including exact-code item observations, source-preserving bid-tab items, bidder-level bid-tab details, agency item mappings, CDOT section metadata, and FHWA NHCCI inflation index values.
-- Evidence model: deterministic TypeScript grouping and filtering rules in `src/matching`.
-- Project workspace model: browser-local `localStorage` state under `roadway-cost-estimator:projects:v2`, with a versioned schema, v1 migration, and recoverable load/save warnings.
-- Deployment path: GitHub Actions validates the app-loaded CSV package, builds the Vite app, and publishes `dist` to GitHub Pages from `main`.
+- Hosting: GitHub Pages.
+- Frontend: Vite and TypeScript.
+- Runtime: static JSON/CSV files; no server database.
+- Data entry point: `public/data/manifest.json`.
+- State partitions: `public/data/states/{state}/`.
+- Shared data: `public/data/common/`.
+- State-native staging: `data/staging/{state}/`.
+- Raw downloaded and attached files: `data/raw/`, which is git-ignored.
+- Browser project storage: `roadway-cost-estimator:projects:v3`.
 
-The app loads the CSV package at startup, builds in-memory lookup maps, and runs all filtering and scoring in the browser.
+The schema-v2 loader reads the manifest, loads only the selected state's core tables, builds relationship maps, and defers `bid_item_prices.csv` until a bidder or source-detail view is opened.
 
-## Data Flow
+## Runtime Flow
 
-1. `src/main.ts` starts the app.
-2. `src/data/loadData.ts` loads CSV files from `public/data`.
-3. `src/data/schema.ts` defines app-facing data structures, including `SpecSectionRecord` for CDOT section/prefix labels and abbreviated agency item descriptions.
-4. `src/matching/buildEvidenceResult.ts` groups exact item-code observations into project-item evidence rows.
-5. `src/matching/buildEvidenceResult.ts` applies explicit evidence filters and calculates awarded, average bid, and engineer estimate summary statistics for the filtered table.
-6. `src/projects/projectWorkspace.ts` loads, validates, updates, and saves browser-local Project workspace state.
-7. Prior comparable scoring modules remain in the repository for reference, but the primary UI no longer uses hidden top-five relevance selection.
-8. `src/ui` renders the fixed prototype scope, Explorer and Project tabs, item search, evidence filters, sortable evidence table, row-level summary exclusions, Matching Projects CSV export, the consolidated Unit Price Summary and Add to Project controls, Project item table, Project CSV export, optional NHCCI unit-price summary adjustment, exact-code public bid-tab bidder details, and source-only public bid-tab project review.
+1. `src/main.ts` loads the manifest and resolves the remembered state preference.
+2. A first-time user selects a state before any state data loads.
+3. `src/data/loadData.ts` loads one state partition and the common FHWA inflation index.
+4. `src/data/schema.ts` defines the shared contract, project-number, agency-item, bid, item-price, observation, taxonomy, and manifest interfaces.
+5. `src/matching/buildEvidenceResult.ts` groups generalized observations by contract item and filters exact `agencyItemId` evidence.
+6. `src/ui` renders manifest-provided labels, capabilities, columns, source filters, details, and exports.
+7. `src/projects/projectWorkspace.ts` loads/migrates local Project schema v3 and binds every Project and line item to a state and agency item.
 
-## Data Governance
+## Data Model
 
-The CSV records include public CDOT 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 Cost Data Book records. They are prototype evidence and must be reviewed before estimating use.
+The shared model uses these normalized tables:
 
-Do not commit private FHU estimate data to a public GitHub Pages repository. Real internal data should either stay outside the repo, be uploaded locally by the user in a later browser-only workflow, or move to an approved private hosting model.
+- `sources`
+- `lettings`
+- `contracts`
+- `contract_projects`
+- `contract_items`
+- `bids`
+- `bid_item_prices`
+- `agency_items`
+- `agency_item_versions`
+- `item_taxonomy`
+- `item_mappings`
+- `item_observations`
 
-The repository can generate staging CSVs from public CDOT Cost Data Book PDFs, validate them against project-list pages and agency item codes, and promote them into app-loaded source, project, and observation CSVs. The current promoted public CDOT cost-book sources are `cdot_cost_data_book_2022_q4`, `cdot_cost_data_book_2023_q4`, `cdot_cost_data_book_2024_q4`, `cdot_cost_data_book_2025_q4`, and `cdot_cost_data_book_2026_q1`.
+`contract_id` is the evidence parent. Project numbers are one-to-many children and never duplicate contract-item evidence. `agency_item_id` is the item identity; raw item codes are display and source fields. Generalized price types are `awarded_bid`, `average_bid`, and `engineer_estimate`.
 
-The repository can also import reviewed public FHU-curated bid tab workbooks as `public_bid_tab` sources. The current importer supports the Watson SAQ-style workbook layout, the Arapahoe bid-form layout with itemized engineer estimate and bidder columns, the Kipling/Bowles split-header tabulation layout, and the Ralston `Results` sheet layout with source specification references such as COA and CDOT prefixes. Bid-tab imports preserve source item identity in `bid_tab_items.csv`, preserve bidder-level item prices in `bidder_bids.csv` and `bidder_item_observations.csv`, and promote rows into `item_observations.csv` only when a reviewed exact agency item code is available. Ralston includes reviewed CDOT reconciliation columns; matched rows participate in exact-code Matching Projects and Unit Price Summary calculations using public bid-tab average and engineer estimate observations, while unmatched rows remain source-only bid-tab detail. Bid-tab imports do not populate awarded contractor, awarded bid total, award index, or awarded bid unit price unless a separate confirmed award source is added later.
+State-native differences remain in normalized nullable fields, taxonomy rows, capability metadata, source provenance, and staging artifacts. They are not hidden by Colorado-specific enums.
 
-The app-loaded CSV package is checked by `scripts/validate_data_package.py`. The validator fails deployment for broken source/project/observation relationships, duplicate IDs, invalid required values, invalid numeric/date fields, malformed NHCCI rows, app-loaded demo evidence leakage, and missing smoke-test evidence for `304-06007`. Lookup gaps, optional metadata gaps, and evidence quarters newer than the latest loaded official NHCCI quarter are reported as warnings.
+See `docs/data_schema.md` for table contracts and `docs/multistate_data_architecture.md` for design boundaries.
 
-## Evidence Browser Rules
+## Colorado Package
 
-The Phase 1 evidence browser rules are intentionally visible and simple:
+The Colorado schema-v2 partition is generated by `scripts/migrate_multistate_data.py` from the prior app package. It contains:
 
-- Filter to the fixed Colorado prototype state.
-- Use all public evidence sources by default.
-- Allow public bid-tab rows through an explicit source filter without treating apparent low bidder as confirmed award evidence.
-- Exclude app-loaded demo evidence rows from Matching Projects, including from the all-sources filter.
-- Require selection of an official agency item code before displaying project evidence.
-- Use exact agency item-code matches as the default definition of relevant evidence.
-- Resolve official item descriptions and units from agency item-code records when possible.
-- Group separate awarded bid, average bid, and engineer estimate observations into one project-item row when they describe the same project, item, unit, quantity, and date.
-- Link exact-code project numbers to bidder-detail modals when bidder-level bid-tab rows exist.
-- Show source-only public bid-tab projects in a separate project review panel without mixing unmatched source items into Matching Projects.
-- Show same-unit rows by default.
-- Track unit-mismatch counts internally instead of mixing units in the default table.
-- Apply source, geography, district, year, quantity, and unit filters as hard filters.
-- Sort evidence rows newest first by default, then allow users to sort by displayed table columns.
-- Allow users to exclude visible rows from the Unit Price Summary without removing them from the visible evidence table.
-- Export the currently filtered and non-excluded Matching Projects rows to CSV with the displayed table columns and useful project/source metadata.
-- Calculate awarded summary statistics from included awarded bid unit prices only.
-- Calculate average bid and engineer estimate summary statistics from the corresponding included rows.
-- Let users toggle inflation adjustment with loaded FHWA NHCCI quarters. Matching Projects table awarded bid, average bid, and engineer estimate prices stay in original dollars as the primary values and show secondary adjusted values for transparency when rounded adjusted dollars differ. CSV export stays in original dollars.
-- Let users save an official selected item into the browser-local Project workspace only as a user-controlled line item with quantity, preferred unit cost, notes, and evidence context. This is not an app-generated recommendation.
+- 462 contracts and 462 project-number records.
+- 112,970 item observations.
+- 4,792 agency items, including 19 explicit historical identities for cost-book codes absent from the current item catalog.
+- 689 source bid-tab items, 17 bids, and 3,050 bidder item prices.
 
-Alias, keyword, and description fallback matching should return only in a later explicit review mode. They are not part of the default evidence table.
+The migration preserves the prior exact-code evidence behavior, public sources, bidder details, district filtering, engineer-estimate prices, FHWA inflation adjustment, and exports. The old root-level CSVs remain migration inputs during this transition; the application does not load them.
+
+## Iowa Package
+
+`scripts/import_iowa_data.py` imports:
+
+- The official fixed-width Iowa DOT Item master text as the catalog authority.
+- The attached item-description PDF as the `SPEC` source and code/unit/description cross-check.
+- Iowa Electronic Reference Library divisions and sections, with explicit 60/61/62 fallback groups.
+- The attached June 16, 2026 bid-tab PDF through page-coordinate parsing and a deterministic contract state machine.
+
+The enabled pilot contains 3,727 unique item codes, 25 contracts, 26 project-number records, 90 bids, 576 contract items, 2,388 bidder item prices, and 1,146 awarded/average observations. It preserves the seven-bidder layout, the two-project contract, alternate set `AA`, source pages, line numbers, and raw source locators.
+
+Awarded prices are promoted only when the printed awarded vendor resolves to exactly one bidder. Rank 1 remains a separate apparent-low flag. Iowa average-bid evidence is the unweighted mean of valid printed bidder unit prices. Iowa does not fabricate engineer-estimate values.
+
+## UI Rules
+
+- State choice is required initially and remembered afterward.
+- State switching constructs a new state-specific application session and clears incompatible query/filter/detail state.
+- Matching Projects uses a stable core: Contract/Project, Location, Let Date, Awarded Vendor, Bid Count, Quantity, Unit, Description, Awarded Price, Average Price, and Source.
+- Colorado adds District and Engineer Estimate.
+- Iowa hides unsupported District and Engineer Estimate controls/columns.
+- Contract CSV export includes state, agency item identity, call order, status, route, project numbers, contract period, DBE goal, bid metadata, and source identity.
+- Bid item prices load on demand.
 
 ## Project Workspace Rules
 
-The Project workspace is an early limited estimate-workspace slice:
+- Schema v3 stores `state` on each Project.
+- Schema v3 stores `state`, `agencyId`, and `agencyItemId` on each line.
+- v1/v2 local storage migrates to Colorado and `co_cdot` identities.
+- The active Project must match the selected state. Switching states selects an existing Project for that state or creates an empty one.
+- A Project can use reviewed evidence from multiple agencies only within its state.
+- Duplicate detection uses `agencyItemId`, not the raw item code.
 
-- Support one active browser-local project in the UI while storing state as a versioned projects array for later multiple-project support.
-- Require project name and location before adding item lines.
-- Store project notes and line notes as plain text.
-- Require quantity and preferred unit cost for each saved project line.
-- Compute extended cost at render/export time from quantity and preferred unit cost instead of storing it as source state.
-- Preserve evidence context when a line is added, including current query, filters, sort, included evidence row count, included observation IDs, summary snapshot, inflation state, and cost source.
-- Treat summary-selected unit costs as user-selected values from currently included summary statistics.
-- If inflation adjustment is on, summary-selected values use the visible adjusted summary statistics and preserve the target NHCCI period in the evidence summary snapshot.
-- Prompt before adding a duplicate official item code so the user can add a separate line, update an existing line, or cancel.
-- Export Project rows to CSV only. XLSX generation, import, shared persistence, accounts, collaboration, and private-data storage are deferred.
+## Data Governance and Validation
 
-## Item Code Search Funnel
+`scripts/validate_data_package.py` validates the manifest and every enabled partition. It fails for duplicate IDs, broken relationships, malformed numbers, bidder headers without ranks, ambiguous awarded vendors, bidder/price contract crossings, unreconciled Iowa bid totals, observations without an agency-item identity, or missing pilot acceptance features.
 
-The item search uses a CDOT section-based item picker instead of a single long item-code dropdown.
+Raw PDFs and downloaded HTML/TXT files stay in ignored `data/raw/`. Committed sources include publication URLs, filenames, hashes, parser names/versions, normalized data, native staging data, and importer code.
 
-The visible left-panel flow is:
+Municipal items remain source-native. Only explicit reviewed `item_mappings` can connect them to state-item evidence. Description similarity never promotes evidence automatically.
 
-1. Locate Item: select a CDOT specification division and section/prefix when they help narrow the search, then use Item code or description to filter loaded agency items by item code, suffix, official description, or abbreviated description.
-2. Select Item: review the potential matching items and select one result to populate the submitted item code. The matching layer resolves the official description and unit from the agency item table.
+## Deferred Scope
 
-Quantity is no longer part of the item search because the project evidence table has explicit result-side quantity filters.
-
-Item code or description works across all loaded agency items when no division or section is selected. Division and section selections narrow the visible search results when selected. Select Item stays empty until the user selects a division, selects a section, types an item search, or already has an official item selected. If the user does not select an official item, the typed description can still submit as a weaker manual description search.
-
-Section labels come from `public/data/spec_sections.csv`. Item-level options continue to come from `public/data/agency_items.csv`.
-
-The current item picker data is generated from the public CDOT 2026 Item Code Book Excel file linked from CDOT's Item Code Book by Year page. The committed CSV contains 4,771 valid item-code rows and 100 item-code prefixes. The raw Excel workbook is not committed; `scripts/import_cdot_item_code_book.py` converts a downloaded workbook into the static CSV files.
-
-Some prefixes use known CDOT Standard Specification section labels. Prefixes not yet mapped to a known section label use fallback labels so all valid item-code rows remain searchable.
-
-The full item code book supports lookup only, so pricing appears only when matching public cost-book rows exist in `public/data/item_observations.csv`.
-
-The submitted `SearchQuery` shape did not change. The visible item search is limited to item identity. Unit is resolved from the selected official item and used as the default evidence filter. Evidence filters are applied from the result-side evidence controls after item identity is established. The result-side Filters control is the third workflow step for refining source, geography, district, year, quantity, and unit filters.
-
-## Near-Term Extension Points
-
-- Review promoted 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 CDOT cost-book rows with roadway engineers.
-- Maintain data integrity checks for loaded CSV relationships.
-- Add manual include/exclude controls and reviewer notes for an engineer-selected evidence set.
-- Add validation coverage for future CDOT cost-book quarters before promotion.
-- Add more reviewed public bid-tab workbook imports after the importer layout detection is validated on each workbook family.
-- Add reviewed private FHU data only through an approved private-data workflow.
-- Expand the browser-local Project workspace after the item explorer and first-line export workflow are trusted.
-- Add CSV/XLSX import only after schema mapping rules are validated.
-- Consider DuckDB-WASM or SQLite-in-browser only when CSV filtering becomes too slow or relationship validation becomes difficult.
+- Iowa 2024-present archive backfill beyond the pilot.
+- Cross-state item comparison.
+- Automatic canonical equivalence.
+- Automatic municipal matching.
+- Shared accounts, server persistence, and private data hosting.
+- DuckDB-WASM or another browser database unless CSV size or relationship work requires it.

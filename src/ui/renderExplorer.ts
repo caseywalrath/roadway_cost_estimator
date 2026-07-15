@@ -1,4 +1,4 @@
-import type { AgencyItemRecord, SearchQuery, SpecSectionRecord } from "../data/schema";
+import type { AgencyItemRecord, SearchQuery, SpecSectionRecord, StateConfig } from "../data/schema";
 import { normalizeDescription } from "../matching/normalizeDescription";
 
 const DEFAULT_STATE = "CO";
@@ -7,7 +7,8 @@ const DEFAULT_WORK_TYPE = "Roadway";
 export function renderExplorer(
   query: SearchQuery,
   agencyItems: AgencyItemRecord[],
-  specSections: SpecSectionRecord[]
+  specSections: SpecSectionRecord[],
+  stateConfig: StateConfig
 ): string {
   const resolvedAgencyItem = findAgencyItem(agencyItems, query.itemCode, query.state);
   const hasResolvedItem = Boolean(resolvedAgencyItem);
@@ -23,10 +24,11 @@ export function renderExplorer(
   return `
     <form id="explorer-form" class="search-panel">
       <div class="panel-heading">
-        <h2>Item Book Search</h2>
+        <h2>${escapeHtml(stateConfig.defaultAgencyName)} Item Search</h2>
       </div>
 
       <input type="hidden" name="itemCode" value="${escapeHtml(query.itemCode)}" />
+      <input type="hidden" name="agencyItemId" value="${escapeHtml(query.agencyItemId)}" />
       <input type="hidden" name="unit" value="${escapeHtml(selectedUnit)}" />
 
       <section class="workflow-step">
@@ -34,7 +36,7 @@ export function renderExplorer(
         <div class="item-picker" data-item-picker>
           <label>
             <span class="label-row">
-              Division
+              ${escapeHtml(stateConfig.divisionLabel)}
             </span>
             <select name="divisionPrefix" data-division-select>
               <option value="" ${selectedDivisionPrefix ? "" : "selected"}>Select division</option>
@@ -44,7 +46,7 @@ export function renderExplorer(
 
           <label>
             <span class="label-row">
-              Section / prefix
+              ${escapeHtml(stateConfig.sectionLabel)}
             </span>
             <select name="sectionPrefix" data-section-select ${selectedDivisionPrefix ? "" : "disabled"}>
               <option value="" ${selectedSectionPrefix ? "" : "selected"}>Select section</option>
@@ -91,6 +93,7 @@ export function bindItemPicker(
   specSections: SpecSectionRecord[]
 ): void {
   const itemCodeInput = form.elements.namedItem("itemCode") as HTMLInputElement | null;
+  const agencyItemIdInput = form.elements.namedItem("agencyItemId") as HTMLInputElement | null;
   const descriptionInput = form.elements.namedItem("description") as HTMLInputElement | null;
   const unitInput = form.elements.namedItem("unit") as HTMLInputElement | null;
   const divisionSelect = form.querySelector<HTMLSelectElement>("[data-division-select]");
@@ -101,6 +104,9 @@ export function bindItemPicker(
   function clearSelectedItem(options: { clearSearch: boolean } = { clearSearch: false }): void {
     if (itemCodeInput) {
       itemCodeInput.value = "";
+    }
+    if (agencyItemIdInput) {
+      agencyItemIdInput.value = "";
     }
     if (descriptionInput && options.clearSearch) {
       descriptionInput.value = "";
@@ -166,6 +172,7 @@ export function bindItemPicker(
     }
 
     const itemCode = button.dataset.itemCode ?? "";
+    const agencyItemId = button.dataset.agencyItemId ?? "";
     const unit = button.dataset.unit ?? "";
     const selectedItemCode = itemCodeInput?.value ?? "";
 
@@ -177,6 +184,9 @@ export function bindItemPicker(
 
     if (itemCodeInput) {
       itemCodeInput.value = itemCode;
+    }
+    if (agencyItemIdInput) {
+      agencyItemIdInput.value = agencyItemId;
     }
     if (unitInput) {
       unitInput.value = unit;
@@ -297,6 +307,7 @@ function renderItemResultButton(agencyItem: AgencyItemRecord, selected: boolean)
       class="item-result-button ${selected ? "item-result-button--selected" : ""}"
       data-item-result
       data-item-code="${escapeHtml(agencyItem.itemCode)}"
+      data-agency-item-id="${escapeHtml(agencyItem.agencyItemId)}"
       data-description="${escapeHtml(agencyItem.officialDescription)}"
       data-unit="${escapeHtml(agencyItem.officialUnit)}"
       title="${escapeHtml(agencyItem.officialDescription)}"
@@ -314,6 +325,8 @@ export function readQueryFromForm(form: HTMLFormElement, currentQuery?: SearchQu
 
   return {
     state: currentQuery?.state ?? DEFAULT_STATE,
+    agencyId: currentQuery?.agencyId ?? "",
+    agencyItemId: String(formData.get("agencyItemId") || ""),
     countyRegion: currentQuery?.countyRegion ?? "",
     workType: currentQuery?.workType ?? DEFAULT_WORK_TYPE,
     estimateYear,
@@ -413,6 +426,6 @@ function findAgencyItem(
 }
 
 function sectionPrefixFromItemCode(itemCode: string): string {
-  const match = itemCode.match(/^(\d{3})-/);
+  const match = itemCode.match(/^(\d{3,4})-/);
   return match?.[1] ?? "";
 }

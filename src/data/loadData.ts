@@ -1,178 +1,326 @@
 import type {
   AgencyItemRecord,
+  AgencyItemVersionRecord,
   AliasRecord,
   AppData,
-  BidderBidRecord,
-  BidTabItemRecord,
-  BidderItemObservationRecord,
+  AppManifest,
+  BidItemPriceRecord,
+  BidRecord,
   CanonicalItemRecord,
+  ContractItemRecord,
+  ContractProjectRecord,
+  ContractRecord,
   InflationIndexRecord,
+  ItemMappingRecord,
   ItemObservationRecord,
-  ProjectRecord,
+  ItemTaxonomyRecord,
+  LettingRecord,
   SourceRecord,
-  SpecSectionRecord
+  StateConfig
 } from "./schema";
 import { normalizeDescription, normalizeUnit } from "../matching/normalizeDescription";
 
 type CsvRow = Record<string, string>;
 
-const dataFiles = {
-  sources: "sources.csv",
-  projects: "projects.csv",
-  observations: "item_observations.csv",
-  canonicalItems: "canonical_items.csv",
-  agencyItems: "agency_items.csv",
-  specSections: "spec_sections.csv",
-  inflationIndexes: "inflation_index.csv",
-  bidderBids: "bidder_bids.csv",
-  bidderItemObservations: "bidder_item_observations.csv",
-  bidTabItems: "bid_tab_items.csv",
-  aliases: "aliases.csv"
-} as const;
+export async function loadManifest(): Promise<AppManifest> {
+  const response = await fetch(dataUrl("manifest.json"));
 
-export async function loadData(): Promise<AppData> {
+  if (!response.ok) {
+    throw new Error(`Could not load the data manifest: ${response.status} ${response.statusText}`);
+  }
+
+  const manifest = await response.json() as AppManifest;
+  if (manifest.schemaVersion !== 2 || !Array.isArray(manifest.states) || manifest.states.length === 0) {
+    throw new Error("The data manifest is not a supported schema-v2 manifest.");
+  }
+
+  return manifest;
+}
+
+/** Compatibility entry point. New callers should load the manifest and choose a state explicitly. */
+export async function loadData(stateCode = "CO"): Promise<AppData> {
+  const manifest = await loadManifest();
+  return loadStateData(manifest, stateCode);
+}
+
+export async function loadStateData(manifest: AppManifest, requestedState: string): Promise<AppData> {
+  const stateCode = requestedState.trim().toUpperCase();
+  const stateConfig = manifest.states.find((state) => state.code === stateCode);
+
+  if (!stateConfig) {
+    throw new Error(`State ${stateCode || "(blank)"} is not enabled in the data manifest.`);
+  }
+
+  const files = stateConfig.files;
   const [
     sources,
-    projects,
+    lettings,
+    rawContracts,
+    contractProjects,
+    rawContractItems,
+    bids,
+    rawAgencyItems,
+    agencyItemVersions,
+    rawTaxonomy,
+    itemMappings,
     observations,
-    canonicalItems,
-    agencyItems,
-    specSections,
     inflationIndexes,
-    bidderBids,
-    bidderItemObservations,
-    bidTabItems,
+    canonicalItems,
     aliases
-  ] =
-    await Promise.all([
-      loadCsv(dataFiles.sources, mapSource),
-      loadCsv(dataFiles.projects, mapProject),
-      loadCsv(dataFiles.observations, mapObservation),
-      loadCsv(dataFiles.canonicalItems, mapCanonicalItem),
-      loadCsv(dataFiles.agencyItems, mapAgencyItem),
-      loadCsv(dataFiles.specSections, mapSpecSection),
-      loadCsv(dataFiles.inflationIndexes, mapInflationIndex),
-      loadOptionalCsv(dataFiles.bidderBids, mapBidderBid),
-      loadOptionalCsv(dataFiles.bidderItemObservations, mapBidderItemObservation),
-      loadCsv(dataFiles.bidTabItems, mapBidTabItem),
-      loadCsv(dataFiles.aliases, mapAlias)
-    ]);
+  ] = await Promise.all([
+    loadCsvPath(files.sources, mapSource),
+    loadCsvPath(files.lettings, mapLetting),
+    loadCsvPath(files.contracts, mapContract),
+    loadCsvPath(files.contractProjects, mapContractProject),
+    loadCsvPath(files.contractItems, mapContractItem),
+    loadCsvPath(files.bids, mapBid),
+    loadCsvPath(files.agencyItems, mapAgencyItem),
+    loadCsvPath(files.agencyItemVersions, mapAgencyItemVersion),
+    loadCsvPath(files.itemTaxonomy, mapTaxonomy),
+    loadCsvPath(files.itemMappings, mapItemMapping),
+    loadCsvPath(files.observations, mapObservation),
+    loadCsvPath(manifest.common.inflationIndexes, mapInflationIndex),
+    loadOptionalCsvPath(files.canonicalItems, mapCanonicalItem),
+    loadOptionalCsvPath(files.aliases, mapAlias)
+  ]);
 
   const sourceById = new Map(sources.map((source) => [source.sourceId, source]));
-  const projectById = new Map(projects.map((project) => [project.projectId, project]));
+  const lettingById = new Map(lettings.map((letting) => [letting.lettingId, letting]));
+  const contractProjectsByContractId = groupBy(contractProjects, (project) => project.contractId);
+  const agencyItemVersionById = new Map(
+    agencyItemVersions.map((version) => [version.agencyItemVersionId, version])
+  );
+  const agencyItems = rawAgencyItems.map((item) => {
+    const version = agencyItemVersionById.get(item.currentVersionId);
+    return {
+      ...item,
+      officialDescription: version?.officialDescription ?? "",
+      officialAbbreviatedDescription: version?.officialAbbreviatedDescription ?? "",
+      officialUnit: normalizeUnit(version?.officialUnit ?? ""),
+      specReferenceCode: version?.specReferenceCode ?? ""
+    };
+  });
+  const agencyItemById = new Map(agencyItems.map((item) => [item.agencyItemId, item]));
+  const agencyByCode = groupBy(agencyItems, (item) => item.itemCode.toUpperCase());
+
+  const taxonomyById = new Map(rawTaxonomy.map((row) => [row.taxonomyId, row]));
+  const itemTaxonomy = rawTaxonomy.map((row) => enrichTaxonomy(row, taxonomyById));
+  const enrichedTaxonomyById = new Map(itemTaxonomy.map((row) => [row.taxonomyId, row]));
+  const specSections = itemTaxonomy.filter((row) => row.taxonomyLevel === "section");
+  const sectionsByDivisionId = groupBy(specSections, (row) => row.parentTaxonomyId);
+  const specSectionByPrefix = new Map(specSections.map((row) => [row.sectionPrefix, row]));
+  const specSectionsByDivision = groupBy(specSections, (row) => row.divisionPrefix);
+
+  const contracts = rawContracts.map((contract) => {
+    const projects = contractProjectsByContractId.get(contract.contractId) ?? [];
+    const letting = lettingById.get(contract.lettingId);
+    const projectNumbers = projects.map((project) => project.projectNumber).filter(Boolean).join("; ");
+    const projectNames = projects.map((project) => project.projectName).filter(Boolean).join("; ");
+    return {
+      ...contract,
+      projectId: contract.contractId,
+      projectName: projectNames || contract.workType || contract.officialContractId,
+      agencyOwner: stateConfig.defaultAgencyName,
+      countyRegion: contract.primaryCounty,
+      estimateLetDate: letting?.lettingDate ?? "",
+      projectNumber: projectNumbers || contract.officialContractId,
+      projectLocationRaw: contract.location,
+      contractor: contract.awardedVendor,
+      awardedBidTotal: contract.awardedAmount
+    };
+  });
+  const contractById = new Map(contracts.map((contract) => [contract.contractId, contract]));
+
+  const observationByContractItemShape = new Map<string, ItemObservationRecord[]>();
+  for (const observation of observations) {
+    const key = observationShapeKey(
+      observation.contractId,
+      observation.sourceId,
+      observation.agencyItemCode,
+      observation.descriptionRaw,
+      observation.unitNormalized,
+      observation.quantity
+    );
+    const rows = observationByContractItemShape.get(key) ?? [];
+    rows.push(observation);
+    observationByContractItemShape.set(key, rows);
+  }
+
+  const contractItems = rawContractItems.map((item) => {
+    const agencyItem = agencyItemById.get(item.agencyItemId);
+    const contract = contractById.get(item.contractId);
+    const source = sourceById.get(item.sourceId);
+    const key = observationShapeKey(
+      item.contractId,
+      item.sourceId,
+      agencyItem?.itemCode || item.sourceItemCode,
+      item.descriptionRaw,
+      item.unitNormalized,
+      item.quantity
+    );
+    const itemObservations = observationByContractItemShape.get(key) ?? [];
+    return {
+      ...item,
+      bidTabItemId: item.contractItemId,
+      projectId: item.contractId,
+      sourceFile: source?.sourceFileName ?? "",
+      sheetName: "",
+      workbookRow: item.sourcePage ?? 0,
+      projectNumber: contract?.projectNumber ?? "",
+      sourceItemNumber: item.lineNumber,
+      sourceItemCodeSystem: stateConfig.defaultAgencyId,
+      sourceSpecRaw: item.sectionNumber,
+      sourceItemDescription: item.descriptionRaw,
+      itemCode: agencyItem?.itemCode ?? item.sourceItemCode,
+      itemDescription: item.descriptionRaw,
+      engineerEstimateUnitPrice: priceFor(itemObservations, "engineer_estimate") ?? 0,
+      averageBidUnitPrice: priceFor(itemObservations, "average_bid") ?? 0,
+      matchedAgencyItemCode: agencyItem?.itemCode ?? "",
+      matchStatus: item.agencyItemId ? "matched" as const : "unmatched" as const,
+      dateBasis: contract?.estimateLetDate ?? ""
+    };
+  });
+
+  const bidsByContractId = groupBy(bids, (bid) => bid.contractId);
+  const contractItemsByContractId = groupBy(contractItems, (item) => item.contractId);
+  const bidItemPrices: BidItemPriceRecord[] = [];
+  const bidItemPricesByContractItemId = new Map<string, BidItemPriceRecord[]>();
+  const bidItemPricesByEvidenceKey = new Map<string, BidItemPriceRecord[]>();
+  const bidderItemsByRowKey = bidItemPricesByEvidenceKey;
+  const bidderItemsByBidTabItemId = bidItemPricesByContractItemId;
+  const contractItemById = new Map(contractItems.map((item) => [item.contractItemId, item]));
+  let bidderPricesPromise: Promise<void> | null = null;
+
+  const ensureBidItemPricesLoaded = (): Promise<void> => {
+    if (!files.bidItemPrices) {
+      return Promise.resolve();
+    }
+    if (bidderPricesPromise) {
+      return bidderPricesPromise;
+    }
+
+    bidderPricesPromise = loadCsvPath(files.bidItemPrices, mapBidItemPrice).then((rawPrices) => {
+      for (const rawPrice of rawPrices) {
+        const item = contractItemById.get(rawPrice.contractItemId);
+        const agencyItem = item ? agencyItemById.get(item.agencyItemId) : undefined;
+        const price: BidItemPriceRecord = {
+          ...rawPrice,
+          bidderItemObservationId: rawPrice.bidItemPriceId,
+          bidTabItemId: rawPrice.contractItemId,
+          projectId: rawPrice.contractId,
+          agencyItemCode: agencyItem?.itemCode ?? item?.sourceItemCode ?? "",
+          descriptionRaw: item?.descriptionRaw ?? "",
+          unitRaw: item?.unitRaw ?? "",
+          unitNormalized: item?.unitNormalized ?? "",
+          quantity: item?.quantity ?? 0
+        };
+        bidItemPrices.push(price);
+        appendToMap(bidItemPricesByContractItemId, price.contractItemId, price);
+        appendToMap(
+          bidItemPricesByEvidenceKey,
+          observationShapeKey(
+            price.contractId,
+            price.sourceId,
+            price.agencyItemCode,
+            price.descriptionRaw,
+            price.unitNormalized,
+            price.quantity
+          ),
+          price
+        );
+      }
+    });
+    return bidderPricesPromise;
+  };
+
   const canonicalById = new Map(
     canonicalItems.map((canonicalItem) => [canonicalItem.canonicalItemId, canonicalItem])
   );
-  const agencyByCode = new Map<string, AgencyItemRecord[]>();
-  const specSectionByPrefix = new Map<string, SpecSectionRecord>();
-  const specSectionsByDivision = new Map<string, SpecSectionRecord[]>();
-  const inflationIndexByPeriod = new Map(inflationIndexes.map((index) => [index.periodLabel, index]));
-  const bidderBidsByProjectId = new Map<string, BidderBidRecord[]>();
-  const bidderItemsByRowKey = new Map<string, BidderItemObservationRecord[]>();
-  const bidTabItemsByProjectId = new Map<string, BidTabItemRecord[]>();
-  const bidderItemsByBidTabItemId = new Map<string, BidderItemObservationRecord[]>();
-
-  for (const agencyItem of agencyItems) {
-    const key = agencyItem.itemCode.toUpperCase();
-    const existing = agencyByCode.get(key) ?? [];
-    existing.push(agencyItem);
-    agencyByCode.set(key, existing);
-  }
-
-  for (const bidderBid of bidderBids) {
-    const existing = bidderBidsByProjectId.get(bidderBid.projectId) ?? [];
-    existing.push(bidderBid);
-    bidderBidsByProjectId.set(bidderBid.projectId, existing);
-  }
-
-  for (const bidderItem of bidderItemObservations) {
-    const key = buildBidderItemRowKey(bidderItem);
-    const existing = bidderItemsByRowKey.get(key) ?? [];
-    existing.push(bidderItem);
-    bidderItemsByRowKey.set(key, existing);
-
-    if (bidderItem.bidTabItemId) {
-      const bidTabItems = bidderItemsByBidTabItemId.get(bidderItem.bidTabItemId) ?? [];
-      bidTabItems.push(bidderItem);
-      bidderItemsByBidTabItemId.set(bidderItem.bidTabItemId, bidTabItems);
-    }
-  }
-
-  for (const bidTabItem of bidTabItems) {
-    const existing = bidTabItemsByProjectId.get(bidTabItem.projectId) ?? [];
-    existing.push(bidTabItem);
-    bidTabItemsByProjectId.set(bidTabItem.projectId, existing);
-  }
-
-  for (const specSection of specSections) {
-    const sectionKey = specSection.sectionPrefix;
-    const divisionKey = specSection.divisionPrefix;
-    specSectionByPrefix.set(sectionKey, specSection);
-
-    const existing = specSectionsByDivision.get(divisionKey) ?? [];
-    existing.push(specSection);
-    specSectionsByDivision.set(divisionKey, existing);
-  }
+  const inflationIndexByPeriod = new Map(
+    inflationIndexes.map((index) => [index.periodLabel, index])
+  );
 
   return {
+    manifest,
+    stateConfig,
     sources,
-    projects,
+    lettings,
+    contracts,
+    contractProjects,
     observations,
     canonicalItems,
     agencyItems,
-    specSections,
+    agencyItemVersions,
+    itemTaxonomy,
+    itemMappings,
     inflationIndexes,
     aliases,
-    bidderBids,
-    bidderItemObservations,
-    bidTabItems,
+    bids,
+    contractItems,
+    bidItemPrices,
     sourceById,
-    projectById,
+    contractById,
+    contractProjectsByContractId,
     canonicalById,
+    agencyItemById,
     agencyByCode,
+    taxonomyById: enrichedTaxonomyById,
+    sectionsByDivisionId,
     specSectionByPrefix,
     specSectionsByDivision,
     inflationIndexByPeriod,
-    bidderBidsByProjectId,
+    bidsByContractId,
+    contractItemsByContractId,
+    bidItemPricesByContractItemId,
+    bidItemPricesByEvidenceKey,
+    ensureBidItemPricesLoaded,
+    projects: contracts,
+    projectById: contractById,
+    specSections,
+    bidderBids: bids,
+    bidderItemObservations: bidItemPrices,
+    bidTabItems: contractItems,
+    bidderBidsByProjectId: bidsByContractId,
     bidderItemsByRowKey,
-    bidTabItemsByProjectId,
+    bidTabItemsByProjectId: contractItemsByContractId,
     bidderItemsByBidTabItemId
   };
 }
 
-async function loadCsv<T>(fileName: string, mapper: (row: CsvRow) => T): Promise<T[]> {
-  const response = await fetch(`${import.meta.env.BASE_URL}data/${fileName}`);
-
-  if (!response.ok) {
-    throw new Error(`Could not load ${fileName}: ${response.status} ${response.statusText}`);
-  }
-
-  const text = await response.text();
-  return parseCsv(text).map(mapper);
+function dataUrl(path: string): string {
+  return `${import.meta.env.BASE_URL}data/${path}`;
 }
 
-async function loadOptionalCsv<T>(fileName: string, mapper: (row: CsvRow) => T): Promise<T[]> {
-  const response = await fetch(`${import.meta.env.BASE_URL}data/${fileName}`);
+async function loadCsvPath<T>(path: string, mapper: (row: CsvRow) => T): Promise<T[]> {
+  const response = await fetch(dataUrl(path));
+  if (!response.ok) {
+    throw new Error(`Could not load ${path}: ${response.status} ${response.statusText}`);
+  }
+  return parseCsv(await response.text()).map(mapper);
+}
 
+async function loadOptionalCsvPath<T>(
+  path: string | undefined,
+  mapper: (row: CsvRow) => T
+): Promise<T[]> {
+  if (!path) {
+    return [];
+  }
+  const response = await fetch(dataUrl(path));
   if (response.status === 404) {
     return [];
   }
-
   if (!response.ok) {
-    throw new Error(`Could not load ${fileName}: ${response.status} ${response.statusText}`);
+    throw new Error(`Could not load ${path}: ${response.status} ${response.statusText}`);
   }
-
-  const text = await response.text();
-  return parseCsv(text).map(mapper);
+  return parseCsv(await response.text()).map(mapper);
 }
 
 function parseCsv(text: string): CsvRow[] {
   const rows = parseCsvRows(text.trim());
-
   if (rows.length === 0) {
     return [];
   }
-
   const headers = rows[0].map((header) => header.trim());
   return rows.slice(1).map((row) =>
     Object.fromEntries(headers.map((header, index) => [header, row[index]?.trim() ?? ""]))
@@ -186,43 +334,30 @@ function parseCsvRows(text: string): string[][] {
   let inQuotes = false;
 
   for (let index = 0; index < text.length; index += 1) {
-    const char = text[index];
-    const nextChar = text[index + 1];
-
-    if (char === '"' && inQuotes && nextChar === '"') {
+    const character = text[index];
+    const nextCharacter = text[index + 1];
+    if (character === '"' && inQuotes && nextCharacter === '"') {
       currentCell += '"';
       index += 1;
-      continue;
-    }
-
-    if (char === '"') {
+    } else if (character === '"') {
       inQuotes = !inQuotes;
-      continue;
-    }
-
-    if (char === "," && !inQuotes) {
+    } else if (character === "," && !inQuotes) {
       currentRow.push(currentCell);
       currentCell = "";
-      continue;
-    }
-
-    if ((char === "\n" || char === "\r") && !inQuotes) {
-      if (char === "\r" && nextChar === "\n") {
+    } else if ((character === "\n" || character === "\r") && !inQuotes) {
+      if (character === "\r" && nextCharacter === "\n") {
         index += 1;
       }
       currentRow.push(currentCell);
       rows.push(currentRow);
       currentRow = [];
       currentCell = "";
-      continue;
+    } else {
+      currentCell += character;
     }
-
-    currentCell += char;
   }
-
   currentRow.push(currentCell);
   rows.push(currentRow);
-
   return rows.filter((row) => row.some((cell) => cell.trim().length > 0));
 }
 
@@ -230,111 +365,263 @@ function mapSource(row: CsvRow): SourceRecord {
   return {
     sourceId: row.source_id,
     sourceType: row.source_type,
-    agency: row.agency,
-    state: row.state,
+    agencyId: row.agency_id,
+    agencyName: row.agency_name,
+    state: row.state.toUpperCase(),
     sourceLabel: row.source_label,
-    dataYear: parseOptionalNumber(row.data_year),
-    notes: row.notes
+    sourceDate: row.source_date,
+    dataYear: optionalNumber(row.data_year),
+    sourceUrl: row.source_url,
+    sourceFileName: row.source_file_name,
+    sha256: row.sha256,
+    parserName: row.parser_name,
+    parserVersion: row.parser_version,
+    notes: row.notes,
+    agency: row.agency_name
   };
 }
 
-function mapProject(row: CsvRow): ProjectRecord {
+function mapLetting(row: CsvRow): LettingRecord {
   return {
-    projectId: row.project_id,
-    projectName: row.project_name,
-    agencyOwner: row.agency_owner,
-    state: row.state.toUpperCase(),
-    countyRegion: row.county_region,
-    workType: row.work_type,
-    estimateLetDate: row.estimate_let_date,
+    lettingId: row.letting_id,
     sourceId: row.source_id,
-    projectNumber: row.project_number ?? "",
-    projectLocationRaw: row.project_location_raw ?? "",
-    contractor: row.contractor ?? "",
-    district: row.district ?? "",
-    terrain: row.terrain ?? "",
-    bidCount: parseOptionalNumber(row.bid_count ?? ""),
-    awardedBidTotal: parseOptionalNumber(row.awarded_bid_total ?? ""),
-    awardIndex: parseOptionalNumber(row.award_index ?? "")
+    state: row.state.toUpperCase(),
+    agencyId: row.agency_id,
+    lettingDate: row.letting_date,
+    lettingLabel: row.letting_label
+  };
+}
+
+function mapContract(row: CsvRow): ContractRecord {
+  return {
+    contractId: row.contract_id,
+    lettingId: row.letting_id,
+    sourceId: row.source_id,
+    state: row.state.toUpperCase(),
+    agencyId: row.agency_id,
+    officialContractId: row.official_contract_id,
+    callOrder: row.call_order,
+    lettingStatus: row.letting_status,
+    awardedVendor: row.awarded_vendor,
+    awardedAmount: optionalNumber(row.awarded_amount),
+    primaryCounty: row.primary_county,
+    route: row.route,
+    workType: row.work_type,
+    contractPeriod: row.contract_period,
+    dbeGoal: row.dbe_goal,
+    bidCount: optionalNumber(row.bid_count),
+    location: row.location,
+    district: row.district,
+    terrain: row.terrain,
+    awardIndex: optionalNumber(row.award_index),
+    projectId: row.contract_id,
+    projectName: "",
+    agencyOwner: "",
+    countyRegion: row.primary_county,
+    estimateLetDate: "",
+    projectNumber: row.official_contract_id,
+    projectLocationRaw: row.location,
+    contractor: row.awarded_vendor,
+    awardedBidTotal: optionalNumber(row.awarded_amount)
+  };
+}
+
+function mapContractProject(row: CsvRow): ContractProjectRecord {
+  return {
+    contractProjectId: row.contract_project_id,
+    contractId: row.contract_id,
+    projectNumber: row.project_number,
+    projectName: row.project_name,
+    workType: row.work_type,
+    countyRegion: row.county_region,
+    route: row.route,
+    location: row.location,
+    projectAwardAmount: optionalNumber(row.project_award_amount)
   };
 }
 
 function mapObservation(row: CsvRow): ItemObservationRecord {
   return {
     observationId: row.observation_id,
-    projectId: row.project_id,
+    contractId: row.contract_id,
     sourceId: row.source_id,
+    agencyItemId: row.agency_item_id,
     agencyItemCode: row.agency_item_code.toUpperCase(),
     descriptionRaw: row.description_raw,
     descriptionNormalized: normalizeDescription(row.description_normalized || row.description_raw),
     unitRaw: row.unit_raw,
     unitNormalized: normalizeUnit(row.unit_normalized || row.unit_raw),
-    quantity: parseRequiredNumber(row.quantity),
-    unitPrice: parseRequiredNumber(row.unit_price),
-    extendedPrice: parseRequiredNumber(row.extended_price),
+    quantity: requiredNumber(row.quantity),
+    unitPrice: requiredNumber(row.unit_price),
+    extendedPrice: requiredNumber(row.extended_price),
     discipline: row.discipline,
     priceType: row.price_type,
-    dateBasis: row.date_basis
+    dateBasis: row.date_basis,
+    derivationMethod: row.derivation_method,
+    derivationInputCount: optionalNumber(row.derivation_input_count),
+    projectId: row.contract_id
   };
 }
 
-function mapBidderBid(row: CsvRow): BidderBidRecord {
+function mapBid(row: CsvRow): BidRecord {
   return {
     bidId: row.bid_id,
-    projectId: row.project_id,
+    contractId: row.contract_id,
     sourceId: row.source_id,
+    sourceVendorId: row.source_vendor_id,
     bidderName: row.bidder_name,
-    bidTotal: parseRequiredNumber(row.bid_total),
-    bidRank: parseOptionalNumber(row.bid_rank ?? ""),
-    apparentLow: row.apparent_low.toLowerCase() === "true"
+    bidRank: optionalNumber(row.bid_rank),
+    bidTotal: requiredNumber(row.bid_total),
+    percentOfLow: optionalNumber(row.percent_of_low),
+    isApparentLow: booleanValue(row.is_apparent_low),
+    isAwarded: booleanValue(row.is_awarded),
+    sourcePage: optionalNumber(row.source_page),
+    projectId: row.contract_id,
+    apparentLow: booleanValue(row.is_apparent_low)
   };
 }
 
-function mapBidderItemObservation(row: CsvRow): BidderItemObservationRecord {
+function mapContractItem(row: CsvRow): ContractItemRecord {
   return {
-    bidderItemObservationId: row.bidder_item_observation_id,
-    bidTabItemId: row.bid_tab_item_id ?? "",
-    bidId: row.bid_id,
-    projectId: row.project_id,
+    contractItemId: row.contract_item_id,
+    contractId: row.contract_id,
     sourceId: row.source_id,
-    agencyItemCode: row.agency_item_code.toUpperCase(),
+    sectionNumber: row.section_number,
+    sectionTitle: row.section_title,
+    lineNumber: row.line_number,
+    sourceItemCode: row.source_item_code.toUpperCase(),
+    agencyItemId: row.agency_item_id,
     descriptionRaw: row.description_raw,
+    quantity: requiredNumber(row.quantity),
     unitRaw: row.unit_raw,
     unitNormalized: normalizeUnit(row.unit_normalized || row.unit_raw),
-    quantity: parseRequiredNumber(row.quantity),
-    unitPrice: parseRequiredNumber(row.unit_price),
-    extendedPrice: parseRequiredNumber(row.extended_price)
+    alternateSet: row.alternate_set,
+    alternateMember: row.alternate_member,
+    mappingStatus: row.mapping_status,
+    sourcePage: optionalNumber(row.source_page),
+    sourceLocator: row.source_locator,
+    bidTabItemId: row.contract_item_id,
+    projectId: row.contract_id,
+    sourceFile: "",
+    sheetName: "",
+    workbookRow: optionalNumber(row.source_page) ?? 0,
+    projectNumber: "",
+    sourceItemNumber: row.line_number,
+    sourceItemCodeSystem: "",
+    sourceSpecRaw: row.section_number,
+    sourceItemDescription: row.description_raw,
+    itemCode: row.source_item_code.toUpperCase(),
+    itemDescription: row.description_raw,
+    engineerEstimateUnitPrice: 0,
+    averageBidUnitPrice: 0,
+    matchedAgencyItemCode: "",
+    matchStatus: row.agency_item_id ? "matched" : "unmatched",
+    dateBasis: ""
   };
 }
 
-function mapBidTabItem(row: CsvRow): BidTabItemRecord {
-  const matchStatus = row.match_status === "matched" || row.match_status === "source_cdot_prefix_only"
-    ? row.match_status
-    : "unmatched";
-
+function mapBidItemPrice(row: CsvRow): BidItemPriceRecord {
   return {
-    bidTabItemId: row.bid_tab_item_id,
-    projectId: row.project_id,
+    bidItemPriceId: row.bid_item_price_id,
+    contractItemId: row.contract_item_id,
+    bidId: row.bid_id,
+    contractId: row.contract_id,
     sourceId: row.source_id,
-    sourceFile: row.source_file,
-    sheetName: row.sheet_name,
-    workbookRow: parseRequiredNumber(row.workbook_row),
-    projectNumber: row.project_number ?? "",
-    sourceItemNumber: row.source_item_number ?? "",
-    sourceItemCode: row.source_item_code,
-    sourceItemCodeSystem: row.source_item_code_system,
-    sourceSpecRaw: row.source_spec_raw ?? "",
-    sourceItemDescription: row.source_item_description || row.item_description,
+    unitPrice: requiredNumber(row.unit_price),
+    extendedPrice: requiredNumber(row.extended_price),
+    sourcePage: optionalNumber(row.source_page),
+    sourceLocator: row.source_locator,
+    bidderItemObservationId: row.bid_item_price_id,
+    bidTabItemId: row.contract_item_id,
+    projectId: row.contract_id,
+    agencyItemCode: "",
+    descriptionRaw: "",
+    unitRaw: "",
+    unitNormalized: "",
+    quantity: 0
+  };
+}
+
+function mapAgencyItem(row: CsvRow): AgencyItemRecord {
+  return {
+    agencyItemId: row.agency_item_id,
+    state: row.state.toUpperCase(),
+    agencyId: row.agency_id,
+    agencyName: row.agency_name,
     itemCode: row.item_code.toUpperCase(),
-    itemDescription: row.item_description || row.source_item_description,
-    unitRaw: row.unit_raw,
-    unitNormalized: normalizeUnit(row.unit_normalized || row.unit_raw),
-    quantity: parseRequiredNumber(row.quantity),
-    engineerEstimateUnitPrice: parseRequiredNumber(row.engineer_estimate_unit_price),
-    averageBidUnitPrice: parseRequiredNumber(row.average_bid_unit_price),
-    matchedAgencyItemCode: row.matched_agency_item_code.toUpperCase(),
-    matchStatus,
-    dateBasis: row.date_basis
+    currentVersionId: row.current_version_id,
+    itemStatus: row.item_status,
+    canonicalItemId: row.canonical_item_id,
+    officialDescription: "",
+    officialAbbreviatedDescription: "",
+    officialUnit: "",
+    specReferenceCode: "",
+    agency: row.agency_name
+  };
+}
+
+function mapAgencyItemVersion(row: CsvRow): AgencyItemVersionRecord {
+  return {
+    agencyItemVersionId: row.agency_item_version_id,
+    agencyItemId: row.agency_item_id,
+    effectiveFrom: row.effective_from,
+    effectiveTo: row.effective_to,
+    officialDescription: row.official_description,
+    officialAbbreviatedDescription: row.official_abbreviated_description,
+    officialUnit: row.official_unit,
+    specReferenceCode: row.spec_reference_code,
+    sourceId: row.source_id,
+    isCurrent: booleanValue(row.is_current)
+  };
+}
+
+function mapTaxonomy(row: CsvRow): ItemTaxonomyRecord {
+  return {
+    taxonomyId: row.taxonomy_id,
+    state: row.state.toUpperCase(),
+    agencyId: row.agency_id,
+    taxonomyLevel: row.taxonomy_level,
+    taxonomyCode: row.taxonomy_code,
+    parentTaxonomyId: row.parent_taxonomy_id,
+    taxonomyLabel: row.taxonomy_label,
+    matchPrefix: row.match_prefix,
+    sourceYear: optionalNumber(row.source_year),
+    sourceUrl: row.source_url,
+    sectionPrefix: row.match_prefix,
+    divisionPrefix: "",
+    divisionTitle: "",
+    sectionTitle: row.taxonomy_label
+  };
+}
+
+function enrichTaxonomy(
+  row: ItemTaxonomyRecord,
+  taxonomyById: Map<string, ItemTaxonomyRecord>
+): ItemTaxonomyRecord {
+  const division = row.taxonomyLevel === "division"
+    ? row
+    : taxonomyById.get(row.parentTaxonomyId);
+  return {
+    ...row,
+    sectionPrefix: row.matchPrefix,
+    divisionPrefix: division?.matchPrefix ?? "",
+    divisionTitle: division?.taxonomyLabel ?? "",
+    sectionTitle: row.taxonomyLabel
+  };
+}
+
+function mapItemMapping(row: CsvRow): ItemMappingRecord {
+  return {
+    mappingId: row.mapping_id,
+    state: row.state.toUpperCase(),
+    sourceAgencyId: row.source_agency_id,
+    sourceItemCode: row.source_item_code,
+    targetAgencyItemId: row.target_agency_item_id,
+    matchStatus: row.match_status,
+    confidence: row.confidence,
+    reviewedBy: row.reviewed_by,
+    reviewedOn: row.reviewed_on,
+    notes: row.notes
   };
 }
 
@@ -350,40 +637,16 @@ function mapCanonicalItem(row: CsvRow): CanonicalItemRecord {
   };
 }
 
-function mapAgencyItem(row: CsvRow): AgencyItemRecord {
-  return {
-    agencyItemId: row.agency_item_id,
-    state: row.state.toUpperCase(),
-    agency: row.agency,
-    itemCode: row.item_code.toUpperCase(),
-    officialDescription: row.official_description,
-    officialAbbreviatedDescription: row.official_abbreviated_description ?? "",
-    officialUnit: normalizeUnit(row.official_unit),
-    canonicalItemId: row.canonical_item_id
-  };
-}
-
-function mapSpecSection(row: CsvRow): SpecSectionRecord {
-  return {
-    sectionPrefix: row.section_prefix,
-    divisionPrefix: row.division_prefix,
-    divisionTitle: row.division_title,
-    sectionTitle: row.section_title,
-    sourceYear: parseOptionalNumber(row.source_year),
-    sourceUrl: row.source_url
-  };
-}
-
 function mapInflationIndex(row: CsvRow): InflationIndexRecord {
   return {
     indexId: row.index_id,
     indexName: row.index_name,
-    periodYear: parseRequiredNumber(row.period_year),
-    periodQuarter: parseRequiredNumber(row.period_quarter),
+    periodYear: requiredNumber(row.period_year),
+    periodQuarter: requiredNumber(row.period_quarter),
     periodLabel: row.period_label,
     periodStartDate: row.period_start_date,
     periodEndDate: row.period_end_date,
-    indexValue: parseRequiredNumber(row.index_value),
+    indexValue: requiredNumber(row.index_value),
     sourceUrl: row.source_url,
     notes: row.notes
   };
@@ -402,39 +665,55 @@ function mapAlias(row: CsvRow): AliasRecord {
   };
 }
 
-function splitList(value: string): string[] {
-  return value
-    .split(";")
-    .map((item) => item.trim())
-    .filter(Boolean);
+function observationShapeKey(
+  contractId: string,
+  sourceId: string,
+  itemCode: string,
+  description: string,
+  unit: string,
+  quantity: number
+): string {
+  return [contractId, sourceId, itemCode, description, normalizeUnit(unit), quantity].join("|");
 }
 
-function parseRequiredNumber(value: string): number {
-  const parsed = Number(value.replace(/[$,]/g, ""));
+function priceFor(observations: ItemObservationRecord[], priceType: string): number | null {
+  return observations.find((observation) => observation.priceType === priceType)?.unitPrice ?? null;
+}
 
-  if (Number.isNaN(parsed)) {
+function groupBy<T>(rows: T[], keyFor: (row: T) => string): Map<string, T[]> {
+  const grouped = new Map<string, T[]>();
+  for (const row of rows) {
+    appendToMap(grouped, keyFor(row), row);
+  }
+  return grouped;
+}
+
+function appendToMap<T>(map: Map<string, T[]>, key: string, row: T): void {
+  const existing = map.get(key) ?? [];
+  existing.push(row);
+  map.set(key, existing);
+}
+
+function splitList(value: string): string[] {
+  return value.split(";").map((item) => item.trim()).filter(Boolean);
+}
+
+function booleanValue(value: string): boolean {
+  return ["1", "true", "yes", "y"].includes(value.trim().toLowerCase());
+}
+
+function requiredNumber(value: string): number {
+  const number = Number(value.replace(/[$,%]/g, "").replace(/,/g, ""));
+  if (!Number.isFinite(number)) {
     throw new Error(`Expected numeric value, received "${value}".`);
   }
-
-  return parsed;
+  return number;
 }
 
-function parseOptionalNumber(value: string): number | null {
+function optionalNumber(value: string): number | null {
   if (!value) {
     return null;
   }
-
-  const parsed = Number(value.replace(/[$,]/g, ""));
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
-function buildBidderItemRowKey(row: BidderItemObservationRecord): string {
-  return [
-    row.projectId,
-    row.sourceId,
-    row.agencyItemCode,
-    row.descriptionRaw,
-    row.unitNormalized,
-    row.quantity
-  ].join("|");
+  const number = Number(value.replace(/[$,%]/g, "").replace(/,/g, ""));
+  return Number.isFinite(number) ? number : null;
 }

@@ -119,16 +119,22 @@ function normalizeEvidenceSort(sort: EvidenceSort): EvidenceSort {
 }
 
 function normalizeEvidenceQuery(data: AppData, query: SearchQuery): SearchQuery {
-  const state = query.state.trim().toUpperCase() || "CO";
+  const state = query.state.trim().toUpperCase() || data.stateConfig.code;
   const itemCode = query.itemCode.trim().toUpperCase();
-  const resolvedAgencyItem = itemCode
-    ? (data.agencyByCode.get(itemCode) ?? []).find((item) => item.state === state)
-    : null;
+  const resolvedAgencyItem = query.agencyItemId
+    ? data.agencyItemById.get(query.agencyItemId) ?? null
+    : itemCode
+      ? (data.agencyByCode.get(itemCode) ?? []).find(
+          (item) => item.state === state && item.agencyId === data.stateConfig.defaultAgencyId
+        ) ?? null
+      : null;
 
   return {
     ...query,
     state,
-    itemCode,
+    agencyId: resolvedAgencyItem?.agencyId ?? (query.agencyId || data.stateConfig.defaultAgencyId),
+    agencyItemId: resolvedAgencyItem?.agencyItemId ?? "",
+    itemCode: resolvedAgencyItem?.itemCode ?? itemCode,
     description: resolvedAgencyItem?.officialDescription || query.description.trim(),
     unit: resolvedAgencyItem?.officialUnit
       ? normalizeUnit(resolvedAgencyItem.officialUnit)
@@ -154,11 +160,13 @@ function buildExactRows(data: AppData, query: SearchQuery): EvidenceRow[] {
   const rowByKey = new Map<string, EvidenceRow>();
 
   for (const observation of data.observations) {
-    if (observation.agencyItemCode !== query.itemCode) {
+    if (query.agencyItemId
+      ? observation.agencyItemId !== query.agencyItemId
+      : observation.agencyItemCode !== query.itemCode) {
       continue;
     }
 
-    const project = data.projectById.get(observation.projectId) ?? null;
+    const project = data.contractById.get(observation.contractId) ?? null;
     const source = data.sourceById.get(observation.sourceId) ?? null;
 
     if (!project || project.state !== query.state) {
@@ -166,7 +174,7 @@ function buildExactRows(data: AppData, query: SearchQuery): EvidenceRow[] {
     }
 
     const key = [
-      observation.projectId,
+      observation.contractId,
       observation.sourceId,
       observation.agencyItemCode,
       observation.descriptionRaw,
@@ -175,12 +183,13 @@ function buildExactRows(data: AppData, query: SearchQuery): EvidenceRow[] {
       observation.dateBasis
     ].join("|");
 
-    let row = rowByKey.get(key);
-    if (!row) {
-      row = {
+    const existingRow = rowByKey.get(key);
+    const row: EvidenceRow = existingRow ?? {
         rowId: key,
+        contract: project,
         project,
         source,
+        agencyItemId: observation.agencyItemId,
         itemCode: observation.agencyItemCode,
         descriptionRaw: observation.descriptionRaw,
         unit: observation.unitNormalized,
@@ -193,6 +202,7 @@ function buildExactRows(data: AppData, query: SearchQuery): EvidenceRow[] {
         hasBidderDetails: false,
         observationIds: []
       };
+    if (!existingRow) {
       rowByKey.set(key, row);
     }
 
@@ -201,7 +211,8 @@ function buildExactRows(data: AppData, query: SearchQuery): EvidenceRow[] {
   }
 
   for (const row of rowByKey.values()) {
-    row.hasBidderDetails = (data.bidderItemsByRowKey.get(row.bidderDetailKey) ?? []).length > 0;
+    row.hasBidderDetails = data.stateConfig.capabilities.bidderDetail
+      && (data.bidsByContractId.get(row.contract?.contractId ?? "") ?? []).length > 0;
   }
 
   return [...rowByKey.values()];
@@ -210,16 +221,25 @@ function buildExactRows(data: AppData, query: SearchQuery): EvidenceRow[] {
 function assignPrice(row: EvidenceRow, priceType: string, unitPrice: number): void {
   const normalizedPriceType = priceType.toLowerCase();
 
-  if (normalizedPriceType === "cdot_awarded_bid" || normalizedPriceType === "bid_tab_demo") {
+  if (
+    normalizedPriceType === "awarded_bid"
+    || normalizedPriceType === "cdot_awarded_bid"
+    || normalizedPriceType === "bid_tab_demo"
+  ) {
     row.awardedBidUnitPrice ??= unitPrice;
   }
 
-  if (normalizedPriceType === "cdot_average_bid" || normalizedPriceType === "public_bid_tab_average") {
+  if (
+    normalizedPriceType === "average_bid"
+    || normalizedPriceType === "cdot_average_bid"
+    || normalizedPriceType === "public_bid_tab_average"
+  ) {
     row.averageBidUnitPrice ??= unitPrice;
   }
 
   if (
-    normalizedPriceType === "cdot_engineer_estimate"
+    normalizedPriceType === "engineer_estimate"
+    || normalizedPriceType === "cdot_engineer_estimate"
     || normalizedPriceType === "engineers_estimate"
     || normalizedPriceType === "public_bid_tab_engineer_estimate"
   ) {
@@ -228,7 +248,7 @@ function assignPrice(row: EvidenceRow, priceType: string, unitPrice: number): vo
 }
 
 function buildBidderDetailKey(observation: {
-  projectId: string;
+  contractId: string;
   sourceId: string;
   agencyItemCode: string;
   descriptionRaw: string;
@@ -236,7 +256,7 @@ function buildBidderDetailKey(observation: {
   quantity: number;
 }): string {
   return [
-    observation.projectId,
+    observation.contractId,
     observation.sourceId,
     observation.agencyItemCode,
     observation.descriptionRaw,
@@ -375,8 +395,8 @@ function buildNotes(
     notes.push("The filtered evidence rows do not include awarded bid unit prices for summary statistics.");
   }
 
-  if (filteredRows.some((row) => row.source?.sourceType === "public_bid_tab")) {
-    notes.push("Public bid-tab rows show apparent bidder data only; apparent low is not confirmed award.");
+  if (filteredRows.some((row) => row.source?.sourceType === "bid_tab")) {
+    notes.push("Bid rank and apparent-low status remain separate from confirmed award status.");
   }
 
   return notes;

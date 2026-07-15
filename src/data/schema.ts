@@ -1,46 +1,132 @@
 export type SourceScope = "both" | "public" | "internal";
-
 export type PriceTypeScope = "awarded" | "average" | "engineer" | "all";
-
-export type EvidenceSourceTypeFilter = "public_cost_book" | "public_bid_tab" | "all";
-
+export type EvidenceSourceTypeFilter = string;
 export type MatchType = "exact_code" | "canonical_alias" | "keyword_fallback";
-
 export type ConfidenceLevel = "High" | "Medium" | "Low" | "Not supportable";
+
+export interface StateCapabilities {
+  districtFilter: boolean;
+  engineerEstimate: boolean;
+  bidderDetail: boolean;
+}
+
+export interface StateDataFiles {
+  sources: string;
+  lettings: string;
+  contracts: string;
+  contractProjects: string;
+  contractItems: string;
+  bids: string;
+  bidItemPrices?: string;
+  agencyItems: string;
+  agencyItemVersions: string;
+  itemTaxonomy: string;
+  itemMappings: string;
+  observations: string;
+  canonicalItems?: string;
+  aliases?: string;
+}
+
+export interface StateConfig {
+  code: string;
+  name: string;
+  defaultAgencyId: string;
+  defaultAgencyName: string;
+  divisionLabel: string;
+  sectionLabel: string;
+  sectionPrefixLength: number;
+  capabilities: StateCapabilities;
+  sourceTypeLabels: Record<string, string>;
+  files: StateDataFiles;
+}
+
+export interface AppManifest {
+  schemaVersion: number;
+  productTitle: string;
+  common: { inflationIndexes: string };
+  states: StateConfig[];
+}
 
 export interface SourceRecord {
   sourceId: string;
   sourceType: string;
-  agency: string;
+  agencyId: string;
+  agencyName: string;
   state: string;
   sourceLabel: string;
+  sourceDate: string;
   dataYear: number | null;
+  sourceUrl: string;
+  sourceFileName: string;
+  sha256: string;
+  parserName: string;
+  parserVersion: string;
   notes: string;
+  /** Compatibility display alias for older rendering helpers. */
+  agency: string;
 }
 
-export interface ProjectRecord {
+export interface LettingRecord {
+  lettingId: string;
+  sourceId: string;
+  state: string;
+  agencyId: string;
+  lettingDate: string;
+  lettingLabel: string;
+}
+
+export interface ContractRecord {
+  contractId: string;
+  lettingId: string;
+  sourceId: string;
+  state: string;
+  agencyId: string;
+  officialContractId: string;
+  callOrder: string;
+  lettingStatus: string;
+  awardedVendor: string;
+  awardedAmount: number | null;
+  primaryCounty: string;
+  route: string;
+  workType: string;
+  contractPeriod: string;
+  dbeGoal: string;
+  bidCount: number | null;
+  location: string;
+  district: string;
+  terrain: string;
+  awardIndex: number | null;
+  /** Compatibility aliases retained only while legacy UI modules are migrated. */
   projectId: string;
   projectName: string;
   agencyOwner: string;
-  state: string;
   countyRegion: string;
-  workType: string;
   estimateLetDate: string;
-  sourceId: string;
   projectNumber: string;
   projectLocationRaw: string;
   contractor: string;
-  district: string;
-  terrain: string;
-  bidCount: number | null;
   awardedBidTotal: number | null;
-  awardIndex: number | null;
+}
+
+export type ProjectRecord = ContractRecord;
+
+export interface ContractProjectRecord {
+  contractProjectId: string;
+  contractId: string;
+  projectNumber: string;
+  projectName: string;
+  workType: string;
+  countyRegion: string;
+  route: string;
+  location: string;
+  projectAwardAmount: number | null;
 }
 
 export interface ItemObservationRecord {
   observationId: string;
-  projectId: string;
+  contractId: string;
   sourceId: string;
+  agencyItemId: string;
   agencyItemCode: string;
   descriptionRaw: string;
   descriptionNormalized: string;
@@ -50,61 +136,91 @@ export interface ItemObservationRecord {
   unitPrice: number;
   extendedPrice: number;
   discipline: string;
-  priceType: string;
+  priceType: "awarded_bid" | "average_bid" | "engineer_estimate" | string;
   dateBasis: string;
+  derivationMethod: string;
+  derivationInputCount: number | null;
+  projectId: string;
 }
 
-export interface BidderBidRecord {
+export interface BidRecord {
   bidId: string;
-  projectId: string;
+  contractId: string;
   sourceId: string;
+  sourceVendorId: string;
   bidderName: string;
-  bidTotal: number;
   bidRank: number | null;
+  bidTotal: number;
+  percentOfLow: number | null;
+  isApparentLow: boolean;
+  isAwarded: boolean;
+  sourcePage: number | null;
+  projectId: string;
   apparentLow: boolean;
 }
 
-export interface BidderItemObservationRecord {
-  bidderItemObservationId: string;
-  bidTabItemId: string;
-  bidId: string;
-  projectId: string;
+export type BidderBidRecord = BidRecord;
+
+export interface ContractItemRecord {
+  contractItemId: string;
+  contractId: string;
   sourceId: string;
-  agencyItemCode: string;
+  sectionNumber: string;
+  sectionTitle: string;
+  lineNumber: string;
+  sourceItemCode: string;
+  agencyItemId: string;
   descriptionRaw: string;
+  quantity: number;
   unitRaw: string;
   unitNormalized: string;
-  quantity: number;
-  unitPrice: number;
-  extendedPrice: number;
-}
-
-export type BidTabMatchStatus = "matched" | "unmatched" | "source_cdot_prefix_only";
-
-export interface BidTabItemRecord {
+  alternateSet: string;
+  alternateMember: string;
+  mappingStatus: string;
+  sourcePage: number | null;
+  sourceLocator: string;
   bidTabItemId: string;
   projectId: string;
-  sourceId: string;
   sourceFile: string;
   sheetName: string;
   workbookRow: number;
   projectNumber: string;
   sourceItemNumber: string;
-  sourceItemCode: string;
   sourceItemCodeSystem: string;
   sourceSpecRaw: string;
   sourceItemDescription: string;
   itemCode: string;
   itemDescription: string;
-  unitRaw: string;
-  unitNormalized: string;
-  quantity: number;
   engineerEstimateUnitPrice: number;
   averageBidUnitPrice: number;
   matchedAgencyItemCode: string;
-  matchStatus: BidTabMatchStatus;
+  matchStatus: "matched" | "unmatched" | "source_cdot_prefix_only";
   dateBasis: string;
 }
+
+export type BidTabItemRecord = ContractItemRecord;
+
+export interface BidItemPriceRecord {
+  bidItemPriceId: string;
+  contractItemId: string;
+  bidId: string;
+  contractId: string;
+  sourceId: string;
+  unitPrice: number;
+  extendedPrice: number;
+  sourcePage: number | null;
+  sourceLocator: string;
+  bidderItemObservationId: string;
+  bidTabItemId: string;
+  projectId: string;
+  agencyItemCode: string;
+  descriptionRaw: string;
+  unitRaw: string;
+  unitNormalized: string;
+  quantity: number;
+}
+
+export type BidderItemObservationRecord = BidItemPriceRecord;
 
 export interface CanonicalItemRecord {
   canonicalItemId: string;
@@ -116,24 +232,65 @@ export interface CanonicalItemRecord {
   keywordsExclude: string[];
 }
 
-export interface AgencyItemRecord {
+export interface AgencyItemVersionRecord {
+  agencyItemVersionId: string;
   agencyItemId: string;
-  state: string;
-  agency: string;
-  itemCode: string;
+  effectiveFrom: string;
+  effectiveTo: string;
   officialDescription: string;
   officialAbbreviatedDescription: string;
   officialUnit: string;
-  canonicalItemId: string;
+  specReferenceCode: string;
+  sourceId: string;
+  isCurrent: boolean;
 }
 
-export interface SpecSectionRecord {
+export interface AgencyItemRecord {
+  agencyItemId: string;
+  state: string;
+  agencyId: string;
+  agencyName: string;
+  itemCode: string;
+  currentVersionId: string;
+  itemStatus: "current" | "historical" | string;
+  canonicalItemId: string;
+  officialDescription: string;
+  officialAbbreviatedDescription: string;
+  officialUnit: string;
+  specReferenceCode: string;
+  agency: string;
+}
+
+export interface ItemTaxonomyRecord {
+  taxonomyId: string;
+  state: string;
+  agencyId: string;
+  taxonomyLevel: "division" | "section" | string;
+  taxonomyCode: string;
+  parentTaxonomyId: string;
+  taxonomyLabel: string;
+  matchPrefix: string;
+  sourceYear: number | null;
+  sourceUrl: string;
   sectionPrefix: string;
   divisionPrefix: string;
   divisionTitle: string;
   sectionTitle: string;
-  sourceYear: number | null;
-  sourceUrl: string;
+}
+
+export type SpecSectionRecord = ItemTaxonomyRecord;
+
+export interface ItemMappingRecord {
+  mappingId: string;
+  state: string;
+  sourceAgencyId: string;
+  sourceItemCode: string;
+  targetAgencyItemId: string;
+  matchStatus: string;
+  confidence: string;
+  reviewedBy: string;
+  reviewedOn: string;
+  notes: string;
 }
 
 export interface InflationIndexRecord {
@@ -161,32 +318,55 @@ export interface AliasRecord {
 }
 
 export interface AppData {
+  manifest: AppManifest;
+  stateConfig: StateConfig;
   sources: SourceRecord[];
-  projects: ProjectRecord[];
+  lettings: LettingRecord[];
+  contracts: ContractRecord[];
+  contractProjects: ContractProjectRecord[];
   observations: ItemObservationRecord[];
   canonicalItems: CanonicalItemRecord[];
   agencyItems: AgencyItemRecord[];
-  specSections: SpecSectionRecord[];
+  agencyItemVersions: AgencyItemVersionRecord[];
+  itemTaxonomy: ItemTaxonomyRecord[];
+  itemMappings: ItemMappingRecord[];
   inflationIndexes: InflationIndexRecord[];
   aliases: AliasRecord[];
-  bidderBids: BidderBidRecord[];
-  bidderItemObservations: BidderItemObservationRecord[];
-  bidTabItems: BidTabItemRecord[];
+  bids: BidRecord[];
+  contractItems: ContractItemRecord[];
+  bidItemPrices: BidItemPriceRecord[];
   sourceById: Map<string, SourceRecord>;
-  projectById: Map<string, ProjectRecord>;
+  contractById: Map<string, ContractRecord>;
+  contractProjectsByContractId: Map<string, ContractProjectRecord[]>;
   canonicalById: Map<string, CanonicalItemRecord>;
+  agencyItemById: Map<string, AgencyItemRecord>;
   agencyByCode: Map<string, AgencyItemRecord[]>;
-  specSectionByPrefix: Map<string, SpecSectionRecord>;
-  specSectionsByDivision: Map<string, SpecSectionRecord[]>;
+  taxonomyById: Map<string, ItemTaxonomyRecord>;
+  sectionsByDivisionId: Map<string, ItemTaxonomyRecord[]>;
+  specSectionByPrefix: Map<string, ItemTaxonomyRecord>;
+  specSectionsByDivision: Map<string, ItemTaxonomyRecord[]>;
   inflationIndexByPeriod: Map<string, InflationIndexRecord>;
-  bidderBidsByProjectId: Map<string, BidderBidRecord[]>;
-  bidderItemsByRowKey: Map<string, BidderItemObservationRecord[]>;
-  bidTabItemsByProjectId: Map<string, BidTabItemRecord[]>;
-  bidderItemsByBidTabItemId: Map<string, BidderItemObservationRecord[]>;
+  bidsByContractId: Map<string, BidRecord[]>;
+  contractItemsByContractId: Map<string, ContractItemRecord[]>;
+  bidItemPricesByContractItemId: Map<string, BidItemPriceRecord[]>;
+  bidItemPricesByEvidenceKey: Map<string, BidItemPriceRecord[]>;
+  ensureBidItemPricesLoaded: () => Promise<void>;
+  projects: ContractRecord[];
+  projectById: Map<string, ContractRecord>;
+  specSections: ItemTaxonomyRecord[];
+  bidderBids: BidRecord[];
+  bidderItemObservations: BidItemPriceRecord[];
+  bidTabItems: ContractItemRecord[];
+  bidderBidsByProjectId: Map<string, BidRecord[]>;
+  bidderItemsByRowKey: Map<string, BidItemPriceRecord[]>;
+  bidTabItemsByProjectId: Map<string, ContractItemRecord[]>;
+  bidderItemsByBidTabItemId: Map<string, BidItemPriceRecord[]>;
 }
 
 export interface SearchQuery {
   state: string;
+  agencyId: string;
+  agencyItemId: string;
   countyRegion: string;
   workType: string;
   estimateYear: number;
@@ -198,14 +378,11 @@ export interface SearchQuery {
   quantity: number | null;
 }
 
-export interface ScoreReason {
-  label: string;
-  points: number;
-}
+export interface ScoreReason { label: string; points: number }
 
 export interface ComparableMatch {
   observation: ItemObservationRecord;
-  project: ProjectRecord | null;
+  project: ContractRecord | null;
   source: SourceRecord | null;
   canonicalItem: CanonicalItemRecord | null;
   score: number;
@@ -236,31 +413,20 @@ export interface EvidenceFilters {
 }
 
 export type EvidenceSortKey =
-  | "projectNumber"
-  | "projectLocation"
-  | "district"
-  | "letDate"
-  | "contractor"
-  | "bidCount"
-  | "quantity"
-  | "unit"
-  | "description"
-  | "awardedBidUnitPrice"
-  | "averageBidUnitPrice"
-  | "engineerEstimateUnitPrice"
-  | "source";
+  | "contractId" | "projectNumber" | "location" | "projectLocation" | "district"
+  | "letDate" | "awardedVendor" | "contractor" | "bidCount" | "quantity" | "unit"
+  | "description" | "awardedBidUnitPrice" | "averageBidUnitPrice"
+  | "engineerEstimateUnitPrice" | "source";
 
 export type SortDirection = "asc" | "desc";
-
-export interface EvidenceSort {
-  key: EvidenceSortKey;
-  direction: SortDirection;
-}
+export interface EvidenceSort { key: EvidenceSortKey; direction: SortDirection }
 
 export interface EvidenceRow {
   rowId: string;
-  project: ProjectRecord | null;
+  contract: ContractRecord | null;
+  project: ContractRecord | null;
   source: SourceRecord | null;
+  agencyItemId: string;
   itemCode: string;
   descriptionRaw: string;
   unit: string;
@@ -315,4 +481,3 @@ export interface MatchResult {
   warnings: string[];
   improveActions: string[];
 }
-

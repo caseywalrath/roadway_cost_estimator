@@ -1,529 +1,147 @@
-# Data Schema
+# Data Schema v2
 
-## Purpose
+## Package Layout
 
-The prototype uses static CSV files so non-developers can inspect records and Git can track every data change.
+`public/data/manifest.json` is the only runtime entry point. It declares schema version 2, product title, shared files, supported states, default agencies, labels, capabilities, and each state's file paths.
 
-The current data package includes public CDOT 2022 Q4, 2023 Q4, 2024 Q4, 2025 Q4, and 2026 Q1 Cost Data Book records, public FHU-curated bid tab workbooks, plus static FHWA NHCCI quarterly index values for optional inflation adjustment in summary statistics and display-only row context. It is prototype evidence, not estimating guidance.
+```text
+public/data/
+  manifest.json
+  common/inflation_index.csv
+  states/co/*.csv
+  states/ia/*.csv
+```
 
-## Files
+State-native review records live under `data/staging/{state}/`. Raw source documents and downloads live under ignored `data/raw/{state}/`.
+
+All IDs are stable strings. Foreign-key fields use IDs, not display codes or names. Empty nullable fields are allowed only where the source does not provide the concept.
+
+## Normalized Tables
 
 ### `sources.csv`
 
-Records where source data came from.
+One publication/source identity.
 
-Required columns:
+`source_id`, `source_type`, `agency_id`, `agency_name`, `state`, `source_label`, `source_date`, `data_year`, `source_url`, `source_file_name`, `sha256`, `parser_name`, `parser_version`, `notes`
 
-- `source_id`
-- `source_type`
-- `agency`
-- `state`
-- `source_label`
-- `data_year`
-- `notes`
+### `lettings.csv`
 
-### `projects.csv`
+One agency letting/event.
 
-One row per source project.
+`letting_id`, `source_id`, `state`, `agency_id`, `letting_date`, `letting_label`
 
-Required columns:
+### `contracts.csv`
 
-- `project_id`
-- `project_name`
-- `agency_owner`
-- `state`
-- `county_region`
-- `work_type`
-- `estimate_let_date`
-- `source_id`
+One official contract. Contract evidence is never repeated for each associated project number.
 
-Optional public cost-book metadata columns:
+`contract_id`, `letting_id`, `source_id`, `state`, `agency_id`, `official_contract_id`, `call_order`, `letting_status`, `awarded_vendor`, `awarded_amount`, `primary_county`, `route`, `work_type`, `contract_period`, `dbe_goal`, `bid_count`, `location`, `district`, `terrain`, `award_index`
 
-- `project_number`
-- `project_location_raw`
-- `contractor`
-- `district`
-- `terrain`
-- `bid_count`
-- `awarded_bid_total`
-- `award_index`
+### `contract_projects.csv`
 
-### `item_observations.csv`
+One project number associated with a contract.
 
-One row per bid item, estimate item, or cost observation.
+`contract_project_id`, `contract_id`, `project_number`, `project_name`, `work_type`, `county_region`, `route`, `location`, `project_award_amount`
 
-Required columns:
+### `contract_items.csv`
 
-- `observation_id`
-- `project_id`
-- `source_id`
-- `agency_item_code`
-- `description_raw`
-- `description_normalized`
-- `unit_raw`
-- `unit_normalized`
-- `quantity`
-- `unit_price`
-- `extended_price`
-- `discipline`
-- `price_type`
-- `date_basis`
+One source schedule line within a contract. Repeated bid-tab pages deduplicate on contract, section, line number, and source item code.
 
-Known `price_type` values include:
+`contract_item_id`, `contract_id`, `source_id`, `section_number`, `section_title`, `line_number`, `source_item_code`, `agency_item_id`, `description_raw`, `quantity`, `unit_raw`, `unit_normalized`, `alternate_set`, `alternate_member`, `mapping_status`, `source_page`, `source_locator`
 
-- `cdot_awarded_bid`
-- `cdot_average_bid`
-- `cdot_engineer_estimate`
-- `public_bid_tab_average`
-- `public_bid_tab_engineer_estimate`
+`agency_item_id` can be blank only for source-native items that have not been reviewed/mapped. Those rows cannot be promoted to exact item evidence.
 
-The app defaults to public CDOT awarded-bid evidence for Matching Projects. Average bid and engineer estimate rows are loaded as separate observation types for review, table display, CSV export, and non-awarded unit price summaries. Public bid-tab rows do not populate awarded bid unit price.
+### `bids.csv`
 
-### `bidder_bids.csv`
+One bidder for one contract.
 
-One row per bidder in a public bid-tab source.
+`bid_id`, `contract_id`, `source_id`, `source_vendor_id`, `bidder_name`, `bid_rank`, `bid_total`, `percent_of_low`, `is_apparent_low`, `is_awarded`, `source_page`
 
-Required columns:
+Rank 1 means apparent low. It does not imply award. `is_awarded` is true only after exact single-bidder resolution against the explicit awarded-vendor field.
 
-- `bid_id`
-- `project_id`
-- `source_id`
-- `bidder_name`
-- `bid_total`
-- `bid_rank`
-- `apparent_low`
+### `bid_item_prices.csv`
 
-`apparent_low` records the apparent low bidder from the bid tab only. It is not confirmed award evidence.
+One bidder-specific price for one contract item.
 
-### `bidder_item_observations.csv`
+`bid_item_price_id`, `contract_item_id`, `bid_id`, `contract_id`, `source_id`, `unit_price`, `extended_price`, `source_page`, `source_locator`
 
-One row per bidder, item, and bid-tab source.
-
-Required columns:
-
-- `bidder_item_observation_id`
-- `bid_tab_item_id`
-- `bid_id`
-- `project_id`
-- `source_id`
-- `description_raw`
-- `unit_raw`
-- `unit_normalized`
-- `quantity`
-- `unit_price`
-- `extended_price`
-
-`agency_item_code` is optional for source-only bid-tab rows. When a bid-tab row has a reviewed CDOT match, bidder item rows use the matched CDOT code so exact-code Matching Projects can open bidder detail. The app also uses `bid_tab_item_id` to show every original source row, including unmatched rows, in public bid-tab project review.
-
-### `bid_tab_items.csv`
-
-One row per source workbook item row from a public bid-tab source.
-
-Required columns:
-
-- `bid_tab_item_id`
-- `project_id`
-- `source_id`
-- `source_file`
-- `sheet_name`
-- `workbook_row`
-- `project_number`
-- `source_item_number`
-- `source_item_code`
-- `source_item_code_system`
-- `source_spec_raw`
-- `source_item_description`
-- `item_code`
-- `item_description`
-- `unit_raw`
-- `unit_normalized`
-- `quantity`
-- `engineer_estimate_unit_price`
-- `average_bid_unit_price`
-- `matched_agency_item_code`
-- `match_status`
-- `date_basis`
-
-`match_status` values are `matched`, `unmatched`, and `source_cdot_prefix_only`. Only rows with a reviewed `matched_agency_item_code` should be promoted into `item_observations.csv` for exact-code Matching Projects. For reconciled Ralston rows, `item_code` and `matched_agency_item_code` store the reviewed CDOT code while `source_item_code`, `source_spec_raw`, `source_item_description`, and `unit_raw` preserve the City of Arvada/source workbook identity. Source-only rows remain visible through the public bid-tab project review UI.
-
-### `canonical_items.csv`
-
-Reusable item families used for description matching.
-
-Required columns:
-
-- `canonical_item_id`
-- `item_family`
-- `canonical_description`
-- `discipline`
-- `typical_units`
-- `keywords_include`
-- `keywords_exclude`
-
-List fields use semicolons.
+Blank/unselected alternate prices have no price row; the contract item remains present.
 
 ### `agency_items.csv`
 
-Official or agency-style item code mappings.
+Stable agency item identity.
 
-Required columns:
+`agency_item_id`, `state`, `agency_id`, `agency_name`, `item_code`, `current_version_id`, `item_status`, `canonical_item_id`
 
-- `agency_item_id`
-- `state`
-- `agency`
-- `item_code`
-- `official_description`
-- `official_abbreviated_description`
-- `official_unit`
-- `canonical_item_id`
+`item_status` is `current` or `historical`. Raw item codes are scoped by agency and are not globally unique.
 
-Rows with a blank `canonical_item_id` can appear when the row is present only to support item-code lookup and has not been mapped to a comparable item family yet. Exact-code pricing still requires matching rows in `item_observations.csv`.
+### `agency_item_versions.csv`
 
-The current `agency_items.csv` is generated from the public CDOT 2026 Item Code Book Excel file linked from CDOT's Item Code Book by Year page. The generated file includes all valid item-code rows found in the workbook. Two reviewed Kipling/Bowles bid-tab lookup rows, `625-01000` Utility Surveying and `626-01100` Public Information Services, are also included so those exact CDOT-coded bid-tab rows remain searchable. The raw workbook is not committed.
+Effective-dated description/unit/specification record.
 
-### `spec_sections.csv`
+`agency_item_version_id`, `agency_item_id`, `effective_from`, `effective_to`, `official_description`, `official_abbreviated_description`, `official_unit`, `spec_reference_code`, `source_id`, `is_current`
 
-Official CDOT specification section metadata used to narrow item-code lookup before selecting an item.
+Iowa's native PDF `SPEC` value is stored in `spec_reference_code`.
 
-Required columns:
+### `item_taxonomy.csv`
 
-- `section_prefix`
-- `division_prefix`
-- `division_title`
-- `section_title`
-- `source_year`
-- `source_url`
+State-native item hierarchy.
 
-This file is a reference lookup table for section labels. It is not a cost book and does not replace `agency_items.csv`.
+`taxonomy_id`, `state`, `agency_id`, `taxonomy_level`, `taxonomy_code`, `parent_taxonomy_id`, `taxonomy_label`, `match_prefix`, `source_year`, `source_url`
 
-The current file is generated with `scripts/import_cdot_item_code_book.py` from the same CDOT 2026 Item Code Book workbook as `agency_items.csv`. Known CDOT Standard Specification prefixes use reviewed section labels. Unmapped prefixes use fallback labels so every loaded agency item can appear in the section-based picker.
+Current levels are `division` and `section`. Colorado uses three-digit match prefixes; Iowa uses four digits.
 
-### `inflation_index.csv`
+### `item_mappings.csv`
 
-Static FHWA National Highway Construction Cost Index values used only when the user turns on Inflation Adjustment for displayed unit-price summaries.
+Explicit reviewed mapping from a municipal/source agency item to a state item.
 
-Required columns:
+`mapping_id`, `state`, `source_agency_id`, `source_item_code`, `target_agency_item_id`, `match_status`, `confidence`, `reviewed_by`, `reviewed_on`, `notes`
 
-- `index_id`
-- `index_name`
-- `period_year`
-- `period_quarter`
-- `period_label`
-- `period_start_date`
-- `period_end_date`
-- `index_value`
-- `source_url`
-- `notes`
+Description similarity can create review candidates outside this table but cannot write a promoted mapping automatically.
 
-The current file is generated with `scripts/refresh_nhcci_index.py` from the DOT public data endpoint for FHWA NHCCI. The app uses the unadjusted quarterly NHCCI value and adjusts awarded bid, average bid, and engineer estimate unit prices from each evidence row's let-date quarter to the latest loaded NHCCI quarter. Matching Projects table prices keep original evidence as the primary value and CSV export remains original evidence.
+### `item_observations.csv`
 
-If evidence contains quarters newer than the latest loaded official NHCCI value, validation reports a warning and the adjusted summaries exclude those unit-price values when Inflation Adjustment is on. The app does not interpolate or fabricate missing index values.
+Materialized app evidence. Every row must reference a contract, source, and agency item.
 
-### `aliases.csv`
+`observation_id`, `contract_id`, `source_id`, `agency_item_id`, `agency_item_code`, `description_raw`, `description_normalized`, `unit_raw`, `unit_normalized`, `quantity`, `unit_price`, `extended_price`, `discipline`, `price_type`, `date_basis`, `derivation_method`, `derivation_input_count`
 
-Reviewed description-to-canonical mappings.
+Allowed generalized `price_type` values:
 
-Required columns:
+- `awarded_bid`
+- `average_bid`
+- `engineer_estimate`
 
-- `alias_id`
-- `state`
-- `agency`
-- `raw_description_pattern`
-- `canonical_item_id`
-- `match_type`
-- `confidence`
-- `notes`
+Iowa `average_bid` is the unweighted mean of valid bidder unit prices for the contract item. Iowa leaves `engineer_estimate` absent.
 
-### `imports/cdot_cost_data_book_2022_q4_item_unit_costs.csv`
+### `common/inflation_index.csv`
 
-Review staging rows extracted from the public CDOT 2022 Q4 Cost Data Book PDF.
+Shared FHWA NHCCI quarters.
 
-This file is the item-level staging artifact used before promoting rows into `sources.csv`, `projects.csv`, and `item_observations.csv`.
+`index_id`, `index_name`, `period_year`, `period_quarter`, `period_label`, `period_start_date`, `period_end_date`, `index_value`, `source_url`, `notes`
 
-Required columns:
+Inflation adjustment affects optional display/summary calculations. Original source prices remain primary and exported.
 
-- `source_file`
-- `source_period`
-- `page_number`
-- `item_code`
-- `item_description`
-- `unit_raw`
-- `unit_normalized`
-- `project_location_raw`
-- `date_let`
-- `quantity`
-- `engineer_estimate_unit_price`
-- `average_bid_unit_price`
-- `awarded_bid_unit_price`
-- `raw_text`
+## Runtime Interfaces
 
-The parser excludes CDOT weighted-average summary rows and rows with placeholder prices rather than complete bid prices. `date_let` is normalized to ISO format. `raw_text` preserves the parsed PDF text for reviewer traceability.
+`AppData` exposes arrays and maps for sources, lettings, contracts, project numbers, agency items/versions, taxonomy, observations, bids, contract items, and bidder prices. `ensureBidItemPricesLoaded()` performs the lazy bidder-price fetch.
 
-### `imports/cdot_cost_data_book_2022_q4_projects.csv`
+`SearchQuery` includes `state`, `agencyId`, and `agencyItemId`. Evidence joins use `contractId` and `agencyItemId`. Compatibility aliases in `src/data/schema.ts` are temporary adapters for rendering modules migrated from schema v1; new logic must use normalized IDs.
 
-Review staging rows parsed from the project-list pages in the public CDOT 2022 Q4 Cost Data Book PDF.
+## Project Local Storage v3
 
-This file is generated by `scripts/promote_cdot_cost_data_book.py` and is used to avoid naive splitting of `project_location_raw` item rows. It is also a review artifact for promoted project metadata.
+Storage key: `roadway-cost-estimator:projects:v3`.
 
-Required columns match the extended `projects.csv` columns.
+- Project: `projectId`, `state`, metadata, timestamps, line items.
+- Line item: `lineItemId`, `state`, `agencyId`, `agencyItemId`, code, description, unit, quantity, preferred cost, notes, evidence context, timestamps.
+- v1/v2 records migrate to state `CO` and agency `co_cdot`.
 
-### `imports/cdot_cost_data_book_2023_q4_item_unit_costs.csv`
+## Validation Rules
 
-Review staging rows extracted from the public CDOT 2023 Q4 Cost Data Book PDF.
-
-This file is the item-level staging artifact used before promoting rows into `sources.csv`, `projects.csv`, and `item_observations.csv`.
-
-Required columns:
-
-- `source_file`
-- `source_period`
-- `page_number`
-- `item_code`
-- `item_description`
-- `unit_raw`
-- `unit_normalized`
-- `project_location_raw`
-- `date_let`
-- `quantity`
-- `engineer_estimate_unit_price`
-- `average_bid_unit_price`
-- `awarded_bid_unit_price`
-- `raw_text`
-
-The parser excludes CDOT weighted-average summary rows. `date_let` is normalized to ISO format. `raw_text` preserves the parsed PDF text for reviewer traceability.
-
-### `imports/cdot_cost_data_book_2023_q4_projects.csv`
-
-Review staging rows parsed from the project-list pages in the public CDOT 2023 Q4 Cost Data Book PDF.
-
-This file is generated by `scripts/promote_cdot_cost_data_book.py` and is used to avoid naive splitting of `project_location_raw` item rows. It is also a review artifact for promoted project metadata.
-
-Required columns match the extended `projects.csv` columns.
-
-### `imports/cdot_cost_data_book_2024_q4_item_unit_costs.csv`
-
-Review staging rows extracted from the public CDOT 2024 Q4 Cost Data Book PDF.
-
-This file is the item-level staging artifact used before promoting rows into `sources.csv`, `projects.csv`, and `item_observations.csv`.
-
-Required columns:
-
-- `source_file`
-- `source_period`
-- `page_number`
-- `item_code`
-- `item_description`
-- `unit_raw`
-- `unit_normalized`
-- `project_location_raw`
-- `date_let`
-- `quantity`
-- `engineer_estimate_unit_price`
-- `average_bid_unit_price`
-- `awarded_bid_unit_price`
-- `raw_text`
-
-The parser excludes CDOT weighted-average summary rows. `date_let` is normalized to ISO format. `raw_text` preserves the parsed PDF text for reviewer traceability.
-
-### `imports/cdot_cost_data_book_2024_q4_projects.csv`
-
-Review staging rows parsed from the project-list pages in the public CDOT 2024 Q4 Cost Data Book PDF.
-
-This file is generated by `scripts/promote_cdot_cost_data_book.py` and is used to avoid naive splitting of `project_location_raw` item rows. It is also a review artifact for promoted project metadata.
-
-Required columns match the extended `projects.csv` columns.
-
-### `imports/cdot_cost_data_book_2025_q4_item_unit_costs.csv`
-
-Review staging rows extracted from the public CDOT 2025 Q4 Cost Data Book PDF.
-
-This file is the item-level staging artifact used before promoting rows into `sources.csv`, `projects.csv`, and `item_observations.csv`.
-
-Required columns:
-
-- `source_file`
-- `source_period`
-- `page_number`
-- `item_code`
-- `item_description`
-- `unit_raw`
-- `unit_normalized`
-- `project_location_raw`
-- `date_let`
-- `quantity`
-- `engineer_estimate_unit_price`
-- `average_bid_unit_price`
-- `awarded_bid_unit_price`
-- `raw_text`
-
-The parser excludes CDOT weighted-average summary rows. `date_let` is normalized to ISO format. `raw_text` preserves the parsed PDF text for reviewer traceability.
-
-### `imports/cdot_cost_data_book_2025_q4_projects.csv`
-
-Review staging rows parsed from the project-list pages in the public CDOT 2025 Q4 Cost Data Book PDF.
-
-This file is generated by `scripts/promote_cdot_cost_data_book.py` and is used to avoid naive splitting of `project_location_raw` item rows. It is also a review artifact for promoted project metadata.
-
-Required columns match the extended `projects.csv` columns.
-
-### `imports/cdot_cost_data_book_2026_q1_item_unit_costs.csv`
-
-Review staging rows extracted from the public CDOT 2026 Q1 Cost Data Book PDF.
-
-This file is the item-level staging artifact used before promoting rows into `sources.csv`, `projects.csv`, and `item_observations.csv`.
-
-Required columns:
-
-- `source_file`
-- `source_period`
-- `page_number`
-- `item_code`
-- `item_description`
-- `unit_raw`
-- `unit_normalized`
-- `project_location_raw`
-- `date_let`
-- `quantity`
-- `engineer_estimate_unit_price`
-- `average_bid_unit_price`
-- `awarded_bid_unit_price`
-- `raw_text`
-
-The parser excludes CDOT weighted-average summary rows. `date_let` is normalized to ISO format. `raw_text` preserves the parsed PDF text for reviewer traceability.
-
-### `imports/cdot_cost_data_book_2026_q1_projects.csv`
-
-Review staging rows parsed from the project-list pages in the public CDOT 2026 Q1 Cost Data Book PDF.
-
-This file is generated by `scripts/promote_cdot_cost_data_book.py` and is used to avoid naive splitting of `project_location_raw` item rows. It is also a review artifact for promoted project metadata.
-
-Required columns match the extended `projects.csv` columns.
-
-### `imports/fhu_bid_tab_*_item_unit_costs.csv`
-
-Review staging rows extracted from public FHU-curated bid tab workbooks.
-
-Required columns match `bid_tab_items.csv`.
-
-Older staging rows used these core identity and price columns:
-
-- `source_file`
-- `sheet_name`
-- `workbook_row`
-- `project_number`
-- `item_code`
-- `item_description`
-- `unit_raw`
-- `unit_normalized`
-- `quantity`
-- `engineer_estimate_unit_price`
-- `average_bid_unit_price`
-- `date_basis`
-
-The current workbook parser is `scripts/import_bid_tab_workbook.py`. It detects supported workbook layouts, normalizes clear unit synonyms, preserves repeated item codes by workbook row, computes bidder totals, computes apparent low bidder, writes staging CSVs, and promotes reviewed rows into the app-loaded CSV package.
-
-Supported layout families:
-
-- Watson SAQ-style workbooks with project metadata, engineer estimate, bidder, and average bid column groups.
-- Arapahoe bid-form workbooks with `ITEM NO.`, `ITEM DESCRIPTION`, `UNIT`, `QUANTITY`, itemized engineer estimate columns, and bidder unit/total column pairs. Average bid unit prices are calculated from bidder unit prices during import.
-- Kipling/Bowles split-header tabulation workbooks with `ITEM` / `NO.`, item descriptions, unit, quantity, engineer estimate columns, bidder unit/extended cost pairs, and an `Average Bid Price` reference group. The importer parses the base bid schedule only and ignores blank/error alternate rows.
-- Ralston `Results` sheet workbooks with `No.`, `Spec*`, `Item`, `Unit`, `Quantity`, paired bidder `Unit Cost` / `Extended Cost` columns, and optional reviewed reconciliation columns `CDOT Item Code`, `CDOT Description`, `CDOT Unit`, and `Confidence`. Rows with reviewed CDOT item codes are promoted into exact-code evidence; blank or `None` CDOT item codes remain source-only.
-
-### `imports/fhu_bid_tab_*_match_candidates.csv`
-
-Review staging rows for exact description/unit candidate matches from public FHU-curated bid tab workbooks.
-
-Required columns:
-
-- `bid_tab_item_id`
-- `source_item_code`
-- `source_item_description`
-- `unit_normalized`
-- `candidate_agency_item_code`
-- `candidate_description`
-- `candidate_unit`
-- `candidate_count`
-- `suggestion_status`
-
-Candidate rows are suggestions only. They are not promoted to exact-code evidence unless reviewed.
-
-### `imports/fhu_bid_tab_*_bidder_bids.csv`
-
-Review staging rows for bidder-level project totals from public FHU-curated bid tab workbooks.
-
-Required columns match `bidder_bids.csv`.
-
-### `imports/fhu_bid_tab_*_bidder_item_observations.csv`
-
-Review staging rows for bidder-level item prices from public FHU-curated bid tab workbooks.
-
-Required columns match `bidder_item_observations.csv`.
-
-## Data Rules
-
-- Use stable IDs.
-- Preserve raw descriptions.
-- Normalize descriptions separately.
-- Preserve raw units and normalized units.
-- Do not compare unit prices across incompatible units.
-- Every observation must point to a source and project.
-- Public CDOT Cost Data Book rows use one `sources.csv` row and separate `price_type` values for awarded bid, average bid, and engineer estimate.
-- Public CDOT Cost Data Book imports use one source row per period, with stable period-specific IDs such as `cdot_cost_data_book_2022_q4`, `cdot_cost_data_book_2023_q4`, `cdot_cost_data_book_2024_q4`, `cdot_cost_data_book_2025_q4`, and `cdot_cost_data_book_2026_q1`.
-- Public FHU-curated bid tab rows use `source_type` `public_bid_tab` and preserve bidder details without implying award status.
-- Public bid-tab imports preserve source item identity in `bid_tab_items.csv` before any exact-code promotion.
-- Source-only bid-tab rows can have blank `agency_item_code` in `bidder_item_observations.csv`; their source identity is carried by `bid_tab_item_id`.
-- Reviewed CDOT matches are required before a source bid-tab row appears in `item_observations.csv`, Matching Projects, or Unit Price Summaries. Reconciliation `Confidence` values are review metadata only and are not used in app logic.
-- Public bid-tab projects leave `contractor`, `awarded_bid_total`, and `award_index` blank unless confirmed award evidence is added.
-- Public bid-tab item summaries use `public_bid_tab_average` and `public_bid_tab_engineer_estimate`; they never use `cdot_awarded_bid`.
-- Unit normalization maps `EA` and `EACH` to `EACH`; `LS`, `L S`, and `LUMP SUM` to `L S`; `LB`, `POUND`, and `POUNDS` to `LB`; `SF`, `SQ FT`, and `SQUARE FOOT` to `SF`; `SY`, `SQ YD`, and `SQUARE YARD` to `SY`; `CY`, `CU YD`, and `CUBIC YARD` to `CY`; `LF`, `FOOT`, and `FEET` to `LF`; `HR`, `HOUR`, and `HOURS` to `HOUR`; `DY`, `DAY`, and `DAYS` to `DAY`; `AC` and `ACRE` to `ACRE`; and `FA`, `F A`, and `F/A` to `F A`.
-- Public bid-tab imports attempt exact short item-code resolution against `agency_items.csv` by normalized description and compatible unit. Ambiguous or missing matches are preserved as workbook item codes and reported as validation warnings.
-- Unknown units are preserved uppercase and reported by import validation. No unit conversions are performed.
-- Every loaded agency item should have a matching section prefix in `spec_sections.csv` when the picker needs to expose that item.
-- The full item-code book is lookup data only; pricing requires matching records in `item_observations.csv`.
-- Cost data book staging imports must be reviewed before they are promoted into app-loaded pricing data.
-- Synthetic demo project evidence should not be committed to the app-loaded public data package.
-- Private FHU data must not be committed to a public repository.
-
-## Data Package Validation
-
-Run the committed CSV package validator before promoting new app-loaded data or deploying the site:
+Run:
 
 ```text
 python scripts/validate_data_package.py
 ```
 
-The validator uses only Python standard library modules and reads the app-loaded CSV files from `public/data`.
+The validator checks manifest paths, required columns/values, unique IDs, all relationships, numeric fields, quantity-price reconciliation, bidder rank integrity, apparent-low/award flags, exact awarded-vendor resolution, source provenance, accepted item statuses, and promoted observation identity.
 
-Validation errors fail the command when the data package has:
-
-- missing required columns
-- duplicate source, project, observation, agency item, or section IDs
-- project rows that reference missing sources
-- observation rows that reference missing projects or sources
-- observation source IDs that do not match the referenced project source IDs
-- bidder rows that reference missing projects, sources, or bids
-- bid-tab item rows that reference missing projects or sources
-- bidder item rows that reference missing bids or bid-tab items
-- bidder item rows where quantity times unit price does not equal extended price within cent tolerance
-- blank required relationship or evidence fields
-- nonnumeric numeric fields
-- invalid date shapes
-- app-loaded demo evidence IDs or legacy demo source and price types
-- no awarded-bid evidence for smoke-test item `304-06007`
-
-Validation warnings do not fail the command when the data package has:
-
-- observation item codes that are not present in the current `agency_items.csv`
-- matched bid-tab item codes that are not present in the current `agency_items.csv`
-- agency item prefixes that are not present in `spec_sections.csv`
-- blank optional project metadata
-- smoke-test item counts that change from the current baseline
-
-Current smoke-test awarded-bid baselines:
-
-- `304-06007`: 151 rows
-- `626-00000`: 422 rows
-- `630-80341`: 420 rows
-- `630-00012`: 415 rows
-- `630-80342`: 411 rows
-- `630-00000`: 396 rows
+Iowa pilot acceptance additionally requires 3,727 catalog items, 25 contracts, 26 project records, 90 bids, 576 contract items, rank 7, one multi-project contract, and alternate set `AA`. Iowa bidder item totals must reconcile to reported bid totals within two cents. Reported contract award totals remain distinct; documented one- and two-cent differences are warnings.

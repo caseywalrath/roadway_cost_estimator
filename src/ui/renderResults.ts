@@ -42,14 +42,15 @@ export function renderResults(
 
   return `
     <section class="results-panel">
-      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, inflationAdjustedPriceSet)}
+      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, inflationAdjustedPriceSet, data)}
       ${renderUnitPriceSummaryPanel(
         displayedStats,
         result.filteredRows.length,
         includedRowCount,
         inflationAdjustmentEnabled,
         inflationAdjustedSummary,
-        addToProjectPanelHtml
+        addToProjectPanelHtml,
+        data.stateConfig.capabilities.engineerEstimate
       )}
       ${renderPublicBidTabProjects(data)}
     </section>
@@ -65,13 +66,14 @@ function renderEvidenceTable(
   excludedSummaryRowIds: ReadonlySet<string>,
   includedRowCount: number,
   visibleExcludedCount: number,
-  inflationAdjustedPriceSet: InflationAdjustedPriceSet | null
+  inflationAdjustedPriceSet: InflationAdjustedPriceSet | null,
+  data: AppData
 ): string {
   if (!result.query.itemCode) {
     return `
       <section class="panel-block">
         ${renderMatchingProjectsHeader(result, false)}
-        <p class="muted">Use Item Book Search to select a loaded CDOT item code before reviewing project evidence.</p>
+        <p class="muted">Use Item Search to select a loaded ${escapeHtml(data.stateConfig.defaultAgencyName)} item code before reviewing project evidence.</p>
       </section>
     `;
   }
@@ -79,8 +81,8 @@ function renderEvidenceTable(
   return `
     <section class="panel-block panel-block--table">
       ${renderMatchingProjectsHeader(result, itemSearchCollapsed, includedRowCount)}
-      ${renderEvidenceControls(result, filtersExpanded, visibleExcludedCount)}
-      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows, result.sort, excludedSummaryRowIds, inflationAdjustedPriceSet)}
+      ${renderEvidenceControls(result, filtersExpanded, visibleExcludedCount, data)}
+      ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows, result.sort, excludedSummaryRowIds, inflationAdjustedPriceSet, data)}
     </section>
   `;
 }
@@ -112,13 +114,13 @@ function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: bo
   `;
 }
 
-function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean, visibleExcludedCount: number): string {
+function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean, visibleExcludedCount: number, data: AppData): string {
   const unitOptions = uniqueValues([result.filters.unit, ...result.availableUnits].filter(Boolean));
 
   return `
     <div class="evidence-filter-toolbar">
       <div class="filter-chip-list" aria-label="Active evidence filters">
-        ${renderFilterChips(result)}
+        ${renderFilterChips(result, data)}
         ${visibleExcludedCount > 0 ? `<span class="filter-chip">Excluded: ${formatNumber(visibleExcludedCount)}</span>` : ""}
       </div>
       <div class="evidence-filter-actions">
@@ -144,8 +146,9 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
             Source
           </span>
           <select name="sourceType">
-            ${renderSourceTypeOption("public_cost_book", "Public CDOT cost book", result.filters.sourceType)}
-            ${renderSourceTypeOption("public_bid_tab", "FHU Bid Tabs", result.filters.sourceType)}
+            ${Object.entries(data.stateConfig.sourceTypeLabels)
+              .map(([value, label]) => renderSourceTypeOption(value, label, result.filters.sourceType))
+              .join("")}
             ${renderSourceTypeOption("all", "All Sources", result.filters.sourceType)}
           </select>
         </label>
@@ -157,7 +160,7 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
           <input name="geography" value="${escapeHtml(result.filters.geography)}" placeholder="District, county, or location" />
         </label>
 
-        <fieldset class="district-filter-field">
+        ${data.stateConfig.capabilities.districtFilter ? `<fieldset class="district-filter-field">
           <legend>District</legend>
           <details class="district-multiselect">
             <summary>${escapeHtml(districtSummaryLabel(result.filters.districts))}</summary>
@@ -165,7 +168,7 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
               ${renderDistrictCheckboxOptions(result.availableDistricts, result.filters.districts)}
             </div>
           </details>
-        </fieldset>
+        </fieldset>` : ""}
 
         <label>
           <span class="label-row">
@@ -218,11 +221,11 @@ interface EvidenceColumn {
 }
 
 const evidenceColumns: EvidenceColumn[] = [
-  { key: "projectNumber", label: "Project no." },
-  { key: "projectLocation", label: "Project / location" },
+  { key: "projectNumber", label: "Contract / project" },
+  { key: "projectLocation", label: "Location" },
   { key: "district", label: "District" },
   { key: "letDate", label: "Let date" },
-  { key: "contractor", label: "Contractor" },
+  { key: "contractor", label: "Awarded vendor" },
   { key: "bidCount", label: "Bid count" },
   { key: "quantity", label: "Quantity" },
   { key: "unit", label: "Unit" },
@@ -237,8 +240,13 @@ function renderTable(
   rows: EvidenceRow[],
   sort: EvidenceSort,
   excludedSummaryRowIds: ReadonlySet<string>,
-  inflationAdjustedPriceSet: InflationAdjustedPriceSet | null
+  inflationAdjustedPriceSet: InflationAdjustedPriceSet | null,
+  data: AppData
 ): string {
+  const columns = evidenceColumns.filter((column) =>
+    (column.key !== "district" || data.stateConfig.capabilities.districtFilter)
+    && (column.key !== "engineerEstimateUnitPrice" || data.stateConfig.capabilities.engineerEstimate)
+  );
   return `
     <div class="table-scroll-shell">
       <div class="table-scroll-affordance" aria-hidden="true"><span></span></div>
@@ -247,11 +255,11 @@ function renderTable(
           <thead>
             <tr>
               <th class="evidence-exclude-header">Exclude from Summary</th>
-              ${evidenceColumns.map((column) => renderSortableHeader(column, sort)).join("")}
+              ${columns.map((column) => renderSortableHeader(column, sort)).join("")}
             </tr>
           </thead>
           <tbody>
-            ${rows.map((row) => renderEvidenceRow(row, excludedSummaryRowIds.has(row.rowId), inflationAdjustedPriceSet)).join("")}
+            ${rows.map((row) => renderEvidenceRow(row, excludedSummaryRowIds.has(row.rowId), inflationAdjustedPriceSet, columns)).join("")}
           </tbody>
         </table>
       </div>
@@ -282,7 +290,8 @@ function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): strin
 function renderEvidenceRow(
   row: EvidenceRow,
   isExcluded: boolean,
-  inflationAdjustedPriceSet: InflationAdjustedPriceSet | null
+  inflationAdjustedPriceSet: InflationAdjustedPriceSet | null,
+  columns: EvidenceColumn[]
 ): string {
   const projectLabel = row.project?.projectNumber || row.project?.projectName || row.project?.projectLocationRaw || row.itemCode;
   const adjustedAwardedBidUnitPrice = inflationAdjustedPriceSet?.awardedBidUnitPriceByRowId.get(row.rowId) ?? null;
@@ -300,22 +309,21 @@ function renderEvidenceRow(
           ${isExcluded ? "checked" : ""}
         />
       </td>
-      <td>${renderProjectNumberCell(row)}</td>
-      <td>
-        ${escapeHtml(row.project?.projectName ?? "Unknown project")}
-        ${renderProjectLocationSubtext(row)}
-      </td>
-      <td>${escapeHtml(row.project?.district || "Not listed")}</td>
-      <td>${escapeHtml(row.project?.estimateLetDate || row.dateBasis)}</td>
-      <td>${escapeHtml(row.project?.contractor || "Not listed")}</td>
-      <td>${row.project?.bidCount ?? "Not listed"}</td>
-      <td>${formatNumber(row.quantity)}</td>
-      <td>${escapeHtml(row.unit)}</td>
-      <td>${escapeHtml(row.descriptionRaw)}</td>
-      <td>${renderUnitPrice(row.awardedBidUnitPrice, adjustedAwardedBidUnitPrice)}</td>
-      <td>${renderUnitPrice(row.averageBidUnitPrice, adjustedAverageBidUnitPrice)}</td>
-      <td>${renderUnitPrice(row.engineerEstimateUnitPrice, adjustedEngineerEstimateUnitPrice)}</td>
-      <td>${escapeHtml(row.source?.sourceLabel ?? "Unknown source")}</td>
+      ${columns.map((column) => {
+        if (column.key === "projectNumber") return `<td>${renderProjectNumberCell(row)}</td>`;
+        if (column.key === "projectLocation") return `<td>${escapeHtml(row.project?.projectName ?? "Unknown project")}${renderProjectLocationSubtext(row)}</td>`;
+        if (column.key === "district") return `<td>${escapeHtml(row.project?.district || "Not listed")}</td>`;
+        if (column.key === "letDate") return `<td>${escapeHtml(row.project?.estimateLetDate || row.dateBasis)}</td>`;
+        if (column.key === "contractor") return `<td>${escapeHtml(row.project?.contractor || "Not listed")}</td>`;
+        if (column.key === "bidCount") return `<td>${row.project?.bidCount ?? "Not listed"}</td>`;
+        if (column.key === "quantity") return `<td>${formatNumber(row.quantity)}</td>`;
+        if (column.key === "unit") return `<td>${escapeHtml(row.unit)}</td>`;
+        if (column.key === "description") return `<td>${escapeHtml(row.descriptionRaw)}</td>`;
+        if (column.key === "awardedBidUnitPrice") return `<td>${renderUnitPrice(row.awardedBidUnitPrice, adjustedAwardedBidUnitPrice)}</td>`;
+        if (column.key === "averageBidUnitPrice") return `<td>${renderUnitPrice(row.averageBidUnitPrice, adjustedAverageBidUnitPrice)}</td>`;
+        if (column.key === "engineerEstimateUnitPrice") return `<td>${renderUnitPrice(row.engineerEstimateUnitPrice, adjustedEngineerEstimateUnitPrice)}</td>`;
+        return `<td>${escapeHtml(row.source?.sourceLabel ?? "Unknown source")}</td>`;
+      }).join("")}
     </tr>
   `;
 }
@@ -332,7 +340,7 @@ function formatProjectLocationSubtext(row: EvidenceRow): string {
     return "";
   }
 
-  if (row.source?.sourceType === "public_cost_book") {
+  if (row.source?.sourceType === "cost_book") {
     return countyRegion.replace(/\s*\/\s*CDOT District \d+\s*$/i, "").trim();
   }
 
@@ -364,7 +372,8 @@ function renderUnitPriceSummaryPanel(
   includedRowCount: number,
   inflationAdjustmentEnabled: boolean,
   inflationAdjustedSummary: InflationAdjustedSummary | null,
-  addToProjectPanelHtml: string
+  addToProjectPanelHtml: string,
+  supportsEngineerEstimate: boolean
 ): string {
   const inflationControl = renderInflationAdjustmentControl(inflationAdjustmentEnabled);
   const inflationNote = renderInflationAdjustmentNote(inflationAdjustmentEnabled, inflationAdjustedSummary);
@@ -404,7 +413,7 @@ function renderUnitPriceSummaryPanel(
           <tbody>
             ${renderSummaryRow("Awarded Bid", stats.awarded)}
             ${renderSummaryRow("Average Bid", stats.average)}
-            ${renderSummaryRow("Engineer Estimate", stats.engineer)}
+            ${supportsEngineerEstimate ? renderSummaryRow("Engineer Estimate", stats.engineer) : ""}
           </tbody>
         </table>
       </div>
@@ -508,10 +517,10 @@ function renderEmptyTableMessage(): string {
   return `<p class="muted evidence-empty">No project-item rows match the current filters.</p>`;
 }
 
-function renderFilterChips(result: EvidenceResult): string {
+function renderFilterChips(result: EvidenceResult, data: AppData): string {
   const chips = [
     `Rows: ${formatNumber(result.filteredRows.length)}`,
-    `Source: ${sourceTypeLabel(result.filters.sourceType)}`,
+    `Source: ${sourceTypeLabel(result.filters.sourceType, data)}`,
     result.filters.geography ? `Geography: ${result.filters.geography}` : "",
     result.filters.districts.length > 0 ? `District: ${districtSummaryLabel(result.filters.districts)}` : "",
     result.filters.unit ? `Unit: ${result.filters.unit}` : "",
@@ -536,14 +545,8 @@ function renderSourceTypeOption(
   return `<option value="${value}" ${value === selectedValue ? "selected" : ""}>${escapeHtml(label)}</option>`;
 }
 
-function sourceTypeLabel(value: EvidenceSourceTypeFilter): string {
-  const labels: Record<EvidenceSourceTypeFilter, string> = {
-    public_cost_book: "Public CDOT cost book",
-    public_bid_tab: "FHU Bid Tabs",
-    all: "All Sources"
-  };
-
-  return labels[value];
+function sourceTypeLabel(value: EvidenceSourceTypeFilter, data: AppData): string {
+  return value === "all" ? "All Sources" : data.stateConfig.sourceTypeLabels[value] ?? value;
 }
 
 function rangeLabel(minimum: number | null, maximum: number | null): string {
@@ -617,7 +620,7 @@ export function readEvidenceFiltersFromForm(
 
 function renderPublicBidTabProjects(data: AppData): string {
   const projects = data.projects
-    .filter((project) => data.sourceById.get(project.sourceId)?.sourceType === "public_bid_tab")
+    .filter((project) => data.sourceById.get(project.sourceId)?.sourceType === "bid_tab")
     .filter((project) => (data.bidTabItemsByProjectId.get(project.projectId) ?? []).length > 0)
     .sort((left, right) => (right.estimateLetDate || "").localeCompare(left.estimateLetDate || ""));
 
@@ -635,7 +638,7 @@ function renderPublicBidTabProjects(data: AppData): string {
           .map((project) => {
             const source = data.sourceById.get(project.sourceId) ?? null;
             const itemCount = data.bidTabItemsByProjectId.get(project.projectId)?.length ?? 0;
-            const sourceLabel = source?.sourceLabel.split(" - ")[0] ?? "FHU Civil Group Bid Tabs";
+            const sourceLabel = source?.sourceLabel.split(" - ")[0] ?? "Bid tab source";
             const projectTitle = [
               project.projectName,
               project.projectNumber,
@@ -682,6 +685,7 @@ function renderBidTabProjectModal(data: AppData, selectedProjectId: string | nul
   const bidderBids = data.bidderBidsByProjectId.get(project.projectId) ?? [];
   const bidById = new Map(bidderBids.map((bid) => [bid.bidId, bid]));
   const apparentLowBid = bidderBids.find((bid) => bid.apparentLow) ?? null;
+  const awardedBid = bidderBids.find((bid) => bid.isAwarded) ?? null;
 
   return `
     <div class="modal-backdrop" role="presentation">
@@ -701,6 +705,7 @@ function renderBidTabProjectModal(data: AppData, selectedProjectId: string | nul
         </div>
         <div class="bidder-modal__summary">
           <span>Apparent low: <strong>${escapeHtml(apparentLowBid?.bidderName ?? "Not listed")}</strong></span>
+          <span>Confirmed award: <strong>${escapeHtml(awardedBid?.bidderName ?? "Not listed")}</strong></span>
           <span>Bid count: <strong>${formatNumber(bidderBids.length)}</strong></span>
           <span>Source items: <strong>${formatNumber(items.length)}</strong></span>
         </div>
@@ -713,7 +718,7 @@ function renderBidTabProjectModal(data: AppData, selectedProjectId: string | nul
                 <th>Description</th>
                 <th>Qty</th>
                 <th>Unit</th>
-                <th>Engineer</th>
+                ${data.stateConfig.capabilities.engineerEstimate ? "<th>Engineer</th>" : ""}
                 <th>Average</th>
                 <th>Status</th>
                 <th>Bidder unit prices</th>
@@ -723,7 +728,12 @@ function renderBidTabProjectModal(data: AppData, selectedProjectId: string | nul
               ${items
                 .slice()
                 .sort((left, right) => left.workbookRow - right.workbookRow)
-                .map((item) => renderBidTabItemRow(item, data.bidderItemsByBidTabItemId.get(item.bidTabItemId) ?? [], bidById))
+                .map((item) => renderBidTabItemRow(
+                  item,
+                  data.bidderItemsByBidTabItemId.get(item.bidTabItemId) ?? [],
+                  bidById,
+                  data.stateConfig.capabilities.engineerEstimate
+                ))
                 .join("")}
             </tbody>
           </table>
@@ -736,7 +746,8 @@ function renderBidTabProjectModal(data: AppData, selectedProjectId: string | nul
 function renderBidTabItemRow(
   item: BidTabItemRecord,
   bidderItems: BidderItemObservationRecord[],
-  bidById: Map<string, BidderBidRecord>
+  bidById: Map<string, BidderBidRecord>,
+  supportsEngineerEstimate: boolean
 ): string {
   const codeLabel = item.sourceSpecRaw || item.sourceItemCode;
   const bidderPrices = bidderItems
@@ -758,7 +769,7 @@ function renderBidTabItemRow(
       <td>${escapeHtml(item.sourceItemDescription)}</td>
       <td>${formatNumber(item.quantity)}</td>
       <td>${escapeHtml(item.unitNormalized)}</td>
-      <td>${formatCurrency(item.engineerEstimateUnitPrice)}</td>
+      ${supportsEngineerEstimate ? `<td>${formatCurrency(item.engineerEstimateUnitPrice)}</td>` : ""}
       <td>${formatCurrency(item.averageBidUnitPrice)}</td>
       <td>${escapeHtml(matchStatusLabel(item.matchStatus))}</td>
       <td>${bidderPrices.length > 0 ? escapeHtml(bidderPrices.join("; ")) : "Not listed"}</td>
@@ -795,6 +806,7 @@ function renderBidderDetailModal(
   const bidderBids = data.bidderBidsByProjectId.get(row.project?.projectId ?? "") ?? [];
   const bidById = new Map(bidderBids.map((bid) => [bid.bidId, bid]));
   const apparentLowBid = bidderBids.find((bid) => bid.apparentLow) ?? null;
+  const confirmedAwardBid = bidderBids.find((bid) => bid.isAwarded) ?? null;
 
   return `
     <div class="modal-backdrop" role="presentation">
@@ -814,6 +826,7 @@ function renderBidderDetailModal(
         </div>
         <div class="bidder-modal__summary">
           <span>Apparent low: <strong>${escapeHtml(apparentLowBid?.bidderName ?? "Not listed")}</strong></span>
+          <span>Confirmed award: <strong>${escapeHtml(confirmedAwardBid?.bidderName ?? "Not listed")}</strong></span>
           <span>Bid count: <strong>${formatNumber(bidderBids.length)}</strong></span>
           <span>Source: <strong>${escapeHtml(row.source?.sourceLabel ?? "Unknown source")}</strong></span>
         </div>
@@ -822,7 +835,10 @@ function renderBidderDetailModal(
             <thead>
               <tr>
                 <th>Bidder</th>
+                <th>Vendor ID</th>
                 <th>Rank</th>
+                <th>% of low</th>
+                <th>Status</th>
                 <th>Unit price</th>
                 <th>Extended price</th>
                 <th>Bid total</th>
@@ -849,7 +865,10 @@ function renderBidderDetailRow(item: BidderItemObservationRecord, bid: BidderBid
         ${escapeHtml(bid?.bidderName ?? item.bidId)}
         ${bid?.apparentLow ? `<div class="row-subtext">Apparent low</div>` : ""}
       </td>
+      <td>${escapeHtml(bid?.sourceVendorId || "Not listed")}</td>
       <td>${bid?.bidRank ?? "Not listed"}</td>
+      <td>${bid?.percentOfLow === null || bid?.percentOfLow === undefined ? "Not listed" : `${formatNumber(bid.percentOfLow)}%`}</td>
+      <td>${bid?.isAwarded ? "Awarded" : bid?.apparentLow ? "Apparent low" : "Bid"}</td>
       <td>${formatCurrency(item.unitPrice)}</td>
       <td>${formatCurrency(item.extendedPrice)}</td>
       <td>${bid ? formatCurrency(bid.bidTotal) : "Not listed"}</td>

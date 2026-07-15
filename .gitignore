@@ -6,3 +6,4 @@ npm-debug.log*
 *.log
 tmp/
 __pycache__/
+data/raw/

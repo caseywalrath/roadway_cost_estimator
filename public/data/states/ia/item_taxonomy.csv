@@ -1,0 +1,148 @@
+taxonomy_id,state,agency_id,taxonomy_level,taxonomy_code,parent_taxonomy_id,taxonomy_label,match_prefix,source_year,source_url
+ia_idot_div_21,IA,ia_idot,division,21,,"Earthwork, Subgrades, and Subbases",21,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm
+ia_idot_div_22,IA,ia_idot,division,22,,Base Courses,22,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm
+ia_idot_div_23,IA,ia_idot,division,23,,Surface Courses,23,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm
+ia_idot_div_24,IA,ia_idot,division,24,,Structures,24,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm
+ia_idot_div_25,IA,ia_idot,division,25,,Miscellaneous Construction,25,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm
+ia_idot_div_26,IA,ia_idot,division,26,,Roadside Development,26,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm
+ia_idot_div_60,IA,ia_idot,division,60,,Special Bid Items,60,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm
+ia_idot_div_61,IA,ia_idot,division,61,,Bid Item Adjustments,61,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm
+ia_idot_div_62,IA,ia_idot,division,62,,Price Adjustments,62,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm
+ia_idot_sec_2101,IA,ia_idot,section,2101,ia_idot_div_21,Clearing and Grubbing,2101,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2102,IA,ia_idot,section,2102,ia_idot_div_21,Roadway and Borrow Excavation,2102,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2103,IA,ia_idot,section,2103,ia_idot_div_21,Pre-Splitting and Production Blasting of Rock Slope Cuts,2103,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2104,IA,ia_idot,section,2104,ia_idot_div_21,Channel Excavation,2104,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2105,IA,ia_idot,section,2105,ia_idot_div_21,"Stripping, Salvaging, and Spreading Topsoil",2105,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2107,IA,ia_idot,section,2107,ia_idot_div_21,Embankments,2107,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2109,IA,ia_idot,section,2109,ia_idot_div_21,Natural Subgrade,2109,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2110,IA,ia_idot,section,2110,ia_idot_div_21,Soil Aggregate Subbase,2110,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2111,IA,ia_idot,section,2111,ia_idot_div_21,Granular Subbase,2111,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2112,IA,ia_idot,section,2112,ia_idot_div_21,Wick Drains,2112,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2113,IA,ia_idot,section,2113,ia_idot_div_21,Subgrade Stabilization Material,2113,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2115,IA,ia_idot,section,2115,ia_idot_div_21,Modified Subbase,2115,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2116,IA,ia_idot,section,2116,ia_idot_div_21,Full Depth Reclamation,2116,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2121,IA,ia_idot,section,2121,ia_idot_div_21,Granular Shoulders,2121,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2122,IA,ia_idot,section,2122,ia_idot_div_21,Paved Shoulders,2122,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2123,IA,ia_idot,section,2123,ia_idot_div_21,Earth Shoulders for Pavements and Bases,2123,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2125,IA,ia_idot,section,2125,ia_idot_div_21,Reshaping Ditches,2125,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2126,IA,ia_idot,section,2126,ia_idot_div_21,Reclaiming Present Surface Material,2126,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2127,IA,ia_idot,section,2127,ia_idot_div_21,Reconstruction of Roadbed,2127,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2128,IA,ia_idot,section,2128,ia_idot_div_21,Furnish and Apply Granular Shoulder Material,2128,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav21.htm
+ia_idot_sec_2201,IA,ia_idot,section,2201,ia_idot_div_22,Portland Cement Concrete Base,2201,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav22.htm
+ia_idot_sec_2210,IA,ia_idot,section,2210,ia_idot_div_22,Macadam Stone Base,2210,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav22.htm
+ia_idot_sec_2212,IA,ia_idot,section,2212,ia_idot_div_22,Base Cleaning and Repair,2212,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav22.htm
+ia_idot_sec_2213,IA,ia_idot,section,2213,ia_idot_div_22,Base Widening,2213,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav22.htm
+ia_idot_sec_2214,IA,ia_idot,section,2214,ia_idot_div_22,Pavement Scarification,2214,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav22.htm
+ia_idot_sec_2216,IA,ia_idot,section,2216,ia_idot_div_22,Cracking and Seating Concrete Pavement,2216,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav22.htm
+ia_idot_sec_2217,IA,ia_idot,section,2217,ia_idot_div_22,Rubblizing Existing Portland Cement Concrete Pavement,2217,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav22.htm
+ia_idot_sec_2301,IA,ia_idot,section,2301,ia_idot_div_23,Portland Cement Concrete Pavement,2301,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2302,IA,ia_idot,section,2302,ia_idot_div_23,Portland Cement Concrete Widening,2302,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2303,IA,ia_idot,section,2303,ia_idot_div_23,Flexible Pavement,2303,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2304,IA,ia_idot,section,2304,ia_idot_div_23,Detour Pavement,2304,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2306,IA,ia_idot,section,2306,ia_idot_div_23,Bituminous Fog Seal (Pavement),2306,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2307,IA,ia_idot,section,2307,ia_idot_div_23,Bituminous Seal Coat,2307,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2308,IA,ia_idot,section,2308,ia_idot_div_23,Bituminous Fog Seal (Shoulders),2308,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2309,IA,ia_idot,section,2309,ia_idot_div_23,Surface Recycling by Heater Scarification,2309,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2310,IA,ia_idot,section,2310,ia_idot_div_23,Portland Cement Concrete Overlay,2310,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2312,IA,ia_idot,section,2312,ia_idot_div_23,Granular Surfacing,2312,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2314,IA,ia_idot,section,2314,ia_idot_div_23,Surface Application of Calcium Chloride,2314,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2315,IA,ia_idot,section,2315,ia_idot_div_23,Driveway Surfacing,2315,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2317,IA,ia_idot,section,2317,ia_idot_div_23,Pavement Smoothness,2317,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2318,IA,ia_idot,section,2318,ia_idot_div_23,Cold In-Place Recycled Asphalt Pavement,2318,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2319,IA,ia_idot,section,2319,ia_idot_div_23,"Slurry Leveling, Surry Wedge (Edge Rut Treatment), and Strip Slurry Treatment",2319,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2320,IA,ia_idot,section,2320,ia_idot_div_23,Polymer-Modified Microsurfacing,2320,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav23.htm
+ia_idot_sec_2401,IA,ia_idot,section,2401,ia_idot_div_24,Removal of Existing Structures,2401,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2402,IA,ia_idot,section,2402,ia_idot_div_24,Excavation for Structures,2402,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2403,IA,ia_idot,section,2403,ia_idot_div_24,Structural Concrete,2403,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2404,IA,ia_idot,section,2404,ia_idot_div_24,Reinforcement,2404,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2405,IA,ia_idot,section,2405,ia_idot_div_24,Foundations and Substructures,2405,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2407,IA,ia_idot,section,2407,ia_idot_div_24,Precast and Prestressed Concrete Bridge Units,2407,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2408,IA,ia_idot,section,2408,ia_idot_div_24,Steel Structures,2408,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2409,IA,ia_idot,section,2409,ia_idot_div_24,Timber,2409,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2410,IA,ia_idot,section,2410,ia_idot_div_24,Plank Decks,2410,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2411,IA,ia_idot,section,2411,ia_idot_div_24,Laminated Wood Decks,2411,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2412,IA,ia_idot,section,2412,ia_idot_div_24,Concrete Bridge Decks,2412,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2413,IA,ia_idot,section,2413,ia_idot_div_24,"Bridge Deck Surfacing, Repair, and Overlay",2413,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2414,IA,ia_idot,section,2414,ia_idot_div_24,Railings,2414,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2415,IA,ia_idot,section,2415,ia_idot_div_24,"Concrete Box, Arch and Circular Culverts",2415,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2416,IA,ia_idot,section,2416,ia_idot_div_24,Rigid Pipe Culverts,2416,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2417,IA,ia_idot,section,2417,ia_idot_div_24,Corrugated Culverts,2417,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2418,IA,ia_idot,section,2418,ia_idot_div_24,Temporary Stream Diversion,2418,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2420,IA,ia_idot,section,2420,ia_idot_div_24,"Structural Plate Pipes, Pipe Arches, and Arches",2420,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2422,IA,ia_idot,section,2422,ia_idot_div_24,Unclassified Pipe,2422,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2423,IA,ia_idot,section,2423,ia_idot_div_24,"Support Structures for Highway Sign, Luminaires, and Traffic Signals",2423,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2424,IA,ia_idot,section,2424,ia_idot_div_24,Shotcrete,2424,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2426,IA,ia_idot,section,2426,ia_idot_div_24,Structural Concrete Repair,2426,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2427,IA,ia_idot,section,2427,ia_idot_div_24,Bridge Cleaning,2427,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2429,IA,ia_idot,section,2429,ia_idot_div_24,Pre-Engineered Steel Truss Recreational Trail Bridge,2429,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2430,IA,ia_idot,section,2430,ia_idot_div_24,Modular Block Retaining Wall,2430,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2431,IA,ia_idot,section,2431,ia_idot_div_24,Segmental Retaining Wall,2431,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2432,IA,ia_idot,section,2432,ia_idot_div_24,Mechanically Stabilized Earth (MSE) Retaining Wall,2432,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2433,IA,ia_idot,section,2433,ia_idot_div_24,Concrete Drilled Shaft,2433,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2434,IA,ia_idot,section,2434,ia_idot_div_24,Disc Bearing Assembly,2434,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2435,IA,ia_idot,section,2435,ia_idot_div_24,Sanitary and Storm Sewer Structures,2435,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2436,IA,ia_idot,section,2436,ia_idot_div_24,Precast Noise Wall,2436,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2499,IA,ia_idot,section,2499,ia_idot_div_24,Section 2499,2499,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav24.htm
+ia_idot_sec_2501,IA,ia_idot,section,2501,ia_idot_div_25,Piles and Pile Driving,2501,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2502,IA,ia_idot,section,2502,ia_idot_div_25,Subdrains,2502,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2503,IA,ia_idot,section,2503,ia_idot_div_25,Storm Sewers,2503,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2504,IA,ia_idot,section,2504,ia_idot_div_25,Sanitary Sewers,2504,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2505,IA,ia_idot,section,2505,ia_idot_div_25,Guardrail Construction and Removal,2505,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2506,IA,ia_idot,section,2506,ia_idot_div_25,Flowable Mortar and Foamed Cellular Concrete,2506,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2507,IA,ia_idot,section,2507,ia_idot_div_25,Concrete and Stone Revetment,2507,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2508,IA,ia_idot,section,2508,ia_idot_div_25,Removal of Paint and Painting Steel Bridge Structures,2508,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2510,IA,ia_idot,section,2510,ia_idot_div_25,Removal of Pavement,2510,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2511,IA,ia_idot,section,2511,ia_idot_div_25,Removal and Construction of Sidewalks and Recreational Trails,2511,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2512,IA,ia_idot,section,2512,ia_idot_div_25,Portland Cement Concrete Curb and Gutter,2512,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2513,IA,ia_idot,section,2513,ia_idot_div_25,Concrete Barrier,2513,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2514,IA,ia_idot,section,2514,ia_idot_div_25,Curb Removal,2514,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2515,IA,ia_idot,section,2515,ia_idot_div_25,Removal and Construction of Paved Driveways,2515,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2516,IA,ia_idot,section,2516,ia_idot_div_25,Combined Concrete Sidewalk and Retaining Wall,2516,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2517,IA,ia_idot,section,2517,ia_idot_div_25,Railroad Approach Sections,2517,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2518,IA,ia_idot,section,2518,ia_idot_div_25,Section 2518,2518,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2519,IA,ia_idot,section,2519,ia_idot_div_25,Fence Construction,2519,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2520,IA,ia_idot,section,2520,ia_idot_div_25,Field Laboratory and Field Office,2520,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2522,IA,ia_idot,section,2522,ia_idot_div_25,Tower Lighting,2522,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2523,IA,ia_idot,section,2523,ia_idot_div_25,Highway Lighting,2523,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2524,IA,ia_idot,section,2524,ia_idot_div_25,Highway Signing,2524,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2525,IA,ia_idot,section,2525,ia_idot_div_25,Traffic Signalization,2525,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2526,IA,ia_idot,section,2526,ia_idot_div_25,Construction Survey,2526,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2527,IA,ia_idot,section,2527,ia_idot_div_25,Pavement Marking,2527,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2528,IA,ia_idot,section,2528,ia_idot_div_25,Traffic Control,2528,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2529,IA,ia_idot,section,2529,ia_idot_div_25,Full Depth Finish Patches,2529,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2530,IA,ia_idot,section,2530,ia_idot_div_25,Partial Depth Finish Patches,2530,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2531,IA,ia_idot,section,2531,ia_idot_div_25,Pavement Surface Repair (Milling),2531,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2532,IA,ia_idot,section,2532,ia_idot_div_25,Pavement Surface Repair (Diamond Grinding),2532,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2533,IA,ia_idot,section,2533,ia_idot_div_25,Mobilization,2533,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2535,IA,ia_idot,section,2535,ia_idot_div_25,Bin Type Crib Walls,2535,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2536,IA,ia_idot,section,2536,ia_idot_div_25,Asbestos Removal,2536,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2537,IA,ia_idot,section,2537,ia_idot_div_25,Underground Tank System Removal and Petroleum Contaminated Soil Remediation,2537,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2538,IA,ia_idot,section,2538,ia_idot_div_25,"Salvage, Removal, and Disposal of Obstructions",2538,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2539,IA,ia_idot,section,2539,ia_idot_div_25,Concrete Pavement Undersealing by Pressure Grouting,2539,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2540,IA,ia_idot,section,2540,ia_idot_div_25,Longitudinal Joint Repair,2540,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2541,IA,ia_idot,section,2541,ia_idot_div_25,Crack and Joint Cleaning and Sealing (HMA Surfaces),2541,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2542,IA,ia_idot,section,2542,ia_idot_div_25,Crack and Joint Cleaning and Filling (Portland Cement Concrete Pavement),2542,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2543,IA,ia_idot,section,2543,ia_idot_div_25,Transverse Joint Repair for HMA Pavements,2543,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2544,IA,ia_idot,section,2544,ia_idot_div_25,Cleaning and Filling Cracks for HMA Surfaces,2544,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2545,IA,ia_idot,section,2545,ia_idot_div_25,"Overlay of Type ""B"" Guide Signs",2545,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2546,IA,ia_idot,section,2546,ia_idot_div_25,Gabions and Revet Mattresses,2546,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2548,IA,ia_idot,section,2548,ia_idot_div_25,Milled Rumble Strips - HMA or PCC Surface,2548,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2549,IA,ia_idot,section,2549,ia_idot_div_25,"Pipe, Culvert, and Manhole Cleaning and Rehabilitation",2549,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2551,IA,ia_idot,section,2551,ia_idot_div_25,Crash Cushions,2551,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2552,IA,ia_idot,section,2552,ia_idot_div_25,Trench Excavation and Backfill,2552,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2554,IA,ia_idot,section,2554,ia_idot_div_25,"Water Mains, Valves, Fire Hydrants, and Appurtenances",2554,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2555,IA,ia_idot,section,2555,ia_idot_div_25,Deliver and Stockpile Salvaged Materials,2555,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2556,IA,ia_idot,section,2556,ia_idot_div_25,Dowel Bar Retrofit,2556,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2557,IA,ia_idot,section,2557,ia_idot_div_25,Portland Cement Concrete Pavement Grooving,2557,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2558,IA,ia_idot,section,2558,ia_idot_div_25,Cross Stitching of Concrete Pavement,2558,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2590,IA,ia_idot,section,2590,ia_idot_div_25,Section 2590,2590,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2595,IA,ia_idot,section,2595,ia_idot_div_25,Section 2595,2595,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2599,IA,ia_idot,section,2599,ia_idot_div_25,Section 2599,2599,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav25.htm
+ia_idot_sec_2601,IA,ia_idot,section,2601,ia_idot_div_26,Erosion Control,2601,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav26.htm
+ia_idot_sec_2602,IA,ia_idot,section,2602,ia_idot_div_26,Water Pollution Control (Soil Erosion),2602,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav26.htm
+ia_idot_sec_2610,IA,ia_idot,section,2610,ia_idot_div_26,"Furnish and Install Shrubs, Trees, and Vines",2610,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav26.htm
+ia_idot_sec_2611,IA,ia_idot,section,2611,ia_idot_div_26,Furnish and Install Shrubs and Trees with Warranty,2611,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav26.htm
+ia_idot_sec_2612,IA,ia_idot,section,2612,ia_idot_div_26,Mowing,2612,2026,https://ia.iowadot.gov/erl/current/GS/Navigation/nav26.htm
+ia_idot_sec_6000,IA,ia_idot,section,6000,ia_idot_div_60,Section 6000,6000,2026,https://iowadot.gov/consultants-contractors/contracts/general-letting-information/bid-item-information
+ia_idot_sec_6100,IA,ia_idot,section,6100,ia_idot_div_61,Section 6100,6100,2026,https://iowadot.gov/consultants-contractors/contracts/general-letting-information/bid-item-information
+ia_idot_sec_6200,IA,ia_idot,section,6200,ia_idot_div_62,Section 6200,6200,2026,https://iowadot.gov/consultants-contractors/contracts/general-letting-information/bid-item-information

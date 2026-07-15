@@ -42,24 +42,32 @@ import {
 import type { PendingDuplicateProjectLine } from "./renderProjectWorkspace";
 import { readEvidenceFiltersFromForm, renderResults } from "./renderResults";
 
-const emptyQuery: SearchQuery = {
-  state: "CO",
-  countyRegion: "",
-  workType: "Roadway",
-  estimateYear: new Date().getFullYear(),
-  sourceScope: "both",
-  priceTypeScope: "awarded",
-  itemCode: "",
-  description: "",
-  unit: "",
-  quantity: null
-};
-
 type AppView = "explorer" | "project";
 
-export function renderApp(root: HTMLElement, data: AppData): void {
+export function renderApp(
+  root: HTMLElement,
+  data: AppData,
+  onStateChange: (stateCode: string) => void
+): void {
+  const emptyQuery: SearchQuery = {
+    state: data.stateConfig.code,
+    agencyId: data.stateConfig.defaultAgencyId,
+    agencyItemId: "",
+    countyRegion: "",
+    workType: "Roadway",
+    estimateYear: new Date().getFullYear(),
+    sourceScope: "both",
+    priceTypeScope: "awarded",
+    itemCode: "",
+    description: "",
+    unit: "",
+    quantity: null
+  };
   const loadedProjectState = loadProjectWorkspaceState();
-  let projectState: ProjectWorkspaceState = ensureActiveProject(loadedProjectState.state);
+  let projectState: ProjectWorkspaceState = ensureActiveProject(
+    loadedProjectState.state,
+    data.stateConfig.code
+  );
   let projectStorageWarning = loadedProjectState.warning;
   let query = { ...emptyQuery };
   let evidenceFilters = createDefaultEvidenceFilters(query);
@@ -100,7 +108,15 @@ export function renderApp(root: HTMLElement, data: AppData): void {
       <main class="app-shell">
         <header class="app-header">
           <div>
-            <h1>Colorado Roadway Comparable Project Explorer</h1>
+            <h1>${escapeHtml(data.manifest.productTitle)}</h1>
+            <label class="state-switcher">
+              <span>State</span>
+              <select id="state-selector">
+                ${data.manifest.states.map((state) => `
+                  <option value="${state.code}" ${state.code === data.stateConfig.code ? "selected" : ""}>${escapeHtml(state.name)}</option>
+                `).join("")}
+              </select>
+            </label>
           </div>
           <nav class="app-view-tabs" aria-label="Primary views">
             ${renderViewTab("explorer", "Explorer", activeView)}
@@ -113,7 +129,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
         ${activeView === "explorer"
           ? `
             <section class="workspace-grid ${itemSearchCollapsed ? "workspace-grid--item-search-collapsed" : ""}">
-              ${itemSearchCollapsed ? "" : renderExplorer(query, data.agencyItems, data.specSections)}
+              ${itemSearchCollapsed ? "" : renderExplorer(query, data.agencyItems, data.specSections, data.stateConfig)}
               ${renderResults(
                 result,
                 evidenceFiltersExpanded,
@@ -150,6 +166,10 @@ export function renderApp(root: HTMLElement, data: AppData): void {
         selectedBidTabProjectId = null;
         render();
       });
+    });
+
+    root.querySelector<HTMLSelectElement>("#state-selector")?.addEventListener("change", (event) => {
+      onStateChange((event.currentTarget as HTMLSelectElement).value);
     });
 
     const form = root.querySelector<HTMLFormElement>("#explorer-form");
@@ -224,7 +244,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     });
 
     root.querySelector<HTMLButtonElement>("#download-matching-projects-csv")?.addEventListener("click", () => {
-      downloadEvidenceCsv(result, includedRows);
+      downloadEvidenceCsv(result, includedRows, data);
     });
 
     root.querySelector<HTMLInputElement>("#inflation-adjustment-toggle")?.addEventListener("change", (event) => {
@@ -272,7 +292,8 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     });
 
     root.querySelectorAll<HTMLButtonElement>("[data-bidder-detail-key]").forEach((button) => {
-      button.addEventListener("click", () => {
+      button.addEventListener("click", async () => {
+        await data.ensureBidItemPricesLoaded();
         selectedBidderDetailKey = button.dataset.bidderDetailKey ?? null;
         selectedBidTabProjectId = null;
         render();
@@ -280,7 +301,8 @@ export function renderApp(root: HTMLElement, data: AppData): void {
     });
 
     root.querySelectorAll<HTMLButtonElement>("[data-bid-tab-project-id]").forEach((button) => {
-      button.addEventListener("click", () => {
+      button.addEventListener("click", async () => {
+        await data.ensureBidItemPricesLoaded();
         selectedBidTabProjectId = button.dataset.bidTabProjectId ?? null;
         selectedBidderDetailKey = null;
         render();
@@ -382,6 +404,9 @@ export function renderApp(root: HTMLElement, data: AppData): void {
 
       const costSource = costSourceInput?.value === "quick_fill" ? "quick_fill" : "manual";
       const lineItem = createProjectLineItem({
+        state: data.stateConfig.code,
+        agencyId: result.query.agencyId,
+        agencyItemId: result.query.agencyItemId,
         itemCode: result.query.itemCode,
         description: result.interpretedDescription,
         unit: result.query.unit,
@@ -399,7 +424,7 @@ export function renderApp(root: HTMLElement, data: AppData): void {
         )
       });
       const matchingLineIds = activeProject.lineItems
-        .filter((candidate) => candidate.itemCode === lineItem.itemCode)
+        .filter((candidate) => candidate.agencyItemId === lineItem.agencyItemId)
         .map((candidate) => candidate.lineItemId);
 
       if (matchingLineIds.length > 0) {

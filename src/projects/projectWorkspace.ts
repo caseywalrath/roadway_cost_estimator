@@ -5,18 +5,20 @@ import type {
   SearchQuery
 } from "../data/schema";
 
-export const PROJECT_WORKSPACE_STORAGE_KEY = "roadway-cost-estimator:projects:v2";
+export const PROJECT_WORKSPACE_STORAGE_KEY = "roadway-cost-estimator:projects:v3";
+const V2_PROJECT_WORKSPACE_STORAGE_KEY = "roadway-cost-estimator:projects:v2";
 const LEGACY_PROJECT_WORKSPACE_STORAGE_KEY = "roadway-cost-estimator:projects:v1";
-export const PROJECT_WORKSPACE_SCHEMA_VERSION = 2;
+export const PROJECT_WORKSPACE_SCHEMA_VERSION = 3;
 
 export interface ProjectWorkspaceState {
-  schemaVersion: 2;
+  schemaVersion: 3;
   activeProjectId: string | null;
   projects: UserProject[];
 }
 
 export interface UserProject {
   projectId: string;
+  state: string;
   name: string;
   location: string;
   notes: string;
@@ -27,6 +29,9 @@ export interface UserProject {
 
 export interface ProjectLineItem {
   lineItemId: string;
+  state: string;
+  agencyId: string;
+  agencyItemId: string;
   itemCode: string;
   description: string;
   unit: string;
@@ -63,6 +68,9 @@ export interface ProjectWorkspaceLoadResult {
 }
 
 export interface CreateProjectLineItemInput {
+  state: string;
+  agencyId: string;
+  agencyItemId: string;
   itemCode: string;
   description: string;
   unit: string;
@@ -101,7 +109,8 @@ export function loadProjectWorkspaceState(): ProjectWorkspaceLoadResult {
       };
     }
 
-    const legacyRawValue = window.localStorage.getItem(LEGACY_PROJECT_WORKSPACE_STORAGE_KEY);
+    const v2RawValue = window.localStorage.getItem(V2_PROJECT_WORKSPACE_STORAGE_KEY);
+    const legacyRawValue = v2RawValue ?? window.localStorage.getItem(LEGACY_PROJECT_WORKSPACE_STORAGE_KEY);
 
     if (!legacyRawValue) {
       return {
@@ -111,7 +120,7 @@ export function loadProjectWorkspaceState(): ProjectWorkspaceLoadResult {
     }
 
     const legacyParsedValue: unknown = JSON.parse(legacyRawValue);
-    const migratedState = parseProjectWorkspaceState(legacyParsedValue, 1);
+    const migratedState = parseProjectWorkspaceState(legacyParsedValue, v2RawValue ? 2 : 1);
 
     if (!migratedState) {
       return {
@@ -143,14 +152,22 @@ export function saveProjectWorkspaceState(state: ProjectWorkspaceState): string 
   }
 }
 
-export function ensureActiveProject(state: ProjectWorkspaceState): ProjectWorkspaceState {
+export function ensureActiveProject(
+  state: ProjectWorkspaceState,
+  stateCode = "CO"
+): ProjectWorkspaceState {
   const activeProject = getActiveProject(state);
 
-  if (activeProject) {
+  if (activeProject?.state === stateCode) {
     return state;
   }
 
-  const project = createUserProject();
+  const existingStateProject = state.projects.find((project) => project.state === stateCode);
+  if (existingStateProject) {
+    return { ...state, activeProjectId: existingStateProject.projectId };
+  }
+
+  const project = createUserProject(stateCode);
 
   return {
     ...state,
@@ -193,6 +210,9 @@ export function createProjectLineItem(input: CreateProjectLineItemInput): Projec
 
   return {
     lineItemId: createId("line"),
+    state: input.state,
+    agencyId: input.agencyId,
+    agencyItemId: input.agencyItemId,
     itemCode: input.itemCode,
     description: input.description,
     unit: input.unit,
@@ -302,11 +322,12 @@ export function removeProjectLineItem(
   });
 }
 
-function createUserProject(): UserProject {
+function createUserProject(state: string): UserProject {
   const now = currentTimestamp();
 
   return {
     projectId: createId("project"),
+    state,
     name: "",
     location: "",
     notes: "",
@@ -330,7 +351,7 @@ function updateProject(
   };
 }
 
-function parseProjectWorkspaceState(value: unknown, schemaVersion: 1 | 2): ProjectWorkspaceState | null {
+function parseProjectWorkspaceState(value: unknown, schemaVersion: 1 | 2 | 3): ProjectWorkspaceState | null {
   if (!isRecord(value) || value.schemaVersion !== schemaVersion) {
     return null;
   }
@@ -340,7 +361,7 @@ function parseProjectWorkspaceState(value: unknown, schemaVersion: 1 | 2): Proje
   }
 
   const projects = value.projects
-    .map(parseUserProject)
+    .map((project) => parseUserProject(project, schemaVersion))
     .filter((project): project is UserProject => project !== null);
 
   const activeProjectId = typeof value.activeProjectId === "string" ? value.activeProjectId : null;
@@ -355,13 +376,14 @@ function parseProjectWorkspaceState(value: unknown, schemaVersion: 1 | 2): Proje
   };
 }
 
-function parseUserProject(value: unknown): UserProject | null {
+function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3): UserProject | null {
   if (!isRecord(value) || typeof value.projectId !== "string") {
     return null;
   }
 
   return {
     projectId: value.projectId,
+    state: schemaVersion === 3 ? (stringValue(value.state) || "CO") : "CO",
     name: stringValue(value.name),
     location: stringValue(value.location),
     notes: stringValue(value.notes),
@@ -369,13 +391,13 @@ function parseUserProject(value: unknown): UserProject | null {
     updatedAt: stringValue(value.updatedAt) || currentTimestamp(),
     lineItems: Array.isArray(value.lineItems)
       ? value.lineItems
-          .map(parseProjectLineItem)
+          .map((lineItem) => parseProjectLineItem(lineItem, schemaVersion))
           .filter((lineItem): lineItem is ProjectLineItem => lineItem !== null)
       : []
   };
 }
 
-function parseProjectLineItem(value: unknown): ProjectLineItem | null {
+function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3): ProjectLineItem | null {
   if (!isRecord(value) || typeof value.lineItemId !== "string") {
     return null;
   }
@@ -390,6 +412,11 @@ function parseProjectLineItem(value: unknown): ProjectLineItem | null {
 
   return {
     lineItemId: value.lineItemId,
+    state: schemaVersion === 3 ? (stringValue(value.state) || "CO") : "CO",
+    agencyId: schemaVersion === 3 ? (stringValue(value.agencyId) || "co_cdot") : "co_cdot",
+    agencyItemId: schemaVersion === 3
+      ? stringValue(value.agencyItemId)
+      : legacyColoradoAgencyItemId(stringValue(value.itemCode)),
     itemCode: stringValue(value.itemCode),
     description: stringValue(value.description),
     unit: stringValue(value.unit),
@@ -504,4 +531,8 @@ function createId(prefix: string): string {
   }
 
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function legacyColoradoAgencyItemId(itemCode: string): string {
+  return itemCode ? `co_cdot_${itemCode.toLowerCase()}` : "";
 }
