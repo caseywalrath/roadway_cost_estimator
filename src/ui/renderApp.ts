@@ -112,25 +112,24 @@ export function renderApp(
     root.innerHTML = `
       <main class="app-shell">
         <header class="app-header">
-          <div>
-            <div class="app-brand">
-              <img class="app-logo" src="brand/FHU-logo.png" alt="FHU — Felsburg Holt & Ullevig" />
-              <span class="app-brand__divider" aria-hidden="true"></span>
-              <h1>${escapeHtml(data.manifest.productTitle)}</h1>
-            </div>
+          <div class="app-brand">
+            <img class="app-logo" src="brand/FHU-logo.png" alt="FHU — Felsburg Holt & Ullevig" />
+            <span class="app-brand__divider" aria-hidden="true"></span>
+            <h1>${escapeHtml(data.manifest.productTitle)}</h1>
+          </div>
+          <div class="app-header-controls">
             <label class="state-switcher">
-              <span>State</span>
-              <select id="state-selector">
+              <select id="state-selector" aria-label="Select state">
                 ${data.manifest.states.map((state) => `
                   <option value="${state.code}" ${state.code === data.stateConfig.code ? "selected" : ""}>${escapeHtml(state.name)}</option>
                 `).join("")}
               </select>
             </label>
+            <nav class="app-view-tabs" aria-label="Primary views">
+              ${renderViewTab("explorer", "Explorer", activeView)}
+              ${renderViewTab("project", "Project", activeView)}
+            </nav>
           </div>
-          <nav class="app-view-tabs" aria-label="Primary views">
-            ${renderViewTab("explorer", "Explorer", activeView)}
-            ${renderViewTab("project", "Project", activeView)}
-          </nav>
         </header>
 
         ${projectStorageWarning ? `<p class="storage-warning">${escapeHtml(projectStorageWarning)}</p>` : ""}
