@@ -1380,31 +1380,6 @@ th {
   flex: 0 0 auto;
 }
 
-.modal-icon-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  border: 1px solid #c9d6e1;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #263544;
-  font-size: 1.35rem;
-  font-weight: 900;
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(24, 37, 51, 0.14);
-  z-index: 2;
-}
-
-.modal-icon-close:hover,
-.modal-icon-close:focus-visible {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 .bidder-modal__summary {
   display: flex;
   flex-wrap: wrap;
@@ -1422,14 +1397,80 @@ th {
   min-width: 760px;
 }
 
-.bid-tab-projects-panel {
-  display: grid;
-  gap: 12px;
-}
-
 .bid-tab-project-list {
   display: grid;
   gap: 8px;
+}
+
+.source-review-launcher {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 10;
+  min-height: 38px;
+  border: 1px solid #aeb8c2;
+  border-radius: 7px;
+  background: #dfe4e8;
+  color: #2d3945;
+  padding: 8px 14px;
+  box-shadow: 0 5px 16px rgba(24, 37, 51, 0.16);
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.source-review-launcher:hover,
+.source-review-launcher:focus-visible {
+  border-color: #7f8d99;
+  background: #cfd6dc;
+  color: #17202b;
+}
+
+.source-review-launcher:focus-visible {
+  outline: 3px solid rgba(39, 95, 143, 0.28);
+  outline-offset: 2px;
+}
+
+.source-review-view {
+  display: grid;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.source-review-heading,
+.source-review-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.source-review-heading h2,
+.source-review-detail-heading h2 {
+  margin: 0;
+  color: var(--heading);
+  line-height: 1.2;
+}
+
+.source-review-heading .muted,
+.source-review-detail-heading .query-line {
+  margin: 6px 0 0;
+}
+
+.source-review-toolbar {
+  flex-wrap: wrap;
+}
+
+.source-review-table-scroll {
+  max-height: calc(100vh - 290px);
+  min-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
 }
 
 .bid-tab-project-row {
@@ -1474,19 +1515,6 @@ th {
   min-height: 36px;
   padding: 6px 12px;
   white-space: nowrap;
-}
-
-.bid-tab-modal {
-  width: min(1240px, 100%);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.bid-tab-modal .bidder-detail-scroll {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
 }
 
 .bid-tab-detail-table {
@@ -1606,6 +1634,25 @@ tbody tr:last-child td {
 
   .bid-tab-project-row {
     grid-template-columns: 1fr;
+  }
+
+  .source-review-launcher {
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .source-review-heading {
+    flex-direction: column;
+  }
+
+  .source-review-heading > .secondary-button,
+  .source-review-toolbar .secondary-button {
+    width: 100%;
+  }
+
+  .source-review-table-scroll {
+    max-height: calc(100vh - 330px);
+    min-height: 280px;
   }
 
   .summary-heading-row {

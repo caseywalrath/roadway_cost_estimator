@@ -27,7 +27,7 @@ The schema-v2 loader reads the manifest, loads only the selected state's core ta
 3. `src/data/loadData.ts` loads one state partition and the common FHWA inflation index.
 4. `src/data/schema.ts` defines the shared contract, project-number, agency-item, bid, item-price, observation, taxonomy, and manifest interfaces.
 5. `src/matching/buildEvidenceResult.ts` groups generalized observations by contract item and filters exact `agencyItemId` evidence.
-6. `src/ui` renders manifest-provided labels, capabilities, columns, source filters, details, and exports.
+6. `src/ui` renders manifest-provided labels, capabilities, columns, source filters, details, and exports. Source Review is a state-specific auxiliary view with list and full-width project-detail states.
 7. `src/projects/projectWorkspace.ts` loads/migrates local Project schema v3 and binds every Project and line item to a state and agency item.
 
 ## Data Model
@@ -84,6 +84,7 @@ Awarded prices are promoted only when the printed awarded vendor resolves to exa
 - Matching Projects uses a stable core: Contract/Project, Location, Let Date, Awarded Vendor, Bid Count, Quantity, Unit, Description, Awarded Price, Average Price, and Source.
 - Colorado adds District and Engineer Estimate.
 - Iowa hides unsupported District and Engineer Estimate controls/columns.
+- Explorer exposes Source Review through a neutral bottom-right launcher. The dedicated view keeps long source-project lists and wide bid-tab details out of the primary evidence workflow and never stacks a project-detail modal over a source list.
 - Contract CSV export includes state, agency item identity, call order, status, route, project numbers, contract period, DBE goal, bid metadata, and source identity.
 - Bid item prices load on demand.
 
