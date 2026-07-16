@@ -114,7 +114,7 @@ export function renderApp(
         <header class="app-header">
           <div>
             <div class="app-brand">
-              <img class="app-logo" src="brand/fhu-logo.svg" alt="FHU — Felsburg Holt & Ullevig" />
+              <img class="app-logo" src="brand/FHU-logo.png" alt="FHU — Felsburg Holt & Ullevig" />
               <span class="app-brand__divider" aria-hidden="true"></span>
               <h1>${escapeHtml(data.manifest.productTitle)}</h1>
             </div>
