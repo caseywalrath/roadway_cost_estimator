@@ -9,9 +9,10 @@ import re
 import statistics
 import urllib.request
 from collections import defaultdict
-from datetime import datetime
+from datetime import date, datetime
 from html import unescape
 from pathlib import Path
+from urllib.parse import urljoin
 
 import pdfplumber
 
@@ -21,9 +22,8 @@ ITEM_INFO_URL = "https://iowadot.gov/consultants-contractors/contracts/general-l
 BID_TABS_URL = "https://iowadot.gov/consultants-contractors/contracts/historical-completed-lettings/bid-tabulations"
 ERL_URL = "https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm"
 ITEM_CATALOG_SOURCE_ID = "ia_idot_item_catalog_2026_07_06"
-BID_TABS_SOURCE_ID = "ia_idot_bid_tabs_2026_06_16"
-LETTING_ID = "ia_idot_2026_06_16"
 AGENCY_ID = "ia_idot"
+CONFIRMED_AWARD_STATUSES = {"AWARDED", "SIGNED CONTRACT"}
 
 DIVISION_TITLES = {
     "21": "Earthwork, Subgrades, and Subbases",
@@ -71,6 +71,22 @@ def slug(value: str) -> str:
     return re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", value.lower())).strip("_")
 
 
+def date_slug(value: str) -> str:
+    return value.replace("-", "_")
+
+
+def compact_date(value: str) -> str:
+    return value.replace("-", "")
+
+
+def bid_tabs_source_id(letting_date: str) -> str:
+    return f"ia_idot_bid_tabs_{date_slug(letting_date)}"
+
+
+def letting_id(letting_date: str) -> str:
+    return f"ia_idot_{date_slug(letting_date)}"
+
+
 def normalize_description(value: str) -> str:
     return clean(re.sub(r"[^a-z0-9]+", " ", value.lower()))
 
@@ -99,12 +115,23 @@ def parse_date(value: str) -> str:
     return datetime.strptime(clean(value), "%B %d, %Y").date().isoformat()
 
 
+def parse_archive_date(value: str) -> str:
+    match = re.search(r"\b(\d{1,2})/(\d{1,2})/(\d{2,4})\b", value)
+    if not match:
+        raise ValueError(f"Could not parse letting date from archive label: {value}")
+    month, day, year = match.groups()
+    full_year = int(year)
+    if full_year < 100:
+        full_year += 2000
+    return date(full_year, int(month), int(day)).isoformat()
+
+
 def item_id(code: str) -> str:
     return f"ia_idot_{code.replace('-', '_')}"
 
 
-def contract_id(official_id: str) -> str:
-    return f"ia_idot_20260616_{slug(official_id)}"
+def contract_id(official_id: str, letting_date: str) -> str:
+    return f"ia_idot_{compact_date(letting_date)}_{slug(official_id)}"
 
 
 def parse_item_master(path: Path, expected_count: int = 3727) -> list[dict[str, str]]:
@@ -171,14 +198,110 @@ def load_erl_section_titles(raw_dir: Path) -> dict[str, str]:
     return titles
 
 
+def parse_bid_tab_archive_page(html: str, page_url: str) -> list[dict[str, str]]:
+    entries: list[dict[str, str]] = []
+    link_pattern = re.compile(r"<a\b[^>]*href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>", re.IGNORECASE | re.DOTALL)
+    for match in link_pattern.finditer(html):
+        href = unescape(match.group(1))
+        label = clean(unescape(re.sub(r"<[^>]+>", " ", match.group(2))))
+        if "Bid Tab" not in label or ".pdf" not in label.lower():
+            continue
+        letting_date = parse_archive_date(label)
+        entries.append({
+            "letting_date": letting_date,
+            "label": label,
+            "url": urljoin(page_url, href),
+        })
+    return entries
+
+
+def discover_bid_tab_archive(raw_dir: Path, refresh: bool = False) -> list[dict[str, str]]:
+    archive_dir = raw_dir / "bid_tabs"
+    page_dir = archive_dir / "archive_pages"
+    page_dir.mkdir(parents=True, exist_ok=True)
+    page_urls = [BID_TABS_URL, f"{BID_TABS_URL}?page=1", f"{BID_TABS_URL}?page=2"]
+    entries: list[dict[str, str]] = []
+    for index, page_url in enumerate(page_urls, start=1):
+        path = page_dir / f"bid_tabulations_page_{index}.html"
+        if refresh and path.exists():
+            path.unlink()
+        download(page_url, path)
+        entries.extend(parse_bid_tab_archive_page(path.read_text(encoding="utf-8", errors="replace"), page_url))
+
+    deduped: dict[str, dict[str, str]] = {}
+    for entry in entries:
+        deduped.setdefault(entry["url"], entry)
+
+    dated_counts: defaultdict[str, int] = defaultdict(int)
+    archive_entries = []
+    for entry in sorted(deduped.values(), key=lambda row: row["letting_date"], reverse=True):
+        dated_counts[entry["letting_date"]] += 1
+        suffix = f"_{dated_counts[entry['letting_date']]}" if dated_counts[entry["letting_date"]] > 1 else ""
+        file_name = f"bid_tabs_{entry['letting_date'].replace('-', '_')}{suffix}.pdf"
+        archive_entries.append({
+            **entry,
+            "source_id": bid_tabs_source_id(entry["letting_date"]),
+            "letting_id": letting_id(entry["letting_date"]),
+            "file_name": file_name,
+            "raw_path": str(archive_dir / file_name),
+        })
+    return archive_entries
+
+
+def download_bid_tab_archive(raw_dir: Path, refresh_index: bool = False) -> list[dict[str, str]]:
+    entries = discover_bid_tab_archive(raw_dir, refresh=refresh_index)
+    seen_lettings: set[str] = set()
+    for entry in entries:
+        if entry["letting_date"] in seen_lettings:
+            entry["duplicate_letting_date"] = "true"
+        else:
+            entry["duplicate_letting_date"] = "false"
+            seen_lettings.add(entry["letting_date"])
+        pdf_path = Path(entry["raw_path"])
+        download(entry["url"], pdf_path)
+        entry["sha256"] = sha256(pdf_path)
+        entry["file_size_bytes"] = str(pdf_path.stat().st_size)
+    return entries
+
+
 def normalized_vendor_tokens(value: str) -> tuple[str, ...]:
-    expanded = value.upper().replace("CONST.", "CONSTRUCTION").replace("CONST ", "CONSTRUCTION ")
+    expanded = value.upper()
+    expanded = re.sub(r"\b([A-Z])\.([A-Z])\.", r"\1\2", expanded)
+    expanded = re.sub(r"\bCONSTR?\.?\b", "CONSTRUCTION", expanded)
+    expanded = re.sub(r"\bEXCAV\.?\b", "EXCAVATING", expanded)
+    expanded = re.sub(r"\bSUBSID\.?\b", "SUBSIDIARY", expanded)
     tokens = re.findall(r"[A-Z0-9]+", expanded)
-    ignored = {"INC", "INCORPORATED", "LLC", "LC", "L", "C", "CO", "COMPANY", "CORP", "CORPORATION", "THE", "DBA", "D", "B", "A", "AKA"}
+    ignored = {"INC", "INCORPORATED", "LLC", "LC", "L", "C", "CO", "COMPANY", "CORP", "CORPORATION", "THE", "DBA", "D", "B", "A", "AKA", "JV", "JOINT", "VENTURE"}
     return tuple(sorted(token for token in tokens if token not in ignored))
 
 
-def parse_contract_projects(text: str, official_contract_id: str) -> list[dict[str, str]]:
+def resolve_awarded_bids(awarded_vendor: str, bids: list[dict[str, object]]) -> list[dict[str, object]]:
+    awarded_tokens = normalized_vendor_tokens(awarded_vendor)
+    exact = [bid for bid in bids if normalized_vendor_tokens(str(bid["bidder_name"])) == awarded_tokens]
+    if exact:
+        return exact
+    awarded_set = set(awarded_tokens)
+    return [
+        bid for bid in bids
+        if awarded_set and awarded_set.issubset(set(normalized_vendor_tokens(str(bid["bidder_name"]))))
+    ]
+
+
+def clean_awarded_vendor(value: str) -> str:
+    lines = [clean(line) for line in value.splitlines() if clean(line)]
+    if len(lines) <= 1:
+        return clean(value)
+    kept = [lines[0]]
+    vendor_markers = {"INC", "LLC", "LC", "CO", "CORP", "JV", "CONSTR", "CONSTRUCTION", "COMPANY", "DBA"}
+    for line in lines[1:]:
+        line_tokens = set(re.findall(r"[A-Z]+", line.replace("D/B/A", "DBA")))
+        if re.fullmatch(r"[A-Z ,.'-]+", line) and not (line_tokens & vendor_markers):
+            break
+        kept.append(line)
+    return clean(" ".join(kept))
+
+
+def parse_contract_projects(text: str, official_contract_id: str, letting_date: str = "2026-06-16") -> list[dict[str, str]]:
     pattern = re.compile(
         r"Project:\s*(\S+)\s+WorkType:\s*(.*?)\n"
         r"County:\s*(.*?)\s+Prj Awd Amt:\s*\$([\d,]+\.\d{2})\n"
@@ -186,10 +309,11 @@ def parse_contract_projects(text: str, official_contract_id: str) -> list[dict[s
         re.DOTALL,
     )
     projects = []
+    internal_contract_id = contract_id(official_contract_id, letting_date)
     for index, match in enumerate(pattern.finditer(text), start=1):
         projects.append({
-            "contract_project_id": f"{contract_id(official_contract_id)}_project_{index}",
-            "contract_id": contract_id(official_contract_id),
+            "contract_project_id": f"{internal_contract_id}_project_{index}",
+            "contract_id": internal_contract_id,
             "project_number": clean(match.group(1)),
             "project_name": clean(match.group(6)),
             "work_type": clean(match.group(2)),
@@ -215,7 +339,53 @@ def group_words_by_top(words: list[dict[str, object]], tolerance: float = 2.0) -
     return rows
 
 
-def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tuple[list[dict[str, object]], list[dict[str, object]], list[dict[str, object]], list[dict[str, object]], list[dict[str, object]]]:
+def price_text_in_range(
+    all_words: list[dict[str, object]],
+    row_words: list[dict[str, object]],
+    value_range: tuple[int, int],
+    row_top: float,
+    row_bottom: float,
+) -> str | None:
+    value_word = next(
+        (
+            word for word in row_words
+            if value_range[0] <= float(word["x0"]) < value_range[1]
+            and re.fullmatch(r"[\d,]+\.\d+", str(word["text"]))
+        ),
+        None,
+    )
+    if value_word:
+        return str(value_word["text"])
+    partial_word = next(
+        (
+            word for word in row_words
+            if value_range[0] <= float(word["x0"]) < value_range[1]
+            and re.fullmatch(r"[\d,]+\.", str(word["text"]))
+        ),
+        None,
+    )
+    if not partial_word:
+        return None
+    continuation = next(
+        (
+            word for word in all_words
+            if row_top < float(word["top"]) < row_bottom
+            and float(partial_word["x0"]) - 2 <= float(word["x0"]) <= float(partial_word["x1"]) + 2
+            and re.fullmatch(r"\d{2,5}", str(word["text"]))
+        ),
+        None,
+    )
+    if not continuation:
+        return None
+    return f"{partial_word['text']}{continuation['text']}"
+
+
+def parse_bid_tabs(
+    path: Path,
+    catalog_by_code: dict[str, dict[str, str]],
+    source_id: str | None = None,
+    default_letting_date: str | None = None,
+) -> tuple[list[dict[str, object]], list[dict[str, object]], list[dict[str, object]], list[dict[str, object]], list[dict[str, object]]]:
     contracts_by_official: dict[str, dict[str, object]] = {}
     projects_by_id: dict[str, dict[str, object]] = {}
     bids_by_contract_rank: dict[tuple[str, int], dict[str, object]] = {}
@@ -229,14 +399,19 @@ def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tu
             if not official_match:
                 continue
             official_id = official_match.group(1)
-            internal_contract_id = contract_id(official_id)
+            letting_match = re.search(r"Letting Date:\s*([A-Za-z]+\s+\d{1,2},\s+\d{4})", text)
+            page_letting_date = parse_date(letting_match.group(1)) if letting_match else default_letting_date
+            if not page_letting_date:
+                raise ValueError(f"{path.name}: could not parse letting date for contract {official_id}")
+            page_source_id = source_id or bid_tabs_source_id(page_letting_date)
+            internal_contract_id = contract_id(official_id, page_letting_date)
             lines = page_lines(page)
 
             if "Project(s) and Vendor Ranking" in text:
                 contract = contracts_by_official.setdefault(official_id, {
                     "contract_id": internal_contract_id,
-                    "letting_id": LETTING_ID,
-                    "source_id": BID_TABS_SOURCE_ID,
+                    "letting_id": letting_id(page_letting_date),
+                    "source_id": page_source_id,
                     "state": "IA",
                     "agency_id": AGENCY_ID,
                     "official_contract_id": official_id,
@@ -262,7 +437,7 @@ def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tu
                 status = re.search(r"Letting Status:\s*([A-Z ]+?)\s+Awarded Vendor:\s*(.*?)\nContract Period:", text, re.DOTALL)
                 if status:
                     contract["letting_status"] = clean(status.group(1))
-                    contract["awarded_vendor"] = clean(status.group(2))
+                    contract["awarded_vendor"] = clean_awarded_vendor(status.group(2))
                 period = re.search(r"Contract Period:\s*(.*?)\n(?:Project Information:|Percent Of Low)", text, re.DOTALL)
                 if period:
                     contract["contract_period"] = clean(period.group(1))
@@ -270,7 +445,7 @@ def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tu
                 if dbe:
                     contract["dbe_goal"] = dbe.group(1)
 
-                for project in parse_contract_projects(text, official_id):
+                for project in parse_contract_projects(text, official_id, page_letting_date):
                     projects_by_id[str(project["contract_project_id"])] = project
                     if not contract["work_type"]:
                         contract["work_type"] = project["work_type"]
@@ -280,18 +455,34 @@ def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tu
                     contract["awarded_amount"] = format_decimal(current_award + float(project["project_award_amount"]), 2)
 
                 rank_pattern = re.compile(r"^(\d+)\s+(\S+)\s+(.+?)\s+\$([\d,]+\.\d{2})\s+([\d.]+)%$")
-                for line in lines:
+                line_index = 0
+                while line_index < len(lines):
+                    line = lines[line_index]
                     rank = rank_pattern.match(line)
                     if not rank:
+                        line_index += 1
                         continue
+                    continuation: list[str] = []
+                    next_index = line_index + 1
+                    while next_index < len(lines):
+                        next_line = lines[next_index]
+                        if rank_pattern.match(next_line):
+                            break
+                        if "$" in next_line or ":" in next_line or next_line.startswith(("Percent ", "Rank ", "Project(")):
+                            break
+                        if re.fullmatch(r"[A-Z0-9&.,' -]{3,}", next_line):
+                            continuation.append(next_line)
+                            next_index += 1
+                            continue
+                        break
                     rank_number = int(rank.group(1))
                     bid_id = f"{internal_contract_id}_bid_{rank_number}"
                     bids_by_contract_rank[(internal_contract_id, rank_number)] = {
                         "bid_id": bid_id,
                         "contract_id": internal_contract_id,
-                        "source_id": BID_TABS_SOURCE_ID,
+                        "source_id": page_source_id,
                         "source_vendor_id": rank.group(2),
-                        "bidder_name": clean(rank.group(3)),
+                        "bidder_name": clean(" ".join([rank.group(3), *continuation])),
                         "bid_rank": str(rank_number),
                         "bid_total": format_decimal(parse_money(rank.group(4)), 2),
                         "percent_of_low": rank.group(5),
@@ -299,6 +490,7 @@ def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tu
                         "is_awarded": "false",
                         "source_page": str(page_number),
                     }
+                    line_index = next_index
                 continue
 
             if "Tabulation of Construction and Material Bids" not in text:
@@ -307,7 +499,7 @@ def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tu
             words = page.extract_words(use_text_flow=False, keep_blank_chars=False)
             bidder_header_words = [
                 word for word in words
-                if 165 <= float(word["top"]) <= 205 and re.fullmatch(r"\(\d+\)", str(word["text"]))
+                if 150 <= float(word["top"]) <= 235 and re.fullmatch(r"\(\d+\)", str(word["text"]))
             ]
             bidder_ranks = [int(str(word["text"])[1:-1]) for word in sorted(bidder_header_words, key=lambda word: float(word["x0"]))]
             if not bidder_ranks:
@@ -358,7 +550,7 @@ def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tu
                     alternate_member = member_match.group(1) if member_match else ""
 
                 row_words = [word for word in words if abs(float(word["top"]) - top) <= 2]
-                quantity_word = next((word for word in row_words if 195 <= float(word["x0"]) < 260 and re.fullmatch(r"\(?[\d,]+(?:\.\d+)?\)?", str(word["text"]))), None)
+                quantity_word = next((word for word in row_words if 185 <= float(word["x0"]) < 260 and re.fullmatch(r"\(?[\d,]+(?:\.\d+)?\)?", str(word["text"]))), None)
                 unit_word = next((word for word in row_words if 255 <= float(word["x0"]) < 295 and re.fullmatch(r"[A-Z]+", str(word["text"]))), None)
                 if not quantity_word or not unit_word:
                     continue
@@ -376,7 +568,7 @@ def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tu
                 item = items_by_key.setdefault(key, {
                     "contract_item_id": contract_item_id,
                     "contract_id": internal_contract_id,
-                    "source_id": BID_TABS_SOURCE_ID,
+                    "source_id": page_source_id,
                     "section_number": section_number,
                     "section_title": section_title,
                     "line_number": str(line_word["text"]),
@@ -401,10 +593,10 @@ def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tu
                 slots = [((290, 370), (370, 435)), ((430, 515), (515, 580)), ((575, 660), (660, 730))]
                 for slot_index, rank_number in enumerate(bidder_ranks[:3]):
                     unit_range, extended_range = slots[slot_index]
-                    unit_price_word = next((word for word in row_words if unit_range[0] <= float(word["x0"]) < unit_range[1] and re.fullmatch(r"[\d,]+\.\d+", str(word["text"]))), None)
-                    extended_word = next((word for word in row_words if extended_range[0] <= float(word["x0"]) < extended_range[1] and re.fullmatch(r"[\d,]+\.\d+", str(word["text"]))), None)
+                    unit_price_text = price_text_in_range(words, row_words, unit_range, top, next_top)
+                    extended_text = price_text_in_range(words, row_words, extended_range, top, next_top)
                     bid = bids_by_contract_rank.get((internal_contract_id, rank_number))
-                    if not unit_price_word or not extended_word or not bid:
+                    if not unit_price_text or not extended_text or not bid:
                         continue
                     price_key = (contract_item_id, str(bid["bid_id"]))
                     prices_by_key[price_key] = {
@@ -412,9 +604,9 @@ def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tu
                         "contract_item_id": contract_item_id,
                         "bid_id": bid["bid_id"],
                         "contract_id": internal_contract_id,
-                        "source_id": BID_TABS_SOURCE_ID,
-                        "unit_price": format_decimal(parse_number(str(unit_price_word["text"])), 5),
-                        "extended_price": format_decimal(parse_number(str(extended_word["text"])), 2),
+                        "source_id": page_source_id,
+                        "unit_price": format_decimal(parse_number(unit_price_text), 5),
+                        "extended_price": format_decimal(parse_number(extended_text), 2),
                         "source_page": str(page_number),
                         "source_locator": f"page:{page_number}:rank:{rank_number}:line:{line_word['text']}",
                     }
@@ -422,12 +614,12 @@ def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tu
     for official_id, contract in contracts_by_official.items():
         bids = [bid for (cid, _), bid in bids_by_contract_rank.items() if cid == contract["contract_id"]]
         contract["bid_count"] = str(len(bids))
-        awarded_tokens = normalized_vendor_tokens(str(contract["awarded_vendor"]))
-        matches = [bid for bid in bids if normalized_vendor_tokens(str(bid["bidder_name"])) == awarded_tokens]
-        if str(contract["letting_status"]).upper() == "AWARDED" and len(matches) != 1:
+        matches = resolve_awarded_bids(str(contract["awarded_vendor"]), bids)
+        if str(contract["letting_status"]).upper() in CONFIRMED_AWARD_STATUSES and len(matches) != 1:
             raise ValueError(f"Contract {official_id} awarded vendor matched {len(matches)} bidders: {contract['awarded_vendor']}")
         for bid in matches:
             bid["is_awarded"] = "true"
+            contract["awarded_amount"] = bid["bid_total"]
 
     return (
         list(contracts_by_official.values()),
@@ -438,14 +630,32 @@ def parse_bid_tabs(path: Path, catalog_by_code: dict[str, dict[str, str]]) -> tu
     )
 
 
+def read_pdf_letting_date(path: Path) -> str:
+    with pdfplumber.open(path) as pdf:
+        for page in pdf.pages[:5]:
+            text = page.extract_text(x_tolerance=2, y_tolerance=3) or ""
+            match = re.search(r"Letting Date:\s*([A-Za-z]+\s+\d{1,2},\s+\d{4})", text)
+            if match:
+                return parse_date(match.group(1))
+    raise ValueError(f"{path.name}: could not find a letting date")
+
+
+def sort_rows(rows: list[dict[str, object]], *keys: str) -> list[dict[str, object]]:
+    return sorted(rows, key=lambda row: tuple(str(row.get(key, "")) for key in keys))
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Import the Iowa DOT item catalog and a bid-tab letting into schema-v2 CSVs.")
+    parser = argparse.ArgumentParser(description="Import the Iowa DOT item catalog and bid-tab lettings into schema-v2 CSVs.")
     parser.add_argument("--item-pdf", required=True, type=Path)
-    parser.add_argument("--bid-tabs-pdf", required=True, type=Path)
+    parser.add_argument("--bid-tabs-pdf", action="append", type=Path, default=[])
+    parser.add_argument("--all-bid-tabs", action="store_true", help="Download and parse every PDF listed in the IDOT bid-tab archive.")
+    parser.add_argument("--refresh-archive-index", action="store_true", help="Refresh cached archive-list HTML before discovering PDFs.")
     parser.add_argument("--raw-dir", type=Path, default=Path("data/raw/ia"))
     parser.add_argument("--staging-dir", type=Path, default=Path("data/staging/ia"))
     parser.add_argument("--output-dir", type=Path, default=Path("public/data/states/ia"))
     args = parser.parse_args()
+    if not args.all_bid_tabs and not args.bid_tabs_pdf:
+        raise SystemExit("Provide --bid-tabs-pdf at least once or use --all-bid-tabs.")
 
     item_master_path = args.raw_dir / "ItemMaster_2026_07_06.txt"
     download(ITEM_MASTER_URL, item_master_path)
@@ -465,7 +675,58 @@ def main() -> None:
         catalog_by_code[master["item_code"]] = row
 
     section_titles = load_erl_section_titles(args.raw_dir)
-    contracts, projects, bids, contract_items, bid_item_prices = parse_bid_tabs(args.bid_tabs_pdf, catalog_by_code)
+
+    archive_inventory: list[dict[str, str]] = []
+    bid_tab_inputs: list[dict[str, str]] = []
+    if args.all_bid_tabs:
+        archive_inventory = download_bid_tab_archive(args.raw_dir, refresh_index=args.refresh_archive_index)
+        seen_dates: set[str] = set()
+        for entry in archive_inventory:
+            if entry["letting_date"] in seen_dates:
+                entry["parse_status"] = "skipped_duplicate_letting_date"
+                continue
+            seen_dates.add(entry["letting_date"])
+            entry["parse_status"] = "selected"
+            bid_tab_inputs.append(entry)
+
+    for pdf_path in args.bid_tabs_pdf:
+        letting_date = read_pdf_letting_date(pdf_path)
+        bid_tab_inputs.append({
+            "letting_date": letting_date,
+            "label": f"Iowa DOT {letting_date} Bid Tabulations",
+            "url": BID_TABS_URL,
+            "source_id": bid_tabs_source_id(letting_date),
+            "letting_id": letting_id(letting_date),
+            "file_name": pdf_path.name,
+            "raw_path": str(pdf_path),
+            "sha256": sha256(pdf_path),
+            "file_size_bytes": str(pdf_path.stat().st_size),
+            "duplicate_letting_date": "false",
+            "parse_status": "selected",
+        })
+
+    unique_inputs: dict[str, dict[str, str]] = {}
+    for entry in bid_tab_inputs:
+        unique_inputs.setdefault(entry["letting_date"], entry)
+    bid_tab_inputs = sorted(unique_inputs.values(), key=lambda row: row["letting_date"], reverse=True)
+
+    contracts: list[dict[str, object]] = []
+    projects: list[dict[str, object]] = []
+    bids: list[dict[str, object]] = []
+    contract_items: list[dict[str, object]] = []
+    bid_item_prices: list[dict[str, object]] = []
+    for entry in bid_tab_inputs:
+        parsed = parse_bid_tabs(
+            Path(entry["raw_path"]),
+            catalog_by_code,
+            source_id=entry["source_id"],
+            default_letting_date=entry["letting_date"],
+        )
+        contracts.extend(parsed[0])
+        projects.extend(parsed[1])
+        bids.extend(parsed[2])
+        contract_items.extend(parsed[3])
+        bid_item_prices.extend(parsed[4])
 
     agency_items = []
     agency_versions = []
@@ -526,6 +787,8 @@ def main() -> None:
         })
 
     bid_by_id = {str(row["bid_id"]): row for row in bids}
+    contracts_by_id = {str(row["contract_id"]): row for row in contracts}
+    letting_dates_by_id = {entry["letting_id"]: entry["letting_date"] for entry in bid_tab_inputs}
     prices_by_item: dict[str, list[dict[str, object]]] = defaultdict(list)
     for price in bid_item_prices:
         prices_by_item[str(price["contract_item_id"])].append(price)
@@ -536,13 +799,14 @@ def main() -> None:
             continue
         prices = prices_by_item[str(item["contract_item_id"])]
         awarded_prices = [price for price in prices if str(bid_by_id[str(price["bid_id"])]["is_awarded"]).lower() == "true"]
-        date_basis = "2026-06-16"
+        contract = contracts_by_id[str(item["contract_id"])]
+        date_basis = letting_dates_by_id[str(contract["letting_id"])]
         if len(awarded_prices) == 1:
             price = awarded_prices[0]
             observations.append({
                 "observation_id": f"{item['contract_item_id']}_awarded",
                 "contract_id": item["contract_id"],
-                "source_id": BID_TABS_SOURCE_ID,
+                "source_id": item["source_id"],
                 "agency_item_id": agency_item_id,
                 "agency_item_code": item["source_item_code"],
                 "description_raw": item["description_raw"],
@@ -564,7 +828,7 @@ def main() -> None:
             observations.append({
                 "observation_id": f"{item['contract_item_id']}_average",
                 "contract_id": item["contract_id"],
-                "source_id": BID_TABS_SOURCE_ID,
+                "source_id": item["source_id"],
                 "agency_item_id": agency_item_id,
                 "agency_item_code": item["source_item_code"],
                 "description_raw": item["description_raw"],
@@ -598,31 +862,35 @@ def main() -> None:
             "parser_version": "2.0.0",
             "notes": "Item master text is primary; PDF adds SPEC code and validates catalog coverage.",
         },
-        {
-            "source_id": BID_TABS_SOURCE_ID,
+    ]
+    for entry in bid_tab_inputs:
+        sources.append({
+            "source_id": entry["source_id"],
             "source_type": "bid_tab",
             "agency_id": AGENCY_ID,
             "agency_name": "Iowa DOT",
             "state": "IA",
-            "source_label": "Iowa DOT 2026-06-16 Bid Tabulations",
-            "source_date": "2026-06-16",
-            "data_year": "2026",
-            "source_url": BID_TABS_URL,
-            "source_file_name": args.bid_tabs_pdf.name,
-            "sha256": sha256(args.bid_tabs_pdf),
+            "source_label": f"Iowa DOT {entry['letting_date']} Bid Tabulations",
+            "source_date": entry["letting_date"],
+            "data_year": entry["letting_date"][:4],
+            "source_url": entry["url"],
+            "source_file_name": entry["file_name"],
+            "sha256": entry["sha256"],
             "parser_name": "import_iowa_data.py",
-            "parser_version": "2.0.0",
-            "notes": "Pilot letting with contract, project, bidder, item, alternate, and item-price provenance.",
-        },
+            "parser_version": "2.1.0",
+            "notes": "Parsed from IDOT historical bid-tab PDF archive with contract, project, bidder, item, alternate, and item-price provenance.",
+        })
+    lettings = [
+        {
+            "letting_id": entry["letting_id"],
+            "source_id": entry["source_id"],
+            "state": "IA",
+            "agency_id": AGENCY_ID,
+            "letting_date": entry["letting_date"],
+            "letting_label": f"Iowa DOT {entry['letting_date']} Letting",
+        }
+        for entry in bid_tab_inputs
     ]
-    lettings = [{
-        "letting_id": LETTING_ID,
-        "source_id": BID_TABS_SOURCE_ID,
-        "state": "IA",
-        "agency_id": AGENCY_ID,
-        "letting_date": "2026-06-16",
-        "letting_label": "Iowa DOT June 16, 2026 Letting",
-    }]
 
     field_map = {
         "sources.csv": ["source_id", "source_type", "agency_id", "agency_name", "state", "source_label", "source_date", "data_year", "source_url", "source_file_name", "sha256", "parser_name", "parser_version", "notes"],
@@ -639,18 +907,18 @@ def main() -> None:
         "item_observations.csv": ["observation_id", "contract_id", "source_id", "agency_item_id", "agency_item_code", "description_raw", "description_normalized", "unit_raw", "unit_normalized", "quantity", "unit_price", "extended_price", "discipline", "price_type", "date_basis", "derivation_method", "derivation_input_count"],
     }
     data_map = {
-        "sources.csv": sources,
-        "lettings.csv": lettings,
-        "contracts.csv": contracts,
-        "contract_projects.csv": projects,
-        "contract_items.csv": contract_items,
-        "bids.csv": bids,
-        "bid_item_prices.csv": bid_item_prices,
-        "agency_items.csv": agency_items,
-        "agency_item_versions.csv": agency_versions,
-        "item_taxonomy.csv": taxonomy,
+        "sources.csv": sort_rows(sources, "source_id"),
+        "lettings.csv": sort_rows(lettings, "letting_date"),
+        "contracts.csv": sort_rows(contracts, "contract_id"),
+        "contract_projects.csv": sort_rows(projects, "contract_project_id"),
+        "contract_items.csv": sort_rows(contract_items, "contract_item_id"),
+        "bids.csv": sort_rows(bids, "bid_id"),
+        "bid_item_prices.csv": sort_rows(bid_item_prices, "bid_item_price_id"),
+        "agency_items.csv": sort_rows(agency_items, "agency_item_id"),
+        "agency_item_versions.csv": sort_rows(agency_versions, "agency_item_version_id"),
+        "item_taxonomy.csv": sort_rows(taxonomy, "taxonomy_id"),
         "item_mappings.csv": [],
-        "item_observations.csv": observations,
+        "item_observations.csv": sort_rows(observations, "observation_id"),
     }
     for name, rows in data_map.items():
         write_csv(args.output_dir / name, field_map[name], rows)
@@ -658,8 +926,14 @@ def main() -> None:
     write_csv(args.staging_dir / "item_catalog_native.csv", list(catalog_native[0]), catalog_native)
     for name in ("contracts.csv", "contract_projects.csv", "contract_items.csv", "bids.csv", "bid_item_prices.csv"):
         write_csv(args.staging_dir / name, field_map[name], data_map[name])
+    if archive_inventory:
+        inventory_fields = ["letting_date", "label", "url", "source_id", "letting_id", "file_name", "raw_path", "sha256", "file_size_bytes", "duplicate_letting_date", "parse_status"]
+        write_csv(args.staging_dir / "bid_tab_archive.csv", inventory_fields, sort_rows(archive_inventory, "letting_date", "url"))
 
     summary = {
+        "archive_entries": len(archive_inventory),
+        "parsed_lettings": len(bid_tab_inputs),
+        "skipped_duplicate_letting_dates": sum(1 for entry in archive_inventory if entry.get("parse_status") == "skipped_duplicate_letting_date"),
         "catalog_items": len(agency_items),
         "catalog_prefixes": len(prefixes),
         "contracts": len(contracts),

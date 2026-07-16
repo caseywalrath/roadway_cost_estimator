@@ -1,11 +1,14 @@
 {
+  "archive_entries": 44,
+  "parsed_lettings": 43,
+  "skipped_duplicate_letting_dates": 1,
   "catalog_items": 3727,
   "catalog_prefixes": 138,
-  "contracts": 25,
-  "contract_projects": 26,
-  "bids": 90,
-  "contract_items": 576,
-  "bid_item_prices": 2388,
-  "observations": 1146,
-  "multi_project_contracts": 1
+  "contracts": 1550,
+  "contract_projects": 1905,
+  "bids": 6388,
+  "contract_items": 55192,
+  "bid_item_prices": 225131,
+  "observations": 107616,
+  "multi_project_contracts": 236
 }

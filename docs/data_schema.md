@@ -142,6 +142,6 @@ Run:
 python scripts/validate_data_package.py
 ```
 
-The validator checks manifest paths, required columns/values, unique IDs, all relationships, numeric fields, quantity-price reconciliation, bidder rank integrity, apparent-low/award flags, exact awarded-vendor resolution, source provenance, accepted item statuses, and promoted observation identity.
+The validator checks manifest paths, required columns/values, unique IDs, all relationships, numeric fields, quantity-price reconciliation, bidder rank integrity, apparent-low/award flags, reviewed awarded-vendor resolution, source provenance, accepted item statuses, and promoted observation identity.
 
-Iowa pilot acceptance additionally requires 3,727 catalog items, 25 contracts, 26 project records, 90 bids, 576 contract items, rank 7, one multi-project contract, and alternate set `AA`. Iowa bidder item totals must reconcile to reported bid totals within two cents. Reported contract award totals remain distinct; documented one- and two-cent differences are warnings.
+Iowa archive acceptance additionally requires 3,727 catalog items, at least 43 parsed lettings, at least the original pilot row counts, rank 7 or higher, at least one multi-project contract, and alternate set `AA`. Iowa bidder item totals must reconcile to reported bid totals within two cents unless the excess is explained by preserved unselected added-option rows. Reported one- and two-cent source differences and documented added-option differences are warnings.
