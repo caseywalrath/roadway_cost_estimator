@@ -60,7 +60,7 @@ Current prototype default:
 Colorado roadway public CDOT cost-book evidence
 ```
 
-Evidence search context can be partial. Missing context should leave fields blank or produce data notes rather than blocking the item search. Project workspace line items require project name and location before saved items can be added.
+Evidence search context can be partial. Missing context should leave fields blank or produce data notes rather than blocking the item search. Project name, location, and notes are optional and do not block saved line items.
 
 ## 3. Enter one roadway bid item
 
@@ -206,27 +206,23 @@ Reviewer interpretation:
 
 After selecting an official item and reviewing evidence, the user can save the item as a Project line from the Add Item to Project controls inside the Unit Price Summary panel.
 
-Required project setup:
-
-- Project name
-- Project location
-
 Required line-item fields:
 
 - Quantity
 - Preferred unit cost
 
-Optional line-item field:
+Optional fields:
 
 - Line notes
+- Project name, location, and notes
 
 How to use it:
 
-- Open the Project tab and enter project name, location, and optional project notes.
-- Return to Explorer.
 - Select an official item and review the Matching Projects table and Unit Price Summary.
 - Enter quantity and preferred unit cost manually, or click an available Unit Price Summary value to fill the preferred unit cost.
 - Click Add to Project.
+- A brief inline status message confirms that the line was added or updated.
+- Add or revise the optional project name, location, and notes from the Project tab at any time.
 
 Summary value selection behavior:
 
@@ -258,9 +254,9 @@ The Project tab stores one active browser-local project.
 
 Project fields:
 
-- Name
-- Location
-- Notes
+- Inline project name, shown as `Unnamed Project` while blank
+- Inline project location, shown as `Add project location` while blank
+- Compact project notes field
 
 Project line table columns:
 
@@ -275,6 +271,7 @@ Project line table columns:
 
 How to use it:
 
+- Edit the project name and location directly in the title area. Edit Notes in the adjacent compact field; all three values autosave and may be cleared.
 - Edit quantity, preferred unit cost, and notes directly in the table.
 - Remove lines that should not remain in the project, then confirm the removal prompt.
 - Review the line count and total project cost.

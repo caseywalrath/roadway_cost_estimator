@@ -20,7 +20,6 @@ import {
   createProjectLineItem,
   ensureActiveProject,
   getActiveProject,
-  hasRequiredProjectMetadata,
   loadProjectWorkspaceState,
   removeProjectLineItem,
   replaceProjectLineItem,
@@ -83,6 +82,8 @@ export function renderApp(
   let activeView: AppView = "explorer";
   let pendingFocus: PendingFocus | null = null;
   let pendingDuplicateLine: PendingDuplicateProjectLine | null = null;
+  let projectLineNotice: string | null = null;
+  let projectLineNoticeToken = 0;
 
   if (projectState !== loadedProjectState.state) {
     projectStorageWarning = saveProjectWorkspaceState(projectState) ?? projectStorageWarning;
@@ -104,7 +105,8 @@ export function renderApp(
     const addToProjectPanelHtml = renderAddToProjectPanel(
       result,
       activeProject,
-      pendingDuplicateLine
+      pendingDuplicateLine,
+      projectLineNotice
     );
 
     root.innerHTML = `
@@ -412,7 +414,7 @@ export function renderApp(
 
       const activeProject = getActiveProject(projectState);
 
-      if (!activeProject || !hasRequiredProjectMetadata(activeProject)) {
+      if (!activeProject) {
         activeView = "project";
         render();
         return;
@@ -463,6 +465,7 @@ export function renderApp(
       }
 
       pendingDuplicateLine = null;
+      showProjectLineNotice(`${lineItem.itemCode} added to Project.`);
       persistProjectState(addProjectLineItem(projectState, activeProject.projectId, lineItem), true);
     });
   }
@@ -486,6 +489,7 @@ export function renderApp(
         if (action === "add") {
           const lineItem = pendingDuplicateLine.lineItem;
           pendingDuplicateLine = null;
+          showProjectLineNotice(`${lineItem.itemCode} added to Project as a new line.`);
           persistProjectState(addProjectLineItem(projectState, activeProject.projectId, lineItem), true);
           return;
         }
@@ -501,6 +505,7 @@ export function renderApp(
 
           const lineItem = pendingDuplicateLine.lineItem;
           pendingDuplicateLine = null;
+          showProjectLineNotice(`${lineItem.itemCode} updated in Project.`);
           persistProjectState(
             replaceProjectLineItem(projectState, activeProject.projectId, selectedLineItemId, lineItem),
             true
@@ -508,6 +513,20 @@ export function renderApp(
         }
       });
     });
+  }
+
+  function showProjectLineNotice(message: string): void {
+    const noticeToken = ++projectLineNoticeToken;
+    projectLineNotice = message;
+
+    window.setTimeout(() => {
+      if (projectLineNoticeToken !== noticeToken) {
+        return;
+      }
+
+      projectLineNotice = null;
+      root.querySelector<HTMLElement>("[data-project-line-notice]")?.remove();
+    }, 4000);
   }
 
   function bindProjectWorkspace(rootElement: HTMLElement): void {

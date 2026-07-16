@@ -96,6 +96,7 @@ Awarded prices are promoted only when the printed awarded vendor resolves to exa
 - The active Project must match the selected state. Switching states selects an existing Project for that state or creates an empty one.
 - A Project can use reviewed evidence from multiple agencies only within its state.
 - Duplicate detection uses `agencyItemId`, not the raw item code.
+- Project name, location, and notes are optional, inline-editable metadata. Blank metadata does not block line creation and remains blank in browser storage and CSV exports.
 
 ## Data Governance and Validation
 

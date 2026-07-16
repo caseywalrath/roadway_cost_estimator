@@ -180,10 +180,6 @@ export function getActiveProject(state: ProjectWorkspaceState): UserProject | nu
   return state.projects.find((project) => project.projectId === state.activeProjectId) ?? state.projects[0] ?? null;
 }
 
-export function hasRequiredProjectMetadata(project: UserProject | null): boolean {
-  return Boolean(project?.name.trim() && project.location.trim());
-}
-
 export function updateActiveProjectMetadata(
   state: ProjectWorkspaceState,
   fields: Pick<UserProject, "name" | "location" | "notes">

@@ -154,8 +154,7 @@ textarea {
   color: #ffffff;
 }
 
-.storage-warning,
-.project-warning {
+.storage-warning {
   margin: 0 0 12px;
   border: 1px solid #e3c084;
   border-radius: 6px;
@@ -315,6 +314,18 @@ textarea {
   min-height: 36px;
   padding: 6px 12px;
   white-space: nowrap;
+}
+
+.project-line-notice {
+  margin: 0;
+  border-left: 3px solid #43845b;
+  border-radius: 4px;
+  background: #eef7f1;
+  color: #245535;
+  padding: 8px 10px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.35;
 }
 
 .add-project-form {
@@ -645,26 +656,85 @@ input[readonly] {
   gap: 14px;
 }
 
-.project-metadata-form {
+.project-metadata-inline-form {
+  flex: 1 1 auto;
+  min-width: 0;
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr);
-  gap: 10px;
-  align-items: start;
+  grid-template-columns: minmax(260px, 1fr) minmax(220px, 320px);
+  gap: 18px;
+  align-items: end;
 }
 
-.project-metadata-form label {
+.project-identity-fields {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.project-title-input,
+.project-location-input {
+  width: 100%;
+  margin-left: -6px;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 3px 5px;
+}
+
+.project-title-input:hover,
+.project-location-input:hover {
+  border-color: var(--line-strong);
+  background: var(--panel-alt);
+}
+
+.project-title-input:focus,
+.project-location-input:focus {
+  border-color: var(--accent);
+  background: #ffffff;
+  outline: 2px solid rgba(0, 82, 136, 0.16);
+  outline-offset: 1px;
+}
+
+.project-title-input {
+  min-height: 44px;
+  color: var(--heading);
+  font-size: clamp(1.4rem, 2vw, 2rem);
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.project-location-input {
+  min-height: 34px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.project-title-input::placeholder,
+.project-location-input::placeholder {
+  color: inherit;
+  opacity: 1;
+}
+
+.project-notes-compact-field {
+  min-width: 0;
   gap: 4px;
   font-size: 0.86rem;
 }
 
-.project-metadata-form input,
-.project-metadata-form textarea {
-  min-height: 38px;
-  padding-block: 7px;
+.project-notes-compact-field textarea {
+  min-height: 62px;
+  resize: vertical;
 }
 
-.project-notes-field {
-  grid-column: 1 / -1;
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .project-total {
@@ -1582,6 +1652,10 @@ tbody tr:last-child td {
     flex-direction: column;
   }
 
+  .project-metadata-inline-form {
+    grid-template-columns: 1fr;
+  }
+
   .search-panel {
     position: static;
   }
@@ -1609,12 +1683,15 @@ tbody tr:last-child td {
     padding: 14px;
   }
 
+  .project-metadata-inline-form {
+    width: 100%;
+  }
+
   .field-grid,
   .item-result-button,
   .evidence-table-heading,
   .evidence-filter-form,
   .add-project-form,
-  .project-metadata-form,
   .metric-grid {
     grid-template-columns: 1fr;
   }
