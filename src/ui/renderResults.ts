@@ -471,7 +471,7 @@ function renderSummaryPriceControl(
       type="button"
       class="summary-price-button"
       data-project-cost-value="${value}"
-      aria-label="Use ${escapeHtml(priceTypeLabel)} ${escapeHtml(metricLabel)} ${escapeHtml(formattedValue)} as preferred unit cost"
+      aria-label="Use ${escapeHtml(priceTypeLabel)} ${escapeHtml(metricLabel)} ${escapeHtml(formattedValue)} as unit cost"
     >
       ${formattedValue}
     </button>
