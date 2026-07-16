@@ -71,7 +71,7 @@ function showLoading(label: string): void {
       <section class="status-panel">
         <img class="app-logo" src="brand/FHU-logo.png" alt="FHU — Felsburg Holt & Ullevig" />
         <p class="eyebrow">Loading project data</p>
-        <h1>Roadway Bid Item Evidence Explorer</h1>
+        <h1>Roadway Cost Estimator</h1>
         <p>${escapeHtml(label)}.</p>
       </section>
     </main>
@@ -85,7 +85,7 @@ function showError(error: unknown): void {
       <section class="status-panel status-panel--error">
         <img class="app-logo" src="brand/FHU-logo.png" alt="FHU — Felsburg Holt & Ullevig" />
         <p class="eyebrow">Data load failed</p>
-        <h1>Roadway Bid Item Evidence Explorer</h1>
+        <h1>Roadway Cost Estimator</h1>
         <p>${escapeHtml(message)}</p>
       </section>
     </main>
