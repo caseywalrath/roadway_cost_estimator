@@ -80,15 +80,18 @@ Bid tabs:
 - Derive one unweighted average unit price from valid bidder prices.
 - Reconcile each bidder's item extensions to the reported bid total.
 
-## Pilot Gate and Archive Backfill
+## Iowa Archive Refresh
 
-Iowa is enabled because the attached June 16, 2026 pilot passes the committed validator and rendered UI checks. Archive ingestion remains letting-by-letting. Each additional letting must:
+Iowa is enabled because the June 16, 2026 pilot and the available 2024-present historical archive pass the committed validator and rendered UI checks. Archive ingestion is scripted from the official IDOT archive page. Each refresh must:
 
-1. Cache and hash the raw PDF.
-2. Produce native staging and import counts.
-3. Pass relationship and reconciliation validation.
-4. Review new layout families and ambiguous award names.
-5. Promote only after the parser fixture and expected counts are recorded.
+1. Refresh `data/staging/ia/bid_tab_archive.csv`.
+2. Cache and hash raw PDFs under ignored `data/raw/ia/bid_tabs/`.
+3. Add one source and one letting per parsed letting date.
+4. Preserve one contract row per official contract ID per letting date.
+5. Preserve one project-number row per printed project.
+6. Reconcile bidder item totals to bidder totals, except source rounding or preserved unselected added-option rows.
+7. Resolve awarded vendors uniquely before creating awarded evidence.
+8. Keep unsupported engineer-estimate fields empty.
 
 The official archive is [Iowa DOT Bid Tabulations](https://iowadot.gov/consultants-contractors/contracts/historical-completed-lettings/bid-tabulations). The catalog source is [Iowa DOT Bid Item Information](https://iowadot.gov/consultants-contractors/contracts/general-letting-information/bid-item-information), and taxonomy comes from the [Iowa Electronic Reference Library](https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm).
 

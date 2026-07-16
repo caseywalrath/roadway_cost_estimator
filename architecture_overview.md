@@ -71,11 +71,11 @@ The migration preserves the prior exact-code evidence behavior, public sources, 
 - The official fixed-width Iowa DOT Item master text as the catalog authority.
 - The attached item-description PDF as the `SPEC` source and code/unit/description cross-check.
 - Iowa Electronic Reference Library divisions and sections, with explicit 60/61/62 fallback groups.
-- The attached June 16, 2026 bid-tab PDF through page-coordinate parsing and a deterministic contract state machine.
+- The Iowa DOT historical bid-tab archive through cached PDFs under ignored `data/raw/ia/bid_tabs/`.
 
-The enabled pilot contains 3,727 unique item codes, 25 contracts, 26 project-number records, 90 bids, 576 contract items, 2,388 bidder item prices, and 1,146 awarded/average observations. It preserves the seven-bidder layout, the two-project contract, alternate set `AA`, source pages, line numbers, and raw source locators.
+The enabled archive package contains 3,727 unique item codes, 43 parsed lettings, 1,550 contracts, 1,905 project-number records, 6,388 bids, 55,192 contract items, 225,131 bidder item prices, and 107,616 awarded/average observations. The archive inventory contains 44 PDF entries; one duplicate letting date is skipped. The parser preserves seven-bidder grouped layouts, multi-project contracts, alternate sets, source pages, line numbers, and raw source locators.
 
-Awarded prices are promoted only when the printed awarded vendor resolves to exactly one bidder. Rank 1 remains a separate apparent-low flag. Iowa average-bid evidence is the unweighted mean of valid printed bidder unit prices. Iowa does not fabricate engineer-estimate values.
+Awarded prices are promoted only when the printed awarded vendor resolves to exactly one bidder after reviewed normalization for common IDOT abbreviations, wrapped DBA names, and county-continuation artifacts. Rank 1 remains a separate apparent-low flag. Iowa average-bid evidence is the unweighted mean of valid printed bidder unit prices. Iowa does not fabricate engineer-estimate values. Preserved unselected added-option rows can make item-price sums exceed reported contract totals; validation reports those as warnings when the difference is explained by added-option sections.
 
 ## UI Rules
 
@@ -98,7 +98,7 @@ Awarded prices are promoted only when the printed awarded vendor resolves to exa
 
 ## Data Governance and Validation
 
-`scripts/validate_data_package.py` validates the manifest and every enabled partition. It fails for duplicate IDs, broken relationships, malformed numbers, bidder headers without ranks, ambiguous awarded vendors, bidder/price contract crossings, unreconciled Iowa bid totals, observations without an agency-item identity, or missing pilot acceptance features.
+`scripts/validate_data_package.py` validates the manifest and every enabled partition. It fails for duplicate IDs, broken relationships, malformed numbers, bidder headers without ranks, ambiguous awarded vendors, bidder/price contract crossings, unreconciled Iowa bid totals not explained by preserved unselected options, observations without an agency-item identity, or missing archive acceptance features.
 
 Raw PDFs and downloaded HTML/TXT files stay in ignored `data/raw/`. Committed sources include publication URLs, filenames, hashes, parser names/versions, normalized data, native staging data, and importer code.
 
@@ -106,7 +106,6 @@ Municipal items remain source-native. Only explicit reviewed `item_mappings` can
 
 ## Deferred Scope
 
-- Iowa 2024-present archive backfill beyond the pilot.
 - Cross-state item comparison.
 - Automatic canonical equivalence.
 - Automatic municipal matching.

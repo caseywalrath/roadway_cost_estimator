@@ -3,10 +3,14 @@ from __future__ import annotations
 import unittest
 
 from scripts.import_iowa_data import (
+    clean_awarded_vendor,
     group_words_by_top,
     normalized_vendor_tokens,
+    parse_archive_date,
+    parse_bid_tab_archive_page,
     parse_contract_projects,
     parse_item_master_lines,
+    resolve_awarded_bids,
 )
 
 
@@ -29,6 +33,26 @@ class IowaImportTests(unittest.TestCase):
         self.assertEqual(
             normalized_vendor_tokens("GRYP, DAVE CONSTRUCTION, INC."),
             normalized_vendor_tokens("DAVE GRYP CONSTRUCTION, INC."),
+        )
+
+    def test_awarded_vendor_resolver_allows_unique_dba_expansion(self) -> None:
+        bids = [
+            {"bidder_name": "MCGILL EQUIPMENT COMPANY D/B/A MCGILL RESTORATION, INC."},
+            {"bidder_name": "AAD CONTRACTING, INC."},
+        ]
+
+        matches = resolve_awarded_bids("MCGILL RESTORATION, INC.", bids)
+
+        self.assertEqual(matches, [bids[0]])
+
+    def test_awarded_vendor_cleanup_removes_county_continuation(self) -> None:
+        self.assertEqual(
+            clean_awarded_vendor("PETERSON CONTRACTORS INC.\nWASHINGTON"),
+            "PETERSON CONTRACTORS INC.",
+        )
+        self.assertEqual(
+            clean_awarded_vendor("ADVANCED TRAFFIC CONTROL, INC.\nSCOTT, STATEWIDE"),
+            "ADVANCED TRAFFIC CONTROL, INC.",
         )
 
     def test_contract_projects_preserve_multiple_project_numbers(self) -> None:
@@ -55,6 +79,21 @@ class IowaImportTests(unittest.TestCase):
         ]
         grouped = group_words_by_top(words)
         self.assertEqual(len(grouped), 1)
+
+    def test_archive_date_accepts_two_and_four_digit_years(self) -> None:
+        self.assertEqual(parse_archive_date("6/16/26 Bid Tabulations 5.21 MB .pdf"), "2026-06-16")
+        self.assertEqual(parse_archive_date("01/17/2024 Bid Tablulation 2.24 MB Archived .pdf"), "2024-01-17")
+
+    def test_archive_page_parser_keeps_pdf_links(self) -> None:
+        html = (
+            '<a href="/media/14685/download?inline="> 6/16/26 Bid Tabulations 5.21 MB .pdf </a>'
+            '<a href="/unrelated">Contact</a>'
+        )
+        entries = parse_bid_tab_archive_page(html, "https://iowadot.gov/archive?page=1")
+
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["letting_date"], "2026-06-16")
+        self.assertEqual(entries[0]["url"], "https://iowadot.gov/media/14685/download?inline=")
 
     @staticmethod
     def _master_line(code: str, abbreviation: str, unit: str, description: str) -> str:
