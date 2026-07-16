@@ -2,14 +2,11 @@ from __future__ import annotations
 
 import tempfile
 import unittest
-import sys
 from pathlib import Path
 
 from openpyxl import Workbook
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-from import_bid_tab_workbook import (
+from scripts.import_bid_tab_workbook import (
     DEFAULT_PROJECT_ID,
     DEFAULT_ROW_PREFIX,
     DEFAULT_SOURCE_ID,
