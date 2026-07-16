@@ -41,6 +41,7 @@ function renderStateChooser(manifest: AppManifest): void {
   root!.innerHTML = `
     <main class="app-shell app-shell--loading">
       <section class="status-panel state-choice-panel">
+        <img class="app-logo" src="brand/fhu-logo.svg" alt="FHU — Felsburg Holt & Ullevig" />
         <p class="eyebrow">Select a state</p>
         <h1>${escapeHtml(manifest.productTitle)}</h1>
         <p>Search results remain isolated to the selected state.</p>
@@ -68,6 +69,7 @@ function showLoading(label: string): void {
   root!.innerHTML = `
     <main class="app-shell app-shell--loading">
       <section class="status-panel">
+        <img class="app-logo" src="brand/fhu-logo.svg" alt="FHU — Felsburg Holt & Ullevig" />
         <p class="eyebrow">Loading project data</p>
         <h1>Roadway Bid Item Evidence Explorer</h1>
         <p>${escapeHtml(label)}.</p>
@@ -81,6 +83,7 @@ function showError(error: unknown): void {
   root!.innerHTML = `
     <main class="app-shell app-shell--loading">
       <section class="status-panel status-panel--error">
+        <img class="app-logo" src="brand/fhu-logo.svg" alt="FHU — Felsburg Holt & Ullevig" />
         <p class="eyebrow">Data load failed</p>
         <h1>Roadway Bid Item Evidence Explorer</h1>
         <p>${escapeHtml(message)}</p>

@@ -1,7 +1,22 @@
 :root {
   color-scheme: light;
-  font-family:
+
+  /* ---- FHU brand palette (Felsburg Holt & Ullevig) ---- */
+  /* Sampled from the FHU logo: teal road, green land, gold field, slate
+     wordmark. These are the single source of truth for the theme accent. */
+  --brand-primary: #14706e; /* FHU teal */
+  --brand-primary-dark: #0e5452;
+  --brand-secondary: #6d9b45; /* FHU green */
+  --brand-secondary-dark: #567d33;
+  --brand-gold: #d8a12c; /* FHU gold */
+  --brand-slate: #3f4b57; /* FHU wordmark slate */
+
+  /* ---- Typography ---- */
+  --font-body:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-heading: "Barlow", var(--font-body);
+
+  font-family: var(--font-body);
   line-height: 1.5;
   font-weight: 400;
   color: #1d2733;
@@ -9,17 +24,23 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+
+  /* ---- Surfaces & neutrals ---- */
   --panel: #ffffff;
   --panel-alt: #f7f9fb;
   --line: #d9e0e7;
+  --line-strong: #c4d0da;
   --text-muted: #5f6d7c;
-  --heading: #17202b;
-  --accent: #275f8f;
-  --accent-dark: #194869;
+  --muted: #5f6d7c;
+  --heading: #37424d;
+
+  /* ---- Accents (mapped to the brand palette) ---- */
+  --accent: var(--brand-primary);
+  --accent-dark: var(--brand-primary-dark);
   --good: #1f7a4d;
   --warn: #9a5b00;
   --bad: #a33b32;
-  --shadow: 0 10px 28px rgba(24, 37, 51, 0.08);
+  --shadow: 0 10px 28px rgba(20, 60, 58, 0.1);
 }
 
 * {
@@ -79,15 +100,53 @@ textarea {
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(
+      90deg,
+      var(--brand-primary) 0%,
+      var(--brand-secondary) 55%,
+      transparent 100%
+    )
+    1;
 }
 
 .app-header h1,
 .status-panel h1 {
   margin: 0;
   color: var(--heading);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.01em;
   font-size: clamp(1.7rem, 2.4vw, 2.5rem);
   line-height: 1.15;
+}
+
+/* Brand lockup: firm logo alongside the product title */
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.app-logo {
+  height: 56px;
+  width: auto;
+  display: block;
+}
+
+.app-brand__divider {
+  align-self: stretch;
+  width: 1px;
+  min-height: 34px;
+  background: var(--line-strong);
+}
+
+.status-panel .app-logo {
+  height: 64px;
+  margin-bottom: 18px;
 }
 
 .state-switcher {
@@ -107,9 +166,10 @@ textarea {
 .eyebrow {
   margin: 0 0 6px;
   color: var(--accent-dark);
+  font-family: var(--font-heading);
   font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -1759,5 +1819,37 @@ tbody tr:last-child td {
 
   .duplicate-project-actions button {
     width: 100%;
+  }
+}
+
+/* ---- Branded footer ---- */
+.app-footer {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.app-footer__firm {
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.app-footer__dot {
+  color: var(--line-strong);
+}
+
+@media (max-width: 560px) {
+  .app-logo {
+    height: 40px;
+  }
+
+  .app-brand__divider {
+    display: none;
   }
 }

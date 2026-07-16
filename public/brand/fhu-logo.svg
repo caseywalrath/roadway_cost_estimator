@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1270 430" role="img" aria-label="FHU — Felsburg Holt and Ullevig">
+  <!-- Road mark -->
+  <g>
+    <!-- green land, upper left -->
+    <path d="M14 24 C150 30 258 42 306 50 C232 78 128 112 44 182 C26 132 16 78 14 24 Z" fill="#6d9b45"/>
+    <!-- teal distant wedge near vanishing point -->
+    <path d="M320 46 C364 42 400 60 418 96 C378 100 340 96 316 80 C312 68 314 54 320 46 Z" fill="#14706e"/>
+    <!-- gold field, right -->
+    <path d="M320 100 C366 102 408 114 430 140 C432 206 408 266 348 312 C334 266 328 214 322 174 C318 146 316 120 320 100 Z" fill="#d8a12c"/>
+    <!-- teal road sweeping from bottom-left up to distance -->
+    <path d="M58 428 C50 322 94 236 180 176 C234 138 280 124 306 120 C302 130 262 152 214 194 C156 246 122 322 132 428 Z" fill="#14706e"/>
+  </g>
+  <!-- Wordmark -->
+  <g fill="#3f4b57" font-family="Arial, 'Helvetica Neue', 'Segoe UI', sans-serif" font-weight="700" letter-spacing="4">
+    <text x="474" y="146" font-size="132">FELSBURG</text>
+    <text x="474" y="288" font-size="132">HOLT &amp;</text>
+    <text x="474" y="430" font-size="132">ULLEVIG</text>
+  </g>
+</svg>

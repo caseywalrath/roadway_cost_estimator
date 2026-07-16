@@ -113,7 +113,11 @@ export function renderApp(
       <main class="app-shell">
         <header class="app-header">
           <div>
-            <h1>${escapeHtml(data.manifest.productTitle)}</h1>
+            <div class="app-brand">
+              <img class="app-logo" src="brand/fhu-logo.svg" alt="FHU — Felsburg Holt & Ullevig" />
+              <span class="app-brand__divider" aria-hidden="true"></span>
+              <h1>${escapeHtml(data.manifest.productTitle)}</h1>
+            </div>
             <label class="state-switcher">
               <span>State</span>
               <select id="state-selector">
@@ -154,6 +158,14 @@ export function renderApp(
           ` : activeView === "project"
             ? renderProjectWorkspace(activeProject)
             : renderSourceReview(data, selectedSourceProjectId)}
+
+        <footer class="app-footer">
+          <span class="app-footer__firm">Felsburg Holt &amp; Ullevig</span>
+          <span class="app-footer__dot" aria-hidden="true">•</span>
+          <span>${escapeHtml(data.manifest.productTitle)}</span>
+          <span class="app-footer__dot" aria-hidden="true">•</span>
+          <span>&copy; ${new Date().getFullYear()}</span>
+        </footer>
       </main>
     `;
 
