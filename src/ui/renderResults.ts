@@ -50,6 +50,9 @@ export function renderResults(
         addToProjectPanelHtml,
         data.stateConfig.capabilities.engineerEstimate
       )}
+      <div class="source-review-link-row">
+        <a href="#source-review" class="source-review-link" data-open-source-review>Source review</a>
+      </div>
     </section>
     ${renderBidderDetailModal(result, data, selectedBidderDetailKey)}
   `;

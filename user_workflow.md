@@ -283,7 +283,7 @@ How to use it:
 
 ## 9. Review source projects
 
-The Explorer keeps source-project records outside the main item-evidence layout. A gray `Source review` button remains available at the bottom-right of Explorer for both Colorado and Iowa.
+The Explorer keeps source-project records outside the main item-evidence layout. A subdued `Source review` text link appears below the results panels for both Colorado and Iowa.
 
 How to use it:
 

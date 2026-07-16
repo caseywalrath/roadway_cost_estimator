@@ -149,7 +149,6 @@ export function renderApp(
                 addToProjectPanelHtml
               )}
             </section>
-            <button type="button" class="source-review-launcher" data-open-source-review>Source review</button>
           ` : activeView === "project"
             ? renderProjectWorkspace(activeProject)
             : renderSourceReview(data, selectedSourceProjectId)}
@@ -306,7 +305,8 @@ export function renderApp(
       });
     });
 
-    root.querySelector<HTMLButtonElement>("[data-open-source-review]")?.addEventListener("click", () => {
+    root.querySelector<HTMLAnchorElement>("[data-open-source-review]")?.addEventListener("click", (event) => {
+      event.preventDefault();
       activeView = "sourceReview";
       selectedBidderDetailKey = null;
       selectedSourceProjectId = null;

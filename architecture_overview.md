@@ -84,7 +84,7 @@ Awarded prices are promoted only when the printed awarded vendor resolves to exa
 - Matching Projects uses a stable core: Contract/Project, Location, Let Date, Awarded Vendor, Bid Count, Quantity, Unit, Description, Awarded Price, Average Price, and Source.
 - Colorado adds District and Engineer Estimate.
 - Iowa hides unsupported District and Engineer Estimate controls/columns.
-- Explorer exposes Source Review through a neutral bottom-right launcher. The dedicated view keeps long source-project lists and wide bid-tab details out of the primary evidence workflow and never stacks a project-detail modal over a source list.
+- Explorer exposes Source Review through a subdued text link aligned with the results column. The dedicated view keeps long source-project lists and wide bid-tab details out of the primary evidence workflow and never stacks a project-detail modal over a source list.
 - Contract CSV export includes state, agency item identity, call order, status, route, project numbers, contract period, DBE goal, bid metadata, and source identity.
 - Bid item prices load on demand.
 

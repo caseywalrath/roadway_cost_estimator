@@ -1402,33 +1402,23 @@ th {
   gap: 8px;
 }
 
-.source-review-launcher {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 10;
-  min-height: 38px;
-  border: 1px solid #aeb8c2;
-  border-radius: 7px;
-  background: #dfe4e8;
-  color: #2d3945;
-  padding: 8px 14px;
-  box-shadow: 0 5px 16px rgba(24, 37, 51, 0.16);
-  cursor: pointer;
+.source-review-link-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 4px;
+}
+
+.source-review-link {
+  color: var(--text-muted);
   font-size: 0.84rem;
-  font-weight: 900;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-.source-review-launcher:hover,
-.source-review-launcher:focus-visible {
-  border-color: #7f8d99;
-  background: #cfd6dc;
-  color: #17202b;
-}
-
-.source-review-launcher:focus-visible {
-  outline: 3px solid rgba(39, 95, 143, 0.28);
-  outline-offset: 2px;
+.source-review-link:hover,
+.source-review-link:focus-visible {
+  color: var(--accent-dark);
 }
 
 .source-review-view {
@@ -1634,11 +1624,6 @@ tbody tr:last-child td {
 
   .bid-tab-project-row {
     grid-template-columns: 1fr;
-  }
-
-  .source-review-launcher {
-    right: 14px;
-    bottom: 14px;
   }
 
   .source-review-heading {
