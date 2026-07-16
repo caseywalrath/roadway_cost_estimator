@@ -1,5 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FHU">
-  <rect width="64" height="64" rx="12" fill="#16558a"/>
-  <rect x="12" y="46" width="40" height="6" rx="3" fill="#6bb345"/>
-  <text x="32" y="40" text-anchor="middle" font-family="Barlow, 'Segoe UI', Arial, sans-serif" font-size="30" font-weight="700" letter-spacing="0.5" fill="#ffffff">FHU</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 460" role="img" aria-label="FHU">
+  <rect width="460" height="460" rx="72" fill="#ffffff"/>
+  <g transform="translate(12 22)">
+    <path d="M14 24 C150 30 258 42 306 50 C232 78 128 112 44 182 C26 132 16 78 14 24 Z" fill="#6d9b45"/>
+    <path d="M320 46 C364 42 400 60 418 96 C378 100 340 96 316 80 C312 68 314 54 320 46 Z" fill="#14706e"/>
+    <path d="M320 100 C366 102 408 114 430 140 C432 206 408 266 348 312 C334 266 328 214 322 174 C318 146 316 120 320 100 Z" fill="#d8a12c"/>
+    <path d="M58 428 C50 322 94 236 180 176 C234 138 280 124 306 120 C302 130 262 152 214 194 C156 246 122 322 132 428 Z" fill="#14706e"/>
+  </g>
 </svg>
