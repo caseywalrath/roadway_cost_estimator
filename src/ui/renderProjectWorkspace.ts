@@ -33,7 +33,7 @@ export function renderAddToProjectPanel(
       <form id="add-project-item-form" class="add-project-form">
         <input type="hidden" name="costSource" value="manual" />
         <label class="add-project-cost-field">
-          <span>Preferred unit cost</span>
+          <span>Unit cost</span>
           <input name="preferredUnitCost" type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" required />
         </label>
         <label>
@@ -76,18 +76,17 @@ export function renderProjectWorkspace(project: UserProject | null): string {
           <form id="project-metadata-form" class="project-metadata-inline-form">
             <h2 class="visually-hidden">Project workspace</h2>
             <div class="project-identity-fields">
-              <p class="eyebrow">Project</p>
               <label class="visually-hidden" for="project-name">Project name</label>
               <input id="project-name" class="project-title-input" name="name" value="${escapeHtml(project.name)}" placeholder="Unnamed Project" />
               <label class="visually-hidden" for="project-location">Project location</label>
               <input id="project-location" class="project-location-input" name="location" value="${escapeHtml(project.location)}" placeholder="Add project location" />
             </div>
             <label class="project-notes-compact-field">
-              <span>Notes</span>
+              <span class="visually-hidden">Project notes</span>
               <textarea name="notes" rows="2" placeholder="Add project notes (optional)">${escapeHtml(project.notes)}</textarea>
             </label>
           </form>
-          <button type="button" id="download-project-csv" class="secondary-button" ${project.lineItems.length === 0 ? "disabled" : ""}>Download Project CSV</button>
+          <button type="button" id="download-project-csv" class="secondary-button" ${project.lineItems.length === 0 ? "disabled" : ""}>Export CSV</button>
         </div>
       </section>
 
@@ -152,12 +151,12 @@ function renderProjectLineTable(project: UserProject): string {
             <tr>
               <th>Item code</th>
               <th>Description</th>
-              <th>Quantity</th>
+              <th>Unit Cost</th>
               <th>Unit</th>
-              <th>Preferred unit cost</th>
+              <th>Quantity</th>
               <th>Total Item Cost</th>
               <th>Notes</th>
-              <th>Actions</th>
+              <th>Remove</th>
             </tr>
           </thead>
           <tbody>
@@ -176,22 +175,22 @@ function renderProjectLineRow(lineItem: ProjectLineItem): string {
       <td>${escapeHtml(lineItem.description)}</td>
       <td>
         <input
-          name="quantity"
+          name="preferredUnitCost"
           class="project-line-number-input"
           data-project-line-id="${escapeHtml(lineItem.lineItemId)}"
-          data-project-line-field="quantity"
-          value="${lineItem.quantity}"
+          data-project-line-field="preferredUnitCost"
+          value="${lineItem.preferredUnitCost}"
           inputmode="decimal"
         />
       </td>
       <td>${escapeHtml(lineItem.unit)}</td>
       <td>
         <input
-          name="preferredUnitCost"
+          name="quantity"
           class="project-line-number-input"
           data-project-line-id="${escapeHtml(lineItem.lineItemId)}"
-          data-project-line-field="preferredUnitCost"
-          value="${lineItem.preferredUnitCost}"
+          data-project-line-field="quantity"
+          value="${lineItem.quantity}"
           inputmode="decimal"
         />
       </td>

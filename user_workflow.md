@@ -191,7 +191,7 @@ How to use it:
 - Turn Inflation Adjustment on when a quick summary normalized to the latest loaded NHCCI quarter is useful.
 - Treat parenthetical adjusted unit prices in Matching Projects as display-only context; the primary table value remains the original awarded bid unit price.
 - Do not treat the summary as a suggested unit price.
-- Click an available Low, P25, Median, Average, P75, or High value only when the user wants to copy that visible value into the Project preferred unit cost field.
+- Click an available Low, P25, Median, Average, P75, or High value only when the user wants to copy that visible value into the Project unit cost field.
 - Refilter the evidence table when the summary appears to be driven by rows the engineer would not use.
 - Check `Exclude from Summary` for rows that should remain visible but should not affect the summary.
 
@@ -209,7 +209,7 @@ After selecting an official item and reviewing evidence, the user can save the i
 Required line-item fields:
 
 - Quantity
-- Preferred unit cost
+- Unit cost
 
 Optional fields:
 
@@ -219,16 +219,16 @@ Optional fields:
 How to use it:
 
 - Select an official item and review the Matching Projects table and Unit Price Summary.
-- Enter quantity and preferred unit cost manually, or click an available Unit Price Summary value to fill the preferred unit cost.
+- Enter quantity and unit cost manually, or click an available Unit Price Summary value to fill the unit cost.
 - Click Add to Project.
 - A brief inline status message confirms that the line was added or updated.
 - Add or revise the optional project name, location, and notes from the Project tab at any time.
 
 Summary value selection behavior:
 
-- Available Low, P25, Median, Average, P75, and High cells in the Unit Price Summary table can fill the preferred unit cost.
-- Selected summary values are rounded to the nearest hundredth when copied into the preferred unit cost field.
-- Count cells do not fill the preferred unit cost because they are not unit prices.
+- Available Low, P25, Median, Average, P75, and High cells in the Unit Price Summary table can fill the unit cost.
+- Selected summary values are rounded to the nearest hundredth when copied into the unit cost field.
+- Count cells do not fill the unit cost because they are not unit prices.
 - Rows checked in `Exclude from Summary` are not included in the selectable summary values or saved evidence context.
 - If `Inflation Adjustment` is on, selected summary values use the visible adjusted summary values.
 - Selected summary values are user-selected starting points, not recommendations.
@@ -262,17 +262,17 @@ Project line table columns:
 
 - Item code
 - Description
-- Quantity
+- Unit cost
 - Unit
-- Preferred unit cost
+- Quantity
 - Total item cost
 - Notes
-- Actions
+- Remove
 
 How to use it:
 
 - Edit the project name and location directly in the title area. Edit Notes in the adjacent compact field; all three values autosave and may be cleared.
-- Edit quantity, preferred unit cost, and notes directly in the table.
+- Edit unit cost, quantity, and notes directly in the table.
 - Remove lines that should not remain in the project, then confirm the removal prompt.
 - Review the line count and total project cost.
 - Treat the Project workspace as local browser storage. Clearing browser data can remove saved projects.
@@ -326,9 +326,9 @@ Matching Projects export:
 Project export:
 
 - Open the Project tab.
-- Click Download Project CSV.
+- Click Export CSV.
 - The export includes one row per saved project line.
-- Total item cost is calculated from quantity times preferred unit cost.
+- Total item cost is calculated from quantity times unit cost.
 - Exported rows include project name, project location, project notes, item details, line notes, evidence row count, included observation IDs, and timestamps.
 - The Project CSV button is disabled when the Project has no line items.
 - XLSX export and project import are deferred.
@@ -370,9 +370,9 @@ Recommended meeting flow:
 7. Review the Unit Price Summary after reviewing rows.
 8. Open Source Review when source-project or bidder-price inspection is needed.
 9. Review source coverage and data notes.
-10. Add one reviewed item to Project when a preferred unit cost is selected.
+10. Add one reviewed item to Project when a unit cost is selected.
 11. Open the Project tab and review the saved line.
-12. Download the CSV if external review is needed.
+12. Export the CSV if external review is needed.
 13. Ask which rows are useful evidence and which rows should be excluded later.
 14. Ask which filters or fields are missing.
 15. Ask what source data should be added first.

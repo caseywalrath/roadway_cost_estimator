@@ -125,7 +125,7 @@ export function renderApp(
           </div>
           <nav class="app-view-tabs" aria-label="Primary views">
             ${renderViewTab("explorer", "Explorer", activeView)}
-            ${renderViewTab("project", `Project (${activeProject?.lineItems.length ?? 0})`, activeView)}
+            ${renderViewTab("project", "Project", activeView)}
           </nav>
         </header>
 
@@ -424,7 +424,7 @@ export function renderApp(
       const preferredUnitCostInput = addForm.elements.namedItem("preferredUnitCost") as HTMLInputElement | null;
       const notesInput = addForm.elements.namedItem("notes") as HTMLTextAreaElement | null;
       const quantity = readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero.");
-      const preferredUnitCost = readRequiredPositiveNumber(preferredUnitCostInput, "Enter a preferred unit cost greater than zero.");
+      const preferredUnitCost = readRequiredPositiveNumber(preferredUnitCostInput, "Enter a unit cost greater than zero.");
 
       if (quantity === null || preferredUnitCost === null || !result.query.itemCode) {
         return;
@@ -569,7 +569,7 @@ export function renderApp(
         const preferredUnitCostInput = row.querySelector<HTMLInputElement>('[data-project-line-field="preferredUnitCost"]');
         const notesInput = row.querySelector<HTMLInputElement>('[data-project-line-field="notes"]');
         const quantity = readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero.");
-        const preferredUnitCost = readRequiredPositiveNumber(preferredUnitCostInput, "Enter a preferred unit cost greater than zero.");
+        const preferredUnitCost = readRequiredPositiveNumber(preferredUnitCostInput, "Enter a unit cost greater than zero.");
 
         if (quantity === null || preferredUnitCost === null) {
           return;
