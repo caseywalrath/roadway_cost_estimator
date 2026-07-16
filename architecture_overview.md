@@ -88,6 +88,15 @@ Awarded prices are promoted only when the printed awarded vendor resolves to exa
 - Contract CSV export includes state, agency item identity, call order, status, route, project numbers, contract period, DBE goal, bid metadata, and source identity.
 - Bid item prices load on demand.
 
+## Branding and Visual Design
+
+- The interface is skinned to the FHU (Felsburg Holt & Ullevig) brand. All theme tokens live in the `:root` block of `src/styles.css` and are the single source of truth for the accent color.
+- Palette: `--brand-primary` (FHU blue) and `--brand-primary-dark` drive `--accent`/`--accent-dark`, which propagate to primary buttons, active tabs, links, focus rings, step numbers, sort arrows, and eyebrows. `--brand-secondary` (FHU green) is the secondary accent used in the header underline gradient and the logo. Exact hex values are approximate and should be reconciled against the official brand guide.
+- The `--muted` and `--line-strong` tokens are now defined in `:root` (they were previously referenced but undefined).
+- Typography: body and UI text use Inter; headings use Barlow. Both load via a Google Fonts `<link>` in `index.html`, behind a system-font fallback stack exposed as `--font-body` and `--font-heading`.
+- Brand assets live in `public/brand/` (copied to the site root at build time): `fhu-logo.svg` (header and status-panel lockup) and `favicon.svg`. The logo is a placeholder wordmark to be swapped for the official logo file. It is referenced from the header in `src/ui/renderApp.ts` and the status panels in `src/main.ts`.
+- A branded footer (firm name, product title, year) renders at the bottom of the app shell from `src/ui/renderApp.ts`. The product title itself remains data-driven from `manifest.json`.
+
 ## Project Workspace Rules
 
 - Schema v3 stores `state` on each Project.
