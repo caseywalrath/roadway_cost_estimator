@@ -2,7 +2,7 @@
 
 ## Current Product
 
-This repository contains **Roadway Bid Item Evidence Explorer**, a static multi-state roadway bid-item evidence application. Colorado and Iowa are enabled. A user must select a state on first visit; the browser remembers that choice. Search results never combine states.
+This repository contains **Roadway Cost Estimator**, a static multi-state roadway bid-item evidence application. Colorado and Iowa are enabled. A user must select a state on first visit; the browser remembers that choice. Search results never combine states.
 
 The app is an evidence browser and limited local project workspace. It is not an automatic estimating recommendation system. Its primary output is a contract-item evidence table with source prices and provenance. Summary statistics, inflation adjustment, bidder detail, CSV export, and saved project lines support user review.
 

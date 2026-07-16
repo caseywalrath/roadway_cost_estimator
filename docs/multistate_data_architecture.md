@@ -53,7 +53,7 @@ State switching reloads the selected partition and resets item, filter, exclusio
 
 ## Presentation
 
-The product title is **Roadway Bid Item Evidence Explorer**. The state manifest supplies agency names, taxonomy labels, source labels, prefix lengths, and capability flags.
+The product title is **Roadway Cost Estimator**. The state manifest supplies agency names, taxonomy labels, source labels, prefix lengths, and capability flags.
 
 The core table is stable across states. Optional fields are removed when unsupported rather than rendered as repeated empty values. State-specific contract and bidder fields remain available in detail and CSV export.
 
