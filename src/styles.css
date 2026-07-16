@@ -149,18 +149,34 @@ textarea {
   margin-bottom: 18px;
 }
 
+.app-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
 .state-switcher {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 800;
 }
 
 .state-switcher select {
   min-width: 130px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #2a3a49;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.state-switcher select:hover,
+.state-switcher select:focus-visible {
+  border-color: #c4d3df;
+  background: #eef3f7;
 }
 
 .eyebrow {
