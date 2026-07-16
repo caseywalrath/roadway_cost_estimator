@@ -1,6 +1,5 @@
 import type { EvidenceResult } from "../data/schema";
 import type { ProjectLineItem, UserProject } from "../projects/projectWorkspace";
-import { hasRequiredProjectMetadata } from "../projects/projectWorkspace";
 
 export interface PendingDuplicateProjectLine {
   lineItem: ProjectLineItem;
@@ -20,18 +19,15 @@ export function renderAddToProjectPanel(
     return renderDuplicateProjectLinePanel(activeProject, pendingDuplicateLine);
   }
 
-  const projectReady = hasRequiredProjectMetadata(activeProject);
-
   return `
     <section class="add-project-panel">
       <div class="panel-heading add-project-heading">
         <div>
           <h3>Add Item to Project</h3>
-          <p class="query-line">${escapeHtml(activeProject.name.trim() || "Unnamed project")} | ${escapeHtml(activeProject.location.trim() || "Location required")}</p>
+          <p class="query-line">${escapeHtml(activeProject.name.trim() || "Unnamed Project")} | ${escapeHtml(activeProject.location.trim() || "Location not specified")}</p>
         </div>
         <button type="button" class="secondary-button project-tab-shortcut" data-app-view="project">Project</button>
       </div>
-      ${projectReady ? "" : `<p class="project-warning">Project name and location are required before adding items.</p>`}
       <form id="add-project-item-form" class="add-project-form">
         <input type="hidden" name="costSource" value="manual" />
         <label class="add-project-cost-field">
@@ -46,7 +42,7 @@ export function renderAddToProjectPanel(
           <span>Line notes</span>
           <textarea name="notes" rows="2"></textarea>
         </label>
-        <button type="submit" class="primary-button add-project-submit" ${projectReady ? "" : "disabled"}>Add to Project</button>
+        <button type="submit" class="primary-button add-project-submit">Add to Project</button>
       </form>
     </section>
   `;
@@ -75,28 +71,22 @@ export function renderProjectWorkspace(project: UserProject | null): string {
     <section class="project-workspace">
       <section class="panel-block project-detail-panel">
         <div class="panel-heading project-workspace-heading">
-          <div>
-            <p class="eyebrow">Project</p>
-            <h2>${escapeHtml(project.name.trim() || "Unnamed Project")}</h2>
-            <p class="query-line">${escapeHtml(project.location.trim() || "Location required")}</p>
-          </div>
+          <form id="project-metadata-form" class="project-metadata-inline-form">
+            <h2 class="visually-hidden">Project workspace</h2>
+            <div class="project-identity-fields">
+              <p class="eyebrow">Project</p>
+              <label class="visually-hidden" for="project-name">Project name</label>
+              <input id="project-name" class="project-title-input" name="name" value="${escapeHtml(project.name)}" placeholder="Unnamed Project" />
+              <label class="visually-hidden" for="project-location">Project location</label>
+              <input id="project-location" class="project-location-input" name="location" value="${escapeHtml(project.location)}" placeholder="Add project location" />
+            </div>
+            <label class="project-notes-compact-field">
+              <span>Notes</span>
+              <textarea name="notes" rows="2" placeholder="Add project notes (optional)">${escapeHtml(project.notes)}</textarea>
+            </label>
+          </form>
           <button type="button" id="download-project-csv" class="secondary-button" ${project.lineItems.length === 0 ? "disabled" : ""}>Download Project CSV</button>
         </div>
-
-        <form id="project-metadata-form" class="project-metadata-form">
-          <label>
-            <span>Name</span>
-            <input name="name" value="${escapeHtml(project.name)}" required />
-          </label>
-          <label>
-            <span>Location</span>
-            <input name="location" value="${escapeHtml(project.location)}" required />
-          </label>
-          <label class="project-notes-field">
-            <span>Notes</span>
-            <textarea name="notes" rows="2">${escapeHtml(project.notes)}</textarea>
-          </label>
-        </form>
       </section>
 
       <section class="panel-block project-lines-panel">

@@ -20,7 +20,6 @@ import {
   createProjectLineItem,
   ensureActiveProject,
   getActiveProject,
-  hasRequiredProjectMetadata,
   loadProjectWorkspaceState,
   removeProjectLineItem,
   replaceProjectLineItem,
@@ -412,7 +411,7 @@ export function renderApp(
 
       const activeProject = getActiveProject(projectState);
 
-      if (!activeProject || !hasRequiredProjectMetadata(activeProject)) {
+      if (!activeProject) {
         activeView = "project";
         render();
         return;
