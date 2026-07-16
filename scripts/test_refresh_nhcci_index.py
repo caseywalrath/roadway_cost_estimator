@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from refresh_nhcci_index import build_output_rows, normalize_decimal, parse_quarter_label, quarter_date_range
+from scripts.refresh_nhcci_index import build_output_rows, normalize_decimal, parse_quarter_label, quarter_date_range
 
 
 class RefreshNhcciIndexTests(unittest.TestCase):
