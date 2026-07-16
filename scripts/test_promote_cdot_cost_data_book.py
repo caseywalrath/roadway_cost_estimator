@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from promote_cdot_cost_data_book import (
+from scripts.promote_cdot_cost_data_book import (
     PRICE_TYPES,
     agency_item_codes,
     parse_project_list_pages,

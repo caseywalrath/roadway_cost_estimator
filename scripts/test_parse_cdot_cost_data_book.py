@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from parse_cdot_cost_data_book import parse_pages
+from scripts.parse_cdot_cost_data_book import parse_pages
 
 
 class CdotCostDataBookParserTests(unittest.TestCase):
