@@ -281,7 +281,21 @@ How to use it:
 - Treat the Project workspace as local browser storage. Clearing browser data can remove saved projects.
 - If local storage is unavailable or malformed, the app shows a recoverable warning and keeps the evidence browser usable.
 
-## 9. Review source coverage
+## 9. Review source projects
+
+The Explorer keeps source-project records outside the main item-evidence layout. A subdued `Source review` text link appears below the results panels for both Colorado and Iowa.
+
+How to use it:
+
+- Click `Source review` to open the state-specific source-project list.
+- Review the project title, source label, and source-item count without loading bidder-level prices.
+- Click `Review` on a project to load and inspect its source items and bidder unit prices in a full-width detail screen.
+- Use `Back to source list` to select another project or `Back to Explorer` to return without clearing the current item, filters, sorting, or exclusions.
+- Switch states only when source review for the current state is complete; state switching starts a new Explorer session for the selected state.
+
+Source Review is not a separate browser page and does not combine Colorado and Iowa records.
+
+## 10. Review source coverage
 
 The user reviews the Source Coverage panel after an item is selected.
 
@@ -299,7 +313,7 @@ How to use it:
 - Use the Matching Projects table and CSV export for review, not as a final estimating recommendation.
 - Final pricing judgment happens outside the app.
 
-## 10. Export CSV files
+## 11. Export CSV files
 
 The user can download the currently filtered and sorted Matching Projects rows as a CSV after selecting an official item code.
 
@@ -322,7 +336,7 @@ Project export:
 - The Project CSV button is disabled when the Project has no line items.
 - XLSX export and project import are deferred.
 
-## 11. Review data notes
+## 12. Review data notes
 
 Data notes may identify:
 
@@ -357,13 +371,14 @@ Recommended meeting flow:
 5. Review the project evidence table.
 6. Apply source, geography, district, year, unit, and quantity filters when relevant.
 7. Review the Unit Price Summary after reviewing rows.
-8. Review source coverage and data notes.
-9. Add one reviewed item to Project when a preferred unit cost is selected.
-10. Open the Project tab and review the saved line.
-11. Download the CSV if external review is needed.
-12. Ask which rows are useful evidence and which rows should be excluded later.
-13. Ask which filters or fields are missing.
-14. Ask what source data should be added first.
+8. Open Source Review when source-project or bidder-price inspection is needed.
+9. Review source coverage and data notes.
+10. Add one reviewed item to Project when a preferred unit cost is selected.
+11. Open the Project tab and review the saved line.
+12. Download the CSV if external review is needed.
+13. Ask which rows are useful evidence and which rows should be excluded later.
+14. Ask which filters or fields are missing.
+15. Ask what source data should be added first.
 15. Record feedback as implementation notes for the coding agent.
 
 Key questions for roadway engineers:

@@ -1,7 +1,6 @@
 import type {
   AppData,
   BidderBidRecord,
-  BidTabItemRecord,
   BidderItemObservationRecord,
   EvidenceFilters,
   EvidenceResult,
@@ -20,7 +19,6 @@ export function renderResults(
   itemSearchCollapsed: boolean,
   data: AppData,
   selectedBidderDetailKey: string | null,
-  selectedBidTabProjectId: string | null,
   excludedSummaryRowIds: ReadonlySet<string>,
   includedRowCount: number,
   visibleExcludedCount: number,
@@ -52,10 +50,11 @@ export function renderResults(
         addToProjectPanelHtml,
         data.stateConfig.capabilities.engineerEstimate
       )}
-      ${renderPublicBidTabProjects(data)}
+      <div class="source-review-link-row">
+        <a href="#source-review" class="source-review-link" data-open-source-review>Source review</a>
+      </div>
     </section>
     ${renderBidderDetailModal(result, data, selectedBidderDetailKey)}
-    ${renderBidTabProjectModal(data, selectedBidTabProjectId)}
   `;
 }
 
@@ -271,9 +270,10 @@ function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): strin
   const isActive = sort.key === column.key;
   const ariaSort = isActive ? (sort.direction === "asc" ? "ascending" : "descending") : "none";
   const nextDirection = isActive && sort.direction === "asc" ? "descending" : "ascending";
+  const columnClass = column.key === "projectNumber" ? " evidence-project-header" : "";
 
   return `
-    <th aria-sort="${ariaSort}" class="${isActive ? "evidence-table__sorted-column" : ""}">
+    <th aria-sort="${ariaSort}" class="${isActive ? "evidence-table__sorted-column" : ""}${columnClass}">
       <button
         type="button"
         class="table-sort-button"
@@ -310,7 +310,7 @@ function renderEvidenceRow(
         />
       </td>
       ${columns.map((column) => {
-        if (column.key === "projectNumber") return `<td>${renderProjectNumberCell(row)}</td>`;
+        if (column.key === "projectNumber") return `<td class="evidence-project-cell">${renderProjectNumberCell(row)}</td>`;
         if (column.key === "projectLocation") return `<td>${escapeHtml(row.project?.projectName ?? "Unknown project")}${renderProjectLocationSubtext(row)}</td>`;
         if (column.key === "district") return `<td>${escapeHtml(row.project?.district || "Not listed")}</td>`;
         if (column.key === "letDate") return `<td>${escapeHtml(row.project?.estimateLetDate || row.dateBasis)}</td>`;
@@ -349,9 +349,10 @@ function formatProjectLocationSubtext(row: EvidenceRow): string {
 
 function renderProjectNumberCell(row: EvidenceRow): string {
   const label = row.project?.projectNumber || "Not listed";
+  const displayLabel = renderProjectNumberLines(label);
 
   if (!row.hasBidderDetails) {
-    return escapeHtml(label);
+    return displayLabel;
   }
 
   return `
@@ -361,9 +362,20 @@ function renderProjectNumberCell(row: EvidenceRow): string {
       data-bidder-detail-key="${escapeHtml(row.bidderDetailKey)}"
       aria-label="Open bidder details for ${escapeHtml(label)}"
     >
-      ${escapeHtml(label)}
+      ${displayLabel}
     </button>
   `;
+}
+
+function renderProjectNumberLines(label: string): string {
+  const projectNumbers = label
+    .split(";")
+    .map((projectNumber) => projectNumber.trim())
+    .filter(Boolean);
+
+  return (projectNumbers.length > 0 ? projectNumbers : [label])
+    .map((projectNumber) => `<span class="project-number-line">${escapeHtml(projectNumber)}</span>`)
+    .join("");
 }
 
 function renderUnitPriceSummaryPanel(
@@ -616,175 +628,6 @@ export function readEvidenceFiltersFromForm(
     quantityMax: readOptionalNumber(formData.get("quantityMax")),
     unit: String(formData.get("unit") || "")
   };
-}
-
-function renderPublicBidTabProjects(data: AppData): string {
-  const projects = data.projects
-    .filter((project) => data.sourceById.get(project.sourceId)?.sourceType === "bid_tab")
-    .filter((project) => (data.bidTabItemsByProjectId.get(project.projectId) ?? []).length > 0)
-    .sort((left, right) => (right.estimateLetDate || "").localeCompare(left.estimateLetDate || ""));
-
-  if (projects.length === 0) {
-    return "";
-  }
-
-  return `
-    <section class="panel-block bid-tab-projects-panel">
-      <div class="panel-heading">
-        <p class="eyebrow">Source Review</p>
-      </div>
-      <div class="bid-tab-project-list">
-        ${projects
-          .map((project) => {
-            const source = data.sourceById.get(project.sourceId) ?? null;
-            const itemCount = data.bidTabItemsByProjectId.get(project.projectId)?.length ?? 0;
-            const sourceLabel = source?.sourceLabel.split(" - ")[0] ?? "Bid tab source";
-            const projectTitle = [
-              project.projectName,
-              project.projectNumber,
-              project.estimateLetDate
-            ].filter(Boolean).join(" - ");
-            return `
-              <article class="bid-tab-project-row">
-                <div>
-                  <strong>${escapeHtml(projectTitle)}</strong>
-                  <small>${escapeHtml(sourceLabel)}</small>
-                </div>
-                <div class="bid-tab-project-meta">
-                  <span>${formatNumber(itemCount)} source items</span>
-                </div>
-                <button
-                  type="button"
-                  class="secondary-button bid-tab-open-button"
-                  data-bid-tab-project-id="${escapeHtml(project.projectId)}"
-                >
-                  Review
-                </button>
-              </article>
-            `;
-          })
-          .join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderBidTabProjectModal(data: AppData, selectedProjectId: string | null): string {
-  if (!selectedProjectId) {
-    return "";
-  }
-
-  const project = data.projectById.get(selectedProjectId) ?? null;
-  const source = project ? data.sourceById.get(project.sourceId) ?? null : null;
-  const items = project ? data.bidTabItemsByProjectId.get(project.projectId) ?? [] : [];
-
-  if (!project || items.length === 0) {
-    return "";
-  }
-
-  const bidderBids = data.bidderBidsByProjectId.get(project.projectId) ?? [];
-  const bidById = new Map(bidderBids.map((bid) => [bid.bidId, bid]));
-  const apparentLowBid = bidderBids.find((bid) => bid.apparentLow) ?? null;
-  const awardedBid = bidderBids.find((bid) => bid.isAwarded) ?? null;
-
-  return `
-    <div class="modal-backdrop" role="presentation">
-      <section
-        class="bidder-modal bid-tab-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="bid-tab-modal-title"
-      >
-        <div class="bidder-modal__header">
-          <div>
-            <p class="eyebrow">Public Bid Tab Detail</p>
-            <h3 id="bid-tab-modal-title">${escapeHtml(project.projectNumber || "Project")} - ${escapeHtml(project.projectName)}</h3>
-            <p class="query-line">${escapeHtml(source?.sourceLabel ?? "Unknown source")}</p>
-          </div>
-          <button type="button" class="modal-icon-close" data-close-bid-tab-project aria-label="Close bid tab review">X</button>
-        </div>
-        <div class="bidder-modal__summary">
-          <span>Apparent low: <strong>${escapeHtml(apparentLowBid?.bidderName ?? "Not listed")}</strong></span>
-          <span>Confirmed award: <strong>${escapeHtml(awardedBid?.bidderName ?? "Not listed")}</strong></span>
-          <span>Bid count: <strong>${formatNumber(bidderBids.length)}</strong></span>
-          <span>Source items: <strong>${formatNumber(items.length)}</strong></span>
-        </div>
-        <div class="table-scroll bidder-detail-scroll">
-          <table class="bid-tab-detail-table">
-            <thead>
-              <tr>
-                <th>No.</th>
-                <th>Source code</th>
-                <th>Description</th>
-                <th>Qty</th>
-                <th>Unit</th>
-                ${data.stateConfig.capabilities.engineerEstimate ? "<th>Engineer</th>" : ""}
-                <th>Average</th>
-                <th>Status</th>
-                <th>Bidder unit prices</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${items
-                .slice()
-                .sort((left, right) => left.workbookRow - right.workbookRow)
-                .map((item) => renderBidTabItemRow(
-                  item,
-                  data.bidderItemsByBidTabItemId.get(item.bidTabItemId) ?? [],
-                  bidById,
-                  data.stateConfig.capabilities.engineerEstimate
-                ))
-                .join("")}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-  `;
-}
-
-function renderBidTabItemRow(
-  item: BidTabItemRecord,
-  bidderItems: BidderItemObservationRecord[],
-  bidById: Map<string, BidderBidRecord>,
-  supportsEngineerEstimate: boolean
-): string {
-  const codeLabel = item.sourceSpecRaw || item.sourceItemCode;
-  const bidderPrices = bidderItems
-    .slice()
-    .sort((left, right) => compareBidderItems(left, right, bidById))
-    .map((bidderItem) => {
-      const bid = bidById.get(bidderItem.bidId) ?? null;
-      const apparentLowText = bid?.apparentLow ? " (low)" : "";
-      return `${bid?.bidderName ?? bidderItem.bidId}${apparentLowText}: ${formatCurrency(bidderItem.unitPrice)}`;
-    });
-
-  return `
-    <tr>
-      <td>${escapeHtml(item.sourceItemNumber || String(item.workbookRow))}</td>
-      <td>
-        ${escapeHtml(codeLabel)}
-        ${item.matchedAgencyItemCode ? `<div class="row-subtext">Matched: ${escapeHtml(item.matchedAgencyItemCode)}</div>` : ""}
-      </td>
-      <td>${escapeHtml(item.sourceItemDescription)}</td>
-      <td>${formatNumber(item.quantity)}</td>
-      <td>${escapeHtml(item.unitNormalized)}</td>
-      ${supportsEngineerEstimate ? `<td>${formatCurrency(item.engineerEstimateUnitPrice)}</td>` : ""}
-      <td>${formatCurrency(item.averageBidUnitPrice)}</td>
-      <td>${escapeHtml(matchStatusLabel(item.matchStatus))}</td>
-      <td>${bidderPrices.length > 0 ? escapeHtml(bidderPrices.join("; ")) : "Not listed"}</td>
-    </tr>
-  `;
-}
-
-function matchStatusLabel(status: BidTabItemRecord["matchStatus"]): string {
-  const labels: Record<BidTabItemRecord["matchStatus"], string> = {
-    matched: "Matched",
-    unmatched: "Unmatched",
-    source_cdot_prefix_only: "CDOT prefix only"
-  };
-
-  return labels[status];
 }
 
 function renderBidderDetailModal(

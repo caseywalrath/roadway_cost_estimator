@@ -41,8 +41,10 @@ import {
 } from "./renderProjectWorkspace";
 import type { PendingDuplicateProjectLine } from "./renderProjectWorkspace";
 import { readEvidenceFiltersFromForm, renderResults } from "./renderResults";
+import { renderSourceReview } from "./renderSourceReview";
 
-type AppView = "explorer" | "project";
+type AppView = "explorer" | "project" | "sourceReview";
+type PendingFocus = "sourceLauncher" | "sourceList" | "sourceDetail" | { sourceProjectId: string };
 
 export function renderApp(
   root: HTMLElement,
@@ -77,8 +79,9 @@ export function renderApp(
   let excludedSummaryRowIds = new Set<string>();
   let inflationAdjustmentEnabled = false;
   let selectedBidderDetailKey: string | null = null;
-  let selectedBidTabProjectId: string | null = null;
+  let selectedSourceProjectId: string | null = null;
   let activeView: AppView = "explorer";
+  let pendingFocus: PendingFocus | null = null;
   let pendingDuplicateLine: PendingDuplicateProjectLine | null = null;
 
   if (projectState !== loadedProjectState.state) {
@@ -126,8 +129,7 @@ export function renderApp(
 
         ${projectStorageWarning ? `<p class="storage-warning">${escapeHtml(projectStorageWarning)}</p>` : ""}
 
-        ${activeView === "explorer"
-          ? `
+        ${activeView === "explorer" ? `
             <section class="workspace-grid ${itemSearchCollapsed ? "workspace-grid--item-search-collapsed" : ""}">
               ${itemSearchCollapsed ? "" : renderExplorer(query, data.agencyItems, data.specSections, data.stateConfig)}
               ${renderResults(
@@ -136,7 +138,6 @@ export function renderApp(
                 itemSearchCollapsed,
                 data,
                 selectedBidderDetailKey,
-                selectedBidTabProjectId,
                 excludedSummaryRowIds,
                 includedRows.length,
                 visibleExcludedCount,
@@ -148,10 +149,14 @@ export function renderApp(
                 addToProjectPanelHtml
               )}
             </section>
-          `
-          : renderProjectWorkspace(activeProject)}
+          ` : activeView === "project"
+            ? renderProjectWorkspace(activeProject)
+            : renderSourceReview(data, selectedSourceProjectId)}
       </main>
     `;
+
+    applyPendingFocus(root, pendingFocus);
+    pendingFocus = null;
 
     root.querySelectorAll<HTMLButtonElement>("[data-app-view]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -163,7 +168,7 @@ export function renderApp(
 
         activeView = nextView;
         selectedBidderDetailKey = null;
-        selectedBidTabProjectId = null;
+        selectedSourceProjectId = null;
         render();
       });
     });
@@ -184,7 +189,7 @@ export function renderApp(
       evidenceSort = createDefaultEvidenceSort();
       excludedSummaryRowIds = new Set<string>();
       selectedBidderDetailKey = null;
-      selectedBidTabProjectId = null;
+      selectedSourceProjectId = null;
       evidenceFiltersExpanded = true;
       itemSearchCollapsed = Boolean(query.itemCode);
       render();
@@ -211,7 +216,7 @@ export function renderApp(
 
       evidenceFilters = readEvidenceFiltersFromForm(evidenceFiltersForm, evidenceFilters);
       selectedBidderDetailKey = null;
-      selectedBidTabProjectId = null;
+      selectedSourceProjectId = null;
       evidenceFiltersExpanded = true;
       render();
     });
@@ -219,7 +224,7 @@ export function renderApp(
     root.querySelector<HTMLButtonElement>("#clear-evidence-filters")?.addEventListener("click", () => {
       evidenceFilters = createDefaultEvidenceFilters(result.query);
       selectedBidderDetailKey = null;
-      selectedBidTabProjectId = null;
+      selectedSourceProjectId = null;
       evidenceFiltersExpanded = true;
       render();
     });
@@ -230,7 +235,7 @@ export function renderApp(
       evidenceSort = createDefaultEvidenceSort();
       excludedSummaryRowIds = new Set<string>();
       selectedBidderDetailKey = null;
-      selectedBidTabProjectId = null;
+      selectedSourceProjectId = null;
       evidenceFiltersExpanded = true;
       itemSearchCollapsed = false;
       render();
@@ -239,7 +244,7 @@ export function renderApp(
     root.querySelector<HTMLButtonElement>("#edit-item-search")?.addEventListener("click", () => {
       itemSearchCollapsed = false;
       selectedBidderDetailKey = null;
-      selectedBidTabProjectId = null;
+      selectedSourceProjectId = null;
       render();
     });
 
@@ -295,16 +300,26 @@ export function renderApp(
       button.addEventListener("click", async () => {
         await data.ensureBidItemPricesLoaded();
         selectedBidderDetailKey = button.dataset.bidderDetailKey ?? null;
-        selectedBidTabProjectId = null;
+        selectedSourceProjectId = null;
         render();
       });
+    });
+
+    root.querySelector<HTMLAnchorElement>("[data-open-source-review]")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      activeView = "sourceReview";
+      selectedBidderDetailKey = null;
+      selectedSourceProjectId = null;
+      pendingFocus = "sourceList";
+      render();
     });
 
     root.querySelectorAll<HTMLButtonElement>("[data-bid-tab-project-id]").forEach((button) => {
       button.addEventListener("click", async () => {
         await data.ensureBidItemPricesLoaded();
-        selectedBidTabProjectId = button.dataset.bidTabProjectId ?? null;
+        selectedSourceProjectId = button.dataset.bidTabProjectId ?? null;
         selectedBidderDetailKey = null;
+        pendingFocus = "sourceDetail";
         render();
       });
     });
@@ -314,9 +329,20 @@ export function renderApp(
       render();
     });
 
-    root.querySelector<HTMLButtonElement>("[data-close-bid-tab-project]")?.addEventListener("click", () => {
-      selectedBidTabProjectId = null;
+    root.querySelector<HTMLButtonElement>("[data-back-to-source-list]")?.addEventListener("click", () => {
+      const projectId = selectedSourceProjectId;
+      selectedSourceProjectId = null;
+      pendingFocus = projectId ? { sourceProjectId: projectId } : "sourceList";
       render();
+    });
+
+    root.querySelectorAll<HTMLButtonElement>("[data-close-source-review]").forEach((button) => {
+      button.addEventListener("click", () => {
+        activeView = "explorer";
+        selectedSourceProjectId = null;
+        pendingFocus = "sourceLauncher";
+        render();
+      });
     });
 
     bindAddToProjectForm(
@@ -560,6 +586,31 @@ export function renderApp(
   }
 
   render();
+}
+
+function applyPendingFocus(root: HTMLElement, pendingFocus: PendingFocus | null): void {
+  if (!pendingFocus) {
+    return;
+  }
+
+  if (pendingFocus === "sourceLauncher") {
+    root.querySelector<HTMLElement>("[data-open-source-review]")?.focus();
+    return;
+  }
+
+  if (pendingFocus === "sourceList") {
+    root.querySelector<HTMLElement>("#source-review-title")?.focus();
+    return;
+  }
+
+  if (pendingFocus === "sourceDetail") {
+    root.querySelector<HTMLElement>("#source-review-detail-title")?.focus();
+    return;
+  }
+
+  const projectButton = [...root.querySelectorAll<HTMLButtonElement>("[data-bid-tab-project-id]")]
+    .find((button) => button.dataset.bidTabProjectId === pendingFocus.sourceProjectId);
+  projectButton?.focus();
 }
 
 function renderViewTab(view: AppView, label: string, activeView: AppView): string {
