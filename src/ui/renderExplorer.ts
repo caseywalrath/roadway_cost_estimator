@@ -24,7 +24,7 @@ export function renderExplorer(
   return `
     <form id="explorer-form" class="search-panel">
       <div class="panel-heading">
-        <h2>${escapeHtml(stateConfig.defaultAgencyName)} Item Search</h2>
+        <h2>${escapeHtml(stateConfig.name)} Item Search</h2>
       </div>
 
       <input type="hidden" name="itemCode" value="${escapeHtml(query.itemCode)}" />
