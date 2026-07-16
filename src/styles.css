@@ -1185,6 +1185,26 @@ th {
   padding: 0;
 }
 
+.evidence-project-header,
+.evidence-project-cell {
+  width: 260px;
+  min-width: 220px;
+  max-width: 260px;
+  white-space: normal;
+}
+
+.project-detail-button {
+  display: block;
+  max-width: 100%;
+}
+
+.project-number-line {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
 .evidence-exclude-header {
   width: 92px;
   min-width: 92px;
@@ -1519,10 +1539,10 @@ th {
   min-width: 320px;
 }
 
-td:nth-child(2),
-td:nth-child(8),
-td:nth-child(9),
-td:nth-child(10) {
+.bid-tab-detail-table td:nth-child(2),
+.bid-tab-detail-table td:nth-child(8),
+.bid-tab-detail-table td:nth-child(9),
+.bid-tab-detail-table td:nth-child(10) {
   white-space: nowrap;
 }
 

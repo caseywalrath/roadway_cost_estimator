@@ -270,9 +270,10 @@ function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): strin
   const isActive = sort.key === column.key;
   const ariaSort = isActive ? (sort.direction === "asc" ? "ascending" : "descending") : "none";
   const nextDirection = isActive && sort.direction === "asc" ? "descending" : "ascending";
+  const columnClass = column.key === "projectNumber" ? " evidence-project-header" : "";
 
   return `
-    <th aria-sort="${ariaSort}" class="${isActive ? "evidence-table__sorted-column" : ""}">
+    <th aria-sort="${ariaSort}" class="${isActive ? "evidence-table__sorted-column" : ""}${columnClass}">
       <button
         type="button"
         class="table-sort-button"
@@ -309,7 +310,7 @@ function renderEvidenceRow(
         />
       </td>
       ${columns.map((column) => {
-        if (column.key === "projectNumber") return `<td>${renderProjectNumberCell(row)}</td>`;
+        if (column.key === "projectNumber") return `<td class="evidence-project-cell">${renderProjectNumberCell(row)}</td>`;
         if (column.key === "projectLocation") return `<td>${escapeHtml(row.project?.projectName ?? "Unknown project")}${renderProjectLocationSubtext(row)}</td>`;
         if (column.key === "district") return `<td>${escapeHtml(row.project?.district || "Not listed")}</td>`;
         if (column.key === "letDate") return `<td>${escapeHtml(row.project?.estimateLetDate || row.dateBasis)}</td>`;
@@ -348,9 +349,10 @@ function formatProjectLocationSubtext(row: EvidenceRow): string {
 
 function renderProjectNumberCell(row: EvidenceRow): string {
   const label = row.project?.projectNumber || "Not listed";
+  const displayLabel = renderProjectNumberLines(label);
 
   if (!row.hasBidderDetails) {
-    return escapeHtml(label);
+    return displayLabel;
   }
 
   return `
@@ -360,9 +362,20 @@ function renderProjectNumberCell(row: EvidenceRow): string {
       data-bidder-detail-key="${escapeHtml(row.bidderDetailKey)}"
       aria-label="Open bidder details for ${escapeHtml(label)}"
     >
-      ${escapeHtml(label)}
+      ${displayLabel}
     </button>
   `;
+}
+
+function renderProjectNumberLines(label: string): string {
+  const projectNumbers = label
+    .split(";")
+    .map((projectNumber) => projectNumber.trim())
+    .filter(Boolean);
+
+  return (projectNumbers.length > 0 ? projectNumbers : [label])
+    .map((projectNumber) => `<span class="project-number-line">${escapeHtml(projectNumber)}</span>`)
+    .join("");
 }
 
 function renderUnitPriceSummaryPanel(
