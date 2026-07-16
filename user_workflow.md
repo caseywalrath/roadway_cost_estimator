@@ -221,6 +221,7 @@ How to use it:
 - Select an official item and review the Matching Projects table and Unit Price Summary.
 - Enter quantity and preferred unit cost manually, or click an available Unit Price Summary value to fill the preferred unit cost.
 - Click Add to Project.
+- A brief inline status message confirms that the line was added or updated.
 - Add or revise the optional project name, location, and notes from the Project tab at any time.
 
 Summary value selection behavior:

@@ -9,7 +9,8 @@ export interface PendingDuplicateProjectLine {
 export function renderAddToProjectPanel(
   result: EvidenceResult,
   activeProject: UserProject | null,
-  pendingDuplicateLine: PendingDuplicateProjectLine | null
+  pendingDuplicateLine: PendingDuplicateProjectLine | null,
+  projectLineNotice: string | null
 ): string {
   if (!result.query.itemCode || !activeProject) {
     return "";
@@ -28,6 +29,7 @@ export function renderAddToProjectPanel(
         </div>
         <button type="button" class="secondary-button project-tab-shortcut" data-app-view="project">Project</button>
       </div>
+      ${projectLineNotice ? `<p class="project-line-notice" role="status" aria-live="polite" aria-atomic="true" data-project-line-notice>${escapeHtml(projectLineNotice)}</p>` : ""}
       <form id="add-project-item-form" class="add-project-form">
         <input type="hidden" name="costSource" value="manual" />
         <label class="add-project-cost-field">
