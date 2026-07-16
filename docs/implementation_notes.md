@@ -2,7 +2,7 @@
 
 ## Current Scope
 
-The first implementation is the Colorado Roadway Comparable Project Explorer.
+The first implementation is the Colorado Roadway Cost Estimator.
 
 Included:
 

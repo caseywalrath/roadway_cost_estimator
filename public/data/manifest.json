@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "productTitle": "Roadway Bid Item Evidence Explorer",
+  "productTitle": "Roadway Cost Estimator",
   "common": {
     "inflationIndexes": "common/inflation_index.csv"
   },

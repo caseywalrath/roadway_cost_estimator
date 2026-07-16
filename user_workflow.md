@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document describes the intended end-user workflow for the Roadway Cost Comparable Explorer prototype.
+This document describes the intended end-user workflow for the Roadway Cost Estimator prototype.
 
 The prototype is a project evidence browser with a browser-local Project workspace. It is not an automatic estimator, a chatbot, or a replacement for roadway engineering judgment.
 
