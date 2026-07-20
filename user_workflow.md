@@ -60,7 +60,7 @@ Current prototype default:
 Colorado roadway public CDOT cost-book evidence
 ```
 
-Evidence search context can be partial. Missing context should leave fields blank or produce data notes rather than blocking the item search. Project name, location, and notes are optional and do not block saved line items.
+Evidence search context can be partial. Missing context should leave fields blank or produce data notes rather than blocking the item search. New Projects require a name; location and notes are optional and do not block saved line items.
 
 ## 3. Enter one roadway bid item
 
@@ -222,7 +222,7 @@ How to use it:
 - Enter quantity and unit cost manually, or click an available Unit Price Summary value to fill the unit cost.
 - Click Add to Project.
 - A brief inline status message confirms that the line was added or updated.
-- Add or revise the optional project name, location, and notes from the Project tab at any time.
+- Add or revise the project name, location, and notes from the Project tab at any time.
 
 Summary value selection behavior:
 
@@ -250,13 +250,13 @@ Saved evidence context:
 
 ## 8. Review the Project workspace
 
-The Project tab stores one active browser-local project.
+The Project tab opens the active browser Project for the selected state. Multiple Colorado and Iowa Projects can coexist, and the Project manager can switch between them.
 
 Project fields:
 
-- Inline project name, shown as `Unnamed Project` while blank
-- Inline project location, shown as `Add project location` while blank
-- Compact project notes field
+- Project name, shown as `Unnamed Project` only for preserved legacy records
+- Project location, shown as `Location not specified` while blank
+- Project notes, shown as `No project notes` while blank
 
 Project line table columns:
 
@@ -271,11 +271,18 @@ Project line table columns:
 
 How to use it:
 
-- Edit the project name and location directly in the title area. Edit Notes in the adjacent compact field; all three values autosave and may be cleared.
+- Use the Project Actions menu to switch recent Projects, create a Project, open the manager, export a Project CSV, or import/export a Project backup.
+- A Project's state is assigned when the Project is created. Use the top state selector to navigate between state workspaces.
+- Use New Project to open the explicit creation form. A name is required before the Project is stored or activated.
+- Use Edit Active Project to open the name, location, and notes fields, then choose Save Changes or Cancel. Draft metadata does not autosave.
+- Use Manage Projects for the full cross-state list, search and state/status filters, sequential active or archived metadata editing, duplication, JSON backup, and reversible archive.
+- The Archived filter provides Restore and permanent delete actions. Permanent deletion requires confirmation and also removes that Project's local recovery snapshots.
+- Confirm before discarding unsaved metadata when switching Project context.
 - Edit unit cost, quantity, and notes directly in the table.
 - Remove lines that should not remain in the project, then confirm the removal prompt.
 - Review the line count and total project cost.
-- Treat the Project workspace as local browser storage. Clearing browser data can remove saved projects.
+- Review the footer for `Saving…`, the last successful Project save time, or a save-failure message.
+- Export a `.rce-project.json` backup for round-trip recovery. Clearing browser site data can still remove IndexedDB Projects and local revisions.
 - If local storage is unavailable or malformed, the app shows a recoverable warning and keeps the evidence browser usable.
 
 ## 9. Review source projects
@@ -326,12 +333,14 @@ Matching Projects export:
 Project export:
 
 - Open the Project tab.
-- Click Export CSV.
+- Open Project Actions and click Export CSV.
 - The export includes one row per saved project line.
 - Total item cost is calculated from quantity times unit cost.
 - Exported rows include project name, project location, project notes, item details, line notes, evidence row count, included observation IDs, and timestamps.
 - The Project CSV button is disabled when the Project has no line items.
-- XLSX export and project import are deferred.
+- CSV remains a reporting export and cannot restore a Project.
+- Project backup export/import uses `.rce-project.json` and preserves the complete Project record.
+- XLSX export is deferred.
 
 ## 12. Review data notes
 
@@ -391,7 +400,7 @@ Key questions for roadway engineers:
 
 ## Intended Later Workflow
 
-The current prototype supports one-item lookup and one active browser-local Project assembled one item at a time.
+The current prototype supports one-item lookup and multiple browser-local Projects assembled one item at a time, with one active Project per state.
 
 The intended later workflow is:
 

@@ -5,14 +5,18 @@ import type {
   SearchQuery
 } from "../data/schema";
 
-export const PROJECT_WORKSPACE_STORAGE_KEY = "roadway-cost-estimator:projects:v3";
-const V2_PROJECT_WORKSPACE_STORAGE_KEY = "roadway-cost-estimator:projects:v2";
-const LEGACY_PROJECT_WORKSPACE_STORAGE_KEY = "roadway-cost-estimator:projects:v1";
-export const PROJECT_WORKSPACE_SCHEMA_VERSION = 3;
+export const PROJECT_WORKSPACE_SCHEMA_VERSION = 4;
+export const LEGACY_PROJECT_WORKSPACE_KEYS = [
+  "roadway-cost-estimator:projects:v3",
+  "roadway-cost-estimator:projects:v2",
+  "roadway-cost-estimator:projects:v1"
+] as const;
+
+export type ProjectStatus = "active" | "archived";
 
 export interface ProjectWorkspaceState {
-  schemaVersion: 3;
-  activeProjectId: string | null;
+  schemaVersion: 4;
+  activeProjectIdByState: Record<string, string | null>;
   projects: UserProject[];
 }
 
@@ -22,6 +26,11 @@ export interface UserProject {
   name: string;
   location: string;
   notes: string;
+  status: ProjectStatus;
+  archivedAt: string | null;
+  revision: number;
+  lastBackupAt: string | null;
+  lastBackupRevision: number | null;
   createdAt: string;
   updatedAt: string;
   lineItems: ProjectLineItem[];
@@ -62,11 +71,6 @@ export interface ProjectEvidenceSummarySnapshot {
   valuesAreInflationAdjusted: boolean;
 }
 
-export interface ProjectWorkspaceLoadResult {
-  state: ProjectWorkspaceState;
-  warning: string | null;
-}
-
 export interface CreateProjectLineItemInput {
   state: string;
   agencyId: string;
@@ -80,142 +84,76 @@ export interface CreateProjectLineItemInput {
   evidenceContext: ProjectEvidenceContext;
 }
 
+export interface LegacyMigrationResult {
+  state: ProjectWorkspaceState;
+  rejectedProjectCount: number;
+  removedPlaceholderProjectIds: string[];
+  removedPlaceholderProjectCount: number;
+  sourceProjectCount: number;
+  sourceLineItemCount: number;
+  migratedLineItemCount: number;
+  errors: string[];
+}
+
 export function createEmptyProjectWorkspaceState(): ProjectWorkspaceState {
   return {
     schemaVersion: PROJECT_WORKSPACE_SCHEMA_VERSION,
-    activeProjectId: null,
+    activeProjectIdByState: {},
     projects: []
   };
 }
 
-export function loadProjectWorkspaceState(): ProjectWorkspaceLoadResult {
-  try {
-    const rawValue = window.localStorage.getItem(PROJECT_WORKSPACE_STORAGE_KEY);
-
-    if (rawValue) {
-      const parsedValue: unknown = JSON.parse(rawValue);
-      const state = parseProjectWorkspaceState(parsedValue, PROJECT_WORKSPACE_SCHEMA_VERSION);
-
-      if (!state) {
-        return {
-          state: createEmptyProjectWorkspaceState(),
-          warning: "Saved project data was not readable. The Project workspace started with a clean local draft."
-        };
-      }
-
-      return {
-        state,
-        warning: null
-      };
-    }
-
-    const v2RawValue = window.localStorage.getItem(V2_PROJECT_WORKSPACE_STORAGE_KEY);
-    const legacyRawValue = v2RawValue ?? window.localStorage.getItem(LEGACY_PROJECT_WORKSPACE_STORAGE_KEY);
-
-    if (!legacyRawValue) {
-      return {
-        state: createEmptyProjectWorkspaceState(),
-        warning: null
-      };
-    }
-
-    const legacyParsedValue: unknown = JSON.parse(legacyRawValue);
-    const migratedState = parseProjectWorkspaceState(legacyParsedValue, v2RawValue ? 2 : 1);
-
-    if (!migratedState) {
-      return {
-        state: createEmptyProjectWorkspaceState(),
-        warning: "Saved project data was not readable. The Project workspace started with a clean local draft."
-      };
-    }
-
-    const migrationWarning = saveProjectWorkspaceState(migratedState);
-
-    return {
-      state: migratedState,
-      warning: migrationWarning
-    };
-  } catch {
-    return {
-      state: createEmptyProjectWorkspaceState(),
-      warning: "Saved project data could not be loaded. The Project workspace is still available for this browser session."
-    };
-  }
-}
-
-export function saveProjectWorkspaceState(state: ProjectWorkspaceState): string | null {
-  try {
-    window.localStorage.setItem(PROJECT_WORKSPACE_STORAGE_KEY, JSON.stringify(state));
-    return null;
-  } catch {
-    return "Project changes could not be saved to browser storage. They will remain available only until this page is reloaded.";
-  }
-}
-
-export function ensureActiveProject(
-  state: ProjectWorkspaceState,
-  stateCode = "CO"
-): ProjectWorkspaceState {
-  const activeProject = getActiveProject(state);
-
-  if (activeProject?.state === stateCode) {
-    return state;
-  }
-
-  const existingStateProject = state.projects.find((project) => project.state === stateCode);
-  if (existingStateProject) {
-    return { ...state, activeProjectId: existingStateProject.projectId };
-  }
-
-  const project = createUserProject(stateCode);
-
+export function createUserProject(name: string, state: string, location = "", notes = ""): UserProject {
+  const now = currentTimestamp();
   return {
-    ...state,
-    activeProjectId: project.projectId,
-    projects: [...state.projects, project]
+    projectId: createId("project"),
+    state,
+    name: name.trim(),
+    location: location.trim(),
+    notes: notes.trim(),
+    status: "active",
+    archivedAt: null,
+    revision: 0,
+    lastBackupAt: null,
+    lastBackupRevision: null,
+    createdAt: now,
+    updatedAt: now,
+    lineItems: []
   };
 }
 
-export function getActiveProject(state: ProjectWorkspaceState): UserProject | null {
-  return state.projects.find((project) => project.projectId === state.activeProjectId) ?? state.projects[0] ?? null;
+export function isLegacyPlaceholderProject(project: UserProject): boolean {
+  return !project.name.trim()
+    && !project.location.trim()
+    && !project.notes.trim()
+    && project.lineItems.length === 0;
 }
 
-export function updateActiveProjectMetadata(
-  state: ProjectWorkspaceState,
-  fields: Pick<UserProject, "name" | "location" | "notes">
-): ProjectWorkspaceState {
-  const activeProject = getActiveProject(state);
+export function getActiveProject(state: ProjectWorkspaceState, stateCode: string): UserProject | null {
+  const projectId = state.activeProjectIdByState[stateCode] ?? null;
+  return state.projects.find((project) => project.projectId === projectId && project.status === "active") ?? null;
+}
 
-  if (!activeProject) {
-    return state;
-  }
+export function setActiveProject(state: ProjectWorkspaceState, projectId: string | null, stateCode: string): ProjectWorkspaceState {
+  const project = projectId ? state.projects.find((candidate) => candidate.projectId === projectId) : null;
+  return {
+    ...state,
+    activeProjectIdByState: {
+      ...state.activeProjectIdByState,
+      [stateCode]: project?.status === "active" && project.state === stateCode ? project.projectId : null
+    }
+  };
+}
 
-  const now = currentTimestamp();
-
-  return updateProject(state, activeProject.projectId, {
-    ...activeProject,
-    name: fields.name,
-    location: fields.location,
-    notes: fields.notes,
-    updatedAt: now
-  });
+export function addProject(state: ProjectWorkspaceState, project: UserProject): ProjectWorkspaceState {
+  return setActiveProject({ ...state, projects: [...state.projects, project] }, project.projectId, project.state);
 }
 
 export function createProjectLineItem(input: CreateProjectLineItemInput): ProjectLineItem {
   const now = currentTimestamp();
-
   return {
     lineItemId: createId("line"),
-    state: input.state,
-    agencyId: input.agencyId,
-    agencyItemId: input.agencyItemId,
-    itemCode: input.itemCode,
-    description: input.description,
-    unit: input.unit,
-    quantity: input.quantity,
-    preferredUnitCost: input.preferredUnitCost,
-    notes: input.notes,
-    evidenceContext: input.evidenceContext,
+    ...input,
     createdAt: now,
     updatedAt: now
   };
@@ -227,11 +165,7 @@ export function addProjectLineItem(
   lineItem: ProjectLineItem
 ): ProjectWorkspaceState {
   const project = state.projects.find((candidate) => candidate.projectId === projectId);
-
-  if (!project) {
-    return state;
-  }
-
+  if (!project) return state;
   return updateProject(state, projectId, {
     ...project,
     lineItems: [...project.lineItems, lineItem],
@@ -247,24 +181,16 @@ export function replaceProjectLineItem(
 ): ProjectWorkspaceState {
   const project = state.projects.find((candidate) => candidate.projectId === projectId);
   const currentLine = project?.lineItems.find((lineItem) => lineItem.lineItemId === lineItemId);
-
-  if (!project || !currentLine) {
-    return state;
-  }
-
+  if (!project || !currentLine) return state;
   const now = currentTimestamp();
-  const nextLineItem: ProjectLineItem = {
-    ...replacement,
-    lineItemId,
-    createdAt: currentLine.createdAt,
-    updatedAt: now
-  };
-
   return updateProject(state, projectId, {
     ...project,
-    lineItems: project.lineItems.map((lineItem) =>
-      lineItem.lineItemId === lineItemId ? nextLineItem : lineItem
-    ),
+    lineItems: project.lineItems.map((lineItem) => lineItem.lineItemId === lineItemId ? {
+      ...replacement,
+      lineItemId,
+      createdAt: currentLine.createdAt,
+      updatedAt: now
+    } : lineItem),
     updatedAt: now
   });
 }
@@ -276,26 +202,13 @@ export function updateProjectLineItem(
   fields: Pick<ProjectLineItem, "quantity" | "preferredUnitCost" | "notes">
 ): ProjectWorkspaceState {
   const project = state.projects.find((candidate) => candidate.projectId === projectId);
-
-  if (!project) {
-    return state;
-  }
-
+  if (!project) return state;
   const now = currentTimestamp();
-
   return updateProject(state, projectId, {
     ...project,
-    lineItems: project.lineItems.map((lineItem) =>
-      lineItem.lineItemId === lineItemId
-        ? {
-            ...lineItem,
-            quantity: fields.quantity,
-            preferredUnitCost: fields.preferredUnitCost,
-            notes: fields.notes,
-            updatedAt: now
-          }
-        : lineItem
-    ),
+    lineItems: project.lineItems.map((lineItem) => lineItem.lineItemId === lineItemId
+      ? { ...lineItem, ...fields, updatedAt: now }
+      : lineItem),
     updatedAt: now
   });
 }
@@ -306,11 +219,7 @@ export function removeProjectLineItem(
   lineItemId: string
 ): ProjectWorkspaceState {
   const project = state.projects.find((candidate) => candidate.projectId === projectId);
-
-  if (!project) {
-    return state;
-  }
-
+  if (!project) return state;
   return updateProject(state, projectId, {
     ...project,
     lineItems: project.lineItems.filter((lineItem) => lineItem.lineItemId !== lineItemId),
@@ -318,104 +227,174 @@ export function removeProjectLineItem(
   });
 }
 
-function createUserProject(state: string): UserProject {
+export function duplicateUserProject(project: UserProject): UserProject {
   const now = currentTimestamp();
-
   return {
+    ...structuredClone(project),
     projectId: createId("project"),
-    state,
-    name: "",
-    location: "",
-    notes: "",
+    name: `Copy of ${project.name.trim() || "Unnamed Project"}`,
+    status: "active",
+    archivedAt: null,
+    revision: 0,
+    lastBackupAt: null,
+    lastBackupRevision: null,
     createdAt: now,
     updatedAt: now,
-    lineItems: []
+    lineItems: project.lineItems.map((lineItem) => ({
+      ...structuredClone(lineItem),
+      lineItemId: createId("line"),
+      createdAt: now,
+      updatedAt: now
+    }))
   };
 }
 
-function updateProject(
-  state: ProjectWorkspaceState,
-  projectId: string,
-  nextProject: UserProject
-): ProjectWorkspaceState {
+export function replaceProject(state: ProjectWorkspaceState, project: UserProject): ProjectWorkspaceState {
+  const exists = state.projects.some((candidate) => candidate.projectId === project.projectId);
   return {
     ...state,
-    activeProjectId: projectId,
-    projects: state.projects.map((project) =>
-      project.projectId === projectId ? nextProject : project
-    )
+    projects: exists
+      ? state.projects.map((candidate) => candidate.projectId === project.projectId ? project : candidate)
+      : [...state.projects, project]
   };
 }
 
-function parseProjectWorkspaceState(value: unknown, schemaVersion: 1 | 2 | 3): ProjectWorkspaceState | null {
-  if (!isRecord(value) || value.schemaVersion !== schemaVersion) {
-    return null;
+export function removeProjectFromState(state: ProjectWorkspaceState, projectId: string): ProjectWorkspaceState {
+  const project = state.projects.find((candidate) => candidate.projectId === projectId);
+  if (!project) return state;
+  const nextState = { ...state, projects: state.projects.filter((candidate) => candidate.projectId !== projectId) };
+  return state.activeProjectIdByState[project.state] === projectId
+    ? setActiveProject(nextState, null, project.state)
+    : nextState;
+}
+
+export function parseUserProjectV4(value: unknown): UserProject | null {
+  return parseUserProject(value, 4);
+}
+
+export function migrateLegacyWorkspace(value: unknown, schemaVersion: 1 | 2 | 3): LegacyMigrationResult {
+  const empty = createEmptyProjectWorkspaceState();
+  if (!isRecord(value) || value.schemaVersion !== schemaVersion || !Array.isArray(value.projects)) {
+    return {
+      state: empty,
+      rejectedProjectCount: 0,
+      removedPlaceholderProjectIds: [],
+      removedPlaceholderProjectCount: 0,
+      sourceProjectCount: 0,
+      sourceLineItemCount: 0,
+      migratedLineItemCount: 0,
+      errors: ["Legacy workspace did not match its declared schema."]
+    };
   }
 
-  if (!Array.isArray(value.projects)) {
-    return null;
-  }
+  const projects: UserProject[] = [];
+  const removedPlaceholderProjectIds: string[] = [];
+  const errors: string[] = [];
+  let rejectedProjectCount = 0;
+  let sourceLineItemCount = 0;
 
-  const projects = value.projects
-    .map((project) => parseUserProject(project, schemaVersion))
-    .filter((project): project is UserProject => project !== null);
+  value.projects.forEach((rawProject, index) => {
+    const rawLineCount = isRecord(rawProject) && Array.isArray(rawProject.lineItems) ? rawProject.lineItems.length : 0;
+    sourceLineItemCount += rawLineCount;
+    const project = parseUserProject(rawProject, schemaVersion);
+    if (!project || project.lineItems.length !== rawLineCount) {
+      errors.push(`Project ${index + 1} could not be migrated without dropping data.`);
+      rejectedProjectCount += 1;
+      return;
+    }
+    if (isLegacyPlaceholderProject(project)) {
+      removedPlaceholderProjectIds.push(project.projectId);
+      return;
+    }
+    projects.push(project);
+  });
 
   const activeProjectId = typeof value.activeProjectId === "string" ? value.activeProjectId : null;
-  const resolvedActiveProjectId = projects.some((project) => project.projectId === activeProjectId)
-    ? activeProjectId
-    : projects[0]?.projectId ?? null;
+  const activeProjectIdByState: Record<string, string | null> = {};
+  const activeProject = projects.find((project) => project.projectId === activeProjectId);
+  if (activeProject) activeProjectIdByState[activeProject.state] = activeProject.projectId;
 
-  return {
-    schemaVersion: PROJECT_WORKSPACE_SCHEMA_VERSION,
-    activeProjectId: resolvedActiveProjectId,
-    projects
-  };
-}
-
-function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3): UserProject | null {
-  if (!isRecord(value) || typeof value.projectId !== "string") {
-    return null;
+  for (const project of [...projects].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))) {
+    if (!(project.state in activeProjectIdByState)) activeProjectIdByState[project.state] = project.projectId;
   }
 
   return {
+    state: { schemaVersion: 4, activeProjectIdByState, projects },
+    rejectedProjectCount,
+    removedPlaceholderProjectIds,
+    removedPlaceholderProjectCount: removedPlaceholderProjectIds.length,
+    sourceProjectCount: value.projects.length,
+    sourceLineItemCount,
+    migratedLineItemCount: projects.reduce((sum, project) => sum + project.lineItems.length, 0),
+    errors
+  };
+}
+
+function updateProject(state: ProjectWorkspaceState, projectId: string, nextProject: UserProject): ProjectWorkspaceState {
+  return {
+    ...state,
+    projects: state.projects.map((project) => project.projectId === projectId ? nextProject : project)
+  };
+}
+
+function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4): UserProject | null {
+  if (!isRecord(value) || typeof value.projectId !== "string" || !value.projectId.trim()) return null;
+  if (schemaVersion === 4) {
+    if (value.status !== "active" && value.status !== "archived") return null;
+    if (!isNonNegativeInteger(value.revision)) return null;
+    if (value.lastBackupAt !== null && typeof value.lastBackupAt !== "string") return null;
+    if (value.lastBackupRevision !== null && !isNonNegativeInteger(value.lastBackupRevision)) return null;
+  }
+  const rawLineItems = Array.isArray(value.lineItems) ? value.lineItems : [];
+  const lineItems = rawLineItems
+    .map((lineItem) => parseProjectLineItem(lineItem, schemaVersion))
+    .filter((lineItem): lineItem is ProjectLineItem => lineItem !== null);
+  if (lineItems.length !== rawLineItems.length) return null;
+
+  const state = schemaVersion >= 3 ? stringValue(value.state) : "CO";
+  if (!state) return null;
+  const revision = schemaVersion === 4 ? positiveInteger(value.revision) : 0;
+  const status = schemaVersion === 4 && value.status === "archived" ? "archived" : "active";
+  return {
     projectId: value.projectId,
-    state: schemaVersion === 3 ? (stringValue(value.state) || "CO") : "CO",
+    state,
     name: stringValue(value.name),
     location: stringValue(value.location),
     notes: stringValue(value.notes),
+    status,
+    archivedAt: status === "archived" ? nullableString(value.archivedAt) : null,
+    revision,
+    lastBackupAt: schemaVersion === 4 ? nullableString(value.lastBackupAt) : null,
+    lastBackupRevision: schemaVersion === 4 ? nullableNonNegativeInteger(value.lastBackupRevision) : null,
     createdAt: stringValue(value.createdAt) || currentTimestamp(),
     updatedAt: stringValue(value.updatedAt) || currentTimestamp(),
-    lineItems: Array.isArray(value.lineItems)
-      ? value.lineItems
-          .map((lineItem) => parseProjectLineItem(lineItem, schemaVersion))
-          .filter((lineItem): lineItem is ProjectLineItem => lineItem !== null)
-      : []
+    lineItems
   };
 }
 
-function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3): ProjectLineItem | null {
-  if (!isRecord(value) || typeof value.lineItemId !== "string") {
-    return null;
-  }
-
-  const quantity = numberValue(value.quantity);
-  const preferredUnitCost = numberValue(value.preferredUnitCost);
+function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4): ProjectLineItem | null {
+  if (!isRecord(value) || typeof value.lineItemId !== "string" || !value.lineItemId.trim()) return null;
+  const quantity = positiveNumberValue(value.quantity);
+  const preferredUnitCost = positiveNumberValue(value.preferredUnitCost);
   const evidenceContext = parseProjectEvidenceContext(value.evidenceContext);
-
-  if (quantity === null || preferredUnitCost === null || !evidenceContext) {
-    return null;
-  }
-
+  if (quantity === null || preferredUnitCost === null || !evidenceContext) return null;
+  const state = schemaVersion >= 3 ? stringValue(value.state) : "CO";
+  const agencyId = schemaVersion >= 3 ? stringValue(value.agencyId) : "co_cdot";
+  const agencyItemId = schemaVersion >= 3
+    ? stringValue(value.agencyItemId)
+    : legacyColoradoAgencyItemId(stringValue(value.itemCode));
+  const itemCode = stringValue(value.itemCode);
+  const description = stringValue(value.description);
+  const unit = stringValue(value.unit);
+  if (!state || !agencyId || !agencyItemId || !itemCode || !description || !unit) return null;
   return {
     lineItemId: value.lineItemId,
-    state: schemaVersion === 3 ? (stringValue(value.state) || "CO") : "CO",
-    agencyId: schemaVersion === 3 ? (stringValue(value.agencyId) || "co_cdot") : "co_cdot",
-    agencyItemId: schemaVersion === 3
-      ? stringValue(value.agencyItemId)
-      : legacyColoradoAgencyItemId(stringValue(value.itemCode)),
-    itemCode: stringValue(value.itemCode),
-    description: stringValue(value.description),
-    unit: stringValue(value.unit),
+    state,
+    agencyId,
+    agencyItemId,
+    itemCode,
+    description,
+    unit,
     quantity,
     preferredUnitCost,
     notes: stringValue(value.notes),
@@ -426,23 +405,16 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3): Project
 }
 
 function parseProjectEvidenceContext(value: unknown): ProjectEvidenceContext | null {
-  if (!isRecord(value)) {
-    return null;
-  }
-
+  if (!isRecord(value)) return null;
   const summarySnapshot = parseProjectEvidenceSummarySnapshot(value.summarySnapshot);
-
-  if (!isRecord(value.query) || !isRecord(value.filters) || !isRecord(value.sort) || !summarySnapshot) {
-    return null;
-  }
-
+  if (!isRecord(value.query) || !isRecord(value.filters) || !isRecord(value.sort) || !summarySnapshot) return null;
   return {
     query: value.query as unknown as SearchQuery,
     filters: value.filters as unknown as EvidenceFilters,
     sort: value.sort as unknown as EvidenceSort,
     includedRowCount: numberValue(value.includedRowCount) ?? 0,
     includedObservationIds: Array.isArray(value.includedObservationIds)
-      ? value.includedObservationIds.map((item) => String(item)).filter(Boolean)
+      ? value.includedObservationIds.map(String).filter(Boolean)
       : [],
     summarySnapshot,
     costSource: value.costSource === "quick_fill" ? "quick_fill" : "manual"
@@ -450,56 +422,23 @@ function parseProjectEvidenceContext(value: unknown): ProjectEvidenceContext | n
 }
 
 function parseProjectEvidenceSummarySnapshot(value: unknown): ProjectEvidenceSummarySnapshot | null {
-  if (!isRecord(value)) {
-    return null;
-  }
-
+  if (!isRecord(value)) return null;
   return {
     awarded: parseEvidenceStats(value.awarded),
     average: parseEvidenceStats(value.average),
     engineer: parseEvidenceStats(value.engineer),
     inflationAdjustmentEnabled: Boolean(value.inflationAdjustmentEnabled),
-    inflationTargetPeriodLabel: typeof value.inflationTargetPeriodLabel === "string"
-      ? value.inflationTargetPeriodLabel
-      : null,
+    inflationTargetPeriodLabel: nullableString(value.inflationTargetPeriodLabel),
     valuesAreInflationAdjusted: Boolean(value.valuesAreInflationAdjusted)
   };
 }
 
 function parseEvidenceStats(value: unknown): EvidenceStats | null {
-  if (!isRecord(value)) {
-    return null;
-  }
-
-  const count = numberValue(value.count);
-  const low = numberValue(value.low);
-  const p25 = numberValue(value.p25);
-  const median = numberValue(value.median);
-  const average = numberValue(value.average);
-  const p75 = numberValue(value.p75);
-  const high = numberValue(value.high);
-
-  if (
-    count === null
-    || low === null
-    || p25 === null
-    || median === null
-    || average === null
-    || p75 === null
-    || high === null
-  ) {
-    return null;
-  }
-
-  return {
-    count,
-    low,
-    p25,
-    median,
-    average,
-    p75,
-    high
-  };
+  if (!isRecord(value)) return null;
+  const keys = ["count", "low", "p25", "median", "average", "p75", "high"] as const;
+  const parsed = Object.fromEntries(keys.map((key) => [key, numberValue(value[key])])) as Record<typeof keys[number], number | null>;
+  if (keys.some((key) => parsed[key] === null)) return null;
+  return parsed as EvidenceStats;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -510,23 +449,44 @@ function stringValue(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function nullableString(value: unknown): string | null {
+  return typeof value === "string" && value ? value : null;
+}
+
 function numberValue(value: unknown): number | null {
-  const number = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : null;
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function positiveNumberValue(value: unknown): number | null {
+  const parsed = numberValue(value);
+  return parsed !== null && parsed > 0 ? parsed : null;
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+function positiveInteger(value: unknown): number {
+  const parsed = numberValue(value);
+  return parsed !== null && Number.isInteger(parsed) ? parsed : 0;
+}
+
+function nullableNonNegativeInteger(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  const parsed = numberValue(value);
+  return parsed !== null && Number.isInteger(parsed) ? parsed : null;
 }
 
 function currentTimestamp(): string {
   return new Date().toISOString();
 }
 
-function createId(prefix: string): string {
+export function createId(prefix: string): string {
   const uuid = globalThis.crypto?.randomUUID?.();
-
-  if (uuid) {
-    return `${prefix}_${uuid}`;
-  }
-
-  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  return uuid
+    ? `${prefix}_${uuid}`
+    : `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function legacyColoradoAgencyItemId(itemCode: string): string {
