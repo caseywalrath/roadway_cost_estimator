@@ -46,6 +46,9 @@ jobs:
       - name: Run importer tests
         run: npm test
 
+      - name: Run browser storage tests
+        run: npm run test:web
+
       - name: Build
         run: npm run build
 

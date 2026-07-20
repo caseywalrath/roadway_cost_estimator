@@ -166,7 +166,7 @@ Goal: Add multi-item review only after the one-item evidence workflow is trusted
 
 Initial slice implemented:
 
-- One active browser-local Project.
+- Multiple independently stored browser Projects with one active Project per state.
 - Project name, location, and notes.
 - Manual project line creation from the selected official item.
 - Required quantity and preferred unit cost.
@@ -174,6 +174,7 @@ Initial slice implemented:
 - Duplicate item prompt.
 - Editable Project item table.
 - Project CSV export.
+- IndexedDB persistence, Project manager, JSON backup/import, local revisions, and concurrent-tab protection.
 
 Recommended features:
 

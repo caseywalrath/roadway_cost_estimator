@@ -16,7 +16,7 @@ The app is an evidence browser and limited local project workspace. It is not an
 - Shared data: `public/data/common/`.
 - State-native staging: `data/staging/{state}/`.
 - Raw downloaded and attached files: `data/raw/`, which is git-ignored.
-- Browser project storage: `roadway-cost-estimator:projects:v3`.
+- Browser project storage: IndexedDB database `roadway-cost-estimator`, with independent Project, settings, revision, and migration-backup stores.
 
 The schema-v2 loader reads the manifest, loads only the selected state's core tables, builds relationship maps, and defers `bid_item_prices.csv` until a bidder or source-detail view is opened.
 
@@ -28,7 +28,7 @@ The schema-v2 loader reads the manifest, loads only the selected state's core ta
 4. `src/data/schema.ts` defines the shared contract, project-number, agency-item, bid, item-price, observation, taxonomy, and manifest interfaces.
 5. `src/matching/buildEvidenceResult.ts` groups generalized observations by contract item and filters exact `agencyItemId` evidence.
 6. `src/ui` renders manifest-provided labels, capabilities, columns, source filters, details, and exports. Source Review is a state-specific auxiliary view with list and full-width project-detail states.
-7. `src/projects/projectWorkspace.ts` loads/migrates local Project schema v3 and binds every Project and line item to a state and agency item.
+7. `src/projects/projectRepository.ts` opens IndexedDB, preserves and migrates legacy v1-v3 storage, and exposes asynchronous Project operations. `src/projects/projectWorkspace.ts` defines Project schema v4 and pure workspace mutations.
 
 ## Data Model
 
@@ -99,13 +99,20 @@ Awarded prices are promoted only when the printed awarded vendor resolves to exa
 
 ## Project Workspace Rules
 
-- Schema v3 stores `state` on each Project.
-- Schema v3 stores `state`, `agencyId`, and `agencyItemId` on each line.
-- v1/v2 local storage migrates to Colorado and `co_cdot` identities.
-- The active Project must match the selected state. Switching states selects an existing Project for that state or creates an empty one.
+- Schema v4 stores each Project independently in IndexedDB and retains `state`, `agencyId`, and `agencyItemId` on every line.
+- Project status, revision, archive time, and backup revision are persisted with the Project.
+- Active Project identity is stored independently per state. Switching states restores the last active Project for that state and never creates a Project implicitly.
+- v1-v3 browser storage migrates without deleting the legacy keys. Exact raw values and migration reports remain in the `migrationBackups` store. Blank zero-line Projects traceable to the former automatic-default behavior are removed once; named Projects and Projects containing metadata or lines are preserved.
+- Invalid legacy Projects are rejected as complete units rather than silently losing invalid lines.
 - A Project can use reviewed evidence from multiple agencies only within its state.
 - Duplicate detection uses `agencyItemId`, not the raw item code.
-- Project name, location, and notes are optional, inline-editable metadata. Blank metadata does not block line creation and remains blank in browser storage and CSV exports.
+- New Projects are created only through an explicit form and require a name; location and notes remain optional. Migrated blank names with meaningful content remain valid and display as `Unnamed Project`.
+- Project state is assigned in the workspace's New Project form. The top state selector controls application navigation; the workspace header does not duplicate it.
+- The Project tab contains a workspace and an in-tab manager for switching, editing, duplicating, backing up, archiving, restoring, and permanently deleting archived Projects across states.
+- `Project Actions` remains available in active, empty, editor, and manager views and contains recent-Project switching, explicit creation/editing, management, CSV reporting export, and JSON recovery import/export.
+- Project JSON files (`.rce-project.json`) are the round-trip recovery format. CSV remains a reporting export.
+- Project metadata is read-only until an explicit Edit action and changes only on Save. Line-field edits autosave after 400 milliseconds; structural changes and metadata saves persist immediately. The footer reports the last successful Project write.
+- Local revisions retain the most recent 20 internal recovery snapshots per Project. They are removed with a permanently deleted archived Project. BroadcastChannel edit claims prevent silent concurrent-tab overwrites.
 
 ## Data Governance and Validation
 

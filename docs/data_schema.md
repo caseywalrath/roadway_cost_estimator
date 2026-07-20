@@ -126,13 +126,19 @@ Inflation adjustment affects optional display/summary calculations. Original sou
 
 `SearchQuery` includes `state`, `agencyId`, and `agencyItemId`. Evidence joins use `contractId` and `agencyItemId`. Compatibility aliases in `src/data/schema.ts` are temporary adapters for rendering modules migrated from schema v1; new logic must use normalized IDs.
 
-## Project Local Storage v3
+## Project Browser Storage v4
 
-Storage key: `roadway-cost-estimator:projects:v3`.
+IndexedDB database: `roadway-cost-estimator`.
 
-- Project: `projectId`, `state`, metadata, timestamps, line items.
-- Line item: `lineItemId`, `state`, `agencyId`, `agencyItemId`, code, description, unit, quantity, preferred cost, notes, evidence context, timestamps.
-- v1/v2 records migrate to state `CO` and agency `co_cdot`.
+- `projects`: one Project aggregate per `projectId`, indexed by state, status, and updated time.
+- `settings`: active Project ID per state, migration status, and one-time legacy-placeholder cleanup version.
+- `revisions`: bounded restorable snapshots keyed by Project and revision.
+- `migrationBackups`: exact legacy storage values and migration reports.
+- Project: `projectId`, `state`, metadata, `status`, `archivedAt`, `revision`, backup metadata, timestamps, and line items.
+- Line item: `lineItemId`, `state`, `agencyId`, `agencyItemId`, code, description, unit, quantity, preferred cost, notes, evidence context, and timestamps.
+- v1/v2 records migrate to state `CO` and agency `co_cdot`; v3 state identities are retained. Legacy keys are not deleted during migration. Migration reports identify blank zero-line automatic placeholders removed from the usable Project list and reconcile those removals separately from invalid Projects.
+- `.rce-project.json` file format v1 stores one complete schema-v4 Project for round-trip recovery.
+- Permanently deleting an archived Project removes its aggregate and associated revision snapshots in one IndexedDB transaction.
 
 ## Validation Rules
 

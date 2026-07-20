@@ -16,17 +16,22 @@ import type {
   UserProject
 } from "../projects/projectWorkspace";
 import {
+  addProject,
   addProjectLineItem,
+  createUserProject,
   createProjectLineItem,
-  ensureActiveProject,
+  duplicateUserProject,
   getActiveProject,
-  loadProjectWorkspaceState,
   removeProjectLineItem,
+  removeProjectFromState,
+  replaceProject,
   replaceProjectLineItem,
-  saveProjectWorkspaceState,
-  updateActiveProjectMetadata,
+  setActiveProject,
   updateProjectLineItem
 } from "../projects/projectWorkspace";
+import { createImportedCopy, downloadProjectBackup, readProjectBackupFile } from "../projects/projectBackup";
+import { openProjectRepository, ProjectConflictError, type ProjectRepository } from "../projects/projectRepository";
+import { ProjectEditCoordinator } from "../projects/projectEditCoordinator";
 import { downloadEvidenceCsv } from "./exportEvidenceCsv";
 import { downloadProjectCsv } from "./exportProjectCsv";
 import {
@@ -36,20 +41,32 @@ import {
 } from "./renderExplorer";
 import {
   renderAddToProjectPanel,
+  renderProjectManager,
   renderProjectWorkspace
 } from "./renderProjectWorkspace";
-import type { PendingDuplicateProjectLine } from "./renderProjectWorkspace";
+import type { PendingDuplicateProjectLine, ProjectManagerFilters, ProjectMetadataEditorView } from "./renderProjectWorkspace";
 import { readEvidenceFiltersFromForm, renderResults } from "./renderResults";
 import { renderSourceReview } from "./renderSourceReview";
 
 type AppView = "explorer" | "project" | "sourceReview";
+type ProjectSubview = "workspace" | "manager";
+type SaveStatus = "idle" | "saving" | "saved" | "failed";
 type PendingFocus = "sourceLauncher" | "sourceList" | "sourceDetail" | { sourceProjectId: string };
 
-export function renderApp(
+interface ProjectMetadataDraft extends ProjectMetadataEditorView {
+  expectedRevision: number | null;
+  initialState: string;
+  initialName: string;
+  initialLocation: string;
+  initialNotes: string;
+}
+
+export async function renderApp(
   root: HTMLElement,
   data: AppData,
-  onStateChange: (stateCode: string) => void
-): void {
+  onStateChange: (stateCode: string, initialView?: "explorer" | "project") => void,
+  initialView: "explorer" | "project" = "explorer"
+): Promise<void> {
   const emptyQuery: SearchQuery = {
     state: data.stateConfig.code,
     agencyId: data.stateConfig.defaultAgencyId,
@@ -64,12 +81,10 @@ export function renderApp(
     unit: "",
     quantity: null
   };
-  const loadedProjectState = loadProjectWorkspaceState();
-  let projectState: ProjectWorkspaceState = ensureActiveProject(
-    loadedProjectState.state,
-    data.stateConfig.code
-  );
-  let projectStorageWarning = loadedProjectState.warning;
+  const initializedRepository = await openProjectRepository();
+  const projectRepository: ProjectRepository = initializedRepository.repository;
+  let projectState: ProjectWorkspaceState = initializedRepository.state;
+  let projectStorageWarning = initializedRepository.warning;
   let query = { ...emptyQuery };
   let evidenceFilters = createDefaultEvidenceFilters(query);
   let evidenceSort = createDefaultEvidenceSort();
@@ -79,15 +94,40 @@ export function renderApp(
   let inflationAdjustmentEnabled = false;
   let selectedBidderDetailKey: string | null = null;
   let selectedSourceProjectId: string | null = null;
-  let activeView: AppView = "explorer";
+  let activeView: AppView = initialView;
+  let projectSubview: ProjectSubview = "workspace";
+  let projectManagerFilters: ProjectManagerFilters = { query: "", state: "all", status: "active" };
+  let projectReadOnly = false;
+  let saveStatus: SaveStatus = "idle";
+  let lastSavedAt: string | null = getActiveProject(projectState, data.stateConfig.code)?.updatedAt ?? null;
+  let saveTimer: number | null = null;
+  let saveQueue: Promise<void> = Promise.resolve();
+  let localChangeVersion = 0;
+  let persistedChangeVersion = 0;
+  let lastSnapshotRevision = 0;
+  let snapshotTimer: number | null = null;
+  let storagePersistenceRequested = false;
   let pendingFocus: PendingFocus | null = null;
   let pendingDuplicateLine: PendingDuplicateProjectLine | null = null;
   let projectLineNotice: string | null = null;
   let projectLineNoticeToken = 0;
-
-  if (projectState !== loadedProjectState.state) {
-    projectStorageWarning = saveProjectWorkspaceState(projectState) ?? projectStorageWarning;
-  }
+  let projectMetadataDraft: ProjectMetadataDraft | null = null;
+  const editCoordinator = new ProjectEditCoordinator();
+  editCoordinator.setLostOwnershipHandler(() => {
+    projectReadOnly = true;
+    render();
+  });
+  editCoordinator.setOwnershipAvailableHandler(() => {
+    const project = getActiveProject(projectState, data.stateConfig.code);
+    if (!project) return;
+    editCoordinator.takeOver(project.projectId);
+    projectReadOnly = false;
+    projectStorageWarning = null;
+    render();
+  });
+  const initialProject = getActiveProject(projectState, data.stateConfig.code);
+  if (initialProject) lastSnapshotRevision = initialProject.revision;
+  if (initialProject) projectReadOnly = !(await editCoordinator.claim(initialProject.projectId));
 
   function render(): void {
     const result = buildEvidenceResult(data, query, evidenceFilters, evidenceSort);
@@ -101,7 +141,7 @@ export function renderApp(
       ? buildInflationAdjustedPriceSet(result.filteredRows, data.inflationIndexByPeriod)
       : null;
     const visibleExcludedCount = result.filteredRows.length - includedRows.length;
-    const activeProject = getActiveProject(projectState);
+    const activeProject = getActiveProject(projectState, data.stateConfig.code);
     const addToProjectPanelHtml = renderAddToProjectPanel(
       result,
       activeProject,
@@ -155,7 +195,9 @@ export function renderApp(
               )}
             </section>
           ` : activeView === "project"
-            ? renderProjectWorkspace(activeProject)
+            ? projectSubview === "manager"
+              ? renderProjectManager(projectState.projects, data.manifest.states, data.stateConfig.code, projectManagerFilters, activeProject, projectReadOnly, projectMetadataDraft)
+              : renderProjectWorkspace(activeProject, projectState.projects, data.manifest.states, data.stateConfig.code, projectReadOnly, projectMetadataDraft)
             : renderSourceReview(data, selectedSourceProjectId)}
 
         <footer class="app-footer">
@@ -164,6 +206,7 @@ export function renderApp(
           <span>${escapeHtml(data.manifest.productTitle)}</span>
           <span class="app-footer__dot" aria-hidden="true">•</span>
           <span>&copy; ${new Date().getFullYear()}</span>
+          <span class="app-footer__save-status" data-project-save-status role="status" aria-live="polite">${escapeHtml(saveStatusText(saveStatus, lastSavedAt))}</span>
         </footer>
       </main>
     `;
@@ -178,8 +221,10 @@ export function renderApp(
         if (nextView !== "explorer" && nextView !== "project") {
           return;
         }
+        if (!confirmDiscardProjectMetadataDraft()) return;
 
         activeView = nextView;
+        if (nextView === "project") projectSubview = "workspace";
         selectedBidderDetailKey = null;
         selectedSourceProjectId = null;
         render();
@@ -187,7 +232,19 @@ export function renderApp(
     });
 
     root.querySelector<HTMLSelectElement>("#state-selector")?.addEventListener("change", (event) => {
-      onStateChange((event.currentTarget as HTMLSelectElement).value);
+      const nextStateCode = (event.currentTarget as HTMLSelectElement).value;
+      void (async () => {
+        if (!confirmDiscardProjectMetadataDraft()) {
+          render();
+          return;
+        }
+        if (!(await flushPendingProjectSave())) {
+          render();
+          return;
+        }
+        cleanupProjectSession();
+        onStateChange(nextStateCode, "explorer");
+      })();
     });
 
     const form = root.querySelector<HTMLFormElement>("#explorer-form");
@@ -368,17 +425,80 @@ export function renderApp(
       inflationAdjustedSummary
     );
     bindDuplicateProjectActions(root);
+    bindProjectMetadataEditor(root);
     bindProjectWorkspace(root);
+    bindProjectManager(root);
+    bindImportControls(root);
   }
 
   function persistProjectState(nextState: ProjectWorkspaceState, renderAfterSave: boolean): void {
-    const previousWarning = projectStorageWarning;
     projectState = nextState;
-    projectStorageWarning = saveProjectWorkspaceState(nextState);
-
-    if (renderAfterSave || (!previousWarning && projectStorageWarning)) {
-      render();
+    localChangeVersion += 1;
+    setSaveStatus("saving");
+    ensurePersistentStorageRequested();
+    if (renderAfterSave) render();
+    if (renderAfterSave) {
+      void queueProjectSave();
+      return;
     }
+    if (saveTimer !== null) window.clearTimeout(saveTimer);
+    saveTimer = window.setTimeout(() => {
+      saveTimer = null;
+      void queueProjectSave();
+    }, 400);
+  }
+
+  function queueProjectSave(): Promise<void> {
+    if (saveTimer !== null) window.clearTimeout(saveTimer);
+    saveTimer = null;
+    saveQueue = saveQueue.then(async () => {
+      if (localChangeVersion <= persistedChangeVersion) return;
+      const project = getActiveProject(projectState, data.stateConfig.code);
+      if (!project || projectReadOnly) return;
+      const capturedChangeVersion = localChangeVersion;
+      const expectedRevision = project.revision;
+      try {
+        const saved = await projectRepository.saveProject(structuredClone(project), expectedRevision);
+        const current = projectState.projects.find((candidate) => candidate.projectId === project.projectId);
+        if (current?.revision === expectedRevision) {
+          projectState = replaceProject(projectState, {
+            ...current,
+            revision: saved.revision,
+            updatedAt: saved.updatedAt
+          });
+        }
+        if (projectMetadataDraft?.projectId === saved.projectId) {
+          projectMetadataDraft = { ...projectMetadataDraft, expectedRevision: saved.revision };
+        }
+        persistedChangeVersion = Math.max(persistedChangeVersion, capturedChangeVersion);
+        lastSavedAt = saved.updatedAt;
+        setSaveStatus(projectRepository.isPersistent ? "saved" : "failed");
+        if (capturedChangeVersion !== localChangeVersion) void queueProjectSave();
+      } catch (error) {
+        projectStorageWarning = error instanceof ProjectConflictError
+          ? error.message
+          : "Project changes could not be saved to browser storage.";
+        projectReadOnly = error instanceof ProjectConflictError;
+        setSaveStatus("failed");
+        render();
+      }
+    });
+    return saveQueue;
+  }
+
+  async function flushPendingProjectSave(): Promise<boolean> {
+    if (saveTimer !== null) {
+      window.clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    await queueProjectSave();
+    return localChangeVersion <= persistedChangeVersion;
+  }
+
+  function setSaveStatus(status: SaveStatus): void {
+    saveStatus = status;
+    const statusElement = root.querySelector<HTMLElement>("[data-project-save-status]");
+    if (statusElement) statusElement.textContent = saveStatusText(saveStatus, lastSavedAt);
   }
 
   function bindAddToProjectForm(
@@ -423,10 +543,15 @@ export function renderApp(
     addForm.addEventListener("submit", (event) => {
       event.preventDefault();
 
-      const activeProject = getActiveProject(projectState);
+      const activeProject = getActiveProject(projectState, data.stateConfig.code);
 
       if (!activeProject) {
         activeView = "project";
+        render();
+        return;
+      }
+      if (projectReadOnly) {
+        projectStorageWarning = "This Project is read-only because it is being edited in another browser tab.";
         render();
         return;
       }
@@ -485,7 +610,7 @@ export function renderApp(
     rootElement.querySelectorAll<HTMLButtonElement>("[data-duplicate-project-action]").forEach((button) => {
       button.addEventListener("click", () => {
         const action = button.dataset.duplicateProjectAction;
-        const activeProject = getActiveProject(projectState);
+        const activeProject = getActiveProject(projectState, data.stateConfig.code);
 
         if (!pendingDuplicateLine || !activeProject) {
           return;
@@ -540,25 +665,153 @@ export function renderApp(
     }, 4000);
   }
 
-  function bindProjectWorkspace(rootElement: HTMLElement): void {
-    const metadataForm = rootElement.querySelector<HTMLFormElement>("#project-metadata-form");
-
-    metadataForm?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input, textarea").forEach((input) => {
-      input.addEventListener("input", () => {
-        const formData = new FormData(metadataForm);
-        persistProjectState(
-          updateActiveProjectMetadata(projectState, {
-            name: String(formData.get("name") || ""),
-            location: String(formData.get("location") || ""),
-            notes: String(formData.get("notes") || "")
-          }),
-          false
-        );
+  function bindProjectMetadataEditor(rootElement: HTMLElement): void {
+    rootElement.querySelectorAll<HTMLFormElement>("[data-project-editor-context]").forEach((form) => {
+      const syncDraft = () => syncProjectMetadataDraft(form);
+      form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("input, textarea, select")
+        .forEach((input) => {
+          input.addEventListener("input", syncDraft);
+          input.addEventListener("change", syncDraft);
+        });
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        syncDraft();
+        void saveProjectMetadataDraft(form);
       });
     });
 
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-cancel-project-editor]").forEach((button) => {
+      button.addEventListener("click", () => {
+        projectMetadataDraft = null;
+        render();
+      });
+    });
+  }
+
+  function syncProjectMetadataDraft(form: HTMLFormElement): void {
+    const context = form.dataset.projectEditorContext === "manager" ? "manager" : "workspace";
+    const mode = form.dataset.projectEditorMode === "edit" ? "edit" : "create";
+    const formData = new FormData(form);
+    const existingDraft = projectMetadataDraft?.context === context && projectMetadataDraft.mode === mode
+      ? projectMetadataDraft
+      : createProjectMetadataDraft(context, mode);
+    projectMetadataDraft = {
+      ...existingDraft,
+      state: String(formData.get("state") || existingDraft.state || data.stateConfig.code),
+      name: String(formData.get("name") || ""),
+      location: String(formData.get("location") || ""),
+      notes: String(formData.get("notes") || "")
+    };
+  }
+
+  function createProjectMetadataDraft(
+    context: "workspace" | "manager",
+    mode: "create" | "edit",
+    project: UserProject | null = null
+  ): ProjectMetadataDraft {
+    const state = project?.state ?? data.stateConfig.code;
+    const name = project?.name ?? "";
+    const location = project?.location ?? "";
+    const notes = project?.notes ?? "";
+    return {
+      context,
+      mode,
+      projectId: project?.projectId ?? null,
+      expectedRevision: project?.revision ?? null,
+      state,
+      name,
+      location,
+      notes,
+      initialState: state,
+      initialName: name,
+      initialLocation: location,
+      initialNotes: notes
+    };
+  }
+
+  function isProjectMetadataDraftDirty(): boolean {
+    const draft = projectMetadataDraft;
+    return Boolean(draft && (
+      draft.state !== draft.initialState
+      || draft.name !== draft.initialName
+      || draft.location !== draft.initialLocation
+      || draft.notes !== draft.initialNotes
+    ));
+  }
+
+  function confirmDiscardProjectMetadataDraft(): boolean {
+    if (!projectMetadataDraft) return true;
+    if (isProjectMetadataDraftDirty() && !window.confirm("Discard unsaved Project changes?")) return false;
+    projectMetadataDraft = null;
+    return true;
+  }
+
+  async function saveProjectMetadataDraft(form: HTMLFormElement): Promise<void> {
+    const draft = projectMetadataDraft;
+    if (!draft) return;
+    const nameInput = form.elements.namedItem("name") as HTMLInputElement | null;
+    const name = draft.name.trim();
+    if (!name) {
+      nameInput?.setCustomValidity("Enter a Project name.");
+      nameInput?.reportValidity();
+      return;
+    }
+    nameInput?.setCustomValidity("");
+
+    if (draft.mode === "create") {
+      try {
+        await createAndOpenProject(name, draft.state, draft.location.trim(), draft.notes.trim());
+      } catch (error) {
+        projectStorageWarning = error instanceof Error ? error.message : "The Project could not be created.";
+        setSaveStatus("failed");
+        render();
+      }
+      return;
+    }
+
+    if (!(await flushPendingProjectSave())) return;
+    const project = projectState.projects.find((candidate) => candidate.projectId === draft.projectId);
+    if (!project) {
+      projectStorageWarning = "The Project being edited is no longer available.";
+      setSaveStatus("failed");
+      render();
+      return;
+    }
+    const location = draft.location.trim();
+    const notes = draft.notes.trim();
+    if (name === project.name && location === project.location && notes === project.notes) {
+      projectMetadataDraft = null;
+      render();
+      return;
+    }
+
+    ensurePersistentStorageRequested();
+    setSaveStatus("saving");
+    try {
+      const expectedRevision = draft.expectedRevision ?? project.revision;
+      const saved = await projectRepository.saveProject({ ...project, name, location, notes }, expectedRevision);
+      projectState = replaceProject(projectState, saved);
+      if (getActiveProject(projectState, data.stateConfig.code)?.projectId === saved.projectId) {
+        lastSavedAt = saved.updatedAt;
+      }
+      projectMetadataDraft = null;
+      setSaveStatus(projectRepository.isPersistent ? "saved" : "failed");
+      render();
+    } catch (error) {
+      projectStorageWarning = error instanceof ProjectConflictError
+        ? error.message
+        : "Project metadata could not be saved to browser storage.";
+      if (error instanceof ProjectConflictError && getActiveProject(projectState, data.stateConfig.code)?.projectId === project.projectId) {
+        projectReadOnly = true;
+      }
+      setSaveStatus("failed");
+      render();
+    }
+  }
+
+  function bindProjectWorkspace(rootElement: HTMLElement): void {
     rootElement.querySelector<HTMLButtonElement>("#download-project-csv")?.addEventListener("click", () => {
-      const activeProject = getActiveProject(projectState);
+      const activeProject = getActiveProject(projectState, data.stateConfig.code);
 
       if (activeProject) {
         downloadProjectCsv(activeProject);
@@ -566,9 +819,9 @@ export function renderApp(
     });
 
     rootElement.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-project-line-field]").forEach((input) => {
-      input.addEventListener("change", () => {
+      const updateLine = (validate: boolean) => {
         const lineItemId = input.dataset.projectLineId ?? "";
-        const activeProject = getActiveProject(projectState);
+        const activeProject = getActiveProject(projectState, data.stateConfig.code);
         const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId) ?? null;
         const row = input.closest("tr");
 
@@ -579,8 +832,12 @@ export function renderApp(
         const quantityInput = row.querySelector<HTMLInputElement>('[data-project-line-field="quantity"]');
         const preferredUnitCostInput = row.querySelector<HTMLInputElement>('[data-project-line-field="preferredUnitCost"]');
         const notesInput = row.querySelector<HTMLInputElement>('[data-project-line-field="notes"]');
-        const quantity = readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero.");
-        const preferredUnitCost = readRequiredPositiveNumber(preferredUnitCostInput, "Enter a unit cost greater than zero.");
+        const quantity = validate
+          ? readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero.")
+          : readOptionalFormNumber(quantityInput?.value ?? "");
+        const preferredUnitCost = validate
+          ? readRequiredPositiveNumber(preferredUnitCostInput, "Enter a unit cost greater than zero.")
+          : readOptionalFormNumber(preferredUnitCostInput?.value ?? "");
 
         if (quantity === null || preferredUnitCost === null) {
           return;
@@ -592,14 +849,19 @@ export function renderApp(
             preferredUnitCost,
             notes: notesInput?.value ?? ""
           }),
-          true
+          false
         );
+      };
+      input.addEventListener("input", () => updateLine(false));
+      input.addEventListener("blur", () => {
+        updateLine(true);
+        void queueProjectSave();
       });
     });
 
     rootElement.querySelectorAll<HTMLButtonElement>("[data-remove-project-line-id]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const activeProject = getActiveProject(projectState);
+      button.addEventListener("click", async () => {
+        let activeProject = getActiveProject(projectState, data.stateConfig.code);
         const lineItemId = button.dataset.removeProjectLineId ?? "";
 
         if (!activeProject || !lineItemId) {
@@ -610,11 +872,273 @@ export function renderApp(
           return;
         }
 
+        if (!(await flushPendingProjectSave())) return;
+        activeProject = getActiveProject(projectState, data.stateConfig.code);
+        if (!activeProject) return;
+        await projectRepository.createRevision(activeProject, "Before line removal");
         persistProjectState(removeProjectLineItem(projectState, activeProject.projectId, lineItemId), true);
+      });
+    });
+
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-open-project-manager], [data-project-manager-shortcut]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!confirmDiscardProjectMetadataDraft()) return;
+        activeView = "project";
+        projectSubview = "manager";
+        render();
+      });
+    });
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-activate-project]").forEach((button) => {
+      button.addEventListener("click", () => void activateProject(button.dataset.activateProject ?? ""));
+    });
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-start-new-project]").forEach((button) => {
+      button.addEventListener("click", () => void startNewProject());
+    });
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-edit-active-project]").forEach((button) => {
+      button.addEventListener("click", () => void startProjectMetadataEdit("workspace", getActiveProject(projectState, data.stateConfig.code)?.projectId ?? ""));
+    });
+    rootElement.querySelector<HTMLButtonElement>("[data-take-over-project]")?.addEventListener("click", (event) => {
+      const projectId = (event.currentTarget as HTMLButtonElement).dataset.takeOverProject ?? "";
+      editCoordinator.takeOver(projectId);
+      projectReadOnly = false;
+      projectStorageWarning = null;
+      render();
+    });
+  }
+
+  function bindProjectManager(rootElement: HTMLElement): void {
+    rootElement.querySelector<HTMLButtonElement>("[data-close-project-manager]")?.addEventListener("click", () => {
+      if (!confirmDiscardProjectMetadataDraft()) return;
+      projectSubview = "workspace";
+      render();
+    });
+
+    const filterForm = rootElement.querySelector<HTMLFormElement>("#project-manager-filter-form");
+    filterForm?.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input, select").forEach((input) => {
+      input.addEventListener("change", () => {
+        const formData = new FormData(filterForm);
+        projectManagerFilters = {
+          query: String(formData.get("query") || ""),
+          state: String(formData.get("state") || "all"),
+          status: formData.get("status") === "archived" ? "archived" : "active"
+        };
+        render();
+      });
+    });
+
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-open-project]").forEach((button) => button.addEventListener("click", () => void activateProject(button.dataset.openProject ?? "")));
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-edit-project]").forEach((button) => button.addEventListener("click", () => void startProjectMetadataEdit("manager", button.dataset.editProject ?? "")));
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-duplicate-project]").forEach((button) => button.addEventListener("click", () => void duplicateProject(button.dataset.duplicateProject ?? "")));
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-backup-project]").forEach((button) => button.addEventListener("click", () => void backupProject(button.dataset.backupProject ?? "")));
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-archive-project]").forEach((button) => button.addEventListener("click", () => void archiveProject(button.dataset.archiveProject ?? "")));
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-restore-project]").forEach((button) => button.addEventListener("click", () => void restoreArchivedProject(button.dataset.restoreProject ?? "")));
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-delete-project]").forEach((button) => button.addEventListener("click", () => void deleteArchivedProject(button.dataset.deleteProject ?? "")));
+  }
+
+  async function startNewProject(): Promise<void> {
+    if (!confirmDiscardProjectMetadataDraft()) return;
+    if (!(await flushPendingProjectSave())) return;
+    projectMetadataDraft = createProjectMetadataDraft("workspace", "create");
+    activeView = "project";
+    projectSubview = "workspace";
+    render();
+  }
+
+  async function startProjectMetadataEdit(context: "workspace" | "manager", projectId: string): Promise<void> {
+    if (!projectId || !confirmDiscardProjectMetadataDraft()) return;
+    if (!(await flushPendingProjectSave())) return;
+    const project = projectState.projects.find((candidate) => candidate.projectId === projectId);
+    if (!project) return;
+    if (context === "workspace" && projectReadOnly) return;
+    projectMetadataDraft = createProjectMetadataDraft(context, "edit", project);
+    if (context === "workspace") {
+      activeView = "project";
+      projectSubview = "workspace";
+    }
+    render();
+  }
+
+  async function createAndOpenProject(name: string, stateCode: string, location = "", notes = ""): Promise<void> {
+    if (!(await flushPendingProjectSave())) return;
+    const project = await projectRepository.createProject(createUserProject(name, stateCode, location, notes));
+    projectState = addProject(projectState, project);
+    await projectRepository.setActiveProjectId(stateCode, project.projectId);
+    ensurePersistentStorageRequested();
+    projectMetadataDraft = null;
+    if (stateCode !== data.stateConfig.code) {
+      cleanupProjectSession();
+      onStateChange(stateCode, "project");
+      return;
+    }
+    projectReadOnly = !(await editCoordinator.claim(project.projectId));
+    projectSubview = "workspace";
+    lastSavedAt = project.updatedAt;
+    saveStatus = "saved";
+    render();
+  }
+
+  async function activateProject(projectId: string): Promise<void> {
+    if (!confirmDiscardProjectMetadataDraft()) return;
+    if (!(await flushPendingProjectSave())) return;
+    const project = projectState.projects.find((candidate) => candidate.projectId === projectId && candidate.status === "active");
+    if (!project) return;
+    projectState = setActiveProject(projectState, project.projectId, project.state);
+    await projectRepository.setActiveProjectId(project.state, project.projectId);
+    if (project.state !== data.stateConfig.code) {
+      cleanupProjectSession();
+      onStateChange(project.state, "project");
+      return;
+    }
+    projectReadOnly = !(await editCoordinator.claim(project.projectId));
+    projectSubview = "workspace";
+    lastSavedAt = project.updatedAt;
+    saveStatus = "idle";
+    render();
+  }
+
+  async function duplicateProject(projectId: string): Promise<void> {
+    if (!confirmDiscardProjectMetadataDraft()) return;
+    if (!(await flushPendingProjectSave())) return;
+    const source = projectState.projects.find((project) => project.projectId === projectId);
+    if (!source) return;
+    const duplicate = await projectRepository.createProject(duplicateUserProject(source));
+    projectState = addProject(projectState, duplicate);
+    await projectRepository.setActiveProjectId(duplicate.state, duplicate.projectId);
+    await activateProject(duplicate.projectId);
+  }
+
+  async function archiveProject(projectId: string): Promise<void> {
+    if (!confirmDiscardProjectMetadataDraft()) return;
+    if (!(await flushPendingProjectSave())) return;
+    const project = projectState.projects.find((candidate) => candidate.projectId === projectId);
+    if (!project || !window.confirm(`Archive ${project.name || "this Project"}?`)) return;
+    await projectRepository.createRevision(project, "Before archive");
+    const saved = await projectRepository.saveProject({ ...project, status: "archived", archivedAt: new Date().toISOString() }, project.revision);
+    projectState = replaceProject(projectState, saved);
+    if (projectState.activeProjectIdByState[project.state] === projectId) {
+      editCoordinator.release();
+      projectReadOnly = false;
+      const replacement = projectState.projects.filter((candidate) => candidate.state === project.state && candidate.status === "active")
+        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))[0] ?? null;
+      projectState = setActiveProject(projectState, replacement?.projectId ?? null, project.state);
+      await projectRepository.setActiveProjectId(project.state, replacement?.projectId ?? null);
+    }
+    render();
+  }
+
+  async function restoreArchivedProject(projectId: string): Promise<void> {
+    if (!confirmDiscardProjectMetadataDraft()) return;
+    const project = projectState.projects.find((candidate) => candidate.projectId === projectId);
+    if (!project) return;
+    const saved = await projectRepository.saveProject({ ...project, status: "active", archivedAt: null }, project.revision);
+    projectState = replaceProject(projectState, saved);
+    projectManagerFilters = { ...projectManagerFilters, status: "active" };
+    render();
+  }
+
+  async function deleteArchivedProject(projectId: string): Promise<void> {
+    if (!confirmDiscardProjectMetadataDraft()) return;
+    if (!(await flushPendingProjectSave())) return;
+    const project = projectState.projects.find((candidate) => candidate.projectId === projectId && candidate.status === "archived");
+    if (!project || !window.confirm(`Permanently delete ${project.name || "this Project"}? This cannot be undone.`)) return;
+    try {
+      await projectRepository.deleteProject(projectId);
+      projectState = removeProjectFromState(projectState, projectId);
+      projectStorageWarning = null;
+      render();
+    } catch (error) {
+      projectStorageWarning = error instanceof Error ? error.message : "The archived Project could not be deleted.";
+      render();
+    }
+  }
+
+  async function backupProject(projectId: string): Promise<void> {
+    if (!(await flushPendingProjectSave())) return;
+    const project = projectState.projects.find((candidate) => candidate.projectId === projectId);
+    if (!project) return;
+    downloadProjectBackup(project);
+    const saved = await projectRepository.recordBackup(project.projectId, project.revision);
+    projectState = replaceProject(projectState, saved);
+    render();
+  }
+
+  function bindImportControls(rootElement: HTMLElement): void {
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-import-project]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!confirmDiscardProjectMetadataDraft()) return;
+        button.parentElement?.querySelector<HTMLInputElement>("[data-project-import-input]")?.click();
+      });
+    });
+    rootElement.querySelectorAll<HTMLInputElement>("[data-project-import-input]").forEach((input) => {
+      input.addEventListener("change", () => {
+        const file = input.files?.[0];
+        if (file) void importProjectFile(file);
+        input.value = "";
       });
     });
   }
 
+  async function importProjectFile(file: File): Promise<void> {
+    try {
+      if (!confirmDiscardProjectMetadataDraft()) return;
+      if (!(await flushPendingProjectSave())) return;
+      const backup = await readProjectBackupFile(file);
+      const existing = projectState.projects.find((project) => project.projectId === backup.project.projectId);
+      let imported: UserProject = { ...structuredClone(backup.project), status: "active", archivedAt: null };
+      if (existing) {
+        const choice = window.prompt("A Project with this ID already exists. Enter COPY to import a copy, REPLACE to replace it, or Cancel.", "COPY")?.trim().toUpperCase();
+        if (!choice) return;
+        if (choice === "COPY") {
+          imported = createImportedCopy(imported);
+        } else if (choice === "REPLACE") {
+          await projectRepository.createRevision(existing, "Before import replacement");
+          imported = await projectRepository.saveProject({ ...imported, projectId: existing.projectId, revision: existing.revision }, existing.revision);
+          projectState = replaceProject(projectState, imported);
+          await activateProject(imported.projectId);
+          return;
+        } else {
+          window.alert("Import canceled. Enter COPY or REPLACE.");
+          return;
+        }
+      } else {
+        imported = { ...imported, revision: 0, lastBackupAt: null, lastBackupRevision: null };
+      }
+      const saved = await projectRepository.createProject(imported);
+      projectState = addProject(projectState, saved);
+      await projectRepository.setActiveProjectId(saved.state, saved.projectId);
+      await activateProject(saved.projectId);
+    } catch (error) {
+      projectStorageWarning = error instanceof Error ? error.message : "Project backup could not be imported.";
+      render();
+    }
+  }
+
+  async function requestPersistentStorage(): Promise<void> {
+    try { await navigator.storage?.persist?.(); } catch { /* Persistence is a best-effort browser permission. */ }
+  }
+
+  function ensurePersistentStorageRequested(): void {
+    if (storagePersistenceRequested) return;
+    storagePersistenceRequested = true;
+    void requestPersistentStorage();
+  }
+
+  function cleanupProjectSession(): void {
+    if (saveTimer !== null) window.clearTimeout(saveTimer);
+    saveTimer = null;
+    editCoordinator.close();
+    projectRepository.close();
+    if (snapshotTimer !== null) window.clearInterval(snapshotTimer);
+    snapshotTimer = null;
+  }
+
+  snapshotTimer = window.setInterval(() => {
+    const project = getActiveProject(projectState, data.stateConfig.code);
+    if (project && project.revision > lastSnapshotRevision) {
+      lastSnapshotRevision = project.revision;
+      void projectRepository.createRevision(project, "Periodic autosave snapshot");
+    }
+  }, 300000);
   render();
 }
 
@@ -776,6 +1300,16 @@ function defaultSortDirection(sortKey: EvidenceSortKey): "asc" | "desc" {
 
 function uniqueValues(values: string[]): string[] {
   return [...new Set(values)];
+}
+
+function saveStatusText(status: SaveStatus, lastSavedAt: string | null): string {
+  if (status === "saving") return "Saving…";
+  if (status === "failed") return "Project save failed";
+  if (!lastSavedAt) return "";
+  const date = new Date(lastSavedAt);
+  return Number.isNaN(date.valueOf())
+    ? "Project saved"
+    : `Project saved at ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })}`;
 }
 
 function escapeHtml(value: string): string {

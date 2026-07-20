@@ -22,16 +22,20 @@ loadManifest()
   })
   .catch(showError);
 
-async function activateState(manifest: AppManifest, stateCode: string): Promise<void> {
+async function activateState(
+  manifest: AppManifest,
+  stateCode: string,
+  initialView: "explorer" | "project" = "explorer"
+): Promise<void> {
   showLoading(`Loading ${stateCode} data`);
   try {
     const data = await loadStateData(manifest, stateCode);
     window.localStorage.setItem(STATE_PREFERENCE_KEY, stateCode);
-    renderApp(root!, data, (nextState) => {
+    await renderApp(root!, data, (nextState, nextView = "explorer") => {
       if (nextState !== stateCode) {
-        void activateState(manifest, nextState);
+        void activateState(manifest, nextState, nextView);
       }
-    });
+    }, initialView);
   } catch (error) {
     showError(error);
   }
