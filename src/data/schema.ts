@@ -191,8 +191,9 @@ export interface ContractItemRecord {
   sourceItemDescription: string;
   itemCode: string;
   itemDescription: string;
-  engineerEstimateUnitPrice: number;
-  averageBidUnitPrice: number;
+  awardedBidUnitPrice: number | null;
+  engineerEstimateUnitPrice: number | null;
+  averageBidUnitPrice: number | null;
   matchedAgencyItemCode: string;
   matchStatus: "matched" | "unmatched" | "source_cdot_prefix_only";
   dateBasis: string;
@@ -437,6 +438,7 @@ export interface EvidenceRow {
   engineerEstimateUnitPrice: number | null;
   bidderDetailKey: string;
   hasBidderDetails: boolean;
+  hasSourceDetails: boolean;
   observationIds: string[];
 }
 

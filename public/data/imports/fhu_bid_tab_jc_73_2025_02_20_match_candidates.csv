@@ -1,0 +1,143 @@
+bid_tab_item_id,source_item_code,source_item_description,unit_normalized,candidate_agency_item_code,candidate_description,candidate_unit,candidate_count,suggestion_status
+fhu_jc_73_20250220_row_0009,201-00000,CLEARING AND GRUBBING,L S,201-00000,Clearing and Grubbing,L S,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0010,202-00010,REMOVAL OF TREE,EACH,202-00010,Removal of Tree,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0011,202-00035,REMOVAL OF PIPE,LF,202-00035,Removal of Pipe,LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0012,202-00160,REMOVAL OF WALL,SF,202-00160,Removal of Wall,SF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0013,202-00203,REMOVAL OF CURB AND GUTTER,LF,202-00203,Removal of Curb and Gutter,LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0014,202-00220,REMOVAL OF ASPHALT MAT,SY,202-00220,Removal of Asphalt Mat,SY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0015,202-00240,REMOVAL OF ASPHALT MAT (PLANING),SY,202-00240,Removal of Asphalt Mat (Planing),SY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0016,202-00250,REMOVAL OF PAVEMENT MARKING,SF,202-00250,Removal of Pavement Marking,SF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0017,202-00400,REMOVAL OF BRIDGE,EACH,202-00400,Removal of Bridge,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0018,202-00810,REMOVAL OF GROUND SIGN,EACH,202-00810,Removal of Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0019,202-00895,REMOVAL OF IMPACT ATTENUATOR,EACH,202-00895,Removal of Impact Attenuator,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0020,202-01000,REMOVAL OF FENCE,LF,202-01000,Removal of Fence,LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0021,202-01130,REMOVAL OF GUARDRAIL TYPE 3,LF,202-01130,Removal of Guardrail Type 3,LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0022,202-01300,REMOVAL OF END ANCHORAGE,EACH,202-01300,Removal of End Anchorage,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0023,202-04002,CLEAN CULVERT,EACH,202-04002,Clean Culvert,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0024,202-04005,CLEAN VALVE BOX,EACH,202-04005,Clean Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0025,203-00050,UNSUITABLE MATERIAL,CY,203-00050,Unsuitable Material,CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0026,203-00400,ROCK EXCAVATION,CY,203-00400,Rock Excavation,CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0027,203-00010,UNCLASSIFIED EXCAVATION (COMPLETE IN PLACE),CY,203-00010,Unclassified Excavation (Complete In Place),CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0028,203-01500,BLADING,HOUR,203-01500,Blading,HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0029,203-01550,DOZING,HOUR,203-01550,Dozing,HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0030,203-01594,COMBINATION LOADER,HOUR,203-01594,Combination Loader,HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0031,203-01597,POTHOLING,HOUR,203-01597,Potholing,HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0032,206-00000,STRUCTURE EXCAVATION,CY,206-00000,Structure Excavation,CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0033,206-00100,STRUCTURE BACKFILL (CLASS 1),CY,206-00100,Structure Backfill (Class 1),CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0034,206-00200,STRUCTURE BACKFILL (CLASS 2),CY,206-00200,Structure Backfill (Class 2),CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0035,206-01781,SHORING (AREA 1),L S,206-01781,Shoring (Area 1),L S,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0036,206-01782,SHORING (AREA 2),L S,206-01782,Shoring (Area 2),L S,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0037,207-00210,STOCKPILE TOPSOIL,CY,207-00210,Stockpile Topsoil,CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0038,207-00700,TOPSOIL (ONSITE),CY,207-00700,Topsoil (Onsite),CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0039,207-00704,SUBGRADE SOIL PREPARATION,SY,207-00704,Subgrade Soil Preparation,SY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0040,208-00002,EROSION LOG TYPE 1 (12 INCH),LF,208-00002,Erosion Log Type 1 (12 Inch),LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0041,208-00020,SILT FENCE,LF,208-00020,Silt Fence,LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0042,208-00021,SILT FENCE (REINFORCED),LF,208-00021,Silt Fence (Reinforced),LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0043,208-00035,AGGREGATE BAG,LF,208-00035,Aggregate Bag,LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0044,208-00041,ROCK CHECK DAM,EACH,208-00041,Rock Check Dam,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0045,208-00046,PRE-FABRICATED CONCRETE WASHOUT STRUCTURE (TYPE 1),EACH,208-00046,Pre-fabricated Concrete Washout Structure (Type 1),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0046,208-00051,STORM DRAIN INLET PROTECTION (TYPE I),LF,208-00051,Storm Drain Inlet Protection (Type I),LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0047,208-00075,PRE-FABRICATED VEHICLE TRACKING PAD,EACH,208-00075,Pre-fabricated Vehicle Tracking Pad,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0048,208-00103,REMOVAL AND DISPOSAL OF SEDIMENT (LABOR),HOUR,208-00103,Removal and Disposal of Sediment (Labor),HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0049,208-00105,REMOVAL AND DISPOSAL OF SEDIMENT (EQUIPMENT),HOUR,208-00105,Removal and Disposal of Sediment (Equipment),HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0050,208-00106,SWEEPING (SEDIMENT REMOVAL),HOUR,208-00106,Sweeping (Sediment Removal),HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0051,208-00107,REMOVAL OF TRASH,HOUR,208-00107,Removal of Trash,HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0052,208-00207,EROSION CONTROL MANAGEMENT,DAY,208-00207,Erosion Control Management,DAY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0054,210-00012,RESET MAILBOX STRUCTURE (TYPE 2),EACH,210-00012,Reset Mailbox Structure (Type 2),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0055,210-00810,RESET GROUND SIGN,EACH,210-00810,Reset Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0056,210-02900,RELAY RIPRAP,CY,210-02900,Relay Riprap,CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0057,210-04010,ADJUST MANHOLE,EACH,210-04010,Adjust Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0058,210-04015,MODIFY MANHOLE,EACH,210-04015,Modify Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0059,210-04050,ADJUST VALVE BOX,EACH,210-04050,Adjust Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0060,210-04060,ADJUST WATER METER,EACH,210-04060,Adjust Water Meter,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0061,212-00022,SEEDING (RIPARIAN),ACRE,212-00022,Seeding (Riparian),ACRE,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0062,212-00700,ORGANIC FERTILIZER,LB,212-00700,Organic Fertilizer,LB,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0063,212-00701,COMPOST (MECHANICALLY APPLIED),CY,212-00701,Compost (Mechanically Applied),CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0064,212-00703,HUMATE,LB,212-00703,Humate,LB,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0065,212-00704,MYCORRHIZAE,LB,212-00704,Mycorrhizae,LB,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0066,212-00706,SEEDING (NATIVE) DRILL,ACRE,212-00706,Seeding (Native) Drill,ACRE,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0067,212-00708,SEEDING (NATIVE) BROADCAST,ACRE,212-00708,Seeding (Native) Broadcast,ACRE,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0068,213-00003,MULCHING (WEED FREE),ACRE,213-00003,Mulching (Weed Free),ACRE,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0069,213-00061,MULCH TACKIFIER,LB,213-00061,Mulch Tackifier,LB,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0070,214-00008,EXTENDED LANDSCAPE PRESERVATION,L S,214-00008,Extended Landscape Preservation,L S,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0071,214-00225,DECIDUOUS TREE (2.5 INCH CALIPER),EACH,214-00225,Deciduous Tree (2.5 Inch Caliper),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0073,214-00508,EVERGREEN TREE (8 FOOT) (BALL AND BURLAP),EACH,214-00508,Evergreen Tree (8 Foot) (Ball and Burlap),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0074,216-00201,SOIL RETENTION BLANKET (STRAW-COCONUT) (BIODEGRADABLE CLASS 1),SY,216-00201,Soil Retention Blanket (Straw-Coconut) (Biodegradable Class 1),SY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0075,217-00020,HERBICIDE TREATMENT,HOUR,217-00020,Herbicide Treatment,HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0076,240-00000,WILDLIFE BIOLOGIST,HOUR,240-00000,Wildlife Biologist,HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0077,240-00010,REMOVAL OF NESTS,HOUR,240-00010,Removal of Nests,HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0078,250-00010,ENVIRONMENTAL HEALTH AND SAFETY MANAGEMENT,L S,250-00010,Environmental Health and Safety Management,L S,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0079,250-00050,MONITORING TECHNICIAN,HOUR,250-00050,Monitoring Technician,HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0080,250-00120,MATERIAL SAMPLING AND DELIVERY,EACH,250-00120,Material Sampling and Delivery,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0081,250-00200,MATERIAL HANDLING (STOCKPILE),CY,250-00200,Material Handling (Stockpile),CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0082,250-00210,SOLID WASTE DISPOSAL,CY,250-00210,Solid Waste Disposal,CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0083,306-01000,RECONDITIONING,SY,306-01000,Reconditioning,SY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0084,403-00720,HOT MIX ASPHALT (PATCHING) (ASPHALT),TON,403-00720,Hot Mix Asphalt (Patching) (Asphalt),TON,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0085,403-33721,HOT MIX ASPHALT (GRADING S) (75) (PG 58-28),TON,403-33721,Hot Mix Asphalt (Grading S) (75) (PG 58-28),TON,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0086,403-34721,HOT MIX ASPHALT (GRADING SX) (75) (PG 58-28),TON,403-34721,Hot Mix Asphalt (Grading SX) (75) (PG 58-28),TON,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0087,411-10255,EMULSIFIED ASPHALT (SLOW-SETTING),GAL,411-10255,Emulsified Asphalt (Slow-Setting),GAL,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0088,504-04410,BLOCK FACING,SF,504-04410,Block Facing,SF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0089,506-00409,SOIL RIPRAP (9 INCH),CY,506-00409,Soil Riprap (9 Inch),CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0090,506-00700,VOID-FILLED RIPRAP,CY,506-00700,Void-Filled Riprap,CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0091,515-00120,WATERPROOFING (MEMBRANE),SY,515-00120,Waterproofing (Membrane),SY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0092,601-01050,CONCRETE CLASS B (WALL),CY,601-01050,Concrete Class B (Wall),CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0093,601-03050,CONCRETE CLASS D (WALL),CY,601-03050,Concrete Class D (Wall),CY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0094,601-40302,STRUCTURAL CONCRETE COATING (ANTI-GRAFFITI),SF,601-40302,Structural Concrete Coating (Anti-Graffiti),SF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0095,601-40400,STRUCTURAL CONCRETE STAIN,SY,601-40400,Structural Concrete Stain,SY,2,multiple_exact_description_unit_candidates
+fhu_jc_73_20250220_row_0095,601-40400,STRUCTURAL CONCRETE STAIN,SY,606-40400,Structural Concrete Stain,SY,2,multiple_exact_description_unit_candidates
+fhu_jc_73_20250220_row_0096,602-00000,REINFORCING STEEL,LB,602-00000,Reinforcing Steel,LB,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0097,603-30018,18 INCH STEEL END SECTION,EACH,603-30018,18 Inch Steel End Section,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0098,603-50008,8 INCH PLASTIC PIPE,LF,603-50008,8 Inch Plastic Pipe,LF,2,multiple_exact_description_unit_candidates
+fhu_jc_73_20250220_row_0098,603-50008,8 INCH PLASTIC PIPE,LF,619-50640,8 Inch Plastic Pipe,LF,2,multiple_exact_description_unit_candidates
+fhu_jc_73_20250220_row_0099,603-50018,18 INCH PLASTIC PIPE,LF,603-50018,18 Inch Plastic Pipe,LF,2,multiple_exact_description_unit_candidates
+fhu_jc_73_20250220_row_0099,603-50018,18 INCH PLASTIC PIPE,LF,619-51290,18 Inch Plastic Pipe,LF,2,multiple_exact_description_unit_candidates
+fhu_jc_73_20250220_row_0101,604-19000,INLET SPECIAL,EACH,604-19000,Inlet Special,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0102,604-30010,MANHOLE SLAB BASE (10 FOOT),EACH,604-30010,Manhole Slab Base (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0103,606-00305,GUARDRAIL TYPE 3 (SPECIAL),LF,606-00305,Guardrail Type 3 (Special),LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0104,606-00916,GUARDRAIL TYPE 9 (STYLE CA) (SPECIAL),LF,606-00916,Guardrail Type 9 (Style CA) (Special),LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0105,606-01340,END ANCHORAGE TYPE 3D,EACH,606-01340,End Anchorage Type 3D,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0106,606-01370,TRANSITION TYPE 3G,EACH,606-01370,Transition Type 3G,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0107,606-01390,END ANCHORAGE TYPE 3K,EACH,606-01390,End Anchorage Type 3K,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0108,606-02003,END ANCHORAGE (NONFLARED),EACH,606-02003,End Anchorage (Nonflared),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0109,607-11450,FENCE SPLIT CEDAR,LF,607-11450,Fence Split Cedar,LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0110,607-11525,FENCE (PLASTIC),LF,607-11525,Fence (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0111,607-11581,FENCE (TEMPORARY) (SPECIAL),LF,607-11581,Fence (Temporary) (Special),LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0112,609-20010,CURB TYPE 2 (SECTION B),LF,609-20010,Curb Type 2 (Section B),LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0113,609-21020,CURB AND GUTTER TYPE 2 (SECTION II-B),LF,609-21020,Curb and Gutter Type 2 (Section II-B),LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0114,610-00030,MEDIAN COVER MATERIAL (CONCRETE),SF,610-00030,Median Cover Material (Concrete),SF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0115,614-00011,SIGN PANEL (CLASS I),SF,614-00011,Sign Panel (Class I),SF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0116,614-00012,SIGN PANEL (CLASS II),SF,614-00012,Sign Panel (Class II),SF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0118,615-80000,STREAM RESTORATION,L S,615-80000,Stream Restoration,L S,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0120,620-00002,FIELD OFFICE (CLASS 2),EACH,620-00002,Field Office (Class 2),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0121,620-00020,SANITARY FACILITY,EACH,620-00020,Sanitary Facility,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0122,621-00450,DETOUR PAVEMENT,SY,621-00450,Detour Pavement,SY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0123,622-00540,WHEEL STOP,EACH,622-00540,Wheel Stop,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0124,625-00000,CONSTRUCTION SURVEYING,L S,625-00000,Construction Surveying,L S,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0125,626-00000,MOBILIZATION,L S,626-00000,Mobilization,L S,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0126,626-01112,PUBLIC INFORMATION MANAGEMENT (TIER II),DAY,626-01112,Public Information Management (Tier II),DAY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0127,627-00008,MODIFIED EPOXY PAVEMENT MARKING,GAL,627-00008,Modified Epoxy Pavement Marking,GAL,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0128,627-00014,PAVEMENT MARKING PAINT (LOW TEMPERATURE),GAL,627-00014,Pavement Marking Paint (Low Temperature),GAL,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0129,627-01010,PREFORMED PLASTIC PAVEMENT MARKING (TYPE I)(INLAID),SF,627-01010,Preformed Plastic Pavement Marking (Type I)(Inlaid),SF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0130,627-30405,PREFORMED THERMOPLASTIC PAVEMENT MARKING (WORD- SYMBOL),SF,627-30405,Preformed Thermoplastic Pavement Marking (Word- Symbol),SF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0131,627-30410,PREFORMED THERMOPLASTIC PAVEMENT MARKING (XWALK-STOP LINE),SF,627-30410,Preformed Thermoplastic Pavement Marking (Xwalk- Stop Line),SF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0132,630-00000,FLAGGING,HOUR,630-00000,Flagging,HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0133,630-00003,UNIFORMED TRAFFIC CONTROL,HOUR,630-00003,Uniformed Traffic Control,HOUR,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0134,630-00004,TRAFFIC CONTROL VEHICLE,EACH,630-00004,Traffic Control Vehicle,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0135,630-00007,TRAFFIC CONTROL INSPECTION,DAY,630-00007,Traffic Control Inspection,DAY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0136,630-00012,TRAFFIC CONTROL MANAGEMENT,DAY,630-00012,Traffic Control Management,DAY,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0137,630-80335,BARRICADE (TYPE 3 M-A) (TEMPORARY),EACH,630-80335,Barricade (Type 3 M-A) (Temporary),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0138,630-80341,CONSTRUCTION TRAFFIC SIGN (PANEL SIZE A),EACH,630-80341,Construction Traffic Sign (Panel Size A),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0139,630-80342,CONSTRUCTION TRAFFIC SIGN (PANEL SIZE B),EACH,630-80342,Construction Traffic Sign (Panel Size B),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0140,630-80343,CONSTRUCTION TRAFFIC SIGN (PANEL SIZE C),EACH,630-80343,Construction Traffic Sign (Panel Size C),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0141,630-80344,CONSTRUCTION TRAFFIC SIGN (SPECIAL),SF,630-80344,Construction Traffic Sign (Special),SF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0142,630-80355,PORTABLE MESSAGE SIGN PANEL,EACH,630-80355,Portable Message Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0143,630-80358,ADVANCE WARNING FLASHING OR SEQUENCING ARROW PANEL (C TYPE),EACH,630-80358,Advance Warning Flashing or Sequencing Arrow Panel (C Type),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0144,630-80360,DRUM CHANNELIZING DEVICE,EACH,630-80360,Drum Channelizing Device,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0145,630-80370,BARRIER (TEMPORARY),LF,630-80370,Barrier (Temporary),LF,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0146,630-80380,TRAFFIC CONE,EACH,630-80380,Traffic Cone,EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0147,630-85010,IMPACT ATTENUATOR (TEMPORARY),EACH,630-85010,Impact Attenuator (Temporary),EACH,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0150,700-70010,F/A MINOR CONTRACT REVISIONS,F A,700-70010,F/A Minor Contract Revisions,F A,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0151,700-70023,F/A ON-THE-JOB TRAINEE,F A,700-70023,F/A On-The-Job Trainee,F A,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0152,700-70031,F/A INTERIM SURFACE REPAIR,F A,700-70031,F/A Interim Surface Repair,F A,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0154,700-70380,F/A EROSION CONTROL,F A,700-70380,F/A Erosion Control,F A,1,single_exact_description_unit_candidate
+fhu_jc_73_20250220_row_0156,700-70589,F/A ENVIRONMENTAL HEALTH & SAFETY MANAGEMENT,F A,700-70589,F/A Environmental Health & Safety Management,F A,1,single_exact_description_unit_candidate

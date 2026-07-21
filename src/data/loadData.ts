@@ -132,6 +132,7 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
   const contractById = new Map(contracts.map((contract) => [contract.contractId, contract]));
 
   const observationByContractItemShape = new Map<string, ItemObservationRecord[]>();
+  const observationByContractItemIdentity = new Map<string, ItemObservationRecord[]>();
   for (const observation of observations) {
     const key = observationShapeKey(
       observation.contractId,
@@ -144,6 +145,16 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
     const rows = observationByContractItemShape.get(key) ?? [];
     rows.push(observation);
     observationByContractItemShape.set(key, rows);
+    const identityKey = observationIdentityKey(
+      observation.contractId,
+      observation.sourceId,
+      observation.agencyItemCode,
+      observation.descriptionRaw,
+      observation.unitNormalized
+    );
+    const identityRows = observationByContractItemIdentity.get(identityKey) ?? [];
+    identityRows.push(observation);
+    observationByContractItemIdentity.set(identityKey, identityRows);
   }
 
   const contractItems = rawContractItems.map((item) => {
@@ -159,6 +170,13 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
       item.quantity
     );
     const itemObservations = observationByContractItemShape.get(key) ?? [];
+    const identityObservations = observationByContractItemIdentity.get(observationIdentityKey(
+      item.contractId,
+      item.sourceId,
+      agencyItem?.itemCode || item.sourceItemCode,
+      item.descriptionRaw,
+      item.unitNormalized
+    )) ?? [];
     return {
       ...item,
       bidTabItemId: item.contractItemId,
@@ -173,8 +191,10 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
       sourceItemDescription: item.descriptionRaw,
       itemCode: agencyItem?.itemCode ?? item.sourceItemCode,
       itemDescription: item.descriptionRaw,
-      engineerEstimateUnitPrice: priceFor(itemObservations, "engineer_estimate") ?? 0,
-      averageBidUnitPrice: priceFor(itemObservations, "average_bid") ?? 0,
+      awardedBidUnitPrice: priceFor(itemObservations, "awarded_bid"),
+      engineerEstimateUnitPrice: priceFor(itemObservations, "engineer_estimate")
+        ?? priceFor(identityObservations, "engineer_estimate"),
+      averageBidUnitPrice: priceFor(itemObservations, "average_bid"),
       matchedAgencyItemCode: agencyItem?.itemCode ?? "",
       matchStatus: item.agencyItemId ? "matched" as const : "unmatched" as const,
       dateBasis: contract?.estimateLetDate ?? ""
@@ -512,8 +532,9 @@ function mapContractItem(row: CsvRow): ContractItemRecord {
     sourceItemDescription: row.description_raw,
     itemCode: row.source_item_code.toUpperCase(),
     itemDescription: row.description_raw,
-    engineerEstimateUnitPrice: 0,
-    averageBidUnitPrice: 0,
+    awardedBidUnitPrice: null,
+    engineerEstimateUnitPrice: null,
+    averageBidUnitPrice: null,
     matchedAgencyItemCode: "",
     matchStatus: row.agency_item_id ? "matched" : "unmatched",
     dateBasis: ""
@@ -674,6 +695,16 @@ function observationShapeKey(
   quantity: number
 ): string {
   return [contractId, sourceId, itemCode, description, normalizeUnit(unit), quantity].join("|");
+}
+
+function observationIdentityKey(
+  contractId: string,
+  sourceId: string,
+  itemCode: string,
+  description: string,
+  unit: string
+): string {
+  return [contractId, sourceId, itemCode, description, normalizeUnit(unit)].join("|");
 }
 
 function priceFor(observations: ItemObservationRecord[], priceType: string): number | null {

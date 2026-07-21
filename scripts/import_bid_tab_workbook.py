@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
+import json
 import re
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 
 DEFAULT_WORKBOOK = Path(r"C:\Users\Casey.Walrath\Downloads\2021 12 16 Bid Tabs Watson Ave Roundabout.xlsx")
@@ -29,13 +31,17 @@ DEFAULT_STAGING_ITEMS = Path("public/data/imports/fhu_bid_tab_watson_ave_roundab
 DEFAULT_STAGING_BIDDER_BIDS = Path("public/data/imports/fhu_bid_tab_watson_ave_roundabout_2021_12_16_bidder_bids.csv")
 DEFAULT_STAGING_BIDDER_ITEMS = Path("public/data/imports/fhu_bid_tab_watson_ave_roundabout_2021_12_16_bidder_item_observations.csv")
 DEFAULT_STAGING_MATCH_CANDIDATES = Path("public/data/imports/fhu_bid_tab_watson_ave_roundabout_2021_12_16_match_candidates.csv")
+DEFAULT_MASTER_CONFIG = Path("data/staging/co/cost_estimate_master_sources.json")
 
 ITEM_CODE_PATTERN = re.compile(r"^\d{3}-\d{5}$")
 BID_FORM_ITEM_CODE_PATTERN = re.compile(r"^(?:\d{3}-\d{5}|\d{3})$")
 PROJECT_NAME_PATTERN = re.compile(r"PROJECT NAME:\s*(?P<value>.+)", re.IGNORECASE)
 PROJECT_NUMBER_PATTERN = re.compile(r"PROJECT NO\.:\s*(?P<value>.+)", re.IGNORECASE)
 
-SOURCE_FIELDS = ["source_id", "source_type", "agency", "state", "source_label", "data_year", "notes"]
+SOURCE_FIELDS = [
+    "source_id", "source_type", "agency", "state", "source_label", "source_date", "data_year",
+    "source_url", "source_file_name", "sha256", "parser_name", "parser_version", "notes",
+]
 PROJECT_FIELDS = [
     "project_id",
     "project_name",
@@ -78,6 +84,7 @@ BIDDER_BID_FIELDS = [
     "bid_total",
     "bid_rank",
     "apparent_low",
+    "is_awarded",
 ]
 BIDDER_ITEM_FIELDS = [
     "bidder_item_observation_id",
@@ -117,7 +124,11 @@ BID_TAB_ITEM_FIELDS = [
     "match_status",
     "date_basis",
 ]
-STAGING_ITEM_FIELDS = BID_TAB_ITEM_FIELDS
+STAGING_ITEM_FIELDS = BID_TAB_ITEM_FIELDS + [
+    "engineer_estimate_quantity",
+    "audit_estimate_unit_price",
+    "audit_estimate_extended_price",
+]
 MATCH_CANDIDATE_FIELDS = [
     "bid_tab_item_id",
     "source_item_code",
@@ -178,6 +189,10 @@ def decimal_value(value: object, default: str | None = None) -> Decimal:
 
 def decimal_text(value: Decimal) -> str:
     return str(value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
+def quantity_text(value: Decimal) -> str:
+    return format(value.normalize(), "f")
 
 
 def normalize_unit(value: object) -> str:
@@ -1377,13 +1392,267 @@ def promoted_observation(
         "description_normalized": normalize_description(description),
         "unit_raw": unit_raw,
         "unit_normalized": unit_normalized,
-        "quantity": decimal_text(quantity),
+        "quantity": quantity_text(quantity),
         "unit_price": decimal_text(unit_price),
         "extended_price": decimal_text(quantity * unit_price),
         "discipline": "Roadway",
         "price_type": price_type,
         "date_basis": date_basis,
     }
+
+
+def optional_decimal(value: object) -> Decimal | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, str):
+        cleaned = value.replace("$", "").replace(",", "").strip()
+        match = re.search(r"-?\d+(?:\.\d+)?", cleaned)
+        if not match:
+            return None
+        value = match.group(0)
+    try:
+        return decimal_value(value)
+    except ValueError:
+        return None
+
+
+def optional_quantity(value: object) -> Decimal | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, str):
+        cleaned = value.replace(",", "").strip()
+        if not re.fullmatch(r"-?\d+(?:\.\d+)?", cleaned):
+            return None
+        value = cleaned
+    try:
+        return Decimal(str(value))
+    except InvalidOperation:
+        return None
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def configured_rows(config: dict[str, Any]) -> Iterable[int]:
+    for first, last in config["row_ranges"]:
+        yield from range(int(first), int(last) + 1)
+
+
+def configured_total(sheet, bidder: dict[str, Any]) -> Decimal | None:
+    total_cell = bidder.get("published_total_cell")
+    return optional_decimal(sheet[total_cell].value) if total_cell else None
+
+
+def parse_master_sheet(
+    workbook_path: Path,
+    sheet,
+    config: dict[str, Any],
+) -> ParsedBidTab:
+    source_id = config["source_id"]
+    project_id = config["project_id"]
+    row_prefix = config["row_prefix"]
+    date_basis = config["source_date"]
+    columns = config["columns"]
+    layout = config["layout"]
+    bidders = config.get("bidders", [])
+    item_rows: list[dict[str, str]] = []
+    bidder_items: list[dict[str, str]] = []
+    observations: list[dict[str, str]] = []
+    warnings: list[str] = []
+    calculated_bid_totals = {bidder["name"]: Decimal("0.00") for bidder in bidders}
+
+    for row_index in configured_rows(config):
+        raw_code = sheet.cell(row_index, int(columns["code"])).value
+        description = re.sub(r"\s+", " ", str(sheet.cell(row_index, int(columns["description"])).value or "")).strip()
+        if raw_code is None or not description:
+            continue
+        source_item_code = normalize_source_item_number(raw_code).upper()
+        if not source_item_code or not source_item_code[0].isdigit():
+            continue
+
+        unit_raw = str(sheet.cell(row_index, int(columns["unit"])).value or "").strip()
+        unit_normalized = normalize_unit(unit_raw)
+        raw_quantity = sheet.cell(row_index, int(columns["quantity"])).value
+        quantity = optional_quantity(raw_quantity)
+        if quantity is None:
+            quantity = Decimal("1.00")
+            warnings.append(f"Row {row_index}: nonnumeric quantity {raw_quantity!r} treated as 1 for source total reconciliation.")
+
+        code_system = source_code_system(source_item_code)
+        matched_code = source_item_code if ITEM_CODE_PATTERN.match(source_item_code) else ""
+        match_status = "matched" if matched_code else "source_cdot_prefix_only" if re.fullmatch(r"\d{3}", source_item_code) else "unmatched"
+        row_id = f"{row_prefix}_row_{row_index:04d}"
+        engineer_quantity = quantity
+        engineer_unit_price: Decimal | None = None
+        engineer_total: Decimal | None = None
+        if columns.get("engineer_quantity"):
+            engineer_quantity = optional_quantity(sheet.cell(row_index, int(columns["engineer_quantity"])).value) or quantity
+        if columns.get("engineer_unit"):
+            engineer_unit_price = optional_decimal(sheet.cell(row_index, int(columns["engineer_unit"])).value)
+        if columns.get("engineer_total"):
+            engineer_total = optional_decimal(sheet.cell(row_index, int(columns["engineer_total"])).value)
+        if engineer_unit_price is None and engineer_total is not None and engineer_quantity != 0:
+            engineer_unit_price = (engineer_total / engineer_quantity).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        bidder_unit_prices: list[Decimal] = []
+        for bidder in bidders:
+            bidder_quantity = optional_quantity(sheet.cell(row_index, int(bidder.get("quantity_col", columns["quantity"]))).value) or quantity
+            unit_price = optional_decimal(sheet.cell(row_index, int(bidder["unit_col"])).value)
+            published_line_total = optional_decimal(sheet.cell(row_index, int(bidder["total_col"])).value)
+            if unit_price is None and published_line_total is not None and bidder_quantity != 0:
+                unit_price = (published_line_total / bidder_quantity).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            if unit_price is None:
+                continue
+            calculated_line_total = (bidder_quantity * unit_price).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            bidder_unit_prices.append(unit_price)
+            calculated_bid_totals[bidder["name"]] += calculated_line_total
+            bid_id = f"{row_prefix}_{slugify(bidder['name'])}"
+            bidder_items.append({
+                "bidder_item_observation_id": f"{row_id}_{slugify(bidder['name'])}",
+                "bid_tab_item_id": row_id,
+                "bid_id": bid_id,
+                "project_id": project_id,
+                "source_id": source_id,
+                "agency_item_code": matched_code,
+                "description_raw": description,
+                "unit_raw": unit_raw,
+                "unit_normalized": unit_normalized,
+                "quantity": quantity_text(bidder_quantity),
+                "unit_price": decimal_text(unit_price),
+                "extended_price": decimal_text(calculated_line_total),
+            })
+            if published_line_total is not None and abs(published_line_total - calculated_line_total) > Decimal("0.01"):
+                warnings.append(
+                    f"Row {row_index}: {bidder['name']} source line total {published_line_total} "
+                    f"differs from calculated {calculated_line_total}."
+                )
+
+        average_unit_price = (
+            (sum(bidder_unit_prices) / Decimal(len(bidder_unit_prices))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            if bidder_unit_prices else None
+        )
+        item_rows.append(bid_tab_item_row(
+            row_id, project_id, source_id, workbook_path, sheet.title, row_index, config["project_number"],
+            str(len(item_rows) + 1), source_item_code, code_system, source_item_code, description,
+            matched_code or source_item_code, unit_raw, unit_normalized, quantity,
+            engineer_unit_price or Decimal("0.00"), average_unit_price or Decimal("0.00"), date_basis,
+            matched_code, match_status,
+        ))
+        item_rows[-1]["engineer_estimate_unit_price"] = decimal_text(engineer_unit_price) if engineer_unit_price is not None else ""
+        item_rows[-1]["average_bid_unit_price"] = decimal_text(average_unit_price) if average_unit_price is not None else ""
+        item_rows[-1]["quantity"] = quantity_text(quantity)
+        item_rows[-1]["engineer_estimate_quantity"] = quantity_text(engineer_quantity) if engineer_unit_price is not None else ""
+        audit_unit_price = optional_decimal(
+            sheet.cell(row_index, int(columns["audit_engineer_unit"])).value
+        ) if columns.get("audit_engineer_unit") else None
+        audit_total = optional_decimal(
+            sheet.cell(row_index, int(columns["audit_engineer_total"])).value
+        ) if columns.get("audit_engineer_total") else None
+        item_rows[-1]["audit_estimate_unit_price"] = decimal_text(audit_unit_price) if audit_unit_price is not None else ""
+        item_rows[-1]["audit_estimate_extended_price"] = decimal_text(audit_total) if audit_total is not None else ""
+
+        if matched_code and engineer_unit_price is not None:
+            observations.append(promoted_observation(
+                f"{row_id}_engineer_estimate", project_id, source_id, matched_code, description, unit_raw,
+                unit_normalized, engineer_quantity, engineer_unit_price,
+                "engineers_estimate" if layout == "estimate" else "public_bid_tab_engineer_estimate", date_basis,
+            ))
+        if matched_code and average_unit_price is not None:
+            observations.append(promoted_observation(
+                f"{row_id}_average", project_id, source_id, matched_code, description, unit_raw,
+                unit_normalized, quantity, average_unit_price, "public_bid_tab_average", date_basis,
+            ))
+        if engineer_total is not None and engineer_unit_price is not None:
+            calculated_engineer_total = (engineer_quantity * engineer_unit_price).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            if abs(engineer_total - calculated_engineer_total) > Decimal("0.01"):
+                warnings.append(
+                    f"Row {row_index}: engineer source line total {engineer_total} differs from calculated {calculated_engineer_total}."
+                )
+
+    ranked_totals: list[tuple[str, Decimal]] = []
+    for bidder in bidders:
+        published_total = configured_total(sheet, bidder)
+        calculated_total = calculated_bid_totals[bidder["name"]]
+        ranking_total = published_total if published_total is not None else calculated_total
+        ranked_totals.append((bidder["name"], ranking_total))
+        if published_total is not None and abs(published_total - calculated_total) > Decimal("0.01"):
+            warnings.append(
+                f"Included schedule total {bidder['name']} {published_total} differs from calculated total {calculated_total}."
+            )
+
+    awarded_bidder = config.get("awarded_bidder", "")
+    bidder_bids = [{
+        "bid_id": f"{row_prefix}_{slugify(name)}",
+        "project_id": project_id,
+        "source_id": source_id,
+        "bidder_name": name,
+        "bid_total": decimal_text(total),
+        "bid_rank": str(rank),
+        "apparent_low": "true" if rank == 1 else "false",
+        "is_awarded": "true" if name == awarded_bidder else "false",
+    } for rank, (name, total) in enumerate(sorted(ranked_totals, key=lambda pair: pair[1]), start=1)]
+
+    expected_count = int(config["expected_item_count"])
+    if len(item_rows) != expected_count:
+        raise ValueError(f"{sheet.title}: expected {expected_count} source items, parsed {len(item_rows)}.")
+    expected_bidders = int(config.get("expected_bidder_count", len(bidders)))
+    if len(bidder_bids) != expected_bidders:
+        raise ValueError(f"{sheet.title}: expected {expected_bidders} bidders, parsed {len(bidder_bids)}.")
+    return ParsedBidTab(
+        config["project_name"], config["project_number"], item_rows, bidder_bids, bidder_items, observations, warnings
+    )
+
+
+def add_resolved_master_observations(parsed: ParsedBidTab, source_type_value: str) -> None:
+    existing = {row["observation_id"] for row in parsed.observations}
+    bidder_items_by_row: dict[str, list[dict[str, str]]] = {}
+    for bidder_item in parsed.bidder_items:
+        bidder_items_by_row.setdefault(bidder_item["bid_tab_item_id"], []).append(bidder_item)
+    awarded_bid_ids = {bid["bid_id"] for bid in parsed.bidder_bids if bid.get("is_awarded") == "true"}
+    parsed.observations[:] = [
+        row for row in parsed.observations
+        if any(item["matched_agency_item_code"] == row["agency_item_code"] for item in parsed.item_rows)
+    ]
+    for item in parsed.item_rows:
+        code = item["matched_agency_item_code"]
+        if item["match_status"] != "matched" or not code:
+            continue
+        engineer_price = optional_decimal(item["engineer_estimate_unit_price"])
+        engineer_id = f"{item['bid_tab_item_id']}_engineer_estimate"
+        if engineer_price is not None and engineer_id not in existing:
+            parsed.observations.append(promoted_observation(
+                engineer_id, item["project_id"], item["source_id"], code, item["source_item_description"],
+                item["unit_raw"], item["unit_normalized"],
+                optional_quantity(item.get("engineer_estimate_quantity")) or optional_quantity(item["quantity"]) or Decimal("0"),
+                engineer_price,
+                "engineers_estimate" if source_type_value == "estimate" else "public_bid_tab_engineer_estimate",
+                item["date_basis"],
+            ))
+        average_price = optional_decimal(item["average_bid_unit_price"])
+        average_id = f"{item['bid_tab_item_id']}_average"
+        if average_price is not None and average_id not in existing:
+            parsed.observations.append(promoted_observation(
+                average_id, item["project_id"], item["source_id"], code, item["source_item_description"],
+                item["unit_raw"], item["unit_normalized"], decimal_value(item["quantity"]), average_price,
+                "public_bid_tab_average", item["date_basis"],
+            ))
+        awarded_item = next(
+            (candidate for candidate in bidder_items_by_row.get(item["bid_tab_item_id"], []) if candidate["bid_id"] in awarded_bid_ids),
+            None,
+        )
+        awarded_id = f"{item['bid_tab_item_id']}_awarded"
+        if awarded_item and awarded_id not in existing:
+            parsed.observations.append(promoted_observation(
+                awarded_id, item["project_id"], item["source_id"], code, item["source_item_description"],
+                awarded_item["unit_raw"], awarded_item["unit_normalized"],
+                optional_quantity(awarded_item["quantity"]) or Decimal("0"), decimal_value(awarded_item["unit_price"]),
+                "public_bid_tab_awarded", item["date_basis"],
+            ))
 
 
 def source_row(args: argparse.Namespace) -> dict[str, str]:
@@ -1393,12 +1662,23 @@ def source_row(args: argparse.Namespace) -> dict[str, str]:
         "agency": args.agency_owner,
         "state": args.state,
         "source_label": args.source_label,
+        "source_date": args.date_basis,
         "data_year": args.source_year,
-        "notes": f"Public bid tab workbook promoted from {Path(args.workbook).name}. Apparent low is not confirmed award.",
+        "source_url": getattr(args, "source_url", ""),
+        "source_file_name": Path(args.workbook).name,
+        "sha256": file_sha256(Path(args.workbook)),
+        "parser_name": "import_bid_tab_workbook.py",
+        "parser_version": "3.0.0",
+        "notes": getattr(
+            args,
+            "source_notes",
+            f"Public bid tab workbook promoted from {Path(args.workbook).name}. Apparent low is not confirmed award.",
+        ),
     }
 
 
 def project_row(args: argparse.Namespace, parsed: ParsedBidTab) -> dict[str, str]:
+    awarded_bid = next((bid for bid in parsed.bidder_bids if bid.get("is_awarded") == "true"), None)
     return {
         "project_id": args.project_id,
         "project_name": parsed.project_name,
@@ -1410,11 +1690,11 @@ def project_row(args: argparse.Namespace, parsed: ParsedBidTab) -> dict[str, str
         "source_id": args.source_id,
         "project_number": parsed.project_number,
         "project_location_raw": parsed.project_name,
-        "contractor": "",
+        "contractor": awarded_bid["bidder_name"] if awarded_bid else "",
         "district": args.district,
         "terrain": "",
         "bid_count": str(len(parsed.bidder_bids)),
-        "awarded_bid_total": "",
+        "awarded_bid_total": awarded_bid["bid_total"] if awarded_bid else "",
         "award_index": "",
     }
 
@@ -1430,7 +1710,7 @@ def validate_import(
 
     if not parsed.item_rows:
         errors.append("No item rows were parsed.")
-    if not parsed.bidder_bids:
+    if not parsed.bidder_bids and any(row.get("average_bid_unit_price") for row in parsed.item_rows):
         errors.append("No bidder columns were parsed.")
 
     if source_only:
@@ -1576,10 +1856,12 @@ def known_normal_units() -> set[str]:
     return {"EACH", "L S", "LB", "SF", "SY", "CY", "LF", "ACRE", "HOUR", "DAY", "GAL", "CF", "TON", "F A"}
 
 
-def promote(args: argparse.Namespace) -> None:
-    parsed = parse_workbook(Path(args.workbook), args.source_id, args.project_id, args.row_prefix, args.date_basis)
+def promote(args: argparse.Namespace, parsed_override: ParsedBidTab | None = None) -> None:
+    parsed = parsed_override or parse_workbook(Path(args.workbook), args.source_id, args.project_id, args.row_prefix, args.date_basis)
     item_rows = agency_item_rows(args.agency_items)
     mapping_warnings = [] if args.source_only else resolve_short_item_codes(parsed, item_rows)
+    if parsed_override is not None and not args.source_only:
+        add_resolved_master_observations(parsed, args.source_type)
     match_candidates = build_match_candidates(parsed, item_rows)
     errors, warnings = validate_import(
         parsed,
@@ -1607,6 +1889,8 @@ def promote(args: argparse.Namespace) -> None:
     write_csv(args.staging_bidder_bids, parsed.bidder_bids, BIDDER_BID_FIELDS)
     write_csv(args.staging_bidder_items, parsed.bidder_items, BIDDER_ITEM_FIELDS)
     write_csv(args.staging_match_candidates, match_candidates, MATCH_CANDIDATE_FIELDS)
+    if getattr(args, "staging_reconciliation", None):
+        write_csv(args.staging_reconciliation, [{"warning": warning} for warning in warnings], ["warning"])
 
     existing_sources = [row for row in normalize_existing_rows(read_csv(args.sources), SOURCE_FIELDS) if row["source_id"] != args.source_id]
     existing_projects = [row for row in normalize_existing_rows(read_csv(args.projects), PROJECT_FIELDS) if row["source_id"] != args.source_id]
@@ -1630,9 +1914,56 @@ def promote(args: argparse.Namespace) -> None:
     print(f"Wrote {len(match_candidates)} match candidate rows.")
 
 
+def promote_master_config(args: argparse.Namespace) -> None:
+    try:
+        from openpyxl import load_workbook
+    except ImportError as error:
+        raise SystemExit("Missing dependency: openpyxl. Run with the bundled Codex Python runtime.") from error
+
+    config_path = Path(args.master_config)
+    config_data = json.loads(config_path.read_text(encoding="utf-8"))
+    workbook_path = Path(args.workbook)
+    workbook = load_workbook(workbook_path, data_only=True, read_only=False)
+    selected_sheet = args.sheet
+    total_items = total_bids = total_bidder_items = 0
+    for source in selected_master_sources(config_data, selected_sheet):
+        if source["sheet"] not in workbook.sheetnames:
+            raise ValueError(f"Configured sheet {source['sheet']!r} is missing from {workbook_path.name}.")
+        parsed = parse_master_sheet(workbook_path, workbook[source["sheet"]], source)
+        source_args = argparse.Namespace(**vars(args))
+        for key, value in source.items():
+            setattr(source_args, key.replace("source_date", "date_basis"), value)
+        source_args.workbook = workbook_path
+        source_args.source_year = source["source_date"][:4]
+        source_args.state = "CO"
+        source_args.staging_items = Path("public/data/imports") / f"{source['source_id']}_item_unit_costs.csv"
+        source_args.staging_bidder_bids = Path("public/data/imports") / f"{source['source_id']}_bidder_bids.csv"
+        source_args.staging_bidder_items = Path("public/data/imports") / f"{source['source_id']}_bidder_item_observations.csv"
+        source_args.staging_match_candidates = Path("public/data/imports") / f"{source['source_id']}_match_candidates.csv"
+        source_args.staging_reconciliation = Path("public/data/imports") / f"{source['source_id']}_reconciliation.csv"
+        promote(source_args, parsed)
+        total_items += len(parsed.item_rows)
+        total_bids += len(parsed.bidder_bids)
+        total_bidder_items += len(parsed.bidder_items)
+    print(
+        f"Master workbook totals: {total_items} source items, {total_bids} bids, "
+        f"{total_bidder_items} bidder item prices."
+    )
+
+
+def selected_master_sources(config_data: dict[str, Any], sheet_name: str | None) -> list[dict[str, Any]]:
+    sources = config_data["sources"]
+    selected = [source for source in sources if not sheet_name or source["sheet"] == sheet_name]
+    if sheet_name and not selected:
+        raise ValueError(f"Sheet {sheet_name!r} is not configured for batch import.")
+    return selected
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Import SAQ-style public bid tab workbooks into app CSV data.")
     parser.add_argument("--workbook", default=DEFAULT_WORKBOOK, type=Path)
+    parser.add_argument("--master-config", type=Path)
+    parser.add_argument("--sheet", help="Import only one configured master-workbook sheet.")
     parser.add_argument("--source-id", default=DEFAULT_SOURCE_ID)
     parser.add_argument("--source-label", default=DEFAULT_SOURCE_LABEL)
     parser.add_argument("--source-type", default=DEFAULT_SOURCE_TYPE)
@@ -1661,7 +1992,10 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
-    promote(args)
+    if args.master_config:
+        promote_master_config(args)
+    else:
+        promote(args)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,156 @@
+bid_tab_item_id,source_item_code,source_item_description,unit_normalized,candidate_agency_item_code,candidate_description,candidate_unit,candidate_count,suggestion_status
+fhu_lincoln_jordan_20250218_row_0003,201-00000,CLEARING AND GRUBBING,L S,201-00000,Clearing and Grubbing,L S,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0004,202-00010,REMOVAL OF TREE,EACH,202-00010,Removal of Tree,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0005,202-00019,REMOVAL OF INLET,EACH,202-00019,Removal of Inlet,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0006,202-00021,REMOVAL OF MANHOLE,EACH,202-00021,Removal of Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0008,202-00037,REMOVAL OF END SECTION,EACH,202-00037,Removal of End Section,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0011,202-00200,REMOVAL OF SIDEWALK,SY,202-00200,Removal of Sidewalk,SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0014,202-00206,REMOVAL OF CONCRETE CURB RAMP,SY,202-00206,Removal of Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0015,202-00210,REMOVAL OF CONCRETE PAVEMENT,SY,202-00210,Removal of Concrete Pavement,SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0017,202-00220,REMOVAL OF ASPHALT MAT,SY,202-00220,Removal of Asphalt Mat,SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0018,202-00240,REMOVAL OF ASPHALT MAT (PLANING),SY,202-00240,Removal of Asphalt Mat (Planing),SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0019,202-00495,REMOVAL OF PORTIONS OF PRESENT STRUCTURE,L S,202-00495,Removal of Portions of Present Structure,L S,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0020,202-00810,REMOVAL OF GROUND SIGN,EACH,202-00810,Removal of Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0021,202-00828,REMOVAL OF TRAFFIC SIGNAL EQUIPMENT,L S,202-00828,Removal of Traffic Signal Equipment,L S,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0023,202-01300,REMOVAL OF END ANCHORAGE,EACH,202-01300,Removal of End Anchorage,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0024,203-00010,UNCLASSIFIED EXCAVATION (COMPLETE IN PLACE),CY,203-00010,Unclassified Excavation (Complete In Place),CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0025,203-00050,UNSUITABLE MATERIAL,CY,203-00050,Unsuitable Material,CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0026,203-01597,POTHOLING,HOUR,203-01597,Potholing,HOUR,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0027,206-00000,STRUCTURE EXCAVATION,CY,206-00000,Structure Excavation,CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0028,206-00100,STRUCTURE BACKFILL (CLASS 1),CY,206-00100,Structure Backfill (Class 1),CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0029,206-00360,MECHANICAL REINFORCEMENT OF SOIL,CY,206-00360,Mechanical Reinforcement of Soil,CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0030,206-00510,FILTER MATERIAL (CLASS A),CY,206-00510,Filter Material (Class A),CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0032,207-00405,TOPSOIL (SPECIAL),CY,207-00405,Topsoil (Special),CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0035,208,SEEDING (NATIVE) DRILL,ACRE,212-00706,Seeding (Native) Drill,ACRE,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0036,208,SEEDING (NATIVE) BROADCAST,ACRE,212-00708,Seeding (Native) Broadcast,ACRE,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0037,208,MULCHING (WEED FREE),ACRE,213-00003,Mulching (Weed Free),ACRE,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0042,208,REMOVAL AND DISPOSAL OF SEDIMENT (EQUIPMENT),HOUR,208-00105,Removal and Disposal of Sediment (Equipment),HOUR,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0043,208,EROSION CONTROL MANAGEMENT,DAY,208-00207,Erosion Control Management,DAY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0050,208,TEMPORARY STREAM CROSSING,EACH,208-00521,Temporary Stream Crossing,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0053,208,MAINTENANCE AGGREGATE (VEHICLE TRACKING PAD),CY,208-00071,Maintenance Aggregate (Vehicle Tracking Pad),CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0055,210-00001,RESET STRUCTURE,EACH,210-00001,Reset Structure,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0056,210-00050,RESET FIRE HYDRANT,EACH,210-00050,Reset Fire Hydrant,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0057,210-00750,RESET LIGHT STANDARD,EACH,210-00750,Reset Light Standard,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0058,210-00760,RESET LUMINAIRE,EACH,210-00760,Reset Luminaire,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0059,210-00810,RESET GROUND SIGN,EACH,210-00810,Reset Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0061,210-00815,RESET SIGN PANEL,EACH,210-00815,Reset Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0062,210-00820,RESET VARIABLE MESSAGE SIGN,EACH,210-00820,Reset Variable Message Sign,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0063,210-00831,RESET TRAFFIC SIGNAL HEAD,EACH,210-00831,Reset Traffic Signal Head,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0064,210-00860,RESET PEDESTRIAN PUSH BUTTON,EACH,210-00860,Reset Pedestrian Push Button,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0065,210-00867,RESET FIRE PREEMPTION UNIT,EACH,210-00867,Reset Fire Preemption Unit,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0066,210-00890,RESET INTERSECTION DETECTION SYSTEM (CAMERA),EACH,210-00890,Reset Intersection Detection System (Camera),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0068,210-04010,ADJUST MANHOLE,EACH,210-04010,Adjust Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0069,210-04015,MODIFY MANHOLE,EACH,210-04015,Modify Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0070,210-04050,ADJUST VALVE BOX,EACH,210-04050,Adjust Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0071,210-04060,ADJUST WATER METER,EACH,210-04060,Adjust Water Meter,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0072,211-03005,DEWATERING,L S,211-03005,Dewatering,L S,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0077,213-00070,LANDSCAPE WEED BARRIER FABRIC,SY,213-00070,Landscape Weed Barrier Fabric,SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0080,213-00700,LANDSCAPE BOULDER,EACH,213-00700,Landscape Boulder,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0084,217-00020,HERBICIDE TREATMENT,HOUR,217-00020,Herbicide Treatment,HOUR,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0085,240-00000,WILDLIFE BIOLOGIST,HOUR,240-00000,Wildlife Biologist,HOUR,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0086,240-00010,REMOVAL OF NESTS,HOUR,240-00010,Removal of Nests,HOUR,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0087,240-00020,NETTING,SY,240-00020,Netting,SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0088,240-00100,PRAIRIE DOG MANAGEMENT,L S,240-00100,Prairie Dog Management,L S,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0089,304-06000,AGGREGATE BASE COURSE (CLASS 6),TON,304-06000,Aggregate Base Course (Class 6),TON,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0090,403-00721,HOT MIX ASPHALT (PATCHING) (ASPHALT),SY,403-00721,Hot Mix Asphalt (Patching) (Asphalt),SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0092,403-33741,HOT MIX ASPHALT (GRADING S) (75) (PG 64-22),TON,403-33741,Hot Mix Asphalt (Grading S) (75) (PG 64-22),TON,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0093,403-34741,HOT MIX ASPHALT (GRADING SX) (75) (PG 64-22),TON,403-34741,Hot Mix Asphalt (Grading SX) (75) (PG 64-22),TON,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0095,412-00900,CONCRETE PAVEMENT (9 INCH),SY,412-00900,Concrete Pavement (9 Inch),SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0096,420-00520,GEOGRID PAVEMENT REINFORCEMENT,SY,420-00520,Geogrid Pavement Reinforcement,SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0097,502-00460,PILE TIP,EACH,502-00460,Pile Tip,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0098,502-00500,COMPLETE JOINT PENETRATION (CJP) SPLICE,EACH,502-00500,Complete Joint Penetration (CJP) Splice,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0099,502-02010,DYNAMIC PILE TEST,EACH,502-02010,Dynamic Pile Test,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0107,506-00209,RIPRAP (9 INCH),CY,506-00209,Riprap (9 Inch),CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0108,506-00212,RIPRAP (12 INCH),CY,506-00212,Riprap (12 Inch),CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0109,506-00409,SOIL RIPRAP (9 INCH),CY,506-00409,Soil Riprap (9 Inch),CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0110,507-00000,CONCRETE SLOPE AND DITCH PAVING,CY,507-00000,Concrete Slope and Ditch Paving,CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0112,515-00120,WATERPROOFING (MEMBRANE),SY,515-00120,Waterproofing (Membrane),SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0113,515-00400,CONCRETE SEALER,SY,515-00400,Concrete Sealer,SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0115,601-03040,CONCRETE CLASS D (BRIDGE),CY,601-03040,Concrete Class D (Bridge),CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0116,601-03050,CONCRETE CLASS D (WALL),CY,601-03050,Concrete Class D (Wall),CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0120,601-40300,STRUCTURAL CONCRETE COATING,SY,601-40300,Structural Concrete Coating,SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0121,602-00000,REINFORCING STEEL,LB,602-00000,Reinforcing Steel,LB,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0122,602-00020,REINFORCING STEEL (EPOXY COATED),LB,602-00020,Reinforcing Steel (Epoxy Coated),LB,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0128,603-05018,18 INCH REINFORCED CONCRETE END SECTION,EACH,603-05018,18 Inch Reinforced Concrete End Section,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0129,603-05024,24 INCH REINFORCED CONCRETE END SECTION,EACH,603-05024,24 Inch Reinforced Concrete End Section,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0130,603-05060,60 INCH REINFORCED CONCRETE END SECTION,EACH,603-05060,60 Inch Reinforced Concrete End Section,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0131,604-00305,INLET TYPE C (5 FOOT),EACH,604-00305,Inlet Type C (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0132,604-00310,INLET TYPE C (10 FOOT),EACH,604-00310,Inlet Type C (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0133,604-00550,INLET TYPE D (SPECIAL),EACH,604-00550,Inlet Type D (Special),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0136,604-19105,INLET TYPE R L 5 (5 FOOT),EACH,604-19105,Inlet Type R L 5 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0137,604-19110,INLET TYPE R L 5 (10 FOOT),EACH,604-19110,Inlet Type R L 5 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0138,604-19205,INLET TYPE R L 10 (5 FOOT),EACH,604-19205,Inlet Type R L 10 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0139,604-19210,INLET TYPE R L 10 (10 FOOT),EACH,604-19210,Inlet Type R L 10 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0140,604-19305,INLET TYPE R L 15 (5 FOOT),EACH,604-19305,Inlet Type R L 15 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0141,604-19310,INLET TYPE R L 15 (10 FOOT),EACH,604-19310,Inlet Type R L 15 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0145,604-30005,MANHOLE SLAB BASE (5 FOOT),EACH,604-30005,Manhole Slab Base (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0146,604-30010,MANHOLE SLAB BASE (10 FOOT),EACH,604-30010,Manhole Slab Base (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0147,604-30015,MANHOLE SLAB BASE (15 FOOT),EACH,604-30015,Manhole Slab Base (15 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0150,606-01370,TRANSITION TYPE 3G,EACH,606-01370,Transition Type 3G,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0151,606-01380,TRANSITION TYPE 3H,EACH,606-01380,Transition Type 3H,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0152,606-01460,MEDIAN TERMINAL,EACH,606-01460,Median Terminal,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0153,606-02003,END ANCHORAGE (NONFLARED),EACH,606-02003,End Anchorage (Nonflared),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0154,606-01407,TRANSITION TYPE BR9-GR3,EACH,606-01407,Transition Type BR9-GR3,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0158,608-00006,CONCRETE SIDEWALK (6 INCH),SY,608-00006,Concrete Sidewalk (6 Inch),SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0159,608-00010,CONCRETE CURB RAMP,SY,608-00010,Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0166,612-00001,DELINEATOR (TYPE I),EACH,612-00001,Delineator (Type I),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0167,612-00003,DELINEATOR (TYPE III),EACH,612-00003,Delineator (Type III),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0173,613-07004,TYPE FOUR PULL BOX,EACH,613-07004,Type Four Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0174,613-07005,TYPE FIVE PULL BOX,EACH,613-07005,Type Five Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0175,613-07010,PULL BOX (SURFACE MOUNTED),EACH,613-07010,Pull Box (Surface Mounted),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0176,613-07023,"PULL BOX (24""x36""X24"")",EACH,613-07023,"Pull Box (24""x36""x24"")",EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0177,613-07026,"PULL BOX (16""x24""x12"")",EACH,613-07026,"Pull Box (16""x24""x12"")",EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0178,613-07040,"PULL BOX (30""x48""x24"")",EACH,613-07040,"Pull Box (30""x48""x24"")",EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0179,613-10000,WIRING,L S,613-10000,Wiring,L S,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0181,613-16010,LIGHT STANDARD AND LUMINAIRE (DECORATIVE),EACH,613-16010,Light Standard and Luminaire (Decorative),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0182,613-40010,LIGHT STANDARD FOUNDATION,EACH,613-40010,Light Standard Foundation,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0183,613-50109,METER POWER PEDESTAL,EACH,613-50109,Meter Power Pedestal,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0187,614-10130,ILLUMINATED SIGN,EACH,614-10130,Illuminated Sign,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0188,614-10160,SIGNAL HEAD BACKPLATES,EACH,614-10160,Signal Head Backplates,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0189,614-70150,PEDESTRIAN SIGNAL FACE (16)(COUNTDOWN),EACH,614-70150,Pedestrian Signal Face (16) (Countdown),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0190,614-70336,TRAFFIC SIGNAL FACE(12-12-12),EACH,614-70336,Traffic Signal Face (12-12-12),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0191,614-70548,TRAFFIC SIGNAL FACE(12-12-12-12),EACH,614-70448,Traffic Signal Face (12-12-12-12),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0192,614-72860,PEDESTRIAN PUSH BUTTON,EACH,614-72860,Pedestrian Push Button,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0193,614-72863,PEDESTRIAN PUSH BUTTON POST ASSEMBLY,EACH,614-72863,Pedestrian Push Button Post Assembly,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0196,614-81130,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-30 FOOT MAST ARM),EACH,614-81130,Traffic Signal-Light Pole Steel (1-30 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0197,614-81140,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-40 FOOT MAST ARM),EACH,614-81140,Traffic Signal-Light Pole Steel (1-40 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0198,614-81145,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-45 FOOT MAST ARM),EACH,614-81145,Traffic Signal-Light Pole Steel (1-45 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0199,614-81155,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-55 FOOT MAST ARM),EACH,614-81155,Traffic Signal-Light Pole Steel (1-55 Foot Mast Arm),EACH,2,multiple_exact_description_unit_candidates
+fhu_lincoln_jordan_20250218_row_0199,614-81155,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-55 FOOT MAST ARM),EACH,614-91155,Traffic Signal-Light Pole Steel (1-55 Foot Mast Arm),EACH,2,multiple_exact_description_unit_candidates
+fhu_lincoln_jordan_20250218_row_0200,614-81160,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-60 FOOT MAST ARM),EACH,614-81160,Traffic Signal Light Pole Steel (1-60 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0201,614-81165,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-65 FOOT MAST ARM),EACH,614-81165,Traffic Signal-Light Pole Steel (1-65 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0202,614-81170,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-70 FOOT MAST ARM),EACH,614-81170,Traffic Signal-Light Pole Steel (1-70 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0203,614-81175,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-75 FOOT MAST ARM),EACH,614-81175,Traffic Signal-Light Pole Steel (1-75 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0204,614-84100,TRAFFIC SIGNAL PEDESTAL POLE ALUMINUM,EACH,614-84100,Traffic Signal Pedestal Pole Aluminum,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0205,614-87350,TEST FIBER OPTIC CABLE,L S,614-87350,Test Fiber Optic Cable,L S,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0207,614-87601,TERMINATE FIBER OPTIC CABLE (1 STRAND),EACH,614-87601,Terminate Fiber Optic Cable (1 Strand),EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0208,615-60050,EMBANKMENT PROTECTOR TYPE 5,EACH,615-00050,Embankment Protector Type 5,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0221,619-75012,1-1/2 INCH GATE VALVE,EACH,619-75012,1-1/2 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_lincoln_jordan_20250218_row_0221,619-75012,1-1/2 INCH GATE VALVE,EACH,623-05012,1-1/2 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_lincoln_jordan_20250218_row_0222,619-75016,2 INCH GATE VALVE,EACH,619-75016,2 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_lincoln_jordan_20250218_row_0222,619-75016,2 INCH GATE VALVE,EACH,623-05016,2 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_lincoln_jordan_20250218_row_0223,619-75048,6 INCH GATE VALVE,EACH,619-75048,6 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_lincoln_jordan_20250218_row_0223,619-75048,6 INCH GATE VALVE,EACH,623-05048,6 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_lincoln_jordan_20250218_row_0224,619-78048,6 INCH FIRE HYDRANT,EACH,619-78048,6 Inch Fire Hydrant,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0225,620-00020,SANITARY FACILITY,EACH,620-00020,Sanitary Facility,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0226,623-00156,IRRIGATION BUBBLER,EACH,623-00156,Irrigation Bubbler,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0227,623-00168,1 INCH EMITTER VALVE ASSEMBLY,EACH,623-00168,1 Inch Emitter Valve Assembly,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0228,623-00185,1/2 INCH AIR RELIEF UNIT,EACH,623-00185,1/2 Inch Air Relief Unit,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0229,623-00186,3/4 INCH FLUSH UNIT,EACH,623-00186,3/4 Inch Flush Unit,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0231,623-03108,1 INCH AUTOMATIC CONTROL VALVE,EACH,623-03108,1 Inch Automatic Control Valve,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0235,625-00000,CONSTRUCTION SURVEYING,L S,625-00000,Construction Surveying,L S,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0236,626-00000,MOBILIZATION,L S,626-00000,Mobilization,L S,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0240,630-00003,UNIFORMED TRAFFIC CONTROL,HOUR,630-00003,Uniformed Traffic Control,HOUR,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0241,630-00006,UNIFORMED TRAFFIC CONTROL (VEHICLE),HOUR,630-00006,Uniformed Traffic Control (Vehicle),HOUR,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0242,630-00016,TRAFFIC CONTROL (SPECIAL) LS,L S,630-00016,Traffic Control (Special) LS,L S,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0243,630-80355,PORTABLE MESSAGE SIGN PANEL,EACH,630-80355,Portable Message Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0245,306-01000,RECONDITIONING,SY,306-01000,Reconditioning,SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0246,506-00218,RIPRAP (18 INCH),CY,506-00218,Riprap (18 Inch),CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0248,202-00027,REMOVAL OF RIPRAP,SY,202-00027,Removal of Riprap,SY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0250,202-04005,CLEAN VALVE BOX,EACH,202-04005,Clean Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0251,202-04007,PLUG CULVERT,EACH,202-04001,Plug Culvert,EACH,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0252,206-01781,SHORING (AREA 1),L S,206-01781,Shoring (Area 1),L S,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0253,207-00305,WETLAND TOPSOIL,CY,207-00305,Wetland Topsoil,CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0255,208,SWEEPING (SEDIMENT REMOVAL),HOUR,208-00106,Sweeping (Sediment Removal),HOUR,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0256,601-01000,CONCRETE CLASS B (WALL),CY,601-01050,Concrete Class B (Wall),CY,1,single_exact_description_unit_candidate
+fhu_lincoln_jordan_20250218_row_0257,301-03030,CONCRETE CLASS D (BOX CULVERT),CY,601-03030,Concrete Class D (Box Culvert),CY,1,single_exact_description_unit_candidate

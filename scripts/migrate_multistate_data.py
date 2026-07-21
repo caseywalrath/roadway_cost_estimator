@@ -4,6 +4,7 @@ import argparse
 import csv
 import hashlib
 import json
+import re
 import shutil
 from collections import defaultdict
 from pathlib import Path
@@ -12,6 +13,9 @@ from pathlib import Path
 LEGACY_DIR = Path("public/data")
 OUTPUT_DIR = Path("public/data/states/co")
 COMMON_DIR = Path("public/data/common")
+COST_BOOK_OBSERVATION_ID = re.compile(
+    r"^(?P<base>.+?_(?P<row_number>\d+))_(?P<price_type>awarded_bid|average_bid|engineer_estimate)$"
+)
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -41,7 +45,7 @@ def file_sha256(path: Path) -> str:
 
 def map_price_type(value: str) -> str:
     normalized = value.strip().lower()
-    if normalized in {"cdot_awarded_bid", "bid_tab_demo"}:
+    if normalized in {"cdot_awarded_bid", "bid_tab_demo", "public_bid_tab_awarded"}:
         return "awarded_bid"
     if normalized in {"cdot_average_bid", "public_bid_tab_average"}:
         return "average_bid"
@@ -56,6 +60,115 @@ def source_type(value: str) -> str:
     if value == "public_bid_tab":
         return "bid_tab"
     return value
+
+
+def build_cost_book_contract_items(
+    imports_dir: Path,
+    legacy_sources: list[dict[str, str]],
+    legacy_observations: list[dict[str, str]],
+    agency_by_code: dict[str, str],
+) -> list[dict[str, str]]:
+    cost_book_sources = {
+        row["source_id"]: row
+        for row in legacy_sources
+        if source_type(row["source_type"]) == "cost_book"
+    }
+    observations_by_source_row: dict[tuple[str, int], dict[str, dict[str, str]]] = defaultdict(dict)
+    observation_bases: dict[tuple[str, int], str] = {}
+
+    for observation in legacy_observations:
+        source_id = observation["source_id"]
+        if source_id not in cost_book_sources:
+            continue
+        match = COST_BOOK_OBSERVATION_ID.match(observation["observation_id"])
+        if not match:
+            raise ValueError(f"Unexpected Cost Data Book observation ID: {observation['observation_id']}")
+        row_number = int(match.group("row_number"))
+        price_type = map_price_type(observation["price_type"])
+        if price_type not in {"awarded_bid", "average_bid", "engineer_estimate"}:
+            raise ValueError(f"Unexpected Cost Data Book price type: {observation['price_type']}")
+        key = (source_id, row_number)
+        if price_type in observations_by_source_row[key]:
+            raise ValueError(f"Duplicate {price_type} observation for {source_id} staging row {row_number}")
+        observations_by_source_row[key][price_type] = observation
+        observation_bases[key] = match.group("base")
+
+    contract_items: list[dict[str, str]] = []
+    expected_price_types = {"awarded_bid", "average_bid", "engineer_estimate"}
+    for source_id, source in cost_book_sources.items():
+        staging_path = imports_dir / f"{source_id}_item_unit_costs.csv"
+        if not staging_path.exists():
+            raise ValueError(f"Missing committed Cost Data Book staging extract: {staging_path}")
+        staging_rows = read_csv(staging_path)
+        for row_number, staging_row in enumerate(staging_rows, start=1):
+            key = (source_id, row_number)
+            price_observations = observations_by_source_row.get(key, {})
+            if set(price_observations) != expected_price_types:
+                missing = sorted(expected_price_types - set(price_observations))
+                raise ValueError(
+                    f"Cost Data Book {source_id} staging row {row_number} is missing observations: {', '.join(missing)}"
+                )
+            reference = price_observations["awarded_bid"]
+            identity = (
+                reference["project_id"],
+                reference["agency_item_code"].upper(),
+                reference["description_raw"],
+                reference["unit_normalized"],
+                reference["quantity"],
+                reference["date_basis"],
+            )
+            for price_type, observation in price_observations.items():
+                candidate_identity = (
+                    observation["project_id"],
+                    observation["agency_item_code"].upper(),
+                    observation["description_raw"],
+                    observation["unit_normalized"],
+                    observation["quantity"],
+                    observation["date_basis"],
+                )
+                if candidate_identity != identity:
+                    raise ValueError(
+                        f"Cost Data Book {source_id} staging row {row_number} has inconsistent {price_type} identity"
+                    )
+
+            item_code = reference["agency_item_code"].upper()
+            agency_item_id = agency_by_code.get(item_code, "")
+            if not agency_item_id:
+                raise ValueError(f"Cost Data Book item {item_code} has no agency-item identity")
+            source_file = staging_row.get("source_file", "")
+            source_page = staging_row.get("page_number", "")
+            locator_parts = [part for part in [source_file, f"page {source_page}" if source_page else ""] if part]
+            locator = ":".join(locator_parts) + f"; staging row {row_number}"
+            contract_items.append({
+                "contract_item_id": f"{observation_bases[key]}_item",
+                "contract_id": reference["project_id"],
+                "source_id": source_id,
+                "section_number": staging_row.get("source_period", ""),
+                "section_title": source["source_label"],
+                "line_number": str(row_number),
+                "source_item_code": staging_row.get("item_code", item_code).upper(),
+                "agency_item_id": agency_item_id,
+                "description_raw": staging_row.get("item_description", reference["description_raw"]),
+                "quantity": reference["quantity"],
+                "unit_raw": staging_row.get("unit_raw", reference["unit_raw"]),
+                "unit_normalized": staging_row.get("unit_normalized", reference["unit_normalized"]),
+                "alternate_set": "",
+                "alternate_member": "",
+                "mapping_status": "matched",
+                "source_page": source_page,
+                "source_locator": locator,
+            })
+
+        source_observation_rows = {
+            row_number for observation_source, row_number in observations_by_source_row if observation_source == source_id
+        }
+        if len(source_observation_rows) != len(staging_rows):
+            raise ValueError(
+                f"Cost Data Book {source_id} has {len(source_observation_rows)} observation rows but "
+                f"{len(staging_rows)} staging rows"
+            )
+
+    return contract_items
 
 
 def main() -> None:
@@ -82,8 +195,13 @@ def main() -> None:
     legacy_canonical = read_csv(legacy / "canonical_items.csv")
 
     source_paths = {row["source_id"]: legacy / "sources.csv" for row in legacy_sources}
+    existing_sources_by_id = {
+        row["source_id"]: row
+        for row in (read_csv(output / "sources.csv") if (output / "sources.csv").exists() else [])
+    }
     sources = []
     for row in legacy_sources:
+        existing_source = existing_sources_by_id.get(row["source_id"], {})
         sources.append({
             "source_id": row["source_id"],
             "source_type": source_type(row["source_type"]),
@@ -91,13 +209,13 @@ def main() -> None:
             "agency_name": row["agency"],
             "state": "CO",
             "source_label": row["source_label"],
-            "source_date": "",
+            "source_date": row.get("source_date", "") or existing_source.get("source_date", ""),
             "data_year": row["data_year"],
-            "source_url": "",
-            "source_file_name": "",
-            "sha256": file_sha256(source_paths[row["source_id"]]),
-            "parser_name": "legacy_schema_v1_migration",
-            "parser_version": "2.0.0",
+            "source_url": row.get("source_url", "") or existing_source.get("source_url", ""),
+            "source_file_name": row.get("source_file_name", "") or existing_source.get("source_file_name", ""),
+            "sha256": row.get("sha256", "") or existing_source.get("sha256", "") or file_sha256(source_paths[row["source_id"]]),
+            "parser_name": row.get("parser_name", "") or existing_source.get("parser_name", "") or "legacy_schema_v1_migration",
+            "parser_version": row.get("parser_version", "") or existing_source.get("parser_version", "") or "2.0.0",
             "notes": row["notes"],
         })
     sources.append({
@@ -270,11 +388,16 @@ def main() -> None:
             "bid_total": row["bid_total"],
             "percent_of_low": "",
             "is_apparent_low": row["apparent_low"],
-            "is_awarded": "false",
+            "is_awarded": row.get("is_awarded", "false") or "false",
             "source_page": "",
         })
 
-    contract_items = []
+    contract_items = build_cost_book_contract_items(
+        legacy / "imports",
+        legacy_sources,
+        legacy_observations,
+        agency_by_code,
+    )
     item_mappings = []
     seen_mappings: set[tuple[str, str, str]] = set()
     for row in legacy_bid_items:

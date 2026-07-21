@@ -1,0 +1,69 @@
+warning
+Resolved short agency item code 201 for CLEARING AND GRUBBING (L S) to 201-00000.
+Resolved short agency item code 202 for REMOVAL OF TREE (EACH) to 202-00010.
+Resolved short agency item code 202 for REMOVAL OF SIDEWALK (SY) to 202-00200.
+Preserved nonstandard item code 202 for REMOVAL OF CURB (LINEAR FOOT/FEET); no exact compatible CDOT item match.
+Preserved nonstandard item code 202 for REMOVAL OF CURB AND GUTTER (LINEAR FOOT/FEET); no exact compatible CDOT item match.
+Resolved short agency item code 202 for REMOVAL OF CONCRETE CURB RAMP (SY) to 202-00206.
+Preserved nonstandard item code 202 for REMOVAL OF POLYMER CEMENT SURFACING & CONCRETE BASE (SQUARE FOOT/FEET); no exact compatible CDOT item match.
+Preserved nonstandard item code 202 for REMOVAL OF POLYMER CEMENT SURFACING (SQUARE FOOT/FEET); no exact compatible CDOT item match.
+Resolved short agency item code 202 for REMOVAL OF CONCRETE PAVEMENT (SY) to 202-00210.
+Preserved nonstandard item code 202 for REMOVAL OF MAILBOX STRUCTURE CONCRETE BASE (SY); no exact compatible CDOT item match.
+Resolved short agency item code 202 for REMOVAL OF ASPHALT MAT (SY) to 202-00220.
+Preserved nonstandard item code 203 for EMBANKMENT MATERIAL (CIP) (CY); no exact compatible CDOT item match.
+Resolved short agency item code 206 for STRUCTURE BACKFILL (FLOW-FILL) (CY) to 206-00065.
+Preserved nonstandard item code 208 for POTHOLING (HOUR); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for CONCRETE WASHOUT AREA (PORTABLE) (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for VEHICLE TRACKING CONTROL (PORTABLE) (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for STABILIZED STAGING AREA (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for INLET PROTECTION CURB ON GRADE (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for PORTABLE TOILET PROTECTION (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 210 for RESET GANG MAILBOX STRUCTURE (EACH); no exact compatible CDOT item match.
+Resolved short agency item code 210 for RESET GROUND SIGN (EACH) to 210-00810.
+Preserved nonstandard item code 210 for RESET GROUND SIGN (SPECIAL) (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 210 for ADJUST PULL BOX (EACH); no exact compatible CDOT item match.
+Resolved short agency item code 210 for ADJUST MANHOLE (EACH) to 210-04010.
+Resolved short agency item code 210 for ADJUST VALVE BOX (EACH) to 210-04050.
+Resolved short agency item code 210 for MODIFY INLET (EACH) to 210-04020.
+Resolved short agency item code 304 for AGGREGATE BASE COURSE (CLASS 6) (CY) to 304-06007.
+Resolved short agency item code 403 for HOT MIX ASPHALT (PATCHING) (ASPHALT) (TON) to 403-00720.
+Preserved nonstandard item code 412 for CONCRETE PAVEMENT (8 INCH) (DOWELED) (SY); no exact compatible CDOT item match.
+Preserved nonstandard item code 412 for CONCRETE PAVEMENT (8 INCH) (DOWELED) (SPECIAL) (SY); no exact compatible CDOT item match.
+Preserved nonstandard item code 412 for CONCRETE PAVEMENT (10 INCH) (DOWELED) (SY); no exact compatible CDOT item match.
+Preserved nonstandard item code 412 for CONCRETE PAVEMENT (10 INCH) (DOWELED) (SPECIAL) (SY); no exact compatible CDOT item match.
+Resolved short agency item code 601 for CONCRETE CLASS B (MISCELLANEOUS) (CY) to 601-01025.
+Preserved nonstandard item code 603 for 15 INCH PLASTIC PIPE SEWER (POLYVINYL CHLORIDE) (LINEAR FOOT/FEET); no exact compatible CDOT item match.
+Resolved short agency item code 604 for INLET TYPE 16 (5 FOOT) (EACH) to 604-16005.
+Resolved short agency item code 604 for INLET TYPE R L 5 (5 FOOT) (EACH) to 604-19105.
+Resolved short agency item code 604 for MANHOLE SLAB BASE (5 FOOT) (EACH) to 604-30005.
+Resolved short agency item code 604 for INLET (SPECIAL) (EACH) to 604-19000.
+Preserved nonstandard item code 607 for CONSTRUCTION FENCE (LINEAR FOOT/FEET); no exact compatible CDOT item match.
+Preserved nonstandard item code 608 for CONCRETE SIDEWALK (6 INCH) (SPECIAL) (SY); no exact compatible CDOT item match.
+Resolved short agency item code 608 for CONCRETE SIDEWALK (6 INCH) (SY) to 608-00006.
+Preserved nonstandard item code 608 for CONCRETE SIDEWALK (COLORED) (SPECIAL) (SY); no exact compatible CDOT item match.
+Resolved short agency item code 608 for CONCRETE SIDEWALK (COLORED) (SY) to 608-00350.
+Resolved short agency item code 608 for CONCRETE CURB RAMP (SY) to 608-00010.
+Preserved nonstandard item code 608 for POLYMER CEMENT CONCRETE SURFACING (ENDURABLEND) (SQUARE FOOT/FEET); no exact compatible CDOT item match.
+Preserved nonstandard item code 609 for CURB AND GUTTER TYPE 2 (SECTION I-B) (LINEAR FOOT/FEET); no exact compatible CDOT item match.
+Preserved nonstandard item code 609 for CURB AND GUTTER TYPE 2 (SECTION II-B) (LINEAR FOOT/FEET); no exact compatible CDOT item match.
+Preserved nonstandard item code 609 for GUTTER TYPE 2 (8 FOOT) (LINEAR FOOT/FEET); no exact compatible CDOT item match.
+"Preserved nonstandard item code 613 for 2"" ELECTRICAL CONDUIT (PLASTIC) (LINEAR FOOT/FEET); no exact compatible CDOT item match."
+Preserved nonstandard item code 613 for PULL BOX (TYPE 1) (EACH); no exact compatible CDOT item match.
+Resolved short agency item code 613 for WIRING (L S) to 613-10000.
+Preserved nonstandard item code 613 for LIGHT STANDARD AND LUMINAIRE (PEDESTRIAN)(TYPE AA) (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 613 for LIGHT STANDARD AND LUMINAIRE (DECORATIVE)(TYPE BB) (EACH); no exact compatible CDOT item match.
+Resolved short agency item code 613 for LIGHT STANDARD FOUNDATION (EACH) to 613-40010.
+Resolved short agency item code 613 for METER-POWER PEDESTAL (EACH) to 613-50109.
+Preserved nonstandard item code 614 for SIGN PANEL (CLASS 1) (SQUARE FOOT/FEET); no exact compatible CDOT item match.
+Preserved nonstandard item code 614 for STEEL SIGN POST (2x2 INCH TUBING) (LINEAR FOOT/FEET); no exact compatible CDOT item match.
+Resolved short agency item code 620 for SANITARY FACILITY (EACH) to 620-00020.
+Resolved short agency item code 625 for CONSTRUCTION SURVEYING (L S) to 625-00000.
+Resolved short agency item code 626 for MOBILIZATION (L S) to 626-00000.
+Resolved short agency item code 626 for PUBLIC INFORMATION SERVICES (L S) to 626-01100.
+Preserved nonstandard item code 627 for MODIFIED EPOXY PAVEMENT MARKING (GALLON); no exact compatible CDOT item match.
+Preserved nonstandard item code 627 for PREFORMED THERMOPLASTIC PAVEMENT MARKING (XWALK-STOPLINE) (SQUARE FOOT/FEET); no exact compatible CDOT item match.
+Resolved short agency item code 630 for FLAGGING (HOUR) to 630-00000.
+Resolved short agency item code 630 for PORTABLE MESSAGE SIGN PANEL (DAY) to 630-80359.
+Included schedule total Elite Surface Infrastructure 1633392.05 differs from calculated total 1500892.05.
+"Included schedule total Jalisco International, Inc. 1899332.00 differs from calculated total 1729332.00."
+"Unknown normalized units preserved as raw values: Gallon, Linear Foot/Feet, Square Foot/Feet"

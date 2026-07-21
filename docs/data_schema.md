@@ -24,6 +24,8 @@ One publication/source identity.
 
 `source_id`, `source_type`, `agency_id`, `agency_name`, `state`, `source_label`, `source_date`, `data_year`, `source_url`, `source_file_name`, `sha256`, `parser_name`, `parser_version`, `notes`
 
+Colorado uses `cost_book`, `bid_tab`, and `estimate`. `estimate` identifies FHU engineer estimates that contain no bidder records and publish only `engineer_estimate` observations.
+
 ### `lettings.csv`
 
 One agency letting/event.
@@ -49,6 +51,8 @@ One source schedule line within a contract. Repeated bid-tab pages deduplicate o
 `contract_item_id`, `contract_id`, `source_id`, `section_number`, `section_title`, `line_number`, `source_item_code`, `agency_item_id`, `description_raw`, `quantity`, `unit_raw`, `unit_normalized`, `alternate_set`, `alternate_member`, `mapping_status`, `source_page`, `source_locator`
 
 `agency_item_id` can be blank only for source-native items that have not been reviewed/mapped. Those rows cannot be promoted to exact item evidence.
+
+Colorado CDOT Cost Data Book rows are materialized here from committed staging extracts. Each staging row remains a separate contract item, including rows whose code, description, quantity, and unit are otherwise identical. `source_page` retains the Cost Data Book PDF page and `source_locator` combines the source filename, page, and staging-row number.
 
 ### `bids.csv`
 
@@ -111,6 +115,22 @@ Allowed generalized `price_type` values:
 - `engineer_estimate`
 
 Iowa `average_bid` is the unweighted mean of valid bidder unit prices for the contract item. Iowa leaves `engineer_estimate` absent.
+
+Colorado master-workbook bid sources also use an unweighted mean of valid bidder unit prices. Engineer quantities may differ from the contract-item bid quantity and remain source-native on the engineer observation. Confirmed-award observations are created only when a public award record reconciles to the configured included schedule. Source Review compatibility price fields are nullable; missing engineer, average, or bidder prices render as `Not listed`, never zero.
+
+Colorado Cost Data Book items retain one awarded, one average, and one engineer observation per source row. The associated contract supplies awarded contractor, awarded total, and bid count. No `bids` or `bid_item_prices` rows are inferred because the Cost Data Book does not publish individual bidder item prices.
+
+## Colorado Master-Workbook Inclusion Policy
+
+The committed configuration at `data/staging/co/cost_estimate_master_sources.json` is the reviewable inclusion authority for the attached master workbook. It records source identity, evidence date, owner, project identifier, explicit row ranges, selected price columns, bidder blocks, and published total cells.
+
+- Estimate-only sheets publish the configured final estimate column only.
+- JC-73 includes the base schedule, publishes the County Engineer's Estimate, retains the FHU Estimate only in staging audit columns, and confirms FNF Construction as awarded.
+- Pikes Peak Sidewalks includes Schedule I only.
+- West Mainstreet includes Schedule A only.
+- Lincoln-Jordan includes Schedule A and its force accounts only.
+- Published included-schedule totals rank bids. Calculated line extensions remain internally consistent, and differences from source totals are retained in per-source reconciliation CSVs.
+- Full CDOT codes and uniquely resolved three-digit prefixes can be promoted. Malformed or ambiguous codes remain unmatched with candidates; description similarity is never promoted by itself.
 
 ### `common/inflation_index.csv`
 

@@ -89,14 +89,14 @@ export function renderProjectWorkspace(
             ? renderMetadataEditor(workspaceEditor, states, currentStateCode, "project-metadata-editor-form")
             : project
               ? renderProjectMetadata(project)
-              : `<div class="project-empty-heading"><p class="eyebrow">Project</p><h2>No active Project</h2><p>Select an existing Project or explicitly create one for ${escapeHtml(stateName(states, currentStateCode))}.</p></div>`}
+              : `<div class="project-empty-heading"><p class="eyebrow">Project</p><h2>No active Project</h2></div>`}
           <div class="project-header-actions">
             ${renderProjectActions(project, projects, "workspace", readOnly)}
           </div>
         </div>
       </section>
 
-      ${!project && !workspaceEditor ? `<section class="panel-block project-empty-workspace"><button type="button" class="primary-button" data-start-new-project>New Project</button><button type="button" class="secondary-button" data-open-project-manager>Manage Projects</button></section>` : ""}
+      ${!project && !workspaceEditor ? `<section class="panel-block project-empty-workspace"><button type="button" class="primary-button" data-start-new-project>New Project</button></section>` : ""}
       ${project && workspaceEditor?.mode !== "create" ? `<section class="panel-block project-lines-panel">
         <div class="panel-heading project-lines-heading">
           <div><p class="eyebrow">Project Items</p><h3>${formatNumber(project.lineItems.length)} line${project.lineItems.length === 1 ? "" : "s"}</h3></div>
