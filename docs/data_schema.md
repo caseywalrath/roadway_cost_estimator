@@ -52,6 +52,8 @@ One source schedule line within a contract. Repeated bid-tab pages deduplicate o
 
 `agency_item_id` can be blank only for source-native items that have not been reviewed/mapped. Those rows cannot be promoted to exact item evidence.
 
+Colorado CDOT Cost Data Book rows are materialized here from committed staging extracts. Each staging row remains a separate contract item, including rows whose code, description, quantity, and unit are otherwise identical. `source_page` retains the Cost Data Book PDF page and `source_locator` combines the source filename, page, and staging-row number.
+
 ### `bids.csv`
 
 One bidder for one contract.
@@ -115,6 +117,8 @@ Allowed generalized `price_type` values:
 Iowa `average_bid` is the unweighted mean of valid bidder unit prices for the contract item. Iowa leaves `engineer_estimate` absent.
 
 Colorado master-workbook bid sources also use an unweighted mean of valid bidder unit prices. Engineer quantities may differ from the contract-item bid quantity and remain source-native on the engineer observation. Confirmed-award observations are created only when a public award record reconciles to the configured included schedule. Source Review compatibility price fields are nullable; missing engineer, average, or bidder prices render as `Not listed`, never zero.
+
+Colorado Cost Data Book items retain one awarded, one average, and one engineer observation per source row. The associated contract supplies awarded contractor, awarded total, and bid count. No `bids` or `bid_item_prices` rows are inferred because the Cost Data Book does not publish individual bidder item prices.
 
 ## Colorado Master-Workbook Inclusion Policy
 

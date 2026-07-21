@@ -200,6 +200,7 @@ function buildExactRows(data: AppData, query: SearchQuery): EvidenceRow[] {
         engineerEstimateUnitPrice: null,
         bidderDetailKey: buildBidderDetailKey(observation),
         hasBidderDetails: false,
+        hasSourceDetails: false,
         observationIds: []
       };
     if (!existingRow) {
@@ -213,6 +214,7 @@ function buildExactRows(data: AppData, query: SearchQuery): EvidenceRow[] {
   for (const row of rowByKey.values()) {
     row.hasBidderDetails = data.stateConfig.capabilities.bidderDetail
       && (data.bidsByContractId.get(row.contract?.contractId ?? "") ?? []).length > 0;
+    row.hasSourceDetails = (data.contractItemsByContractId.get(row.contract?.contractId ?? "") ?? []).length > 0;
   }
 
   return [...rowByKey.values()];

@@ -351,16 +351,21 @@ function renderProjectNumberCell(row: EvidenceRow): string {
   const label = row.project?.projectNumber || "Not listed";
   const displayLabel = renderProjectNumberLines(label);
 
-  if (!row.hasBidderDetails) {
+  if (!row.hasBidderDetails && !row.hasSourceDetails) {
     return displayLabel;
   }
+
+  const detailAttribute = row.hasBidderDetails
+    ? `data-bidder-detail-key="${escapeHtml(row.bidderDetailKey)}"`
+    : `data-source-project-id="${escapeHtml(row.project?.projectId ?? "")}"`;
+  const detailLabel = row.hasBidderDetails ? "bidder details" : "source details";
 
   return `
     <button
       type="button"
       class="link-button project-detail-button"
-      data-bidder-detail-key="${escapeHtml(row.bidderDetailKey)}"
-      aria-label="Open bidder details for ${escapeHtml(label)}"
+      ${detailAttribute}
+      aria-label="Open ${detailLabel} for ${escapeHtml(label)}"
     >
       ${displayLabel}
     </button>

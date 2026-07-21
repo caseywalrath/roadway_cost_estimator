@@ -375,6 +375,16 @@ export async function renderApp(
       });
     });
 
+    root.querySelectorAll<HTMLButtonElement>("[data-source-project-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        activeView = "sourceReview";
+        selectedSourceProjectId = button.dataset.sourceProjectId ?? null;
+        selectedBidderDetailKey = null;
+        pendingFocus = "sourceDetail";
+        render();
+      });
+    });
+
     root.querySelector<HTMLAnchorElement>("[data-open-source-review]")?.addEventListener("click", (event) => {
       event.preventDefault();
       activeView = "sourceReview";

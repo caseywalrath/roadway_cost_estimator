@@ -13,8 +13,11 @@ export function renderSourceReview(data: AppData, selectedProjectId: string | nu
 
 function renderSourceProjectList(data: AppData): string {
   const projects = data.projects
-    .filter((project) => ["bid_tab", "estimate"].includes(data.sourceById.get(project.sourceId)?.sourceType ?? ""))
-    .filter((project) => (data.bidTabItemsByProjectId.get(project.projectId) ?? []).length > 0)
+    .filter((project) => ["bid_tab", "estimate", "cost_book"].includes(data.sourceById.get(project.sourceId)?.sourceType ?? ""))
+    .filter((project) => (
+      data.sourceById.get(project.sourceId)?.sourceType === "cost_book"
+      || (data.bidTabItemsByProjectId.get(project.projectId) ?? []).length > 0
+    ))
     .sort((left, right) => (right.estimateLetDate || "").localeCompare(left.estimateLetDate || ""));
 
   return `
@@ -23,7 +26,7 @@ function renderSourceProjectList(data: AppData): string {
         <div>
           <p class="eyebrow">Source Review</p>
           <h2 id="source-review-title" tabindex="-1">Review source projects</h2>
-          <p class="muted">Inspect bid tabs, engineer estimates, and source item mappings for ${escapeHtml(data.stateConfig.name)}.</p>
+          <p class="muted">Inspect cost books, bid tabs, engineer estimates, and source item mappings for ${escapeHtml(data.stateConfig.name)}.</p>
         </div>
         <button type="button" class="secondary-button" data-close-source-review>Back to Explorer</button>
       </div>
@@ -71,7 +74,7 @@ function renderSourceProjectDetail(data: AppData, selectedProjectId: string): st
   const source = project ? data.sourceById.get(project.sourceId) ?? null : null;
   const items = project ? data.bidTabItemsByProjectId.get(project.projectId) ?? [] : [];
 
-  if (!project || items.length === 0) {
+  if (!project) {
     return renderSourceProjectList(data);
   }
 
@@ -79,6 +82,14 @@ function renderSourceProjectDetail(data: AppData, selectedProjectId: string): st
   const bidById = new Map(bidderBids.map((bid) => [bid.bidId, bid]));
   const apparentLowBid = bidderBids.find((bid) => bid.apparentLow) ?? null;
   const awardedBid = bidderBids.find((bid) => bid.isAwarded) ?? null;
+  const isCostBook = source?.sourceType === "cost_book";
+  const detailEyebrow = isCostBook
+    ? "CDOT Cost Book Detail"
+    : source?.sourceType === "estimate"
+      ? "FHU Engineer Estimate Detail"
+      : "Public Bid Tab Detail";
+  const confirmedAward = isCostBook ? project.contractor : awardedBid?.bidderName;
+  const bidCount = isCostBook ? project.bidCount : bidderBids.length;
 
   return `
     <section class="source-review-view source-review-detail" aria-labelledby="source-review-detail-title">
@@ -87,17 +98,19 @@ function renderSourceProjectDetail(data: AppData, selectedProjectId: string): st
         <button type="button" class="secondary-button" data-close-source-review>Back to Explorer</button>
       </div>
       <div class="source-review-detail-heading">
-        <p class="eyebrow">${source?.sourceType === "estimate" ? "FHU Engineer Estimate Detail" : "Public Bid Tab Detail"}</p>
+        <p class="eyebrow">${detailEyebrow}</p>
         <h2 id="source-review-detail-title" tabindex="-1">${escapeHtml(project.projectNumber || "Project")} - ${escapeHtml(project.projectName)}</h2>
         <p class="query-line">${escapeHtml(source?.sourceLabel ?? "Unknown source")}</p>
       </div>
       <div class="bidder-modal__summary">
         <span>Apparent low: <strong>${escapeHtml(apparentLowBid?.bidderName ?? "Not listed")}</strong></span>
-        <span>Confirmed award: <strong>${escapeHtml(awardedBid?.bidderName ?? "Not listed")}</strong></span>
-        <span>Bid count: <strong>${formatNumber(bidderBids.length)}</strong></span>
+        <span>Confirmed award: <strong>${escapeHtml(confirmedAward || "Not listed")}</strong></span>
+        <span>Bid count: <strong>${bidCount === null ? "Not listed" : formatNumber(bidCount)}</strong></span>
         <span>Source items: <strong>${formatNumber(items.length)}</strong></span>
       </div>
-      <div class="table-scroll source-review-table-scroll">
+      ${items.length === 0
+        ? `<p class="muted">No item-level Cost Data Book rows were published for this project.</p>`
+        : `<div class="table-scroll source-review-table-scroll">
         <table class="bid-tab-detail-table">
           <thead>
             <tr>
@@ -108,24 +121,26 @@ function renderSourceProjectDetail(data: AppData, selectedProjectId: string): st
               <th>Unit</th>
               ${data.stateConfig.capabilities.engineerEstimate ? "<th>Engineer</th>" : ""}
               <th>Average</th>
+              ${isCostBook ? "<th>Awarded</th>" : ""}
               <th>Status</th>
-              <th>Bidder unit prices</th>
+              <th>${isCostBook ? "Source locator" : "Bidder unit prices"}</th>
             </tr>
           </thead>
           <tbody>
             ${items
               .slice()
-              .sort((left, right) => left.workbookRow - right.workbookRow)
+              .sort(compareSourceItems)
               .map((item) => renderBidTabItemRow(
                 item,
                 data.bidderItemsByBidTabItemId.get(item.bidTabItemId) ?? [],
                 bidById,
-                data.stateConfig.capabilities.engineerEstimate
+                data.stateConfig.capabilities.engineerEstimate,
+                isCostBook
               ))
               .join("")}
           </tbody>
         </table>
-      </div>
+      </div>`}
     </section>
   `;
 }
@@ -134,9 +149,10 @@ function renderBidTabItemRow(
   item: BidTabItemRecord,
   bidderItems: BidderItemObservationRecord[],
   bidById: Map<string, BidderBidRecord>,
-  supportsEngineerEstimate: boolean
+  supportsEngineerEstimate: boolean,
+  isCostBook: boolean
 ): string {
-  const codeLabel = item.sourceSpecRaw || item.sourceItemCode;
+  const codeLabel = isCostBook ? item.sourceItemCode : item.sourceSpecRaw || item.sourceItemCode;
   const bidderPrices = bidderItems
     .slice()
     .sort((left, right) => compareBidderItems(left, right, bidById))
@@ -158,10 +174,22 @@ function renderBidTabItemRow(
       <td>${escapeHtml(item.unitNormalized)}</td>
       ${supportsEngineerEstimate ? `<td>${formatCurrency(item.engineerEstimateUnitPrice)}</td>` : ""}
       <td>${formatCurrency(item.averageBidUnitPrice)}</td>
+      ${isCostBook ? `<td>${formatCurrency(item.awardedBidUnitPrice)}</td>` : ""}
       <td>${escapeHtml(matchStatusLabel(item.matchStatus))}</td>
-      <td>${bidderPrices.length > 0 ? escapeHtml(bidderPrices.join("; ")) : "Not listed"}</td>
+      <td>${isCostBook
+        ? escapeHtml(item.sourceLocator || "Not listed")
+        : bidderPrices.length > 0 ? escapeHtml(bidderPrices.join("; ")) : "Not listed"}</td>
     </tr>
   `;
+}
+
+function compareSourceItems(left: BidTabItemRecord, right: BidTabItemRecord): number {
+  const leftLine = Number(left.sourceItemNumber);
+  const rightLine = Number(right.sourceItemNumber);
+  if (Number.isFinite(leftLine) && Number.isFinite(rightLine) && leftLine !== rightLine) {
+    return leftLine - rightLine;
+  }
+  return left.workbookRow - right.workbookRow;
 }
 
 function compareBidderItems(

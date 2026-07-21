@@ -191,6 +191,7 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
       sourceItemDescription: item.descriptionRaw,
       itemCode: agencyItem?.itemCode ?? item.sourceItemCode,
       itemDescription: item.descriptionRaw,
+      awardedBidUnitPrice: priceFor(itemObservations, "awarded_bid"),
       engineerEstimateUnitPrice: priceFor(itemObservations, "engineer_estimate")
         ?? priceFor(identityObservations, "engineer_estimate"),
       averageBidUnitPrice: priceFor(itemObservations, "average_bid"),
@@ -531,6 +532,7 @@ function mapContractItem(row: CsvRow): ContractItemRecord {
     sourceItemDescription: row.description_raw,
     itemCode: row.source_item_code.toUpperCase(),
     itemDescription: row.description_raw,
+    awardedBidUnitPrice: null,
     engineerEstimateUnitPrice: null,
     averageBidUnitPrice: null,
     matchedAgencyItemCode: "",
