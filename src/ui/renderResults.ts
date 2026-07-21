@@ -72,7 +72,6 @@ function renderEvidenceTable(
     return `
       <section class="panel-block">
         ${renderMatchingProjectsHeader(result, false)}
-        <p class="muted">Use Item Search to select a loaded ${escapeHtml(data.stateConfig.name)} item code before reviewing project evidence.</p>
       </section>
     `;
   }
