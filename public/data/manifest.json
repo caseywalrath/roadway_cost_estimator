@@ -20,7 +20,8 @@
       },
       "sourceTypeLabels": {
         "cost_book": "Public CDOT cost book",
-        "bid_tab": "Public bid tabs"
+        "bid_tab": "Public bid tabs",
+        "estimate": "FHU engineer estimates"
       },
       "files": {
         "sources": "states/co/sources.csv",

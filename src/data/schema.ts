@@ -191,8 +191,8 @@ export interface ContractItemRecord {
   sourceItemDescription: string;
   itemCode: string;
   itemDescription: string;
-  engineerEstimateUnitPrice: number;
-  averageBidUnitPrice: number;
+  engineerEstimateUnitPrice: number | null;
+  averageBidUnitPrice: number | null;
   matchedAgencyItemCode: string;
   matchStatus: "matched" | "unmatched" | "source_cdot_prefix_only";
   dateBasis: string;

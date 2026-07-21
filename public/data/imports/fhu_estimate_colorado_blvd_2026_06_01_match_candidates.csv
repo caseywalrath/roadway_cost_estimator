@@ -1,0 +1,145 @@
+bid_tab_item_id,source_item_code,source_item_description,unit_normalized,candidate_agency_item_code,candidate_description,candidate_unit,candidate_count,suggestion_status
+fhu_colorado_blvd_20260601_row_0009,201-00000,CLEARING AND GRUBBING,L S,201-00000,Clearing and Grubbing,L S,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0010,240-00000,WILDLIFE BIOLOGIST,HOUR,240-00000,Wildlife Biologist,HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0011,240-00010,REMOVAL OF NESTS,HOUR,240-00010,Removal of Nests,HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0012,620-00020,SANITARY FACILITY,EACH,620-00020,Sanitary Facility,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0013,625-00000,CONSTRUCTION SURVEYING,L S,625-00000,Construction Surveying,L S,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0014,626-00000,MOBILIZATION,L S,626-00000,Mobilization,L S,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0015,626-01113,PUBLIC INFORMATION MANAGEMENT (TIER III),DAY,626-01113,Public Information Management (Tier III),DAY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0016,700-70010,F/A MINOR CONTRACT REVISIONS,F A,700-70010,F/A Minor Contract Revisions,F A,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0017,700-70016,F/A FUEL COST ADJUSTMENT,F A,700-70016,F/A Fuel Cost Adjustment,F A,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0018,700-70019,F/A ASPHALT CEMENT COST ADJUSTMENT,F A,700-70019,F/A Asphalt Cement Cost Adjustment,F A,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0019,700-70023,F/A ON-THE-JOB TRAINEE,F A,700-70023,F/A On-The-Job Trainee,F A,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0020,700-70031,F/A INTERIM SURFACE REPAIR,F A,700-70031,F/A Interim Surface Repair,F A,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0021,700-70380,F/A EROSION CONTROL,F A,700-70380,F/A Erosion Control,F A,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0023,700-70589,F/A ENVIRONMENTAL HEALTH & SAFETY MANAGEMENT,F A,700-70589,F/A Environmental Health & Safety Management,F A,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0025,202-00200,REMOVAL OF SIDEWALK,SY,202-00200,Removal of Sidewalk,SY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0026,202-00201,REMOVAL OF CURB,LF,202-00201,Removal of Curb,LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0027,202-00202,REMOVAL OF GUTTER,LF,202-00202,Removal of Gutter,LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0028,202-00203,REMOVAL OF CURB AND GUTTER,LF,202-00203,Removal of Curb and Gutter,LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0029,202-00206,REMOVAL OF CONCRETE CURB RAMP,SY,202-00206,Removal of Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0030,202-00210,REMOVAL OF CONCRETE PAVEMENT,SY,202-00210,Removal of Concrete Pavement,SY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0031,202-00220,REMOVAL OF ASPHALT MAT,SY,202-00220,Removal of Asphalt Mat,SY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0032,202-00240,REMOVAL OF ASPHALT MAT (PLANING),SY,202-00240,Removal of Asphalt Mat (Planing),SY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0033,202-00420,REMOVAL OF PEDESTRIAN RAIL,LF,202-00420,Removal of Pedestrian Rail,LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0034,203-00010,UNCLASSIFIED EXCAVATION (COMPLETE IN PLACE),CY,203-00010,Unclassified Excavation (Complete In Place),CY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0035,304-06000,AGGREGATE BASE COURSE (CLASS 6),TON,304-06000,Aggregate Base Course (Class 6),TON,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0036,403-00720,HOT MIX ASPHALT (PATCHING) (ASPHALT),TON,403-00720,Hot Mix Asphalt (Patching) (Asphalt),TON,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0037,403-09221,STONE MATRIX ASPHALT (FIBERS)(ASPHALT),TON,403-09221,Stone Matrix Asphalt (Fibers)(Asphalt),TON,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0038,403-33751,HOT MIX ASPHALT (GRADING S) (75) (PG 64-28),TON,403-33751,Hot Mix Asphalt (Grading S) (75) (PG 64-28),TON,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0039,411-10255,EMULSIFIED ASPHALT (SLOW-SETTING),GAL,411-10255,Emulsified Asphalt (Slow-Setting),GAL,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0040,412-00600,CONCRETE PAVEMENT (6 INCH),SY,412-00600,Concrete Pavement (6 Inch),SY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0041,412-00800,CONCRETE PAVEMENT (8 INCH),SY,412-00800,Concrete Pavement (8 Inch),SY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0042,507-00100,CONCRETE SLOPE AND DITCH PAVING (REINFORCED),CY,507-00100,Concrete Slope and Ditch Paving (Reinforced),CY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0043,514-00200,PEDESTRIAN RAILING (STEEL),LF,514-00200,Pedestrian Railing (Steel),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0044,608-00005,CONCRETE SIDEWALK (SPECIAL),SY,608-00005,Concrete Sidewalk (Special),SY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0045,608-00006,CONCRETE SIDEWALK (6 INCH),SY,608-00006,Concrete Sidewalk (6 Inch),SY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0047,608-00010,CONCRETE CURB RAMP,SY,608-00010,Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0048,609-20010,CURB TYPE 2 (SECTION B),LF,609-20010,Curb Type 2 (Section B),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0049,609-21020,CURB AND GUTTER TYPE 2 (SECTION II-B),LF,609-21020,Curb and Gutter Type 2 (Section II-B),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0050,609-21021,CURB AND GUTTER TYPE 2 (SECTION II-M),LF,609-21021,Curb and Gutter Type 2 (Section II-M),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0051,609-24008,GUTTER TYPE 2 (8 FOOT),LF,609-24008,Gutter Type 2 (8 Foot),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0052,610-00020,MEDIAN COVER MATERIAL (PATTERNED CONCRETE),SF,610-00020,Median Cover Material (Patterned Concrete),SF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0054,202-00019,REMOVAL OF INLET,EACH,202-00019,Removal of Inlet,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0055,202-00021,REMOVAL OF MANHOLE,EACH,202-00021,Removal of Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0056,202-00035,REMOVAL OF PIPE,LF,202-00035,Removal of Pipe,LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0057,603-01185,18 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01185,18 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0058,603-01425,42 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01425,42 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0059,603-01485,48 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01485,48 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0060,603-02185,23X14 INCH REINFORCED CONCRETE PIPE ELLIPTICAL (COMPLETE IN PLACE),LF,603-02185,23x14 Inch Reinforced Concrete Pipe Elliptical (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0061,603-02245,30X19 INCH REINFORCED CONCRETE PIPE ELLIPTICAL (COMPLETE IN PLACE),LF,603-02245,30x19 Inch Reinforced Concrete Pipe Elliptical (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0062,604-00305,INLET TYPE C (5 FOOT),EACH,604-00305,Inlet Type C (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0063,604-16605,INLET TYPE 16 (TRIPLE) (5 FOOT),EACH,604-16605,Inlet Type 16 (Triple) (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0064,604-19000,INLET SPECIAL,EACH,604-19000,Inlet Special,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0065,604-19110,INLET TYPE R L 5 (10 FOOT),EACH,604-19110,Inlet Type R L 5 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0066,604-19205,INLET TYPE R L 10 (5 FOOT),EACH,604-19205,Inlet Type R L 10 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0067,604-19210,INLET TYPE R L 10 (10 FOOT),EACH,604-19210,Inlet Type R L 10 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0068,604-19305,INLET TYPE R L 15 (5 FOOT),EACH,604-19305,Inlet Type R L 15 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0069,604-19310,INLET TYPE R L 15 (10 FOOT),EACH,604-19310,Inlet Type R L 15 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0070,604-19405,INLET TYPE R SPECIAL (5 FOOT),EACH,604-19405,Inlet Type R Special (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0071,604-30010,MANHOLE SLAB BASE (10 FOOT),EACH,604-30010,Manhole Slab Base (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0072,604-30015,MANHOLE SLAB BASE (15 FOOT),EACH,604-30015,Manhole Slab Base (15 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0073,604-31000,MANHOLE BOX BASE (SPECIAL),EACH,604-31000,Manhole Box Base (Special),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0074,604-31005,MANHOLE BOX BASE (5 FOOT),EACH,604-31005,Manhole Box Base (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0075,604-31010,MANHOLE BOX BASE (10 FOOT),EACH,604-31010,Manhole Box Base (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0076,608-10010,SIDEWALK DRAIN,EACH,608-10010,Sidewalk Drain,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0078,202-04002,CLEAN CULVERT,EACH,202-04002,Clean Culvert,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0079,203-01500,BLADING,HOUR,203-01500,Blading,HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0080,203-01550,DOZING,HOUR,203-01550,Dozing,HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0081,203-01594,COMBINATION LOADER,HOUR,203-01594,Combination Loader,HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0082,207-00606,TOPSOIL (IMPORTED),CY,207-00606,Topsoil (Imported),CY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0083,207-00700,TOPSOIL (ONSITE),CY,207-00700,Topsoil (Onsite),CY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0084,208-00002,EROSION LOG TYPE 1 (12 INCH),LF,208-00002,Erosion Log Type 1 (12 Inch),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0085,208-00035,AGGREGATE BAG,LF,208-00035,Aggregate Bag,LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0086,208-00046,PRE-FABRICATED CONCRETE WASHOUT STRUCTURE (TYPE 1),EACH,208-00046,Pre-fabricated Concrete Washout Structure (Type 1),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0087,208-00051,STORM DRAIN INLET PROTECTION (TYPE I),LF,208-00051,Storm Drain Inlet Protection (Type I),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0088,208-00052,STORM DRAIN INLET PROTECTION (TYPE II),LF,208-00052,Storm Drain Inlet Protection (Type II),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0089,208-00075,PRE-FABRICATED VEHICLE TRACKING PAD,EACH,208-00075,Pre-fabricated Vehicle Tracking Pad,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0090,208-00103,REMOVAL AND DISPOSAL OF SEDIMENT (LABOR),HOUR,208-00103,Removal and Disposal of Sediment (Labor),HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0091,208-00105,REMOVAL AND DISPOSAL OF SEDIMENT (EQUIPMENT),HOUR,208-00105,Removal and Disposal of Sediment (Equipment),HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0092,208-00106,SWEEPING (SEDIMENT REMOVAL),HOUR,208-00106,Sweeping (Sediment Removal),HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0093,208-00107,REMOVAL OF TRASH,HOUR,208-00107,Removal of Trash,HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0094,208-00207,EROSION CONTROL MANAGEMENT,DAY,208-00207,Erosion Control Management,DAY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0095,212-00700,ORGANIC FERTILIZER,LB,212-00700,Organic Fertilizer,LB,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0096,212-00701,COMPOST (MECHANICALLY APPLIED),CY,212-00701,Compost (Mechanically Applied),CY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0097,212-00704,MYCORRHIZAE,LB,212-00704,Mycorrhizae,LB,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0098,212-00706,SEEDING (NATIVE) DRILL,ACRE,212-00706,Seeding (Native) Drill,ACRE,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0099,212-00708,SEEDING (NATIVE) BROADCAST,ACRE,212-00708,Seeding (Native) Broadcast,ACRE,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0100,213-00003,MULCHING (WEED FREE),ACRE,213-00003,Mulching (Weed Free),ACRE,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0101,213-00061,MULCH TACKIFIER,LB,213-00061,Mulch Tackifier,LB,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0102,607-11525,FENCE (PLASTIC),LF,607-11525,Fence (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0104,202-00011,TREE TRIMMING,EACH,202-00011,Tree Trimming,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0106,212-00050,SOD,SF,212-00050,Sod,SF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0107,213-00005,MULCHING (DECORATIVE),CF,213-00005,Mulching (Decorative),CF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0108,213-00008,MULCHING (WOOD CHIP),CF,213-00008,Mulching (Wood Chip),CF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0110,213-00070,LANDSCAPE WEED BARRIER FABRIC,SY,213-00070,Landscape Weed Barrier Fabric,SY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0111,213-00462,METAL LANDSCAPE BORDER (3/16 X 5-1/2 INCH),LF,213-00462,Metal Landscape Border (3/16 X 5-1/2 Inch),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0112,214-01420,STANDARD NURSERY CONTAINER (#1 CONTAINER),EACH,214-01420,Standard Nursery Container (#1 Container),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0113,214-01421,STANDARD NURSERY CONTAINER (#5 CONTAINER),EACH,214-01421,Standard Nursery Container (#5 Container),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0114,623-09900,SPRINKLER SYSTEM,L S,623-09900,Sprinkler System,L S,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0116,202-00250,REMOVAL OF PAVEMENT MARKING,SF,202-00250,Removal of Pavement Marking,SF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0117,627-00013,PAVEMENT MARKING PAINT (HIGH BUILD),GAL,627-00013,Pavement Marking Paint (High Build),GAL,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0118,630-00000,FLAGGING,HOUR,630-00000,Flagging,HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0119,630-00003,UNIFORMED TRAFFIC CONTROL,HOUR,630-00003,Uniformed Traffic Control,HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0120,630-00006,UNIFORMED TRAFFIC CONTROL (VEHICLE),HOUR,630-00006,Uniformed Traffic Control (Vehicle),HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0121,630-00007,TRAFFIC CONTROL INSPECTION,DAY,630-00007,Traffic Control Inspection,DAY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0122,630-00012,TRAFFIC CONTROL MANAGEMENT,DAY,630-00012,Traffic Control Management,DAY,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0123,630-80335,BARRICADE (TYPE 3 M-A) (TEMPORARY),EACH,630-80335,Barricade (Type 3 M-A) (Temporary),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0124,630-80340,PEDESTRIAN BARRICADE (ADA),LF,630-80340,Pedestrian Barricade (ADA),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0125,630-80341,CONSTRUCTION TRAFFIC SIGN (PANEL SIZE A),EACH,630-80341,Construction Traffic Sign (Panel Size A),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0126,630-80342,CONSTRUCTION TRAFFIC SIGN (PANEL SIZE B),EACH,630-80342,Construction Traffic Sign (Panel Size B),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0127,630-80350,VERTICAL PANEL,EACH,630-80350,Vertical Panel,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0128,630-80355,PORTABLE MESSAGE SIGN PANEL,EACH,630-80355,Portable Message Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0129,630-80358,ADVANCE WARNING FLASHING OR SEQUENCING ARROW PANEL (C TYPE),EACH,630-80358,Advance Warning Flashing or Sequencing Arrow Panel (C Type),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0130,630-80360,DRUM CHANNELIZING DEVICE,EACH,630-80360,Drum Channelizing Device,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0131,630-80370,BARRIER (TEMPORARY),LF,630-80370,Barrier (Temporary),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0132,630-80380,TRAFFIC CONE,EACH,630-80380,Traffic Cone,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0133,630-80384,TUBULAR MARKER,EACH,630-80384,Tubular Marker,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0134,630-85010,IMPACT ATTENUATOR (TEMPORARY),EACH,630-85010,Impact Attenuator (Temporary),EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0135,202-00828,REMOVAL OF TRAFFIC SIGNAL EQUIPMENT,L S,202-00828,Removal of Traffic Signal Equipment,L S,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0136,210-00827,RESET PULL BOX,EACH,210-00827,Reset Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0137,210-00860,RESET PEDESTRIAN PUSH BUTTON,EACH,210-00860,Reset Pedestrian Push Button,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0138,210-00865,RESET PEDESTRIAN SIGNAL HEAD,EACH,210-00865,Reset Pedestrian Signal Head,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0139,503-00018,DRILLED SHAFT (18 INCH),LF,503-00018,Drilled Shaft (18 Inch),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0140,613-00206,2 INCH ELECTRICAL CONDUIT (BORED),LF,613-00206,2 Inch Electrical Conduit (Bored),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0141,613-00306,3 INCH ELECTRICAL CONDUIT (BORED),LF,613-00306,3 Inch Electrical Conduit (Bored),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0142,613-01200,2 INCH ELECTRICAL CONDUIT (PLASTIC),LF,613-01200,2 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0143,613-07003,TYPE THREE PULL BOX,EACH,613-07003,Type Three Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0144,613-07004,TYPE FOUR PULL BOX,EACH,613-07004,Type Four Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0145,613-10000,WIRING,L S,613-10000,Wiring,L S,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0146,614-00011,SIGN PANEL (CLASS I),SF,614-00011,Sign Panel (Class I),SF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0147,614-70200,ACCESSIBLE PEDESTRIAN SIGNAL,EACH,614-70200,Accessible Pedestrian Signal,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0148,614-72863,PEDESTRIAN PUSH BUTTON POST ASSEMBLY,EACH,614-72863,Pedestrian Push Button Post Assembly,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0149,614-84100,TRAFFIC SIGNAL PEDESTAL POLE ALUMINUM,EACH,614-84100,Traffic Signal Pedestal Pole Aluminum,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0150,202-00810,REMOVAL OF GROUND SIGN,EACH,202-00810,Removal of Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0151,210-00810,RESET GROUND SIGN,EACH,210-00810,Reset Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0152,614-00214,STEEL SIGNPOST (1.75X1.75 INCH TUBING),LF,614-00214,Steel Signpost (1.75x1.75 Inch Tubing),LF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0153,627-00008,MODIFIED EPOXY PAVEMENT MARKING,GAL,627-00008,Modified Epoxy Pavement Marking,GAL,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0154,627-30205,THERMOPLASTIC PAVEMENT MARKING (WORD-SYMBOL),SF,627-30205,Thermoplastic Pavement Marking (Word-Symbol),SF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0155,627-30329,PREFORMED PLASTIC PAVEMENT MARKING (XWALK-STOP LINE) (TYPE I),SF,627-30329,Preformed Plastic Pavement Marking (Xwalk-Stop Line) (Type I),SF,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0157,202-04005,CLEAN VALVE BOX,EACH,202-04005,Clean Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0158,203-01597,POTHOLING,HOUR,203-01597,Potholing,HOUR,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0159,210-04015,MODIFY MANHOLE,EACH,210-04015,Modify Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0160,210-04050,ADJUST VALVE BOX,EACH,210-04050,Adjust Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0161,210-04060,ADJUST WATER METER,EACH,210-04060,Adjust Water Meter,EACH,1,single_exact_description_unit_candidate
+fhu_colorado_blvd_20260601_row_0163,210-04010,ADJUST MANHOLE,EACH,210-04010,Adjust Manhole,EACH,1,single_exact_description_unit_candidate

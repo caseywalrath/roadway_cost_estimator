@@ -1,0 +1,215 @@
+bid_tab_item_id,source_item_code,source_item_description,unit_normalized,candidate_agency_item_code,candidate_description,candidate_unit,candidate_count,suggestion_status
+fhu_west_colfax_phase_2_20260123_row_0005,201-00000,CLEARING AND GRUBBING,L S,201-00000,Clearing and Grubbing,L S,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0006,202-00002,REMOVAL OF STRUCTURE (SPECIAL),EACH,202-00002,Removal of Structure (Special),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0007,202-00010,REMOVAL OF TREE,EACH,202-00010,Removal of Tree,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0008,202-00019,REMOVAL OF INLET,EACH,202-00019,Removal of Inlet,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0009,202-00021,REMOVAL OF MANHOLE,EACH,202-00021,Removal of Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0010,202-00035,REMOVAL OF PIPE,LF,202-00035,Removal of Pipe,LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0011,202-00039,REMOVAL OF BOLLARD,EACH,202-00039,Removal of Bollard,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0012,202-00190,REMOVAL OF CONCRETE MEDIAN COVER MATERIAL,SY,202-00190,Removal of Concrete Median Cover Material,SY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0013,202-00200,REMOVAL OF SIDEWALK,SY,202-00200,Removal of Sidewalk,SY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0014,202-00202,REMOVAL OF GUTTER,LF,202-00202,Removal of Gutter,LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0015,202-00203,REMOVAL OF CURB AND GUTTER,LF,202-00203,Removal of Curb and Gutter,LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0016,202-00206,REMOVAL OF CONCRETE CURB RAMP,SY,202-00206,Removal of Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0017,202-00210,REMOVAL OF CONCRETE PAVEMENT,SY,202-00210,Removal of Concrete Pavement,SY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0018,202-00220,REMOVAL OF ASPHALT MAT,SY,202-00220,Removal of Asphalt Mat,SY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0019,202-00226,REMOVAL OF ASPHALT MAT (SPECIAL),SY,202-00226,Removal of Asphalt Mat (Special),SY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0020,202-00250,REMOVAL OF PAVEMENT MARKING,SF,202-00250,Removal of Pavement Marking,SF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0021,202-00810,REMOVAL OF GROUND SIGN,EACH,202-00810,Removal of Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0022,202-00821,REMOVAL OF SIGN PANEL,EACH,202-00821,Removal of Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0023,202-00828,REMOVAL OF TRAFFIC SIGNAL EQUIPMENT,L S,202-00828,Removal of Traffic Signal Equipment,L S,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0024,202-01000,REMOVAL OF FENCE,LF,202-01000,Removal of Fence,LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0025,202-04002,CLEAN CULVERT,EACH,202-04002,Clean Culvert,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0026,202-04005,CLEAN VALVE BOX,EACH,202-04005,Clean Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0027,203-00060,EMBANKMENT MATERIAL (COMPLETE IN PLACE),CY,203-00060,Embankment Material (Complete In Place),CY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0028,203-01500,BLADING,HOUR,203-01500,Blading,HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0029,203-01550,DOZING,HOUR,203-01550,Dozing,HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0030,203-01594,COMBINATION LOADER,HOUR,203-01594,Combination Loader,HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0031,203-01597,POTHOLING,HOUR,203-01597,Potholing,HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0032,206-00065,STRUCTURE BACKFILL (FLOW-FILL),CY,206-00065,Structure Backfill (Flow-Fill),CY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0033,206-00510,FILTER MATERIAL (CLASS A),CY,206-00510,Filter Material (Class A),CY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0034,207-00210,STOCKPILE TOPSOIL,CY,207-00210,Stockpile Topsoil,CY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0035,207-00405,TOPSOIL (SPECIAL),CY,207-00405,Topsoil (Special),CY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0036,207-00700,TOPSOIL (ONSITE),CY,207-00700,Topsoil (Onsite),CY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0037,208-00002,EROSION LOG TYPE 1 (12 INCH),LF,208-00002,Erosion Log Type 1 (12 Inch),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0038,208-00012,EROSION LOG TYPE 1 (9 INCH),LF,208-00012,Erosion Log Type 1 (9 Inch),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0039,208-00035,AGGREGATE BAG,LF,208-00035,Aggregate Bag,LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0040,208-00045,CONCRETE WASHOUT STRUCTURE,EACH,208-00045,Concrete Washout Structure,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0041,208-00051,STORM DRAIN INLET PROTECTION (TYPE I),LF,208-00051,Storm Drain Inlet Protection (Type I),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0042,208-00052,STORM DRAIN INLET PROTECTION (TYPE II),LF,208-00052,Storm Drain Inlet Protection (Type II),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0043,208-00075,PRE-FABRICATED VEHICLE TRACKING PAD,EACH,208-00075,Pre-fabricated Vehicle Tracking Pad,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0044,208-00106,SWEEPING (SEDIMENT REMOVAL),HOUR,208-00106,Sweeping (Sediment Removal),HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0045,210-00001,RESET STRUCTURE,EACH,210-00001,Reset Structure,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0046,210-00050,RESET FIRE HYDRANT,EACH,210-00050,Reset Fire Hydrant,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0047,210-00473,RESET TV CAMERAS,EACH,210-00473,Reset TV Cameras,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0048,210-00479,RESET RADIO COMMUNICATION ANTENNA,EACH,210-00479,Reset Radio Communication Antenna,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0049,210-00530,REBUILD PORTIONS OF PRESENT STRUCTURE,SF,210-00530,Rebuild Portions of Present Structure,SF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0050,210-00815,RESET SIGN PANEL,EACH,210-00815,Reset Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0051,210-00867,RESET FIRE PREEMPTION UNIT,EACH,210-00867,Reset Fire Preemption Unit,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0052,210-00882,RESET TRAFFIC SIGNAL VEHICLE DETECTOR,EACH,210-00882,Reset Traffic Signal Vehicle Detector,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0053,210-04010,ADJUST MANHOLE,EACH,210-04010,Adjust Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0054,210-04015,MODIFY MANHOLE,EACH,210-04015,Modify Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0055,210-04020,MODIFY INLET,EACH,210-04020,Modify Inlet,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0056,210-04050,ADJUST VALVE BOX,EACH,210-04050,Adjust Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0057,210-04060,ADJUST WATER METER,EACH,210-04060,Adjust Water Meter,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0058,211-03005,DEWATERING,L S,211-03005,Dewatering,L S,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0059,212-00032,SOIL CONDITIONING,ACRE,212-00032,Soil Conditioning,ACRE,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0060,212-00706,SEEDING (NATIVE) DRILL,ACRE,212-00706,Seeding (Native) Drill,ACRE,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0061,212-00708,SEEDING (NATIVE) BROADCAST,ACRE,212-00708,Seeding (Native) Broadcast,ACRE,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0062,213-00004,MULCHING (WEED FREE STRAW),ACRE,213-00004,Mulching (Weed Free Straw),ACRE,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0063,213-00061,MULCH TACKIFIER,LB,213-00061,Mulch Tackifier,LB,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0064,213-00067,ROCK MULCH (WEED FREE),SF,213-00067,Rock Mulch (Weed Free),SF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0065,214-00000,LANDSCAPE MAINTENANCE,L S,214-00000,Landscape Maintenance,L S,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0068,216-00042,SOIL RETENTION BLANKET (BIODEGRADABLE STRAW/COCONUT),SY,216-00042,Soil Retention Blanket (Biodegradable Straw/Coconut),SY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0069,217-00020,HERBICIDE TREATMENT,HOUR,217-00020,Herbicide Treatment,HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0070,240-00000,WILDLIFE BIOLOGIST,HOUR,240-00000,Wildlife Biologist,HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0071,240-00010,REMOVAL OF NESTS,HOUR,240-00010,Removal of Nests,HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0072,250-00010,ENVIRONMENTAL HEALTH AND SAFETY MANAGEMENT,L S,250-00010,Environmental Health and Safety Management,L S,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0073,250-00050,MONITORING TECHNICIAN,HOUR,250-00050,Monitoring Technician,HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0074,250-00110,HEALTH AND SAFETY OFFICER,HOUR,250-00110,Health and Safety Officer,HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0075,250-00120,MATERIAL SAMPLING AND DELIVERY,EACH,250-00120,Material Sampling and Delivery,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0076,250-00200,MATERIAL HANDLING (STOCKPILE),CY,250-00200,Material Handling (Stockpile),CY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0077,250-00210,SOLID WASTE DISPOSAL,CY,250-00210,Solid Waste Disposal,CY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0078,304-06007,AGGREGATE BASE COURSE (CLASS 6),CY,304-06007,Aggregate Base Course (Class 6),CY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0079,403-33841,HOT MIX ASPHALT (GRADING S) (100) (PG 64-22),TON,403-33841,Hot Mix Asphalt (Grading S) (100) (PG 64-22),TON,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0080,403-33871,HOT MIX ASPHALT (GRADING S) (100) (PG 76-28),TON,403-33871,Hot Mix Asphalt (Grading S) (100) (PG 76-28),TON,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0081,411-10255,EMULSIFIED ASPHALT (SLOW-SETTING),GAL,411-10255,Emulsified Asphalt (Slow-Setting),GAL,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0082,412-00600,CONCRETE PAVEMENT (6 INCH),SY,412-00600,Concrete Pavement (6 Inch),SY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0083,412-01120,CONCRETE PAVEMENT (11 INCH) (FAST TRACK),SY,412-01120,Concrete Pavement (11 Inch) (Fast Track),SY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0084,503-00018,DRILLED SHAFT (18 INCH),LF,503-00018,Drilled Shaft (18 Inch),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0085,503-00024,DRILLED SHAFT (24 INCH),LF,503-00024,Drilled Shaft (24 Inch),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0086,503-00036,DRILLED SHAFT (36 INCH),LF,503-00036,Drilled Shaft (36 Inch),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0087,503-00048,DRILLED SHAFT (48 INCH),LF,503-00048,Drilled Shaft (48 Inch),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0088,506-00409,SOIL RIPRAP (9 INCH),CY,506-00409,Soil Riprap (9 Inch),CY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0089,601-03050,CONCRETE CLASS D (WALL),CY,601-03050,Concrete Class D (Wall),CY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0090,601-40301,STRUCTURAL CONCRETE COATING,SF,601-40301,Structural Concrete Coating,SF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0091,601-40302,STRUCTURAL CONCRETE COATING (ANTI-GRAFFITI),SF,601-40302,Structural Concrete Coating (Anti-Graffiti),SF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0092,602-00000,REINFORCING STEEL,LB,602-00000,Reinforcing Steel,LB,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0093,603-01185,18 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01185,18 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0094,603-01305,30 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01305,30 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0095,603-01365,36 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01365,36 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0096,603-01545,54 INCH REINFORCED CONCRETE PIPE (COMPLETE IN PLACE),LF,603-01545,54 Inch Reinforced Concrete Pipe (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0097,603-02365,45X29 INCH REINFORCED CONCRETE PIPE ELLIPTICAL (COMPLETE IN PLACE),LF,603-02365,45x29 Inch Reinforced Concrete Pipe Elliptical (Complete In Place),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0098,604-00550,INLET TYPE D (SPECIAL),EACH,604-00550,Inlet Type D (Special),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0099,604-16605,INLET TYPE 16 (TRIPLE) (5 FOOT),EACH,604-16605,Inlet Type 16 (Triple) (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0100,604-16610,INLET TYPE 16 (TRIPLE) (10 FOOT),EACH,604-16610,Inlet Type 16 (Triple) (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0101,604-19105,INLET TYPE R L 5 (5 FOOT),EACH,604-19105,Inlet Type R L 5 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0102,604-19205,INLET TYPE R L 10 (5 FOOT),EACH,604-19205,Inlet Type R L 10 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0103,604-19210,INLET TYPE R L 10 (10 FOOT),EACH,604-19210,Inlet Type R L 10 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0104,604-19305,INLET TYPE R L 15 (5 FOOT),EACH,604-19305,Inlet Type R L 15 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0105,604-19310,INLET TYPE R L 15 (10 FOOT),EACH,604-19310,Inlet Type R L 15 (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0106,604-19320,INLET TYPE R L 15 (20 FOOT),EACH,604-19320,Inlet Type R L 15 (20 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0107,604-30005,MANHOLE SLAB BASE (5 FOOT),EACH,604-30005,Manhole Slab Base (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0108,604-30010,MANHOLE SLAB BASE (10 FOOT),EACH,604-30010,Manhole Slab Base (10 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0109,604-39005,MANHOLE SPECIAL (5 FOOT),EACH,604-39005,Manhole Special (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0110,604-83108,8 INCH PLASTIC PIPE SEWER (POLYVINYL CHLORIDE),LF,604-83108,8 Inch Plastic Pipe Sewer (Polyvinyl Chloride),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0111,607-11525,FENCE (PLASTIC),LF,607-11525,Fence (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0112,607-11530,FENCE (SPECIAL),LF,607-11530,Fence (Special),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0113,607-21300,FENCE BARRIER WITH METAL POSTS,LF,607-21300,Fence Barrier With Metal Posts,LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0114,608-00006,CONCRETE SIDEWALK (6 INCH),SY,608-00006,Concrete Sidewalk (6 Inch),SY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0115,608-00010,CONCRETE CURB RAMP,SY,608-00010,Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0116,609-20000,CURB TYPE 2 (SECTION B) (SPECIAL),LF,609-20000,Curb Type 2 (Section B) (Special),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0117,609-20010,CURB TYPE 2 (SECTION B),LF,609-20010,Curb Type 2 (Section B),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0118,609-21020,CURB AND GUTTER TYPE 2 (SECTION II-B),LF,609-21020,Curb and Gutter Type 2 (Section II-B),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0119,609-24000,GUTTER TYPE 2 (SPECIAL),LF,609-24000,Gutter Type 2 (Special),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0120,609-24004,GUTTER TYPE 2 (4 FOOT),LF,609-24004,Gutter Type 2 (4 Foot),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0121,609-24008,GUTTER TYPE 2 (8 FOOT),LF,609-24008,Gutter Type 2 (8 Foot),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0122,610-00030,MEDIAN COVER MATERIAL (CONCRETE),SF,610-00030,Median Cover Material (Concrete),SF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0123,613-00206,2 INCH ELECTRICAL CONDUIT (BORED),LF,613-00206,2 Inch Electrical Conduit (Bored),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0124,613-00306,3 INCH ELECTRICAL CONDUIT (BORED),LF,613-00306,3 Inch Electrical Conduit (Bored),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0125,613-01200,2 INCH ELECTRICAL CONDUIT (PLASTIC),LF,613-01200,2 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0126,613-01300,3 INCH ELECTRICAL CONDUIT (PLASTIC),LF,613-01300,3 Inch Electrical Conduit (Plastic),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0127,613-07003,TYPE THREE PULL BOX,EACH,613-07003,Type Three Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0128,613-07004,TYPE FOUR PULL BOX,EACH,613-07004,Type Four Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0129,613-07011,"PULL BOX (11""X18""X12"")",EACH,613-07011,"Pull Box (11""x18""x12"")",EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0130,613-07023,"PULL BOX (24""X36""X24"")",EACH,613-07023,"Pull Box (24""x36""x24"")",EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0131,613-10000,WIRING,L S,613-10000,Wiring,L S,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0132,613-13002,"LUMINAIRE (LED) (2,000 LUMENS)",EACH,613-13002,"Luminaire (LED) (2,000 Lumens)",EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0133,613-13007,"LUMINAIRE (LED) (3,000 LUMENS)",EACH,613-13007,"Luminaire (LED) (3,000 Lumens)",EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0134,613-13014,"LUMINAIRE (LED) (14,000 LUMENS)",EACH,613-13014,"Luminaire (LED) (14,000 Lumens)",EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0135,613-32250,LIGHT STANDARD STEEL (25 FOOT),EACH,613-32250,Light Standard Steel (25 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0136,613-32350,LIGHT STANDARD STEEL (35 FOOT),EACH,613-32350,Light Standard Steel (35 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0137,613-34150,LIGHT STANDARD METAL (15 FOOT),EACH,613-34150,Light Standard Metal (15 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0138,613-40010,LIGHT STANDARD FOUNDATION,EACH,613-40010,Light Standard Foundation,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0139,613-40020,TRANSFORMER BASE ALUMINUM,EACH,613-40020,Transformer Base Aluminum,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0140,613-50109,METER POWER PEDESTAL,EACH,613-50109,Meter Power Pedestal,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0141,614-00011,SIGN PANEL (CLASS I),SF,614-00011,Sign Panel (Class I),SF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0143,614-01736,STEEL SIGN GROUND STUB BASE (36 INCH),EACH,614-01736,Steel Sign Ground Stub Base (36 Inch),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0144,614-10160,SIGNAL HEAD BACKPLATES,EACH,614-10160,Signal Head Backplates,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0145,614-70150,PEDESTRIAN SIGNAL FACE (16) (COUNTDOWN),EACH,614-70150,Pedestrian Signal Face (16) (Countdown),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0146,614-70200,ACCESSIBLE PEDESTRIAN SIGNAL,EACH,614-70200,Accessible Pedestrian Signal,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0147,614-70336,TRAFFIC SIGNAL FACE (12-12-12),EACH,614-70336,Traffic Signal Face (12-12-12),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0148,614-70448,TRAFFIC SIGNAL FACE (12-12-12-12),EACH,614-70448,Traffic Signal Face (12-12-12-12),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0149,614-72854,TRAFFIC CONTROLLER CABINET,EACH,614-72854,Traffic Controller Cabinet,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0150,614-72863,PEDESTRIAN PUSH BUTTON POST ASSEMBLY,EACH,614-72863,Pedestrian Push Button Post Assembly,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0151,614-72866,FIRE PREEMPTION UNIT AND TIMER,EACH,614-72866,Fire Preemption Unit and Timer,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0152,614-72886,INTERSECTION DETECTION SYSTEM (CAMERA),EACH,614-72886,Intersection Detection System (Camera),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0153,614-81125,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-25 FOOT MAST ARM),EACH,614-81125,Traffic Signal-Light Pole Steel (1-25 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0154,614-81130,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-30 FOOT MAST ARM),EACH,614-81130,Traffic Signal-Light Pole Steel (1-30 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0155,614-81135,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-35 FOOT MAST ARM),EACH,614-81135,Traffic Signal-Light Pole Steel (1-35 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0156,614-81140,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-40 FOOT MAST ARM),EACH,614-81140,Traffic Signal-Light Pole Steel (1-40 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0157,614-81145,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-45 FOOT MAST ARM),EACH,614-81145,Traffic Signal-Light Pole Steel (1-45 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0158,614-81150,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-50 FOOT MAST ARM),EACH,614-81150,Traffic Signal-Light Pole Steel (1-50 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0159,614-81155,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-55 FOOT MAST ARM),EACH,614-81155,Traffic Signal-Light Pole Steel (1-55 Foot Mast Arm),EACH,2,multiple_exact_description_unit_candidates
+fhu_west_colfax_phase_2_20260123_row_0159,614-81155,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-55 FOOT MAST ARM),EACH,614-91155,Traffic Signal-Light Pole Steel (1-55 Foot Mast Arm),EACH,2,multiple_exact_description_unit_candidates
+fhu_west_colfax_phase_2_20260123_row_0160,614-81160,TRAFFIC SIGNAL LIGHT POLE STEEL (1-60 FOOT MAST ARM),EACH,614-81160,Traffic Signal Light Pole Steel (1-60 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0161,614-81165,TRAFFIC SIGNAL-LIGHT POLE STEEL (1-65 FOOT MAST ARM),EACH,614-81165,Traffic Signal-Light Pole Steel (1-65 Foot Mast Arm),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0162,614-84000,TRAFFIC SIGNAL PEDESTAL POLE STEEL,EACH,614-84000,Traffic Signal Pedestal Pole Steel,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0163,614-86800,UNINTERRUPTED POWER SUPPLY,EACH,614-86800,Uninterrupted Power Supply,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0164,614-87320,CLOSED CIRCUIT TELEVISION,EACH,614-87320,Closed Circuit Television,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0165,614-87690,ETHERNET SWITCH,EACH,614-87690,Ethernet Switch,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0166,620-00020,SANITARY FACILITY,EACH,620-00020,Sanitary Facility,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0167,622-00012,BICYCLE RACK,EACH,622-00010,Bicycle Rack,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0168,622-00250,BENCH,EACH,622-00250,Bench,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0169,622-00350,TRASH RECEPTACLE,EACH,622-00350,Trash Receptacle,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0170,623-00162,DRIP EMITTER TUBING,LF,623-00162,Drip Emitter Tubing,LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0171,623-00168,1 INCH EMITTER VALVE ASSEMBLY,EACH,623-00168,1 Inch Emitter Valve Assembly,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0172,623-00206,6 INCH POP-UP SPRAY SPRINKLER,EACH,623-00206,6 Inch Pop-Up Spray Sprinkler,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0173,623-00600,1-1/2 INCH PLASTIC PIPE,LF,619-50120,1-1/2 Inch Plastic Pipe,LF,2,multiple_exact_description_unit_candidates
+fhu_west_colfax_phase_2_20260123_row_0173,623-00600,1-1/2 INCH PLASTIC PIPE,LF,623-00600,1-1/2 Inch Plastic Pipe,LF,2,multiple_exact_description_unit_candidates
+fhu_west_colfax_phase_2_20260123_row_0174,623-00601,1 INCH PLASTIC PIPE,LF,619-50080,1 Inch Plastic Pipe,LF,2,multiple_exact_description_unit_candidates
+fhu_west_colfax_phase_2_20260123_row_0174,623-00601,1 INCH PLASTIC PIPE,LF,623-00601,1 Inch Plastic Pipe,LF,2,multiple_exact_description_unit_candidates
+fhu_west_colfax_phase_2_20260123_row_0175,623-00602,2 INCH PLASTIC PIPE (IRRIGATION/SLEEVE),LF,623-00602,2 Inch Plastic Pipe (Irrigation/Sleeve),LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0176,623-00603,1-1/4 INCH PLASTIC PIPE,LF,619-50100,1-1/4 Inch Plastic Pipe,LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0179,623-01706,3/4 INCH BACKFLOW PREVENTER,EACH,623-01706,3/4 Inch Backflow Preventer,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0180,623-01708,1 INCH BACKFLOW PREVENTER,EACH,623-01708,1 Inch Backflow Preventer,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0181,623-02008,1 INCH DRAIN VALVE,EACH,623-02008,1 Inch Drain Valve,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0182,623-03108,1 INCH AUTOMATIC CONTROL VALVE,EACH,623-03108,1 Inch Automatic Control Valve,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0183,623-04000,CONTROL WIRE 24 VOLT,LF,623-04000,Control Wire 24 Volt,LF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0184,623-05012,1-1/2 INCH GATE VALVE,EACH,619-75012,1-1/2 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_west_colfax_phase_2_20260123_row_0184,623-05012,1-1/2 INCH GATE VALVE,EACH,623-05012,1-1/2 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_west_colfax_phase_2_20260123_row_0185,623-05016,2 INCH GATE VALVE,EACH,619-75016,2 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_west_colfax_phase_2_20260123_row_0185,623-05016,2 INCH GATE VALVE,EACH,623-05016,2 Inch Gate Valve,EACH,2,multiple_exact_description_unit_candidates
+fhu_west_colfax_phase_2_20260123_row_0186,623-06900,VALVE BOX,EACH,623-06900,Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0187,623-07006,3/4 INCH WATER METER,EACH,623-07006,3/4 Inch Water Meter,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0188,623-07008,1 INCH WATER METER,EACH,623-07008,1 Inch Water Meter,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0189,623-07601,1 INCH FLOW SENSOR,EACH,623-07601,1 Inch Flow Sensor,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0191,623-08124,24 STATION AUTOMATIC CONTROLLER,EACH,623-08124,24 Station Automatic Controller,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0192,623-08136,36 STATION AUTOMATIC CONTROLLER,EACH,623-08136,36 Station Automatic Controller,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0193,625-00000,CONSTRUCTION SURVEYING,L S,625-00000,Construction Surveying,L S,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0194,626-00000,MOBILIZATION,L S,626-00000,Mobilization,L S,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0195,627-00008,MODIFIED EPOXY PAVEMENT MARKING,GAL,627-00008,Modified Epoxy Pavement Marking,GAL,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0196,627-00013,PAVEMENT MARKING PAINT (HIGH BUILD),GAL,627-00013,Pavement Marking Paint (High Build),GAL,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0197,627-30405,PREFORMED THERMOPLASTIC PAVEMENT MARKING (WORD- SYMBOL),SF,627-30405,Preformed Thermoplastic Pavement Marking (Word- Symbol),SF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0198,627-30410,PREFORMED THERMOPLASTIC PAVEMENT MARKING (XWALK-STOP LINE),SF,627-30410,Preformed Thermoplastic Pavement Marking (Xwalk- Stop Line),SF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0200,630-00000,FLAGGING,HOUR,630-00000,Flagging,HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0201,630-00003,UNIFORMED TRAFFIC CONTROL,HOUR,630-00003,Uniformed Traffic Control,HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0202,630-00006,UNIFORMED TRAFFIC CONTROL (VEHICLE),HOUR,630-00006,Uniformed Traffic Control (Vehicle),HOUR,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0203,630-00007,TRAFFIC CONTROL INSPECTION,DAY,630-00007,Traffic Control Inspection,DAY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0204,630-00012,TRAFFIC CONTROL MANAGEMENT,DAY,630-00012,Traffic Control Management,DAY,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0205,630-80335,BARRICADE (TYPE 3 M-A) (TEMPORARY),EACH,630-80335,Barricade (Type 3 M-A) (Temporary),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0206,630-80341,CONSTRUCTION TRAFFIC SIGN (PANEL SIZE A),EACH,630-80341,Construction Traffic Sign (Panel Size A),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0207,630-80342,CONSTRUCTION TRAFFIC SIGN (PANEL SIZE B),EACH,630-80342,Construction Traffic Sign (Panel Size B),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0208,630-80344,CONSTRUCTION TRAFFIC SIGN (SPECIAL),SF,630-80344,Construction Traffic Sign (Special),SF,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0209,630-80348,CONSTRUCTION INFORMATION SIGN,EACH,630-80348,Construction Information Sign,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0210,630-80350,VERTICAL PANEL,EACH,630-80350,Vertical Panel,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0211,630-80355,PORTABLE MESSAGE SIGN PANEL,EACH,630-80355,Portable Message Sign Panel,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0212,630-80358,ADVANCE WARNING FLASHING OR SEQUENCING ARROW PANEL (C TYPE),EACH,630-80358,Advance Warning Flashing or Sequencing Arrow Panel (C Type),EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0213,630-80360,DRUM CHANNELIZING DEVICE,EACH,630-80360,Drum Channelizing Device,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0214,630-80380,TRAFFIC CONE,EACH,630-80380,Traffic Cone,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0215,630-80384,TUBULAR MARKER,EACH,630-80384,Tubular Marker,EACH,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0216,700-70010,F/A MINOR CONTRACT REVISIONS,F A,700-70010,F/A Minor Contract Revisions,F A,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0217,700-70023,F/A ON-THE-JOB TRAINEE,F A,700-70023,F/A On-The-Job Trainee,F A,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0218,700-70082,F/A FURNISH & INSTALL ELECTRICAL SERVICE,F A,700-70082,F/A Furnish & Install Electrical Service,F A,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0219,700-70380,F/A EROSION CONTROL,F A,700-70380,F/A Erosion Control,F A,1,single_exact_description_unit_candidate
+fhu_west_colfax_phase_2_20260123_row_0220,700-70589,F/A ENVIRONMENTAL HEALTH & SAFETY MANAGEMENT,F A,700-70589,F/A Environmental Health & Safety Management,F A,1,single_exact_description_unit_candidate

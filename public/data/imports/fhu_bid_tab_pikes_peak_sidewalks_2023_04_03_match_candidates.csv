@@ -1,0 +1,32 @@
+bid_tab_item_id,source_item_code,source_item_description,unit_normalized,candidate_agency_item_code,candidate_description,candidate_unit,candidate_count,suggestion_status
+fhu_pikes_peak_sidewalks_20230403_row_0009,201,CLEARING AND GRUBBING,L S,201-00000,Clearing and Grubbing,L S,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0010,202,REMOVAL OF TREE,EACH,202-00010,Removal of Tree,EACH,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0011,202,REMOVAL OF SIDEWALK,SY,202-00200,Removal of Sidewalk,SY,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0014,202,REMOVAL OF CONCRETE CURB RAMP,SY,202-00206,Removal of Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0017,202,REMOVAL OF CONCRETE PAVEMENT,SY,202-00210,Removal of Concrete Pavement,SY,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0019,202,REMOVAL OF ASPHALT MAT,SY,202-00220,Removal of Asphalt Mat,SY,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0021,206,STRUCTURE BACKFILL (FLOW-FILL),CY,206-00065,Structure Backfill (Flow-Fill),CY,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0022,208,POTHOLING,HOUR,203-01597,Potholing,HOUR,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0029,210,RESET GROUND SIGN,EACH,210-00810,Reset Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0032,210,ADJUST MANHOLE,EACH,210-04010,Adjust Manhole,EACH,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0033,210,ADJUST VALVE BOX,EACH,210-04050,Adjust Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0034,210,MODIFY INLET,EACH,210-04020,Modify Inlet,EACH,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0035,304,AGGREGATE BASE COURSE (CLASS 6),CY,304-06007,Aggregate Base Course (Class 6),CY,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0036,403,HOT MIX ASPHALT (PATCHING) (ASPHALT),TON,403-00720,Hot Mix Asphalt (Patching) (Asphalt),TON,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0041,601,CONCRETE CLASS B (MISCELLANEOUS),CY,601-01025,Concrete Class B (Miscellaneous),CY,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0043,604,INLET TYPE 16 (5 FOOT),EACH,604-16005,Inlet Type 16 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0044,604,INLET TYPE R L 5 (5 FOOT),EACH,604-19105,Inlet Type R L 5 (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0045,604,MANHOLE SLAB BASE (5 FOOT),EACH,604-30005,Manhole Slab Base (5 Foot),EACH,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0046,604,INLET (SPECIAL),EACH,604-19000,Inlet Special,EACH,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0049,608,CONCRETE SIDEWALK (6 INCH),SY,608-00006,Concrete Sidewalk (6 Inch),SY,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0051,608,CONCRETE SIDEWALK (COLORED),SY,608-00350,Concrete Sidewalk (Colored),SY,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0052,608,CONCRETE CURB RAMP,SY,608-00010,Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0059,613,WIRING,L S,613-10000,Wiring,L S,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0062,613,LIGHT STANDARD FOUNDATION,EACH,613-40010,Light Standard Foundation,EACH,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0063,613,METER-POWER PEDESTAL,EACH,613-50109,Meter Power Pedestal,EACH,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0066,620,SANITARY FACILITY,EACH,620-00020,Sanitary Facility,EACH,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0067,625,CONSTRUCTION SURVEYING,L S,625-00000,Construction Surveying,L S,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0068,626,MOBILIZATION,L S,626-00000,Mobilization,L S,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0069,626,PUBLIC INFORMATION SERVICES,L S,626-01100,Public Information Services,L S,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0072,630,FLAGGING,HOUR,630-00000,Flagging,HOUR,1,single_exact_description_unit_candidate
+fhu_pikes_peak_sidewalks_20230403_row_0073,630,PORTABLE MESSAGE SIGN PANEL,DAY,630-80359,Portable Message Sign Panel,DAY,1,single_exact_description_unit_candidate

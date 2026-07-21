@@ -4772,22 +4772,68 @@ co_cdot_950-01900_v2026,co_cdot_950-01900,2026-01-01,,"Signing, Pavement Marking
 co_cdot_950-02000_v2026,co_cdot_950-02000,2026-01-01,,ITS and Tolling,ITS and Tolling,DOL,950,cdot_item_code_book_2026,true
 co_cdot_950-02100_v2026,co_cdot_950-02100,2026-01-01,,Maintenance During Construction,Maintenance During Construction,DOL,950,cdot_item_code_book_2026,true
 co_cdot_950-02200_v2026,co_cdot_950-02200,2026-01-01,,Bus Rapid Transit Facilities,Bus Rapid Transit Facilities,DOL,950,cdot_item_code_book_2026,true
+co_cdot_202-00199_historical,co_cdot_202-00199,,2026-02-05,REMOVAL OF SIDEWALK DRAIN,,EACH,202,fhu_estimate_old_hampden_2026_02_05,false
 co_cdot_202-00826_historical,co_cdot_202-00826,,2026-02-19,Removal of Pull Box (Tag and Abandon),,EACH,202,cdot_cost_data_book_2026_q1,false
+co_cdot_202-00867_historical,co_cdot_202-00867,,2026-02-05,REMOVAL OF FIRE PREEMPTION UNIT,,EACH,202,fhu_estimate_old_hampden_2026_02_05,false
 co_cdot_208_historical,co_cdot_208,,2021-09-24,REINFORCED ROCK BERM FOR CULVERT PROTECTION,,LF,208,fhu_bid_tab_arapahoe_big_dry_creek_2021_09_24,false
 co_cdot_208-00050_historical,co_cdot_208-00050,,2021-09-24,INLET PROTECTION,,EACH,208,fhu_bid_tab_arapahoe_big_dry_creek_2021_09_24,false
 co_cdot_208-00065_historical,co_cdot_208-00065,,2026-01-15,Storm Drain Inlet Protection (Type IV),,EACH,208,cdot_cost_data_book_2026_q1,false
+co_cdot_208-00305_historical,co_cdot_208-00305,,2025-02-20,TEMPORARY STREAM DIVERSION,,L S,208,fhu_bid_tab_jc_73_2025_02_20,false
+co_cdot_210-00000_historical,co_cdot_210-00000,,2025-02-18,RESET LANDSCAPE WALL,,SQUARE FOOT/FEET,210,fhu_bid_tab_lincoln_jordan_2025_02_18,false
+co_cdot_210-00310_historical,co_cdot_210-00310,,2026-06-01,RESET LANDSCAPE BOULDER,,EACH,210,fhu_estimate_colorado_blvd_2026_06_01,false
+co_cdot_210-00811_historical,co_cdot_210-00811,,2025-02-18,RESET GROUND SIGN (SPECIAL),,EACH,210,fhu_bid_tab_lincoln_jordan_2025_02_18,false
+co_cdot_210-04001_historical,co_cdot_210-04001,,2026-06-01,ADJUST FIBER CONDUIT,,LF,210,fhu_estimate_colorado_blvd_2026_06_01,false
+co_cdot_210-99995_historical,co_cdot_210-99995,,2026-02-05,RESET HAND RAIL,,EACH,210,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_210-99996_historical,co_cdot_210-99996,,2026-02-05,RESET BENCH,,EACH,210,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_210-99998_historical,co_cdot_210-99998,,2026-02-05,RESET TRASH RECEPTACLE,,EACH,210,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_212-00110_historical,co_cdot_212-00110,,2026-02-05,TREE RETENTION AND PROTECTION FENCING,,LF,212,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_213-00010_historical,co_cdot_213-00010,,2026-06-01,MULCHING (DECORATIVE) (2TO 4-INCH),,CF,213,fhu_estimate_colorado_blvd_2026_06_01,false
+co_cdot_213-00068_historical,co_cdot_213-00068,,2026-02-05,ROCK MULCH (SQUEEGEE),,CY,213,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_213-00069_historical,co_cdot_213-00069,,2026-02-05,ROCK MULCH (CRUSHED STONE),,CY,213,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_214-00800_historical,co_cdot_214-00800,,2026-02-05,GROUND COVERS (1 GALLON CONTAINER),,EACH,214,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_214-01050_historical,co_cdot_214-01050,,2026-02-05,ORNAMENTAL GRASSES (3 GALLON CONTAINER),,EACH,214,fhu_estimate_old_hampden_2026_02_05,false
 co_cdot_250-10021_historical,co_cdot_250-10021,,2023-02-16,Fire Preempt Unit + Timer,,EACH,250,cdot_cost_data_book_2023_q4,false
+co_cdot_301-03030_historical,co_cdot_301-03030,,2025-02-18,CONCRETE CLASS D (BOX CULVERT),,CY,301,fhu_bid_tab_lincoln_jordan_2025_02_18,false
+co_cdot_403-32741_historical,co_cdot_403-32741,,2025-02-18,HOT MIX ASPHALT (GRADING SG) (75) (PG 64-22),,TON,403,fhu_bid_tab_lincoln_jordan_2025_02_18,false
 co_cdot_506_historical,co_cdot_506,,2021-09-24,GROUTED RIPRAP (36 INCH),,CY,506,fhu_bid_tab_arapahoe_big_dry_creek_2021_09_24,false
+co_cdot_514-00400_historical,co_cdot_514-00400,,2026-02-05,KICK RAIL,,LF,514,fhu_estimate_old_hampden_2026_02_05,false
 co_cdot_601_historical,co_cdot_601,,2021-09-24,NATURAL STONE VENEER,,SF,601,fhu_bid_tab_arapahoe_big_dry_creek_2021_09_24,false
+co_cdot_601-40008_historical,co_cdot_601-40008,,2025-02-18,HAND STAINED STONE FORMLINER,,SQUARE FOOT/FEET,601,fhu_bid_tab_lincoln_jordan_2025_02_18,false
 co_cdot_604-83112_historical,co_cdot_604-83112,,2021-09-24,12 INCH PLASTIC PIPE SEWER (POLYVINYL CHLORIDE),,LF,604,fhu_bid_tab_arapahoe_big_dry_creek_2021_09_24,false
 co_cdot_604-83121_historical,co_cdot_604-83121,,2021-09-24,21 INCH PLASTIC PIPE SEWER (POLYVINYL CHLORIDE),,LF,604,fhu_bid_tab_arapahoe_big_dry_creek_2021_09_24,false
 co_cdot_604-83124_historical,co_cdot_604-83124,,2021-09-24,24 INCH PLASTIC PIPE SEWER (POLYVINYL CHLORIDE),,LF,604,fhu_bid_tab_arapahoe_big_dry_creek_2021_09_24,false
+co_cdot_608-00008_historical,co_cdot_608-00008,,2026-06-01,CONCRETE SIDEWALK (8 INCH),,SY,608,fhu_estimate_colorado_blvd_2026_06_01,false
+co_cdot_608-00600_historical,co_cdot_608-00600,,2026-02-05,SAND FINISH,,SF,608,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_608-00601_historical,co_cdot_608-00601,,2026-02-05,SANDBLASTED PATTERN FINISH,,SF,608,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_609-99999_historical,co_cdot_609-99999,,2026-02-05,CROSSPAN,,LF,609,fhu_estimate_old_hampden_2026_02_05,false
 co_cdot_614-75868_historical,co_cdot_614-75868,,2022-05-05,Inst Fire Preempt Unit,,EACH,614,cdot_cost_data_book_2022_q4,false
 co_cdot_614-81540_historical,co_cdot_614-81540,,2024-06-13,Sig-Light Pole Steel (2-25&40 Ft),,EACH,614,cdot_cost_data_book_2024_q4,false
 co_cdot_614-86739_historical,co_cdot_614-86739,,2026-03-12,WIN Station TYPE 3 install only,,EACH,614,cdot_cost_data_book_2026_q1,false
+co_cdot_615-60050_historical,co_cdot_615-60050,,2025-02-18,EMBANKMENT PROTECTOR TYPE 5,,EACH,615,fhu_bid_tab_lincoln_jordan_2025_02_18,false
 co_cdot_619_historical,co_cdot_619,,2021-09-24,PIPE PROTECTION,,EACH,619,fhu_bid_tab_arapahoe_big_dry_creek_2021_09_24,false
+co_cdot_619-10120_historical,co_cdot_619-10120,,2025-02-20,12 INCH WELDED STEEL PIPE,,LF,619,fhu_bid_tab_jc_73_2025_02_20,false
+co_cdot_619-50180_historical,co_cdot_619-50180,,2025-02-18,2 INCH PLASTIC PIPE - SPEC (HDPE PIPING - BORED),,LINEAR FOOT/FEET,619,fhu_bid_tab_lincoln_jordan_2025_02_18,false
+co_cdot_622-00012_historical,co_cdot_622-00012,,2026-01-23,BICYCLE RACK,,EACH,622,fhu_estimate_west_colfax_phase_2_2026_01_23,false
+co_cdot_622-00102_historical,co_cdot_622-00102,,2026-02-05,SHADE SHELTER (SPECIAL),,EACH,622,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_622-00156_historical,co_cdot_622-00156,,2026-02-05,PLANTER POT,,EACH,622,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_622-00253_historical,co_cdot_622-00253,,2026-02-05,BENCH TOPPER,,EACH,622,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_622-00280_historical,co_cdot_622-00280,,2026-02-05,ARMREST,,EACH,622,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_622-00351_historical,co_cdot_622-00351,,2026-02-05,TRASH RECEPTACLE (SPECIAL),,EACH,622,fhu_estimate_old_hampden_2026_02_05,false
 co_cdot_623-00423_historical,co_cdot_623-00423,,2021-12-16,CONTROLLER COMMUNICATION CABLE,,LF,623,fhu_bid_tab_watson_ave_roundabout_2021_12_16,false
+co_cdot_623-00702_historical,co_cdot_623-00702,,2026-01-23,2 INCH PVC SLEEVING,,LF,623,fhu_estimate_west_colfax_phase_2_2026_01_23,false
+co_cdot_623-00703_historical,co_cdot_623-00703,,2026-01-23,3 INCH PVC SLEEVING,,LF,623,fhu_estimate_west_colfax_phase_2_2026_01_23,false
+co_cdot_623-01508_historical,co_cdot_623-01508,,2025-02-18,1 INCH CHECK VALVE,,EACH,623,fhu_bid_tab_lincoln_jordan_2025_02_18,false
 co_cdot_623-03005_historical,co_cdot_623-03005,,2021-12-16,1 INCH DRIP ZONE CONTROL VALVE,,EACH,623,fhu_bid_tab_watson_ave_roundabout_2021_12_16,false
 co_cdot_623-05008_historical,co_cdot_623-05008,,2021-12-16,1 INCH GATE VALVE,,EACH,623,fhu_bid_tab_watson_ave_roundabout_2021_12_16,false
+co_cdot_623-08118_historical,co_cdot_623-08118,,2026-01-23,18 STATION AUTOMATIC CONTROLLER,,EACH,623,fhu_estimate_west_colfax_phase_2_2026_01_23,false
+co_cdot_623-99999_historical,co_cdot_623-99999,,2026-02-05,IRRIGATION SYSTEM,,L S,623,fhu_estimate_old_hampden_2026_02_05,false
+co_cdot_627-60000_historical,co_cdot_627-60000,,2026-01-23,PAVEMENT MARKING (SPECIAL),,LF,627,fhu_estimate_west_colfax_phase_2_2026_01_23,false
+co_cdot_630-08380_historical,co_cdot_630-08380,,2024-10-03,Traffic Cone,,EACH,630,fhu_bid_tab_west_colfax_phase_1_2024_10_03,false
+co_cdot_635-00010_historical,co_cdot_635-00010,,2026-02-05,CHAIR,,EACH,635,fhu_estimate_old_hampden_2026_02_05,false
 co_cdot_642_historical,co_cdot_642,,2021-09-24,DRILLING AND SETTING OF TEMPORARY CASING,,LF,642,fhu_bid_tab_arapahoe_big_dry_creek_2021_09_24,false
+co_cdot_690-00001_historical,co_cdot_690-00001,,2025-02-20,HISTORIC WALL MONITORING,,L S,690,fhu_bid_tab_jc_73_2025_02_20,false
 co_cdot_700_historical,co_cdot_700,,2021-09-24,F/A FENCE REPLACEMENT,,F A,700,fhu_bid_tab_arapahoe_big_dry_creek_2021_09_24,false
+co_cdot_700-70000_historical,co_cdot_700-70000,,2025-02-20,F/A FURNISH & INSTALL (HISTORIC WALL REPAIR),,F A,700,fhu_bid_tab_jc_73_2025_02_20,false
+co_cdot_700-70038_historical,co_cdot_700-70038,,2025-02-20,F/A CONTAMINATED GROUNDWATER,,F A,700,fhu_bid_tab_jc_73_2025_02_20,false
+co_cdot_700-70394_historical,co_cdot_700-70394,,2025-02-18,F/A WETLAND PROTECTION,,N/A,700,fhu_bid_tab_lincoln_jordan_2025_02_18,false
+co_cdot_700-70586_historical,co_cdot_700-70586,,2026-06-01,F/A DEWATERING,,F A,700,fhu_estimate_colorado_blvd_2026_06_01,false

@@ -1,0 +1,30 @@
+warning
+Preserved nonstandard item code 208 for CONCRETE WASHOUT AREA (PORTABLE) (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for VEHICLE TRACKING CONTROL (PORTABLE) (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for SEEDING (NATIVE) DRILL (ACRE); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for SEEDING (NATIVE) BROADCAST (ACRE); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for MULCHING (WEED FREE) (ACRE); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for CONSTRUCTION FENCE (LINEAR FOOT/FEET); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for CULVERT PROTECTION (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for PORTABLE TOILET PROTECTION (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for SILT FENCE (LINEAR FOOT/FEET); no exact compatible CDOT item match.
+Resolved short agency item code 208 for REMOVAL AND DISPOSAL OF SEDIMENT (EQUIPMENT) (HOUR) to 208-00105.
+Resolved short agency item code 208 for EROSION CONTROL MANAGEMENT (DAY) to 208-00207.
+Preserved nonstandard item code 208 for INLET PROTECTION FOR AREA INLETS NOT IN PAVEMENT (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for INLET PROTECTION FOR AREA INLETS IN PAVEMENT (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for INLET PROTECTION CURB ON-GRADE TYPE R INLET (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for INLET PROTECTION CURB ON-SUMP TYPE R INLET (EACH); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for SEDIMENT CONTROL LOG (12 INCH) (LINEAR FOOT/FEET); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for CHECK DAM (EACH); no exact compatible CDOT item match.
+Resolved short agency item code 208 for TEMPORARY STREAM CROSSING (EACH) to 208-00521.
+Preserved nonstandard item code 208 for EROSION CONTROL BLANKET (STRAW/COCONUT) (SY); no exact compatible CDOT item match.
+Preserved nonstandard item code 208 for STABILIZED STAGING AREA (MIN. 6-INCH THICK) (SQUARE FOOT/FEET); no exact compatible CDOT item match.
+Resolved short agency item code 208 for MAINTENANCE AGGREGATE (VEHICLE TRACKING PAD) (CY) to 208-00071.
+Preserved nonstandard item code 619 for 48 LB MAGNESIUM ANODE (LINEAR FOOT/FEET); no exact compatible CDOT item match.
+"Preserved nonstandard item code 619 for 12""x6"" SWIVEL TEE (EACH); no exact compatible CDOT item match."
+Preserved nonstandard item code 208 for SEEDING (WETLANDS) BROADCAST (ACRE); no exact compatible CDOT item match.
+Resolved short agency item code 208 for SWEEPING (SEDIMENT REMOVAL) (HOUR) to 208-00106.
+Preserved nonstandard item code 700 for F/A FIBER INTERCONNECT WORK (N/A); no exact compatible CDOT item match.
+Preserved nonstandard item code 700 for F/A BRIDGE REPAIR AND MAINTENANCE (N/A); no exact compatible CDOT item match.
+"Missing agency item codes: 210-00000, 210-00811, 301-03030, 403-32741, 601-40008, 615-60050, 619-50180, 623-01508, 700-70394"
+"Unknown normalized units preserved as raw values: Gallon, Linear Foot/Feet, N/A, Square Foot/Feet"

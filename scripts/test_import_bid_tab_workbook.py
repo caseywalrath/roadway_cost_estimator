@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,13 +14,92 @@ from scripts.import_bid_tab_workbook import (
     DEFAULT_WORKBOOK,
     agency_item_rows,
     normalize_unit,
+    parse_master_sheet,
     parse_workbook,
     resolve_short_item_codes,
+    selected_master_sources,
     validate_import,
 )
 
 
+MASTER_WORKBOOK = Path(r"C:\Users\Casey.Walrath\Downloads\Cost Estimate Data Tracking-MASTER.xlsx")
+MASTER_CONFIG = Path("data/staging/co/cost_estimate_master_sources.json")
+
+
 class BidTabWorkbookImportTests(unittest.TestCase):
+    def test_master_estimate_parser_supports_estimate_only_and_distinct_engineer_quantity(self) -> None:
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Estimate"
+        sheet.append(["code", "description", "unit", "bid qty", "engineer qty", "unit price", "total"])
+        sheet.append(["201-00000", "Clearing and Grubbing", "LS", 1, 2, 50, 100])
+        config = {
+            "source_id": "estimate", "project_id": "project", "row_prefix": "estimate", "source_date": "2026-01-01",
+            "project_name": "Estimate", "project_number": "FHU-TEST", "layout": "estimate",
+            "row_ranges": [[2, 2]],
+            "columns": {"code": 1, "description": 2, "unit": 3, "quantity": 4, "engineer_quantity": 5, "engineer_unit": 6, "engineer_total": 7},
+            "expected_item_count": 1, "expected_bidder_count": 0,
+        }
+
+        parsed = parse_master_sheet(Path("estimate.xlsx"), sheet, config)
+
+        self.assertEqual([], parsed.bidder_bids)
+        self.assertEqual("2", parsed.item_rows[0]["engineer_estimate_quantity"])
+        self.assertEqual("2", parsed.observations[0]["quantity"])
+        self.assertEqual("50.00", parsed.observations[0]["unit_price"])
+
+    def test_master_vendor_blocks_derive_force_accounts_and_exclude_other_schedules(self) -> None:
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Blocks"
+        sheet.append(["code", "description", "unit", "qty", "A price", "A total", "B price", "B total"])
+        sheet.append(["700-70010", "F/A Minor Contract Revisions", "N/A", 1, None, 100, None, 100])
+        sheet.append([None] * 8)
+        sheet.append(["201-00000", "Excluded schedule", "LS", 1, 1, 1, 1, 1])
+        config = {
+            "source_id": "blocks", "project_id": "project", "row_prefix": "blocks", "source_date": "2025-01-01",
+            "project_name": "Blocks", "project_number": "FHU-TEST", "layout": "vendor_blocks",
+            "row_ranges": [[2, 2]], "columns": {"code": 1, "description": 2, "unit": 3, "quantity": 4},
+            "bidders": [
+                {"name": "Vendor A", "unit_col": 5, "total_col": 6},
+                {"name": "Vendor B", "unit_col": 7, "total_col": 8},
+            ],
+            "expected_item_count": 1, "expected_bidder_count": 2,
+        }
+
+        parsed = parse_master_sheet(Path("blocks.xlsx"), sheet, config)
+
+        self.assertEqual(1, len(parsed.item_rows))
+        self.assertEqual(2, len(parsed.bidder_items))
+        self.assertTrue(all(row["unit_price"] == "100.00" for row in parsed.bidder_items))
+        self.assertEqual("100.00", parsed.item_rows[0]["average_bid_unit_price"])
+
+    def test_master_sheet_selection_is_explicit(self) -> None:
+        config = {"sources": [{"sheet": "A"}, {"sheet": "B"}]}
+        self.assertEqual([{"sheet": "B"}], selected_master_sources(config, "B"))
+        with self.assertRaisesRegex(ValueError, "not configured"):
+            selected_master_sources(config, "C")
+
+    @unittest.skipUnless(MASTER_WORKBOOK.exists(), "Colorado master workbook is not present on this machine.")
+    def test_real_master_workbook_regression_counts_and_jc_award(self) -> None:
+        from openpyxl import load_workbook
+
+        workbook = load_workbook(MASTER_WORKBOOK, data_only=True, read_only=False)
+        config = json.loads(MASTER_CONFIG.read_text(encoding="utf-8"))
+        expected_counts = [198, 149, 148, 96, 216, 65, 79, 262]
+        parsed_sources = [parse_master_sheet(MASTER_WORKBOOK, workbook[source["sheet"]], source) for source in config["sources"]]
+
+        self.assertEqual(expected_counts, [len(parsed.item_rows) for parsed in parsed_sources])
+        self.assertEqual(3134, sum(len(parsed.bidder_items) for parsed in parsed_sources))
+        self.assertEqual([5, 5, 2, 6, 5], [len(parsed.bidder_bids) for parsed in parsed_sources if parsed.bidder_bids])
+        jc = parsed_sources[2]
+        totals = {bid["bidder_name"]: bid for bid in jc.bidder_bids}
+        self.assertEqual("4924768.96", totals["FNF Construction, Inc."]["bid_total"])
+        self.assertEqual("true", totals["FNF Construction, Inc."]["is_awarded"])
+        self.assertEqual("4685267.25", totals["Rodriguez Construction Organization, LLC"]["bid_total"])
+        self.assertEqual("true", totals["Rodriguez Construction Organization, LLC"]["apparent_low"])
+        self.assertTrue(all(row["audit_estimate_unit_price"] for row in jc.item_rows))
+
     def test_unit_normalization_preserves_raw_unknowns(self) -> None:
         self.assertEqual("EACH", normalize_unit("EA"))
         self.assertEqual("L S", normalize_unit("Lump Sum"))

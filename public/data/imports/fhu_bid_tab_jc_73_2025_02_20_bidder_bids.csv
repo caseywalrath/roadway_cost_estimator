@@ -1,0 +1,6 @@
+bid_id,project_id,source_id,bidder_name,bid_total,bid_rank,apparent_low,is_awarded
+fhu_jc_73_20250220_rodriguez_construction_organization_llc,fhu_bid_tab_jc_73_2025_02_20_stu_c110_053,fhu_bid_tab_jc_73_2025_02_20,"Rodriguez Construction Organization, LLC",4685267.25,1,true,false
+fhu_jc_73_20250220_fnf_construction_inc,fhu_bid_tab_jc_73_2025_02_20_stu_c110_053,fhu_bid_tab_jc_73_2025_02_20,"FNF Construction, Inc.",4924768.96,2,false,true
+fhu_jc_73_20250220_timber_wolf_excavating_llc,fhu_bid_tab_jc_73_2025_02_20_stu_c110_053,fhu_bid_tab_jc_73_2025_02_20,"Timber Wolf Excavating, LLC",5432962.50,3,false,false
+fhu_jc_73_20250220_w_w_clyde_co,fhu_bid_tab_jc_73_2025_02_20_stu_c110_053,fhu_bid_tab_jc_73_2025_02_20,W.W. Clyde & Co.,7343858.00,4,false,false
+fhu_jc_73_20250220_flatiron,fhu_bid_tab_jc_73_2025_02_20_stu_c110_053,fhu_bid_tab_jc_73_2025_02_20,Flatiron,8304494.18,5,false,false

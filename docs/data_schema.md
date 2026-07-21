@@ -24,6 +24,8 @@ One publication/source identity.
 
 `source_id`, `source_type`, `agency_id`, `agency_name`, `state`, `source_label`, `source_date`, `data_year`, `source_url`, `source_file_name`, `sha256`, `parser_name`, `parser_version`, `notes`
 
+Colorado uses `cost_book`, `bid_tab`, and `estimate`. `estimate` identifies FHU engineer estimates that contain no bidder records and publish only `engineer_estimate` observations.
+
 ### `lettings.csv`
 
 One agency letting/event.
@@ -111,6 +113,20 @@ Allowed generalized `price_type` values:
 - `engineer_estimate`
 
 Iowa `average_bid` is the unweighted mean of valid bidder unit prices for the contract item. Iowa leaves `engineer_estimate` absent.
+
+Colorado master-workbook bid sources also use an unweighted mean of valid bidder unit prices. Engineer quantities may differ from the contract-item bid quantity and remain source-native on the engineer observation. Confirmed-award observations are created only when a public award record reconciles to the configured included schedule. Source Review compatibility price fields are nullable; missing engineer, average, or bidder prices render as `Not listed`, never zero.
+
+## Colorado Master-Workbook Inclusion Policy
+
+The committed configuration at `data/staging/co/cost_estimate_master_sources.json` is the reviewable inclusion authority for the attached master workbook. It records source identity, evidence date, owner, project identifier, explicit row ranges, selected price columns, bidder blocks, and published total cells.
+
+- Estimate-only sheets publish the configured final estimate column only.
+- JC-73 includes the base schedule, publishes the County Engineer's Estimate, retains the FHU Estimate only in staging audit columns, and confirms FNF Construction as awarded.
+- Pikes Peak Sidewalks includes Schedule I only.
+- West Mainstreet includes Schedule A only.
+- Lincoln-Jordan includes Schedule A and its force accounts only.
+- Published included-schedule totals rank bids. Calculated line extensions remain internally consistent, and differences from source totals are retained in per-source reconciliation CSVs.
+- Full CDOT codes and uniquely resolved three-digit prefixes can be promoted. Malformed or ambiguous codes remain unmatched with candidates; description similarity is never promoted by itself.
 
 ### `common/inflation_index.csv`
 

@@ -13,7 +13,7 @@ export function renderSourceReview(data: AppData, selectedProjectId: string | nu
 
 function renderSourceProjectList(data: AppData): string {
   const projects = data.projects
-    .filter((project) => data.sourceById.get(project.sourceId)?.sourceType === "bid_tab")
+    .filter((project) => ["bid_tab", "estimate"].includes(data.sourceById.get(project.sourceId)?.sourceType ?? ""))
     .filter((project) => (data.bidTabItemsByProjectId.get(project.projectId) ?? []).length > 0)
     .sort((left, right) => (right.estimateLetDate || "").localeCompare(left.estimateLetDate || ""));
 
@@ -23,12 +23,12 @@ function renderSourceProjectList(data: AppData): string {
         <div>
           <p class="eyebrow">Source Review</p>
           <h2 id="source-review-title" tabindex="-1">Review source projects</h2>
-          <p class="muted">Inspect project bid-tab records and their source item mappings for ${escapeHtml(data.stateConfig.name)}.</p>
+          <p class="muted">Inspect bid tabs, engineer estimates, and source item mappings for ${escapeHtml(data.stateConfig.name)}.</p>
         </div>
         <button type="button" class="secondary-button" data-close-source-review>Back to Explorer</button>
       </div>
       ${projects.length === 0
-        ? `<p class="muted">No bid-tab source projects are available for this state.</p>`
+        ? `<p class="muted">No reviewable source projects are available for this state.</p>`
         : `
           <div class="bid-tab-project-list">
             ${projects.map((project) => {
@@ -87,7 +87,7 @@ function renderSourceProjectDetail(data: AppData, selectedProjectId: string): st
         <button type="button" class="secondary-button" data-close-source-review>Back to Explorer</button>
       </div>
       <div class="source-review-detail-heading">
-        <p class="eyebrow">Public Bid Tab Detail</p>
+        <p class="eyebrow">${source?.sourceType === "estimate" ? "FHU Engineer Estimate Detail" : "Public Bid Tab Detail"}</p>
         <h2 id="source-review-detail-title" tabindex="-1">${escapeHtml(project.projectNumber || "Project")} - ${escapeHtml(project.projectName)}</h2>
         <p class="query-line">${escapeHtml(source?.sourceLabel ?? "Unknown source")}</p>
       </div>
@@ -189,7 +189,10 @@ function matchStatusLabel(status: BidTabItemRecord["matchStatus"]): string {
   return labels[status];
 }
 
-function formatCurrency(value: number): string {
+function formatCurrency(value: number | null): string {
+  if (value === null) {
+    return "Not listed";
+  }
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

@@ -1,0 +1,50 @@
+bid_tab_item_id,source_item_code,source_item_description,unit_normalized,candidate_agency_item_code,candidate_description,candidate_unit,candidate_count,suggestion_status
+fhu_west_mainstreet_20240208_row_0009,201,CLEARING AND GRUBBING,L S,201-00000,Clearing and Grubbing,L S,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0010,202,REMOVAL OF TREE,EACH,202-00010,Removal of Tree,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0011,202,REMOVAL OF MEDIAN COVER,SY,202-00195,Removal of Median Cover,SY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0012,202,REMOVAL OF SIDEWALK,SY,202-00200,Removal of Sidewalk,SY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0015,202,REMOVAL OF CONCRETE CURB RAMP,SY,202-00206,Removal of Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0016,202,REMOVAL OF CONCRETE PAVEMENT,SY,202-00210,Removal of Concrete Pavement,SY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0017,202,REMOVAL OF LIGHT STANDARD,EACH,202-00700,Removal of Light Standard,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0018,202,REMOVAL OF GROUND SIGN,EACH,202-00810,Removal of Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0019,202,REMOVAL OF PULL BOX,EACH,202-00827,Removal of Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0020,202,REMOVAL OF TRAFFIC SIGNAL HEAD,EACH,202-00831,Removal of Traffic Signal Head,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0021,202,REMOVAL OF TRAFFIC SIGNAL POLE,EACH,202-00840,Removal of Traffic Signal Pole,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0022,203,UNCLASSIFIED EXCAVATION (COMPLETE IN PLACE),CY,203-00010,Unclassified Excavation (Complete In Place),CY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0023,203,UNSUITABLE MATERIAL,CY,203-00050,Unsuitable Material,CY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0024,203,POTHOLING,HOUR,203-01597,Potholing,HOUR,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0025,207,TOPSOIL,CY,207-00205,Topsoil,CY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0028,208,CONCRETE WASHOUT STRUCTURE,EACH,208-00045,Concrete Washout Structure,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0033,208,EROSION CONTROL MANAGEMENT,DAY,208-00207,Erosion Control Management,DAY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0034,210,RESET LUMINAIRE,EACH,210-00760,Reset Luminaire,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0035,210,RESET GROUND SIGN,EACH,210-00810,Reset Ground Sign,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0036,210,RESET SIGN PANEL (SPECIAL),EACH,201-00816,Reset Sign Panel (Special),EACH,2,multiple_exact_description_unit_candidates
+fhu_west_mainstreet_20240208_row_0036,210,RESET SIGN PANEL (SPECIAL),EACH,210-00816,Reset Sign Panel (Special),EACH,2,multiple_exact_description_unit_candidates
+fhu_west_mainstreet_20240208_row_0037,210,RESET PULL BOX,EACH,210-00827,Reset Pull Box,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0038,210,RESET PEDESTRIAN PUSH BUTTON,EACH,210-00860,Reset Pedestrian Push Button,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0039,210,RESET AIR VENT,EACH,210-01720,Reset Air Vent,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0040,210,MODIFY INLET,EACH,210-04020,Modify Inlet,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0041,210,ADJUST VALVE BOX,EACH,210-04050,Adjust Valve Box,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0044,213,LANDSCAPE WEED BARRIER FABRIC,SY,213-00070,Landscape Weed Barrier Fabric,SY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0045,213,DECIDUOUS TREE (2 INCH CALIPER),EACH,214-00220,Deciduous Tree (2 Inch Caliper),EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0048,304,AGGREGATE BASE COURSE (CLASS 6),CY,304-06007,Aggregate Base Course (Class 6),CY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0049,412,CONCRETE PAVEMENT (9 INCH),SY,412-00900,Concrete Pavement (9 Inch),SY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0050,412,CONCRETE PAVEMENT (9 INCH) (FAST TRACK),SY,412-00920,Concrete Pavement (9 Inch) (Fast Track),SY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0054,604,INLET SPECIAL,EACH,604-19000,Inlet Special,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0056,608,CONCRETE SIDEWALK (6 INCH),SY,608-00006,Concrete Sidewalk (6 Inch),SY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0057,608,CONCRETE CURB RAMP,SY,608-00010,Concrete Curb Ramp,SY,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0061,612,DELINEATOR (TYPE I),EACH,612-00001,Delineator (Type I),EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0067,613,WIRING,L S,613-10000,Wiring,L S,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0071,614,SIGNAL HEAD BACKPLATES,EACH,614-10160,Signal Head Backplates,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0072,614,PEDESTRIAN SIGNAL FACE (16) (COUNTDOWN),EACH,614-70150,Pedestrian Signal Face (16) (Countdown),EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0073,614,TRAFFIC SIGNAL FACE (12-12-12),EACH,614-70336,Traffic Signal Face (12-12-12),EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0074,614,TRAFFIC SIGNAL FACE (12-12-12-12),EACH,614-70448,Traffic Signal Face (12-12-12-12),EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0075,614,PEDESTRIAN PUSH BUTTON,EACH,614-72860,Pedestrian Push Button,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0076,614,MICROWAVE VEHICLE RADAR DETECTOR,EACH,614-72887,Microwave Vehicle Radar Detector,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0077,614,TRAFFIC SIGNAL-LIGHT POLE STEEL (1 MAST ARM) (INSTALL ONLY),EACH,614-81011,Traffic Signal-Light Pole Steel (1 Mast Arm) (Install Only),EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0078,614,TRAFFIC SIGNAL PEDESTAL POLE ALUMINUM,EACH,614-84100,Traffic Signal Pedestal Pole Aluminum,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0079,614,PAINT TRAFFIC SIGNAL POLE,EACH,614-85520,Paint Traffic Signal Pole,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0080,619,3/4 INCH WATER METER,EACH,623-07006,3/4 Inch Water Meter,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0082,620,SANITARY FACILITY,EACH,620-00020,Sanitary Facility,EACH,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0083,625,CONSTRUCTION SURVEYING,L S,625-00000,Construction Surveying,L S,1,single_exact_description_unit_candidate
+fhu_west_mainstreet_20240208_row_0084,626,MOBILIZATION,L S,626-00000,Mobilization,L S,1,single_exact_description_unit_candidate

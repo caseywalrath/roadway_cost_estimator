@@ -41,7 +41,7 @@ def file_sha256(path: Path) -> str:
 
 def map_price_type(value: str) -> str:
     normalized = value.strip().lower()
-    if normalized in {"cdot_awarded_bid", "bid_tab_demo"}:
+    if normalized in {"cdot_awarded_bid", "bid_tab_demo", "public_bid_tab_awarded"}:
         return "awarded_bid"
     if normalized in {"cdot_average_bid", "public_bid_tab_average"}:
         return "average_bid"
@@ -82,8 +82,13 @@ def main() -> None:
     legacy_canonical = read_csv(legacy / "canonical_items.csv")
 
     source_paths = {row["source_id"]: legacy / "sources.csv" for row in legacy_sources}
+    existing_sources_by_id = {
+        row["source_id"]: row
+        for row in (read_csv(output / "sources.csv") if (output / "sources.csv").exists() else [])
+    }
     sources = []
     for row in legacy_sources:
+        existing_source = existing_sources_by_id.get(row["source_id"], {})
         sources.append({
             "source_id": row["source_id"],
             "source_type": source_type(row["source_type"]),
@@ -91,13 +96,13 @@ def main() -> None:
             "agency_name": row["agency"],
             "state": "CO",
             "source_label": row["source_label"],
-            "source_date": "",
+            "source_date": row.get("source_date", "") or existing_source.get("source_date", ""),
             "data_year": row["data_year"],
-            "source_url": "",
-            "source_file_name": "",
-            "sha256": file_sha256(source_paths[row["source_id"]]),
-            "parser_name": "legacy_schema_v1_migration",
-            "parser_version": "2.0.0",
+            "source_url": row.get("source_url", "") or existing_source.get("source_url", ""),
+            "source_file_name": row.get("source_file_name", "") or existing_source.get("source_file_name", ""),
+            "sha256": row.get("sha256", "") or existing_source.get("sha256", "") or file_sha256(source_paths[row["source_id"]]),
+            "parser_name": row.get("parser_name", "") or existing_source.get("parser_name", "") or "legacy_schema_v1_migration",
+            "parser_version": row.get("parser_version", "") or existing_source.get("parser_version", "") or "2.0.0",
             "notes": row["notes"],
         })
     sources.append({
@@ -270,7 +275,7 @@ def main() -> None:
             "bid_total": row["bid_total"],
             "percent_of_low": "",
             "is_apparent_low": row["apparent_low"],
-            "is_awarded": "false",
+            "is_awarded": row.get("is_awarded", "false") or "false",
             "source_page": "",
         })
 
