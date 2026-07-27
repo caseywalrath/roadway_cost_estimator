@@ -2,7 +2,7 @@
 
 ## Decision
 
-Use a shared normalized contract/item/bid model with state-native staging and manifest-driven presentation. Colorado is a supported state, not the baseline schema. Iowa is the second implementation and establishes the contract/project-number separation, effective-dated item catalog, bidder rank, alternate, and capability patterns required for future states.
+Use a shared normalized contract/item/bid model with state-native staging and manifest-driven presentation. Colorado is a supported state, not the baseline schema. Iowa establishes contract/project-number separation, effective-dated catalogs, bidder rank, alternates, and capability patterns. South Dakota establishes paired-document provenance, separate project control numbers, historical item recovery, and confirmed non-low combination awards.
 
 ## Boundaries
 
@@ -42,6 +42,13 @@ Iowa examples:
 - Call order, contract period, DBE goal, route, and letting status are shared contract metadata.
 - Alternate set/member are shared contract-item metadata.
 - Rank, percent of low, apparent low, and confirmed award are distinct bid fields.
+
+South Dakota examples:
+
+- Project No. and PCN are distinct fields on one contract-project record.
+- A completed letting is one logical source with abstract and final-report document children.
+- Deleted schedule rows remain in contract-item audit data but cannot become item observations.
+- Apparent low remains rank 1 even when a combination award selects another bidder.
 
 ## Search and Matching
 
@@ -95,12 +102,46 @@ Iowa is enabled because the June 16, 2026 pilot and the available 2024-present h
 
 The official archive is [Iowa DOT Bid Tabulations](https://iowadot.gov/consultants-contractors/contracts/historical-completed-lettings/bid-tabulations). The catalog source is [Iowa DOT Bid Item Information](https://iowadot.gov/consultants-contractors/contracts/general-letting-information/bid-item-information), and taxonomy comes from the [Iowa Electronic Reference Library](https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm).
 
+## South Dakota Import Rules
+
+Catalog:
+
+- Submit the live Standard Bid Item search for all items and preserve the raw HTML snapshot.
+- Normalize item codes to uppercase and exclude explicit `Deleted Item`/`Del` placeholders from current search identities.
+- Recover valid archive-only codes as historical identities without inventing formal effective dates.
+- Use the three official specification divisions as parents and the live 84 bid-item groups as sections.
+
+Completed lettings:
+
+- Inventory every central completed-letting link from January 1, 2019 through the requested end date.
+- Treat the Abstract of Bids and Low Bid Final Report as paired children of one source.
+- Parse bidder price columns and continuation pages by coordinates.
+- Join final awards to abstract bidders by letting date, Item Nbr., normalized vendor, and amount; reviewed overrides are explicit repository inputs.
+- Retain `AWARDED`, `WITHDRAWN`, `NO BIDS`, `REJECTED`, and `CANCELLED` contracts, but publish observations only for confirmed awards.
+- Treat an abstract `No Bids Received` header as status, not a bidder. A `Moved to ... letting by addendum` note is `CANCELLED` only when the final block has no award amount; SDDOT also retains that note on later re-let award blocks.
+- Preserve Project No. and PCN independently. Pair lists only when their cardinalities agree.
+- Derive `average_bid` from every valid bidder unit price. Use the annual three-lowest statistic only for QA.
+
+The official sources are the [completed letting archive](https://apps.sd.gov/hc65bidletting/bidlettingscomplete.aspx), [Standard Bid Item search](https://apps.sd.gov/hc70sbi/main.aspx), and [2024 Bid Item Price Report](https://dot.sd.gov/media/qqhgg24h/2024-bid-item-price-report.pdf).
+
+The normal cached rebuild is:
+
+```text
+python scripts/import_south_dakota_data.py --catalog-date YYYY-MM-DD
+```
+
+Use `--refresh-item-catalog`, `--refresh-archive-index`, `--download-missing-reports`, `--refresh-reports`, or `--refresh-annual-report` only when refreshing the corresponding raw cache. `--start-date` defaults to `2019-01-01`; `--through-date` defaults to the current date.
+
 ## Future State Checklist
 
 - Define state/agency IDs and source provenance.
+- Inventory every source entry before parsing and record explicit skip/failure reasons.
+- Identify whether one logical source depends on multiple physical documents.
 - Record catalog history and status behavior.
-- Map the state's contract/project relationship.
+- Map all independent contract/project identifiers without overloading a display field.
 - Identify bidder, alternate, award, and estimate capabilities.
+- Keep apparent low separate from confirmed award.
+- Treat annual or aggregate price reports as QA unless they provide contract-level evidence.
 - Create state-native staging and fixtures.
 - Add manifest labels and capabilities.
 - Validate code collisions, relationships, totals, and state isolation.

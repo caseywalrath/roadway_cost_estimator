@@ -71,6 +71,39 @@
         "itemMappings": "states/ia/item_mappings.csv",
         "observations": "states/ia/item_observations.csv"
       }
+    },
+    {
+      "code": "SD",
+      "name": "South Dakota",
+      "defaultAgencyId": "sd_sddot",
+      "defaultAgencyName": "South Dakota Department of Transportation",
+      "divisionLabel": "Division",
+      "sectionLabel": "Standard Bid Item Group",
+      "sectionPrefixLength": 3,
+      "capabilities": {
+        "districtFilter": false,
+        "engineerEstimate": false,
+        "bidderDetail": true
+      },
+      "sourceTypeLabels": {
+        "item_catalog": "SDDOT item catalog",
+        "bid_tab": "SDDOT completed lettings"
+      },
+      "files": {
+        "sources": "states/sd/sources.csv",
+        "sourceDocuments": "states/sd/source_documents.csv",
+        "lettings": "states/sd/lettings.csv",
+        "contracts": "states/sd/contracts.csv",
+        "contractProjects": "states/sd/contract_projects.csv",
+        "contractItems": "states/sd/contract_items.csv",
+        "bids": "states/sd/bids.csv",
+        "bidItemPrices": "states/sd/bid_item_prices.csv",
+        "agencyItems": "states/sd/agency_items.csv",
+        "agencyItemVersions": "states/sd/agency_item_versions.csv",
+        "itemTaxonomy": "states/sd/item_taxonomy.csv",
+        "itemMappings": "states/sd/item_mappings.csv",
+        "observations": "states/sd/item_observations.csv"
+      }
     }
   ]
 }

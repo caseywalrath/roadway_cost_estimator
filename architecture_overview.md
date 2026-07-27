@@ -2,7 +2,7 @@
 
 ## Current Product
 
-This repository contains **Roadway Cost Estimator**, a static multi-state roadway bid-item evidence application. Colorado and Iowa are enabled. A user must select a state on first visit; the browser remembers that choice. Search results never combine states.
+This repository contains **Roadway Cost Estimator**, a static multi-state roadway bid-item evidence application. Colorado, Iowa, and South Dakota are enabled. A user must select a state on first visit; the browser remembers that choice. Search results never combine states.
 
 The app is an evidence browser and limited local project workspace. It is not an automatic estimating recommendation system. Its primary output is a contract-item evidence table with source prices and provenance. Summary statistics, inflation adjustment, bidder detail, CSV export, and saved project lines support user review.
 
@@ -46,8 +46,9 @@ The shared model uses these normalized tables:
 - `item_taxonomy`
 - `item_mappings`
 - `item_observations`
+- optional `source_documents`
 
-`contract_id` is the evidence parent. Project numbers are one-to-many children and never duplicate contract-item evidence. `agency_item_id` is the item identity; raw item codes are display and source fields. Generalized price types are `awarded_bid`, `average_bid`, and `engineer_estimate`.
+`contract_id` is the evidence parent. Project numbers and project control numbers are one-to-many children and never duplicate contract-item evidence. `agency_item_id` is the item identity; raw item codes are display and source fields. Generalized price types are `awarded_bid`, `average_bid`, and `engineer_estimate`.
 
 State-native differences remain in normalized nullable fields, taxonomy rows, capability metadata, source provenance, and staging artifacts. They are not hidden by Colorado-specific enums.
 
@@ -83,13 +84,25 @@ The enabled archive package contains 3,727 unique item codes, 43 parsed lettings
 
 Awarded prices are promoted only when the printed awarded vendor resolves to exactly one bidder after reviewed normalization for common IDOT abbreviations, wrapped DBA names, and county-continuation artifacts. Rank 1 remains a separate apparent-low flag. Iowa average-bid evidence is the unweighted mean of valid printed bidder unit prices. Iowa does not fabricate engineer-estimate values. Preserved unselected added-option rows can make item-price sums exceed reported contract totals; validation reports those as warnings when the difference is explained by added-option sections.
 
+## South Dakota Package
+
+`scripts/import_south_dakota_data.py` imports the live SDDOT Standard Bid Item catalog and the central completed-letting archive from 2019 forward. The enabled package contains 5,643 agency-item identities: 5,574 current catalog items and 69 historical identities observed in bid abstracts. Nine catalog deletion placeholders remain in staging but are excluded from searchable items. The three official specification divisions and 84 Standard Bid Item groups form the item taxonomy.
+
+The letting inventory contains all 175 central archive entries in scope. It parses 172 lettings into 1,206 contracts, 1,461 project-number/PCN records, 4,020 bids, 68,405 contract items, 253,990 bidder item prices, and 135,854 awarded/average observations. Three official report pairs return HTTP 404 and remain in the committed inventory with explicit failure reasons: May 3, 2019 University Class; February 21, 2024; and August 27, 2025.
+
+Each parsed letting is one `sources` bundle with child `source_documents` rows for the Abstract of Bids and Low Bid Final Report. Abstracts provide bidder schedules and apparent-low totals. Final reports provide authoritative award or non-award status. An awarded bidder is published only after unique vendor reconciliation; it may differ from the apparent-low bidder for combination awards. `average_bid` is the unweighted mean of all valid bidder unit prices for that contract item. Source-deleted lines, unmatched items, non-awarded contracts, and annual aggregates do not publish observations.
+
+The 2024 Bid Item Price Report is parsed into committed staging and reconciled as a QA source. Its 1,431 annual rows are not runtime contract evidence. Raw HTML and PDFs remain ignored under `data/raw/sd/`; the importer supports cached operation and explicit refresh/download options.
+
 ## UI Rules
 
 - State choice is required initially and remembered afterward.
 - State switching constructs a new state-specific application session and clears incompatible query/filter/detail state.
 - Matching Projects uses a stable core: Contract/Project, Location, Let Date, Awarded Vendor, Bid Count, Quantity, Unit, Description, Awarded Price, Average Price, and Source.
 - Colorado adds District and Engineer Estimate.
-- Iowa hides unsupported District and Engineer Estimate controls/columns.
+- Iowa and South Dakota hide unsupported District and Engineer Estimate controls/columns.
+- Item-prefix extraction uses each state's manifest-defined leading-digit length. South Dakota therefore supports codes such as `009E0010` without a state-specific UI parser.
+- Historical identities and source-deleted lines retain distinct labels. South Dakota project displays and exports include both Project No. and PCN, and Source Review links the named abstract and final-report documents.
 - Explorer exposes Source Review through a subdued text link aligned with the results column. The dedicated view keeps long source-project lists and wide source details out of the primary evidence workflow and never stacks a project-detail modal over a source list. Matching Projects links continue to open bidder detail when bidder rows exist; otherwise, reviewable Cost Data Book and estimate projects open directly in Source Review.
 - Contract CSV export includes state, agency item identity, call order, status, route, project numbers, contract period, DBE goal, bid metadata, and source identity.
 - Bid item prices load on demand.
@@ -122,14 +135,26 @@ Awarded prices are promoted only when the printed awarded vendor resolves to exa
 
 ## Data Governance and Validation
 
-`scripts/validate_data_package.py` validates the manifest and every enabled partition. It fails for duplicate IDs, broken relationships, malformed numbers, bidder headers without ranks, ambiguous awarded vendors, bidder/price contract crossings, unreconciled Iowa bid totals not explained by preserved unselected options, observations without an agency-item identity, or missing archive acceptance features.
+`scripts/validate_data_package.py` validates the manifest and every enabled partition. It fails for duplicate IDs, broken relationships, malformed numbers, bidder headers without ranks, ambiguous awarded vendors, bidder/price contract crossings, unreconciled Iowa bid totals not explained by preserved unselected options, observations without an agency-item identity, invalid optional source-document relationships, unresolved South Dakota awards, or missing archive acceptance features.
 
 Raw PDFs and downloaded HTML/TXT files stay in ignored `data/raw/`. Committed sources include publication URLs, filenames, hashes, parser names/versions, normalized data, native staging data, and importer code.
 
 Municipal items remain source-native. Only explicit reviewed `item_mappings` can connect them to state-item evidence. Description similarity never promotes evidence automatically.
 
+Future state imports follow these rules:
+
+1. Inventory every source entry before parsing and commit explicit failure or skip reasons.
+2. Preserve paired or multi-document provenance as child source documents.
+3. Store distinct agency project identifiers in distinct fields; never infer associations when source cardinalities disagree.
+4. Preserve exact agency item identity and raw contract descriptions/units.
+5. Express unsupported filters and measures through manifest capabilities instead of state-specific UI forks.
+6. Create historical identities from contract evidence without claiming unsupported official effective dates.
+7. Keep apparent-low derivation separate from confirmed final awards.
+8. Treat annual aggregate reports as reconciliation evidence, not contract-level observations.
+
 ## Deferred Scope
 
+- South Dakota regional letting archives.
 - Cross-state item comparison.
 - Automatic canonical equivalence.
 - Automatic municipal matching.

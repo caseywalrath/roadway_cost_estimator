@@ -1,0 +1,88 @@
+taxonomy_id,state,agency_id,taxonomy_level,taxonomy_code,parent_taxonomy_id,taxonomy_label,match_prefix,source_year,source_url
+sd_sddot_div_i,SD,sd_sddot,division,I,,Division I - General Provisions,I,2025,https://dot.sd.gov/media/035a1wt1/2025-sddot-specbook-final.pdf
+sd_sddot_div_ii,SD,sd_sddot,division,II,,Division II - Construction Details,II,2025,https://dot.sd.gov/media/035a1wt1/2025-sddot-specbook-final.pdf
+sd_sddot_div_iii,SD,sd_sddot,division,III,,Division III - Material Requirements,III,2025,https://dot.sd.gov/media/035a1wt1/2025-sddot-specbook-final.pdf
+sd_sddot_sec_004,SD,sd_sddot,section,004,sd_sddot_div_i,Traffic Diversions and Detours,004,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_009,SD,sd_sddot,section,009,sd_sddot_div_i,"Measurement, Payment, and Special Provision Payment Items",009,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_100,SD,sd_sddot,section,100,sd_sddot_div_ii,Clearing and Grubbing,100,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_110,SD,sd_sddot,section,110,sd_sddot_div_ii,Removal of Structures and Obstructions,110,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_120,SD,sd_sddot,section,120,sd_sddot_div_ii,Excavation and Embankment Construction,120,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_205,SD,sd_sddot,section,205,sd_sddot_div_ii,Dust Control,205,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_210,SD,sd_sddot,section,210,sd_sddot_div_ii,Roadway Shaping,210,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_230,SD,sd_sddot,section,230,sd_sddot_div_ii,"Salvaging, Stockpiling, and Placing Topsoil",230,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_240,SD,sd_sddot,section,240,sd_sddot_div_ii,Obliterating Old Roads,240,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_250,SD,sd_sddot,section,250,sd_sddot_div_ii,Incidental Work,250,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_260,SD,sd_sddot,section,260,sd_sddot_div_ii,Granular Bases and Surfacing,260,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_270,SD,sd_sddot,section,270,sd_sddot_div_ii,"Salvaging, Processing, and Stockpiling Granular and Asphalt Concrete Mix Material",270,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_280,SD,sd_sddot,section,280,sd_sddot_div_ii,Process In Place Surfacing,280,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_320,SD,sd_sddot,section,320,sd_sddot_div_ii,Asphalt Concrete,320,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_330,SD,sd_sddot,section,330,sd_sddot_div_ii,"Prime, Tack, Fog, and Flush Seal Coats",330,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_332,SD,sd_sddot,section,332,sd_sddot_div_ii,Cold Milling Asphalt Concrete,332,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_340,SD,sd_sddot,section,340,sd_sddot_div_ii,Polymer-Modified Micro Surfacing,340,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_350,SD,sd_sddot,section,350,sd_sddot_div_ii,Asphalt Concrete Crack Sealing,350,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_355,SD,sd_sddot,section,355,sd_sddot_div_ii,Asphalt Concrete Crack Leveling,355,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_360,SD,sd_sddot,section,360,sd_sddot_div_ii,Asphalt Surface Treatment,360,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_370,SD,sd_sddot,section,370,sd_sddot_div_ii,Cold Recycling of Asphalt Concrete,370,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_380,SD,sd_sddot,section,380,sd_sddot_div_ii,Portland Cement Concrete Pavement,380,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_390,SD,sd_sddot,section,390,sd_sddot_div_ii,Concrete Spall Repair,390,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_391,SD,sd_sddot,section,391,sd_sddot_div_ii,Undersealing,391,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_392,SD,sd_sddot,section,392,sd_sddot_div_ii,Pavement Jacking,392,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_393,SD,sd_sddot,section,393,sd_sddot_div_ii,Cracking and Seating of PCC Pavement,393,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_395,SD,sd_sddot,section,395,sd_sddot_div_ii,High Friction Surface Treatment,395,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_410,SD,sd_sddot,section,410,sd_sddot_div_ii,"Steel Structures, Bearings, Joints, and Misc. Related Items",410,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_411,SD,sd_sddot,section,411,sd_sddot_div_ii,New Structural Steel Painting,411,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_412,SD,sd_sddot,section,412,sd_sddot_div_ii,Bridge Field Spot Painting,412,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_413,SD,sd_sddot,section,413,sd_sddot_div_ii,Bridge Field Repainting,413,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_420,SD,sd_sddot,section,420,sd_sddot_div_ii,Structure Excavation,420,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_421,SD,sd_sddot,section,421,sd_sddot_div_ii,"Box, Pipe, and Plate Pipe Culvert Undercutting",421,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_423,SD,sd_sddot,section,423,sd_sddot_div_ii,Temporary Works,423,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_430,SD,sd_sddot,section,430,sd_sddot_div_ii,Bridge End Backfill,430,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_440,SD,sd_sddot,section,440,sd_sddot_div_ii,Structural Plate Pipe and Pipe Arches,440,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_450,SD,sd_sddot,section,450,sd_sddot_div_ii,Pipe Culverts,450,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_451,SD,sd_sddot,section,451,sd_sddot_div_ii,"Urban, Sewer and Water",451,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_460,SD,sd_sddot,section,460,sd_sddot_div_ii,Structural Concrete and Misc. Related Items,460,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_462,SD,sd_sddot,section,462,sd_sddot_div_ii,Concrete for Incidental Construction Class M,462,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_463,SD,sd_sddot,section,463,sd_sddot_div_ii,Cellular Grout,463,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_464,SD,sd_sddot,section,464,sd_sddot_div_ii,Controlled Density Fill,464,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_465,SD,sd_sddot,section,465,sd_sddot_div_ii,Drilled Shaft Construction,465,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_470,SD,sd_sddot,section,470,sd_sddot_div_ii,Railing,470,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_480,SD,sd_sddot,section,480,sd_sddot_div_ii,Reinforcing Steel,480,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_491,SD,sd_sddot,section,491,sd_sddot_div_ii,Bridge Deck Epoxy Chip Seal,491,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_510,SD,sd_sddot,section,510,sd_sddot_div_ii,"Timber, Prestressed Concrete, and Steel Piles",510,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_530,SD,sd_sddot,section,530,sd_sddot_div_ii,Retaining Walls,530,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_541,SD,sd_sddot,section,541,sd_sddot_div_ii,Timber,541,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_550,SD,sd_sddot,section,550,sd_sddot_div_ii,Bridge Deck Preparation and Resurfacing,550,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_560,SD,sd_sddot,section,560,sd_sddot_div_ii,Precast and Prestressed Concrete,560,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_600,SD,sd_sddot,section,600,sd_sddot_div_ii,Field Laboratories,600,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_601,SD,sd_sddot,section,601,sd_sddot_div_ii,Haul Roads,601,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_602,SD,sd_sddot,section,602,sd_sddot_div_ii,Detour Routes,602,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_610,SD,sd_sddot,section,610,sd_sddot_div_ii,Cattle Guards,610,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_620,SD,sd_sddot,section,620,sd_sddot_div_ii,Right-of-Way Fence,620,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_621,SD,sd_sddot,section,621,sd_sddot_div_ii,Chain Link Fence,621,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_628,SD,sd_sddot,section,628,sd_sddot_div_ii,Crash Cushions and Barriers,628,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_629,SD,sd_sddot,section,629,sd_sddot_div_ii,Three Cable Guardrail,629,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_630,SD,sd_sddot,section,630,sd_sddot_div_ii,Steel Beam Guardrail,630,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_632,SD,sd_sddot,section,632,sd_sddot_div_ii,Highway Signs and Delineators,632,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_633,SD,sd_sddot,section,633,sd_sddot_div_ii,Pavement Marking,633,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_634,SD,sd_sddot,section,634,sd_sddot_div_ii,Traffic Control,634,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_635,SD,sd_sddot,section,635,sd_sddot_div_ii,Traffic Signals and Roadway Lighting,635,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_650,SD,sd_sddot,section,650,sd_sddot_div_ii,Concrete Curb and Gutter,650,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_651,SD,sd_sddot,section,651,sd_sddot_div_ii,Concrete Sidewalk,651,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_670,SD,sd_sddot,section,670,sd_sddot_div_ii,Drop Inlets,670,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_671,SD,sd_sddot,section,671,sd_sddot_div_ii,Manholes,671,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_680,SD,sd_sddot,section,680,sd_sddot_div_ii,Underdrains,680,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_681,SD,sd_sddot,section,681,sd_sddot_div_ii,Edge Drains,681,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_700,SD,sd_sddot,section,700,sd_sddot_div_ii,Riprap,700,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_720,SD,sd_sddot,section,720,sd_sddot_div_ii,Bank and Channel Protection Gabions,720,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_730,SD,sd_sddot,section,730,sd_sddot_div_ii,Seeding,730,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_731,SD,sd_sddot,section,731,sd_sddot_div_ii,Fertilizing,731,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_732,SD,sd_sddot,section,732,sd_sddot_div_ii,Mulching,732,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_733,SD,sd_sddot,section,733,sd_sddot_div_ii,Sodding,733,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_734,SD,sd_sddot,section,734,sd_sddot_div_ii,Erosion Control and Water Pollution Control,734,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_735,SD,sd_sddot,section,735,sd_sddot_div_ii,Tree and Shrub Planting,735,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_740,SD,sd_sddot,section,740,sd_sddot_div_ii,Crushed Aggregate for Maintenance Stockpiles,740,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_831,SD,sd_sddot,section,831,sd_sddot_div_iii,Geotextiles and Impermeable Plastic Membranes,831,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_900,SD,sd_sddot,section,900,sd_sddot_div_iii,Miscellaneous Construction,900,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_910,SD,sd_sddot,section,910,sd_sddot_div_iii,Informal Miscellaneous Maintenance,910,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_997,SD,sd_sddot,section,997,sd_sddot_div_iii,Railroads,997,2026,https://apps.sd.gov/hc70sbi/main.aspx
+sd_sddot_sec_998,SD,sd_sddot,section,998,sd_sddot_div_iii,Railroad Protective Insurance,998,2026,https://apps.sd.gov/hc70sbi/main.aspx

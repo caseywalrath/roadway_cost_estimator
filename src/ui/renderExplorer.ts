@@ -15,7 +15,10 @@ export function renderExplorer(
   const resolvedUnit = resolvedAgencyItem?.officialUnit ?? query.unit;
   const selectedUnit = hasResolvedItem ? resolvedUnit : "";
   const itemSearchValue = hasResolvedItem ? "" : query.description;
-  const selectedSectionPrefix = sectionPrefixFromItemCode(query.itemCode);
+  const selectedSectionPrefix = sectionPrefixFromItemCode(
+    query.itemCode,
+    stateConfig.sectionPrefixLength
+  );
   const selectedSection = selectedSectionPrefix
     ? findSpecSection(specSections, selectedSectionPrefix)
     : null;
@@ -66,7 +69,15 @@ export function renderExplorer(
       <section class="workflow-step workflow-step--selected">
         ${renderStepHeading("2", "Select Item")}
         <div class="item-result-list" data-item-results aria-live="polite">
-          ${renderItemResults(agencyItems, specSections, selectedDivisionPrefix, selectedSectionPrefix, itemSearchValue, query.itemCode)}
+          ${renderItemResults(
+            agencyItems,
+            specSections,
+            selectedDivisionPrefix,
+            selectedSectionPrefix,
+            itemSearchValue,
+            query.itemCode,
+            stateConfig.sectionPrefixLength
+          )}
         </div>
       </section>
 
@@ -90,7 +101,8 @@ function renderStepHeading(stepNumber: string, label: string): string {
 export function bindItemPicker(
   form: HTMLFormElement,
   agencyItems: AgencyItemRecord[],
-  specSections: SpecSectionRecord[]
+  specSections: SpecSectionRecord[],
+  stateConfig: StateConfig
 ): void {
   const itemCodeInput = form.elements.namedItem("itemCode") as HTMLInputElement | null;
   const agencyItemIdInput = form.elements.namedItem("agencyItemId") as HTMLInputElement | null;
@@ -143,7 +155,8 @@ export function bindItemPicker(
       selectedDivisionPrefix,
       selectedSectionPrefix,
       searchText,
-      itemCodeInput?.value ?? ""
+      itemCodeInput?.value ?? "",
+      stateConfig.sectionPrefixLength
     );
     updateItemResultScrollCue(itemResults);
   }
@@ -236,7 +249,8 @@ function renderItemResults(
   selectedDivisionPrefix: string,
   selectedSectionPrefix: string,
   searchText: string,
-  selectedItemCode: string
+  selectedItemCode: string,
+  sectionPrefixLength: number
 ): string {
   const normalizedSearchText = searchText.trim().toUpperCase();
   const searchHasStarted = Boolean(
@@ -256,7 +270,8 @@ function renderItemResults(
         agencyItem,
         sectionByPrefix,
         selectedDivisionPrefix,
-        selectedSectionPrefix
+        selectedSectionPrefix,
+        sectionPrefixLength
       )
     )
     .sort((left, right) => left.itemCode.localeCompare(right.itemCode));
@@ -314,7 +329,7 @@ function renderItemResultButton(agencyItem: AgencyItemRecord, selected: boolean)
     >
       <strong>${escapeHtml(agencyItem.itemCode)}</strong>
       <span>${escapeHtml(agencyItem.officialDescription)}</span>
-      <small>${escapeHtml(agencyItem.officialUnit)}</small>
+      <small>${escapeHtml(agencyItem.officialUnit)}${agencyItem.itemStatus === "historical" ? " · Historical" : ""}</small>
     </button>
   `;
 }
@@ -390,9 +405,10 @@ function itemMatchesSelectedFilters(
   agencyItem: AgencyItemRecord,
   sectionByPrefix: Map<string, SpecSectionRecord>,
   selectedDivisionPrefix: string,
-  selectedSectionPrefix: string
+  selectedSectionPrefix: string,
+  sectionPrefixLength: number
 ): boolean {
-  const sectionPrefix = sectionPrefixFromItemCode(agencyItem.itemCode);
+  const sectionPrefix = sectionPrefixFromItemCode(agencyItem.itemCode, sectionPrefixLength);
 
   if (selectedSectionPrefix && sectionPrefix !== selectedSectionPrefix) {
     return false;
@@ -425,7 +441,7 @@ function findAgencyItem(
   ) ?? null;
 }
 
-function sectionPrefixFromItemCode(itemCode: string): string {
-  const match = itemCode.match(/^(\d{3,4})-/);
+function sectionPrefixFromItemCode(itemCode: string, prefixLength: number): string {
+  const match = itemCode.match(new RegExp(`^(\\d{${prefixLength}})`));
   return match?.[1] ?? "";
 }

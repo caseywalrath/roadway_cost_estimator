@@ -11,6 +11,7 @@ from pathlib import Path
 
 FILE_KEYS = {
     "sources": "sources.csv",
+    "sourceDocuments": "source_documents.csv",
     "lettings": "lettings.csv",
     "contracts": "contracts.csv",
     "contractProjects": "contract_projects.csv",
@@ -26,6 +27,7 @@ FILE_KEYS = {
 
 ID_FIELDS = {
     "sources": "source_id",
+    "sourceDocuments": "source_document_id",
     "lettings": "letting_id",
     "contracts": "contract_id",
     "contractProjects": "contract_project_id",
@@ -41,6 +43,7 @@ ID_FIELDS = {
 
 REQUIRED = {
     "sources": ["source_id", "source_type", "agency_id", "agency_name", "state", "source_label", "sha256", "parser_name", "parser_version"],
+    "sourceDocuments": ["source_document_id", "source_id", "document_role", "source_url", "source_file_name", "sha256", "media_type", "published_on", "retrieved_on"],
     "lettings": ["letting_id", "source_id", "state", "agency_id", "letting_date"],
     "contracts": ["contract_id", "letting_id", "source_id", "state", "agency_id"],
     "contractProjects": ["contract_project_id", "contract_id"],
@@ -57,6 +60,7 @@ REQUIRED = {
 PRICE_TYPES = {"awarded_bid", "average_bid", "engineer_estimate"}
 INFLATION_FIELDS = ["index_id", "index_name", "period_year", "period_quarter", "period_label", "period_start_date", "period_end_date", "index_value", "source_url"]
 CONFIRMED_AWARD_STATUSES = {"AWARDED", "SIGNED CONTRACT"}
+OPTIONAL_TABLES = {"sourceDocuments", "bidItemPrices"}
 
 
 def read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
@@ -110,7 +114,7 @@ def validate_state(data_dir: Path, config: dict, errors: list[str], warnings: li
     for key, expected_name in FILE_KEYS.items():
         relative = config["files"].get(key)
         if not relative:
-            if key == "bidItemPrices":
+            if key in OPTIONAL_TABLES:
                 tables[key] = []
                 headers_by_key[key] = []
                 continue
@@ -147,7 +151,25 @@ def validate_state(data_dir: Path, config: dict, errors: list[str], warnings: li
     agency_items = {row["agency_item_id"]: row for row in tables["agencyItems"]}
     versions = {row["agency_item_version_id"]: row for row in tables["agencyItemVersions"]}
     taxonomy = {row["taxonomy_id"]: row for row in tables["itemTaxonomy"]}
+    reviewed_sd_awards: set[tuple[str, str, str]] = set()
+    if state == "SD":
+        override_path = data_dir.parent.parent / "data" / "overrides" / "sd" / "award_matches.csv"
+        if override_path.exists():
+            _, override_rows = read_csv(override_path)
+            reviewed_sd_awards = {
+                (
+                    row.get("letting_date", ""),
+                    row.get("item_number", ""),
+                    row.get("bidder_name", ""),
+                )
+                for row in override_rows
+            }
 
+    for row in tables["sourceDocuments"]:
+        if row["source_id"] not in sources:
+            add(errors, state, "source_documents.csv", f"{row['source_document_id']} references missing source {row['source_id']}")
+        if not re.match(r"^https?://", row["source_url"]):
+            add(errors, state, "source_documents.csv", f"{row['source_document_id']} has malformed source_url")
     for row in tables["lettings"]:
         if row["source_id"] not in sources:
             add(errors, state, "lettings.csv", f"{row['letting_id']} references missing source {row['source_id']}")
@@ -210,21 +232,31 @@ def validate_state(data_dir: Path, config: dict, errors: list[str], warnings: li
             add(errors, state, "bid_item_prices.csv", f"{row['bid_item_price_id']} has malformed numerics")
             continue
         if abs(quantity * unit_price - extended) > Decimal("0.02"):
-            add(errors, state, "bid_item_prices.csv", f"{row['bid_item_price_id']} quantity x unit price does not reconcile")
+            if state == "SD":
+                warnings.append(f"{state}/bid_item_prices.csv: {row['bid_item_price_id']} preserves a reported quantity/unit/extension difference")
+            else:
+                add(errors, state, "bid_item_prices.csv", f"{row['bid_item_price_id']} quantity x unit price does not reconcile")
         price_sums[row["bid_id"]] += extended
         if "ADDED OPTION" in item.get("section_title", "").upper():
             added_option_price_sums[row["bid_id"]] += extended
         price_counts[row["bid_id"]] += 1
         prices_by_item[row["contract_item_id"]].append(unit_price)
 
-    if state == "IA":
+    if state in {"IA", "SD"}:
         for bid_id, bid in bids.items():
             total = number(bid["bid_total"])
             if total is not None:
                 difference = price_sums[bid_id] - total
-                if abs(difference) > Decimal("0.02"):
-                    if difference > 0 and added_option_price_sums[bid_id] >= difference:
+                tolerance = (
+                    Decimal("0.01") * max(price_counts[bid_id], 2)
+                    if state == "SD"
+                    else Decimal("0.02")
+                )
+                if abs(difference) > tolerance:
+                    if state == "IA" and difference > 0 and added_option_price_sums[bid_id] >= difference:
                         warnings.append(f"{state}/bids.csv: {bid_id} item total includes preserved unselected added-option prices; difference {difference}")
+                    elif state == "SD":
+                        warnings.append(f"{state}/bids.csv: {bid_id} preserves a reported item/bid total difference of {difference}")
                     else:
                         add(errors, state, "bids.csv", f"{bid_id} item total differs from reported bid total by {difference}")
 
@@ -264,12 +296,30 @@ def validate_state(data_dir: Path, config: dict, errors: list[str], warnings: li
             if awarded_by_contract[contract_id] != 1:
                 add(errors, state, "contracts.csv", f"{contract_id} has {awarded_by_contract[contract_id]} awarded bidders")
             awarded = [bid for bid in contract_bids if truth(bid.get("is_awarded", ""))]
-            if awarded and not awarded_vendor_matches(contract.get("awarded_vendor", ""), awarded[0]["bidder_name"]):
+            letting_date = lettings.get(contract.get("letting_id", ""), {}).get("letting_date", "")
+            has_reviewed_override = bool(awarded) and (
+                letting_date,
+                contract.get("call_order", ""),
+                awarded[0]["bidder_name"],
+            ) in reviewed_sd_awards
+            if (
+                awarded
+                and not awarded_vendor_matches(contract.get("awarded_vendor", ""), awarded[0]["bidder_name"])
+                and not has_reviewed_override
+            ):
                 add(errors, state, "contracts.csv", f"{contract_id} awarded vendor does not resolve uniquely to awarded bidder")
             if awarded and contract.get("awarded_amount"):
                 difference = abs((number(contract["awarded_amount"]) or Decimal()) - (number(awarded[0]["bid_total"]) or Decimal()))
-                if difference > Decimal("0.02"):
-                    add(errors, state, "contracts.csv", f"{contract_id} award amount differs from awarded bid by {difference}")
+                tolerance = (
+                    Decimal("0.01") * max(price_counts[awarded[0]["bid_id"]], 2)
+                    if state == "SD"
+                    else Decimal("0.02")
+                )
+                if difference > tolerance:
+                    if state == "SD":
+                        warnings.append(f"{state}/contracts.csv: {contract_id} preserves a reported award/bid total difference of {difference}")
+                    else:
+                        add(errors, state, "contracts.csv", f"{contract_id} award amount differs from awarded bid by {difference}")
                 elif difference:
                     warnings.append(f"{state}/contracts.csv: {contract_id} preserves a reported award/bid rounding difference of {difference}")
 
@@ -304,6 +354,258 @@ def validate_iowa_acceptance(data_dir: Path, config: dict, tables: dict[str, lis
         _, native = read_csv(native_path)
         if {row["item_code"] for row in native} != set(codes):
             add(errors, "IA", "item_catalog_native.csv", "TXT/PDF promoted code set does not match native staging")
+
+
+def validate_south_dakota_acceptance(
+    data_dir: Path,
+    config: dict,
+    tables: dict[str, list[dict[str, str]]],
+    errors: list[str],
+) -> None:
+    staging_dir = data_dir.parent.parent / "data" / "staging" / "sd"
+    inventory_path = staging_dir / "letting_inventory.csv"
+    catalog_path = staging_dir / "item_catalog_native.csv"
+    annual_path = staging_dir / "annual_price_report_2024.csv"
+    annual_reconciliation_path = staging_dir / "annual_price_reconciliation_2024.csv"
+    review_path = staging_dir / "review_exceptions.csv"
+    summary_path = staging_dir / "import_summary.json"
+    summary: dict[str, int] = {}
+    if not summary_path.exists():
+        add(errors, "SD", "import_summary.json", "import summary is missing")
+    else:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+
+    if not inventory_path.exists():
+        add(errors, "SD", "letting_inventory.csv", "completed-letting inventory is missing")
+    else:
+        _, inventory = read_csv(inventory_path)
+        if len(inventory) < 175:
+            add(errors, "SD", "letting_inventory.csv", f"expected at least 175 entries from 2019 forward; found {len(inventory)}")
+        if summary and summary.get("archive_entries") != len(inventory):
+            add(errors, "SD", "import_summary.json", "archive entry count does not match letting inventory")
+        silent = [
+            row for row in inventory
+            if row.get("parse_status") != "parsed" and not row.get("notes")
+        ]
+        if silent:
+            add(errors, "SD", "letting_inventory.csv", f"{len(silent)} non-parsed entries lack an explicit reason")
+        parsed_inventory = sum(row.get("parse_status") == "parsed" for row in inventory)
+        if parsed_inventory != len(tables.get("lettings", [])):
+            add(errors, "SD", "letting_inventory.csv", "parsed inventory count does not match lettings.csv")
+
+    if not catalog_path.exists():
+        add(errors, "SD", "item_catalog_native.csv", "native catalog staging is missing")
+    else:
+        _, native = read_csv(catalog_path)
+        deleted = [
+            row for row in native
+            if row.get("is_deleted", "").lower() == "true"
+        ]
+        current = [
+            row for row in native
+            if row.get("is_deleted", "").lower() != "true"
+        ]
+        catalog_source = next(
+            (row for row in tables.get("sources", []) if row.get("source_type") == "item_catalog"),
+            {},
+        )
+        is_initial_snapshot = catalog_source.get("source_date") == "2026-07-27"
+        if is_initial_snapshot and (
+            len(native) != 5583 or len(deleted) != 9 or len(current) != 5574
+        ):
+            add(
+                errors,
+                "SD",
+                "item_catalog_native.csv",
+                f"initial catalog snapshot expected 5,583 rows, nine deleted placeholders, and 5,574 current rows; found {len(native)}, {len(deleted)}, {len(current)}",
+            )
+        if summary and (
+            summary.get("catalog_rows") != len(native)
+            or summary.get("catalog_deleted_placeholders") != len(deleted)
+            or summary.get("catalog_current_items") != len(current)
+        ):
+            add(errors, "SD", "import_summary.json", "catalog counts do not match native catalog staging")
+        current_codes = {row["item_code"] for row in current}
+        published_current = {
+            row["item_code"] for row in tables.get("agencyItems", [])
+            if row.get("item_status") == "current"
+        }
+        if current_codes != published_current:
+            add(errors, "SD", "agency_items.csv", "published current code set does not match native catalog")
+
+    if not annual_path.exists():
+        add(errors, "SD", "annual_price_report_2024.csv", "2024 annual-report staging is missing")
+    else:
+        _, annual = read_csv(annual_path)
+        if len(annual) != 1431:
+            add(errors, "SD", "annual_price_report_2024.csv", f"expected 1,431 annual rows; found {len(annual)}")
+        if not annual_reconciliation_path.exists():
+            add(errors, "SD", "annual_price_reconciliation_2024.csv", "annual-report reconciliation is missing")
+        else:
+            reconciliation_headers, reconciliation = read_csv(annual_reconciliation_path)
+            required_reconciliation_fields = {
+                "item_code",
+                "catalog_code_match",
+                "catalog_unit_match",
+                "quantity_difference",
+                "total_cost_difference",
+                "average_low_difference",
+            }
+            missing_fields = required_reconciliation_fields - set(reconciliation_headers)
+            if missing_fields:
+                add(
+                    errors,
+                    "SD",
+                    "annual_price_reconciliation_2024.csv",
+                    f"missing reconciliation fields: {', '.join(sorted(missing_fields))}",
+                )
+            if len(reconciliation) != len(annual):
+                add(
+                    errors,
+                    "SD",
+                    "annual_price_reconciliation_2024.csv",
+                    f"expected one reconciliation row per annual row; found {len(reconciliation)} for {len(annual)} annual rows",
+                )
+            annual_codes = [row.get("item_code", "") for row in annual]
+            reconciliation_codes = [row.get("item_code", "") for row in reconciliation]
+            if annual_codes != reconciliation_codes:
+                add(errors, "SD", "annual_price_reconciliation_2024.csv", "annual and reconciliation item-code sequences differ")
+            for row_number, row in enumerate(reconciliation, 2):
+                for field in (
+                    "catalog_code_match",
+                    "catalog_unit_match",
+                    "quantity_difference",
+                    "total_cost_difference",
+                    "average_low_difference",
+                ):
+                    if row.get(field, "") == "":
+                        add(
+                            errors,
+                            "SD",
+                            "annual_price_reconciliation_2024.csv",
+                            f"line {row_number} does not explicitly record {field}",
+                        )
+
+    reviews: list[dict[str, str]] = []
+    if review_path.exists():
+        _, reviews = read_csv(review_path)
+        unresolved_awards = [
+            row for row in reviews if row.get("category") == "award_resolution"
+        ]
+        if unresolved_awards:
+            add(errors, "SD", "review_exceptions.csv", f"{len(unresolved_awards)} awarded contracts remain unresolved")
+    else:
+        add(errors, "SD", "review_exceptions.csv", "review exception staging is missing")
+    review_details_by_category: defaultdict[str, list[str]] = defaultdict(list)
+    review_contracts_by_category: defaultdict[str, set[str]] = defaultdict(set)
+    for row in reviews:
+        review_details_by_category[row.get("category", "")].append(row.get("details", ""))
+        review_contracts_by_category[row.get("category", "")].add(row.get("contract_id", ""))
+
+    codes = [row["item_code"] for row in tables.get("agencyItems", [])]
+    if len(codes) != len(set(codes)):
+        add(errors, "SD", "agency_items.csv", "catalog item codes are not unique")
+
+    contracts = {row["contract_id"]: row for row in tables.get("contracts", [])}
+    allowed_statuses = {"AWARDED", "WITHDRAWN", "NO BIDS", "REJECTED", "CANCELLED"}
+    for contract_id, contract in contracts.items():
+        if contract.get("letting_status") not in allowed_statuses:
+            add(
+                errors,
+                "SD",
+                "contracts.csv",
+                f"{contract_id} has unsupported normalized status {contract.get('letting_status')!r}",
+            )
+    bids = {row["bid_id"]: row for row in tables.get("bids", [])}
+    bids_by_contract: defaultdict[str, list[dict[str, str]]] = defaultdict(list)
+    for bid in bids.values():
+        bids_by_contract[bid["contract_id"]].append(bid)
+    for contract_id, contract in contracts.items():
+        contract_bids = bids_by_contract.get(contract_id, [])
+        awarded_count = sum(truth(bid.get("is_awarded", "")) for bid in contract_bids)
+        if contract.get("letting_status") == "AWARDED" and awarded_count != 1:
+            add(errors, "SD", "bids.csv", f"{contract_id} must have one confirmed awarded bidder")
+        if contract.get("letting_status") != "AWARDED" and awarded_count:
+            add(errors, "SD", "bids.csv", f"{contract_id} is not awarded but has an awarded bidder")
+        if contract.get("letting_status") == "NO BIDS" and contract_bids:
+            add(errors, "SD", "bids.csv", f"{contract_id} is NO BIDS but contains bidder rows")
+    items = {row["contract_item_id"]: row for row in tables.get("contractItems", [])}
+    prices_by_item: defaultdict[str, list[dict[str, str]]] = defaultdict(list)
+    price_sums_by_bid: defaultdict[str, Decimal] = defaultdict(Decimal)
+    price_counts_by_bid: Counter[str] = Counter()
+    for row in tables.get("bidItemPrices", []):
+        prices_by_item[row["contract_item_id"]].append(row)
+        price_sums_by_bid[row["bid_id"]] += number(row["extended_price"]) or Decimal()
+        price_counts_by_bid[row["bid_id"]] += 1
+        item = items.get(row["contract_item_id"])
+        if item:
+            quantity = number(item["quantity"]) or Decimal()
+            unit_price = number(row["unit_price"]) or Decimal()
+            extended = number(row["extended_price"]) or Decimal()
+            if abs(quantity * unit_price - extended) > Decimal("0.02"):
+                if not any(
+                    row["bid_item_price_id"] in details
+                    for details in review_details_by_category["line_extension_difference"]
+                ):
+                    add(errors, "SD", "review_exceptions.csv", f"{row['bid_item_price_id']} line-extension difference is not explicitly reviewed")
+    for bid_id, bid in bids.items():
+        reported_total = number(bid["bid_total"]) or Decimal()
+        difference = price_sums_by_bid[bid_id] - reported_total
+        tolerance = Decimal("0.01") * max(price_counts_by_bid[bid_id], 2)
+        if abs(difference) > tolerance and not any(
+            bid_id in details for details in review_details_by_category["bid_total_difference"]
+        ):
+            add(errors, "SD", "review_exceptions.csv", f"{bid_id} bid-total difference is not explicitly reviewed")
+    for contract_id, contract in contracts.items():
+        if contract.get("letting_status") != "AWARDED":
+            continue
+        awarded = [
+            bid for bid in bids.values()
+            if bid["contract_id"] == contract_id and truth(bid.get("is_awarded", ""))
+        ]
+        if len(awarded) != 1 or not contract.get("awarded_amount"):
+            continue
+        difference = abs(
+            (number(contract["awarded_amount"]) or Decimal())
+            - (number(awarded[0]["bid_total"]) or Decimal())
+        )
+        tolerance = Decimal("0.01") * max(price_counts_by_bid[awarded[0]["bid_id"]], 2)
+        if (
+            difference > tolerance
+            and contract_id not in review_contracts_by_category["award_amount_difference"]
+        ):
+            add(errors, "SD", "review_exceptions.csv", f"{contract_id} award/bid difference is not explicitly reviewed")
+    observations_by_item: defaultdict[str, list[dict[str, str]]] = defaultdict(list)
+    for row in tables.get("observations", []):
+        item_id = row["observation_id"].rsplit("_", 1)[0]
+        observations_by_item[item_id].append(row)
+
+    for item_id, item in items.items():
+        contract = contracts.get(item["contract_id"])
+        observations = observations_by_item.get(item_id, [])
+        if (
+            item.get("mapping_status") in {"source_deleted", "unmatched"}
+            or not contract
+            or contract.get("letting_status") != "AWARDED"
+        ) and observations:
+            add(errors, "SD", "item_observations.csv", f"{item_id} has observations despite mapping/status exclusion")
+        if not observations:
+            continue
+        item_prices = prices_by_item[item_id]
+        awarded_prices = [
+            row for row in item_prices
+            if truth(bids.get(row["bid_id"], {}).get("is_awarded", ""))
+        ]
+        awarded_observations = [row for row in observations if row["price_type"] == "awarded_bid"]
+        average_observations = [row for row in observations if row["price_type"] == "average_bid"]
+        if len(awarded_prices) != 1 or len(awarded_observations) != 1:
+            add(errors, "SD", "item_observations.csv", f"{item_id} does not have one source/observation awarded price")
+        elif number(awarded_prices[0]["unit_price"]) != number(awarded_observations[0]["unit_price"]):
+            add(errors, "SD", "item_observations.csv", f"{item_id} awarded observation differs from source price")
+        if item_prices:
+            expected_average = sum((number(row["unit_price"]) or Decimal() for row in item_prices), Decimal()) / len(item_prices)
+            if len(average_observations) != 1 or abs((number(average_observations[0]["unit_price"]) or Decimal()) - expected_average) > Decimal("0.00001"):
+                add(errors, "SD", "item_observations.csv", f"{item_id} average observation does not equal the all-bid mean")
 
 
 def validate_common(data_dir: Path, manifest: dict, errors: list[str]) -> None:
@@ -351,6 +653,8 @@ def main() -> None:
         tables = validate_state(args.data_dir, config, errors, warnings)
         if config["code"] == "IA":
             validate_iowa_acceptance(args.data_dir, config, tables, errors)
+        if config["code"] == "SD":
+            validate_south_dakota_acceptance(args.data_dir, config, tables, errors)
         summaries.append({key: len(rows) for key, rows in tables.items()})
         print(f"{config['code']}: " + ", ".join(f"{key}={len(rows):,}" for key, rows in tables.items()))
 

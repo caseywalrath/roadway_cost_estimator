@@ -10,6 +10,7 @@ const csvColumns: CsvColumn[] = [
   { header: "Agency item ID", value: (row) => row.agencyItemId || null },
   { header: "Contract ID", value: (row) => row.contract?.officialContractId || null },
   { header: "Project no.", value: (row) => row.contract?.projectNumber || null },
+  { header: "Project control no.", value: (row) => row.contract?.projectControlNumber || null },
   { header: "Project / location", value: (row) => row.contract?.projectName || null },
   { header: "Call order", value: (row) => row.contract?.callOrder || null },
   { header: "Letting status", value: (row) => row.contract?.lettingStatus || null },
