@@ -12,6 +12,7 @@ export interface StateCapabilities {
 
 export interface StateDataFiles {
   sources: string;
+  sourceDocuments?: string;
   lettings: string;
   contracts: string;
   contractProjects: string;
@@ -66,6 +67,19 @@ export interface SourceRecord {
   agency: string;
 }
 
+export interface SourceDocumentRecord {
+  sourceDocumentId: string;
+  sourceId: string;
+  documentRole: string;
+  sourceUrl: string;
+  sourceFileName: string;
+  sha256: string;
+  mediaType: string;
+  publishedOn: string;
+  retrievedOn: string;
+  notes: string;
+}
+
 export interface LettingRecord {
   lettingId: string;
   sourceId: string;
@@ -103,6 +117,7 @@ export interface ContractRecord {
   countyRegion: string;
   estimateLetDate: string;
   projectNumber: string;
+  projectControlNumber: string;
   projectLocationRaw: string;
   contractor: string;
   awardedBidTotal: number | null;
@@ -114,6 +129,7 @@ export interface ContractProjectRecord {
   contractProjectId: string;
   contractId: string;
   projectNumber: string;
+  projectControlNumber: string;
   projectName: string;
   workType: string;
   countyRegion: string;
@@ -195,7 +211,7 @@ export interface ContractItemRecord {
   engineerEstimateUnitPrice: number | null;
   averageBidUnitPrice: number | null;
   matchedAgencyItemCode: string;
-  matchStatus: "matched" | "unmatched" | "source_cdot_prefix_only";
+  matchStatus: string;
   dateBasis: string;
 }
 
@@ -322,6 +338,7 @@ export interface AppData {
   manifest: AppManifest;
   stateConfig: StateConfig;
   sources: SourceRecord[];
+  sourceDocuments: SourceDocumentRecord[];
   lettings: LettingRecord[];
   contracts: ContractRecord[];
   contractProjects: ContractProjectRecord[];
@@ -337,6 +354,7 @@ export interface AppData {
   contractItems: ContractItemRecord[];
   bidItemPrices: BidItemPriceRecord[];
   sourceById: Map<string, SourceRecord>;
+  sourceDocumentsBySourceId: Map<string, SourceDocumentRecord[]>;
   contractById: Map<string, ContractRecord>;
   contractProjectsByContractId: Map<string, ContractProjectRecord[]>;
   canonicalById: Map<string, CanonicalItemRecord>;

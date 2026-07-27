@@ -1,0 +1,487 @@
+contract_id,category,details
+sd_sddot_20190123_item_001,abstract_parse,page 10 line 211: malformed quantity ''
+sd_sddot_20190123_item_001,abstract_parse,page 24 line 211: malformed quantity ''
+sd_sddot_20190123_item_001,abstract_parse,page 38 line 211: malformed quantity ''
+sd_sddot_20190123_item_001,bid_total_difference,sd_sddot_20190123_item_001_bid_001 preserves printed item total 12420646 and reported bid total 12467527.57; difference=-46881.57.
+sd_sddot_20190123_item_001,bid_total_difference,sd_sddot_20190123_item_001_bid_002 preserves printed item total 12432319.19 and reported bid total 12478983.31; difference=-46664.12.
+sd_sddot_20190123_item_001,bid_total_difference,sd_sddot_20190123_item_001_bid_003 preserves printed item total 12887029.75 and reported bid total 12934599.99; difference=-47570.24.
+sd_sddot_20190123_item_001,bid_total_difference,sd_sddot_20190123_item_001_bid_004 preserves printed item total 13657095.3 and reported bid total 13704723; difference=-47627.7.
+sd_sddot_20190123_item_001,bid_total_difference,sd_sddot_20190123_item_001_bid_005 preserves printed item total 15287140.32 and reported bid total 15332445.31; difference=-45304.99.
+sd_sddot_20190206_item_013,line_extension_difference,"sd_sddot_20190206_item_013_line_0017_001 preserves printed quantity 69.5, unit price 15.5, and extension 187077.25; difference=-186000."
+sd_sddot_20190206_item_013,line_extension_difference,"sd_sddot_20190206_item_013_line_0017_002 preserves printed quantity 69.5, unit price 13.75, and extension 165955.63; difference=-165000."
+sd_sddot_20190206_item_013,line_extension_difference,"sd_sddot_20190206_item_013_line_0017_003 preserves printed quantity 69.5, unit price 17, and extension 205181.5; difference=-204000."
+sd_sddot_20190220_item_002,award_amount_difference,"Final award 9174913.03 resolves uniquely by vendor to abstract bid 9324913.03 for Reede Construction, Inc.."
+sd_sddot_20190220_item_002,bid_total_difference,sd_sddot_20190220_item_002_bid_001 preserves printed item total 9174913.04 and reported bid total 9324913.03; difference=-149999.99.
+sd_sddot_20190220_item_002,bid_total_difference,sd_sddot_20190220_item_002_bid_002 preserves printed item total 10055856.84 and reported bid total 10205856.83; difference=-149999.99.
+sd_sddot_20190220_item_002,bid_total_difference,sd_sddot_20190220_item_002_bid_003 preserves printed item total 12455893.31 and reported bid total 12605893.31; difference=-150000.
+sd_sddot_20191106_item_002,award_amount_difference,"Final award 16873172.33 resolves uniquely by vendor to abstract bid 17113172.33 for Reede Construction, Inc.."
+sd_sddot_20191106_item_002,bid_total_difference,sd_sddot_20191106_item_002_bid_001 preserves printed item total 16873172.37 and reported bid total 17113172.33; difference=-239999.96.
+sd_sddot_20191106_item_002,bid_total_difference,sd_sddot_20191106_item_002_bid_002 preserves printed item total 17877373.17 and reported bid total 18117373.16; difference=-239999.99.
+sd_sddot_20191106_item_002,bid_total_difference,sd_sddot_20191106_item_002_bid_003 preserves printed item total 18493951.25 and reported bid total 18733951.25; difference=-240000.
+sd_sddot_20191106_item_002,bid_total_difference,sd_sddot_20191106_item_002_bid_004 preserves printed item total 18624482.43 and reported bid total 18864482.43; difference=-240000.
+sd_sddot_20200603_item_002,line_extension_difference,"sd_sddot_20200603_item_002_line_0088_001 preserves printed quantity 8, unit price 1050, and extension 18900; difference=-10500."
+sd_sddot_20200603_item_002,line_extension_difference,"sd_sddot_20200603_item_002_line_0088_002 preserves printed quantity 8, unit price 1070, and extension 19260; difference=-10700."
+sd_sddot_20200603_item_002,line_extension_difference,"sd_sddot_20200603_item_002_line_0088_003 preserves printed quantity 8, unit price 1100, and extension 19800; difference=-11000."
+sd_sddot_20200603_item_002,line_extension_difference,"sd_sddot_20200603_item_002_line_0088_004 preserves printed quantity 8, unit price 1000, and extension 18000; difference=-10000."
+sd_sddot_20200916_item_001,award_amount_difference,Final award 17114000 resolves uniquely by vendor to abstract bid 17384000 for MICHELS CORPORATION.
+sd_sddot_20200916_item_001,bid_total_difference,sd_sddot_20200916_item_001_bid_001 preserves printed item total 17114000.01 and reported bid total 17384000; difference=-269999.99.
+sd_sddot_20200916_item_001,bid_total_difference,sd_sddot_20200916_item_001_bid_002 preserves printed item total 18323638.3 and reported bid total 18593638.27; difference=-269999.97.
+sd_sddot_20200916_item_001,bid_total_difference,sd_sddot_20200916_item_001_bid_003 preserves printed item total 19662026.51 and reported bid total 19932026.5; difference=-269999.99.
+sd_sddot_20200916_item_001,bid_total_difference,sd_sddot_20200916_item_001_bid_004 preserves printed item total 19717590.04 and reported bid total 19987590.04; difference=-270000.
+sd_sddot_20200916_item_001,bid_total_difference,sd_sddot_20200916_item_001_bid_005 preserves printed item total 19975000 and reported bid total 20245000; difference=-270000.
+sd_sddot_20200916_item_002,project_pcn_cardinality,"Project No. values 'NH-EM 0014(194)227, FP2019SS01 ( )' do not align with PCN values '03WN, X04Y, 07P4'."
+sd_sddot_20201007_item_001,line_extension_difference,"sd_sddot_20201007_item_001_line_0208_001 preserves printed quantity 261, unit price 31.5, and extension 39721.5; difference=-31500."
+sd_sddot_20201007_item_001,line_extension_difference,"sd_sddot_20201007_item_001_line_0208_002 preserves printed quantity 261, unit price 30, and extension 37830; difference=-30000."
+sd_sddot_20201007_item_001,line_extension_difference,"sd_sddot_20201007_item_001_line_0208_003 preserves printed quantity 261, unit price 30, and extension 37830; difference=-30000."
+sd_sddot_20201007_item_001,line_extension_difference,"sd_sddot_20201007_item_001_line_0208_004 preserves printed quantity 261, unit price 33, and extension 41613; difference=-33000."
+sd_sddot_20201007_item_001,line_extension_difference,"sd_sddot_20201007_item_001_line_0208_005 preserves printed quantity 261, unit price 30, and extension 37830; difference=-30000."
+sd_sddot_20201007_item_001,line_extension_difference,"sd_sddot_20201007_item_001_line_0208_006 preserves printed quantity 261, unit price 31.5, and extension 39721.5; difference=-31500."
+sd_sddot_20201007_item_009,award_amount_difference,"Final award 1422111 resolves uniquely by vendor to abstract bid 2153611 for BX CIVIL & CONSTRUCTION, INC.."
+sd_sddot_20201007_item_009,bid_total_difference,sd_sddot_20201007_item_009_bid_001 preserves printed item total 1422111 and reported bid total 2153611; difference=-731500.
+sd_sddot_20201007_item_009,bid_total_difference,sd_sddot_20201007_item_009_bid_002 preserves printed item total 2098360.83 and reported bid total 3378485.83; difference=-1280125.
+sd_sddot_20201007_item_009,bid_total_difference,sd_sddot_20201007_item_009_bid_003 preserves printed item total 1999925.1 and reported bid total 3712300.1; difference=-1712375.
+sd_sddot_20201104_item_005,project_pcn_cardinality,"Project No. values 'NH 0083(75)39, NH 0018(183)247, P 0044(181)257, P 0049(04)35, P 0183(22)2' do not align with PCN values '03UE, 03UF, 03UH,'."
+sd_sddot_20201202_item_001,abstract_parse,page 7 line 127: malformed quantity ''
+sd_sddot_20201202_item_001,abstract_parse,page 17 line 127: malformed quantity ''
+sd_sddot_20201202_item_001,abstract_parse,page 27 line 127: malformed quantity ''
+sd_sddot_20201202_item_001,bid_total_difference,sd_sddot_20201202_item_001_bid_001 preserves printed item total 11096476.42 and reported bid total 11099144.85; difference=-2668.43.
+sd_sddot_20201202_item_001,bid_total_difference,sd_sddot_20201202_item_001_bid_002 preserves printed item total 11654548.7 and reported bid total 11661300.19; difference=-6751.49.
+sd_sddot_20201202_item_001,bid_total_difference,sd_sddot_20201202_item_001_bid_003 preserves printed item total 11932215.18 and reported bid total 11939448.93; difference=-7233.75.
+sd_sddot_20201202_item_001,bid_total_difference,sd_sddot_20201202_item_001_bid_004 preserves printed item total 12226560.73 and reported bid total 12229454.23; difference=-2893.5.
+sd_sddot_20201202_item_001,bid_total_difference,sd_sddot_20201202_item_001_bid_005 preserves printed item total 13767866.82 and reported bid total 13770278.06; difference=-2411.24.
+sd_sddot_20201202_item_005,line_extension_difference,"sd_sddot_20201202_item_005_line_0009_001 preserves printed quantity 682.5, unit price 18, and extension 30285; difference=-18000."
+sd_sddot_20201202_item_005,line_extension_difference,"sd_sddot_20201202_item_005_line_0009_002 preserves printed quantity 682.5, unit price 30, and extension 50475; difference=-30000."
+sd_sddot_20201209_item_003,abstract_parse,page 42 line 11: inconsistent repeated schedule row
+sd_sddot_20201209_item_003,abstract_parse,page 45 line 11: inconsistent repeated schedule row
+sd_sddot_20201209_item_003,bid_total_difference,sd_sddot_20201209_item_003_bid_002 preserves printed item total 2876116.25 and reported bid total 2897282.25; difference=-21166.
+sd_sddot_20201209_item_003,bid_total_difference,sd_sddot_20201209_item_003_bid_004 preserves printed item total 2972658.96 and reported bid total 2991126.29; difference=-18467.33.
+sd_sddot_20201209_item_003,line_extension_difference,"sd_sddot_20201209_item_003_line_0011_002 preserves printed quantity 1058.3, unit price 20, and extension 0; difference=21166."
+sd_sddot_20201209_item_003,line_extension_difference,"sd_sddot_20201209_item_003_line_0011_004 preserves printed quantity 1058.3, unit price 17.45, and extension 0; difference=18467.34."
+sd_sddot_20210414_item_006,award_amount_difference,"Final award 2966084.03 resolves uniquely by vendor to abstract bid 4418584.03 for CENTRAL SPECIALTIES, INC."
+sd_sddot_20210414_item_006,bid_total_difference,sd_sddot_20210414_item_006_bid_001 preserves printed item total 2966084.03 and reported bid total 4418584.03; difference=-1452500.
+sd_sddot_20210414_item_006,bid_total_difference,sd_sddot_20210414_item_006_bid_002 preserves printed item total 3138998.75 and reported bid total 4986998.75; difference=-1848000.
+sd_sddot_20210421_item_001,line_extension_difference,"sd_sddot_20210421_item_001_line_0096_001 preserves printed quantity 12, unit price 17, and extension 34204; difference=-34000."
+sd_sddot_20210421_item_001,line_extension_difference,"sd_sddot_20210421_item_001_line_0096_002 preserves printed quantity 12, unit price 40.7, and extension 81888.4; difference=-81400."
+sd_sddot_20210421_item_001,line_extension_difference,"sd_sddot_20210421_item_001_line_0096_003 preserves printed quantity 12, unit price 44.76, and extension 90057.12; difference=-89520."
+sd_sddot_20210519_item_002,award_amount_difference,"Final award 5218455.15 resolves uniquely by vendor to abstract bid 5378455.15 for INTERSTATE IMPROVEMENT, INC.."
+sd_sddot_20210519_item_002,bid_total_difference,sd_sddot_20210519_item_002_bid_001 preserves printed item total 5218455.16 and reported bid total 5378455.15; difference=-159999.99.
+sd_sddot_20210519_item_002,bid_total_difference,sd_sddot_20210519_item_002_bid_002 preserves printed item total 4811381.99 and reported bid total 5504981.99; difference=-693600.
+sd_sddot_20210519_item_002,bid_total_difference,sd_sddot_20210519_item_002_bid_003 preserves printed item total 4984090.03 and reported bid total 5556890.02; difference=-572799.99.
+sd_sddot_20210721_item_001,line_extension_difference,"sd_sddot_20210721_item_001_line_0008_001 preserves printed quantity 101, unit price 34.52, and extension 452246.52; difference=-448760."
+sd_sddot_20210721_item_001,line_extension_difference,"sd_sddot_20210721_item_001_line_0008_002 preserves printed quantity 101, unit price 34, and extension 445434; difference=-442000."
+sd_sddot_20210901_item_001,abstract_parse,page 8 line 168: malformed quantity ''
+sd_sddot_20210901_item_001,bid_total_difference,sd_sddot_20210901_item_001_bid_001 preserves printed item total 20988187.88 and reported bid total 20993728.92; difference=-5541.04.
+sd_sddot_20210901_item_001,bid_total_difference,sd_sddot_20210901_item_001_bid_002 preserves printed item total 21873857.83 and reported bid total 21880170.43; difference=-6312.6.
+sd_sddot_20211020_item_002,line_extension_difference,"sd_sddot_20211020_item_002_line_0098_001 preserves printed quantity 2, unit price 550, and extension 6600; difference=-5500."
+sd_sddot_20211020_item_002,line_extension_difference,"sd_sddot_20211020_item_002_line_0098_002 preserves printed quantity 2, unit price 526, and extension 6312; difference=-5260."
+sd_sddot_20211020_item_002,line_extension_difference,"sd_sddot_20211020_item_002_line_0098_003 preserves printed quantity 2, unit price 510, and extension 6120; difference=-5100."
+sd_sddot_20211020_item_002,line_extension_difference,"sd_sddot_20211020_item_002_line_0098_004 preserves printed quantity 2, unit price 500, and extension 6000; difference=-5000."
+sd_sddot_20211020_item_002,line_extension_difference,"sd_sddot_20211020_item_002_line_0098_005 preserves printed quantity 2, unit price 500, and extension 6000; difference=-5000."
+sd_sddot_20211103_item_001,abstract_parse,page 8 line 151: malformed quantity ''
+sd_sddot_20211103_item_001,abstract_parse,page 20 line 151: malformed quantity ''
+sd_sddot_20211103_item_001,bid_total_difference,sd_sddot_20211103_item_001_bid_001 preserves printed item total 22618205.37 and reported bid total 22618378.6; difference=-173.23.
+sd_sddot_20211103_item_001,bid_total_difference,sd_sddot_20211103_item_001_bid_002 preserves printed item total 24040442.45 and reported bid total 24040624.11; difference=-181.66.
+sd_sddot_20211103_item_001,bid_total_difference,sd_sddot_20211103_item_001_bid_003 preserves printed item total 26053480.4 and reported bid total 26053648.4; difference=-168.
+sd_sddot_20211117_item_003,project_pcn_cardinality,"Project No. values 'BR CSBP(01)' do not align with PCN values '07ME, 07NM, 07NK,'."
+sd_sddot_20211117_item_005,line_extension_difference,"sd_sddot_20211117_item_005_line_0161_001 preserves printed quantity 533, unit price 75.06, and extension 115066.98; difference=-75060."
+sd_sddot_20211117_item_005,line_extension_difference,"sd_sddot_20211117_item_005_line_0161_002 preserves printed quantity 533, unit price 35.7, and extension 54728.1; difference=-35700."
+sd_sddot_20211117_item_005,line_extension_difference,"sd_sddot_20211117_item_005_line_0161_003 preserves printed quantity 533, unit price 35, and extension 53655; difference=-35000."
+sd_sddot_20211117_item_005,line_extension_difference,"sd_sddot_20211117_item_005_line_0161_004 preserves printed quantity 533, unit price 48.5, and extension 74350.5; difference=-48500."
+sd_sddot_20211117_item_006,project_pcn_cardinality,"Project No. values 'IM 0906(75)263' do not align with PCN values '04NK, X05C'."
+sd_sddot_20211201_item_001,award_amount_difference,"Final award 11925649.21 resolves uniquely by vendor to abstract bid 12300649.21 for J & J EARTH WORKS, INC."
+sd_sddot_20211201_item_001,bid_total_difference,sd_sddot_20211201_item_001_bid_001 preserves printed item total 11925649.22 and reported bid total 12300649.21; difference=-374999.99.
+sd_sddot_20211201_item_001,bid_total_difference,sd_sddot_20211201_item_001_bid_002 preserves printed item total 11885547.84 and reported bid total 12585547.84; difference=-700000.
+sd_sddot_20211201_item_001,bid_total_difference,sd_sddot_20211201_item_001_bid_003 preserves printed item total 11049575.73 and reported bid total 12799575.73; difference=-1750000.
+sd_sddot_20211201_item_007,abstract_parse,page 68 line 42: inconsistent repeated schedule row
+sd_sddot_20211201_item_007,abstract_parse,page 81 line 42: inconsistent repeated schedule row
+sd_sddot_20211201_item_007,abstract_parse,page 94 line 42: inconsistent repeated schedule row
+sd_sddot_20211201_item_007,bid_total_difference,sd_sddot_20211201_item_007_bid_002 preserves printed item total 35392614.47 and reported bid total 37741174.46; difference=-2348559.99.
+sd_sddot_20211201_item_007,bid_total_difference,sd_sddot_20211201_item_007_bid_004 preserves printed item total 37822661.01 and reported bid total 40171220.99; difference=-2348559.98.
+sd_sddot_20211201_item_007,line_extension_difference,"sd_sddot_20211201_item_007_line_0042_002 preserves printed quantity 469712, unit price 5, and extension 0; difference=2348560."
+sd_sddot_20211201_item_007,line_extension_difference,"sd_sddot_20211201_item_007_line_0042_004 preserves printed quantity 469712, unit price 5, and extension 0; difference=2348560."
+sd_sddot_20211215_item_001,abstract_parse,page 11 line 220: malformed quantity ''
+sd_sddot_20211215_item_001,abstract_parse,page 29 line 220: malformed quantity ''
+sd_sddot_20211215_item_001,bid_total_difference,sd_sddot_20211215_item_001_bid_001 preserves printed item total 35552545.02 and reported bid total 35568714; difference=-16168.98.
+sd_sddot_20211215_item_001,bid_total_difference,sd_sddot_20211215_item_001_bid_002 preserves printed item total 37680628 and reported bid total 37697500; difference=-16872.
+sd_sddot_20211215_item_001,bid_total_difference,sd_sddot_20211215_item_001_bid_003 preserves printed item total 38081447.78 and reported bid total 38097897.97; difference=-16450.19.
+sd_sddot_20211215_item_001,bid_total_difference,sd_sddot_20211215_item_001_bid_004 preserves printed item total 41278198.89 and reported bid total 41293664.87; difference=-15465.98.
+sd_sddot_20211215_item_001,project_pcn_cardinality,"Project No. values 'IM 0293(106)76, P 1400(16), P 1423(07), P 8050(81)' do not align with PCN values '03RA, 05NF, 06Y0,'."
+sd_sddot_20220302_item_001,project_pcn_cardinality,"Project No. values 'BRO 8003(37), BRO 8008(04), BRO 8014(37), BRO 8030(16), BRO 8042(50), BRO 8044(14)' do not align with PCN values '08A6, 08A7, 08A8,'."
+sd_sddot_20220406_item_001,abstract_parse,page 7 line 122: malformed quantity ''
+sd_sddot_20220406_item_001,abstract_parse,page 18 line 122: malformed quantity ''
+sd_sddot_20220406_item_001,bid_total_difference,sd_sddot_20220406_item_001_bid_001 preserves printed item total 20017270.07 and reported bid total 20025525.25; difference=-8255.18.
+sd_sddot_20220406_item_001,bid_total_difference,sd_sddot_20220406_item_001_bid_002 preserves printed item total 20243919.13 and reported bid total 20252071.12; difference=-8151.99.
+sd_sddot_20220406_item_001,bid_total_difference,sd_sddot_20220406_item_001_bid_003 preserves printed item total 20872005.84 and reported bid total 20879951.47; difference=-7945.63.
+sd_sddot_20220420_item_004,award_amount_difference,"Final award 614062.68 resolves uniquely by vendor to abstract bid 854062.68 for TRU-FORM CONSTRUCTION, INC.."
+sd_sddot_20220420_item_004,bid_total_difference,sd_sddot_20220420_item_004_bid_001 preserves printed item total 614062.68 and reported bid total 854062.68; difference=-240000.
+sd_sddot_20220511_item_001,abstract_parse,page 13 line 268: malformed quantity ''
+sd_sddot_20220511_item_001,abstract_parse,page 28 line 268: malformed quantity ''
+sd_sddot_20220511_item_001,bid_total_difference,sd_sddot_20220511_item_001_bid_001 preserves printed item total 35013383.84 and reported bid total 35035743.84; difference=-22360.
+sd_sddot_20220511_item_001,bid_total_difference,sd_sddot_20220511_item_001_bid_002 preserves printed item total 37113660.73 and reported bid total 37135260.72; difference=-21599.99.
+sd_sddot_20220511_item_001,bid_total_difference,sd_sddot_20220511_item_001_bid_003 preserves printed item total 41973296.28 and reported bid total 41995502; difference=-22205.72.
+sd_sddot_20220615_item_005,line_extension_difference,"sd_sddot_20220615_item_005_line_0008_001 preserves printed quantity 774, unit price 37.5, and extension 329025; difference=-300000."
+sd_sddot_20220615_item_005,line_extension_difference,"sd_sddot_20220615_item_005_line_0008_002 preserves printed quantity 774, unit price 31.67, and extension 277872.58; difference=-253360."
+sd_sddot_20221207_item_001,abstract_parse,page 11 line 226: malformed quantity ''
+sd_sddot_20221207_item_001,abstract_parse,page 11 line 227: malformed quantity ''
+sd_sddot_20221207_item_001,bid_total_difference,sd_sddot_20221207_item_001_bid_001 preserves printed item total 34244756.23 and reported bid total 34295545.45; difference=-50789.22.
+sd_sddot_20221207_item_001,bid_total_difference,sd_sddot_20221207_item_001_bid_002 preserves printed item total 37362905.93 and reported bid total 37413695.18; difference=-50789.25.
+sd_sddot_20230201_item_009,abstract_parse,page 45 line 10: malformed quantity ''
+sd_sddot_20230201_item_009,abstract_parse,page 45 line 11: malformed quantity ''
+sd_sddot_20230201_item_009,abstract_parse,page 47 line 10: malformed quantity ''
+sd_sddot_20230201_item_009,abstract_parse,page 47 line 11: malformed quantity ''
+sd_sddot_20230201_item_009,bid_total_difference,sd_sddot_20230201_item_009_bid_001 preserves printed item total 4393090.72 and reported bid total 4582972.72; difference=-189882.
+sd_sddot_20230201_item_009,bid_total_difference,sd_sddot_20230201_item_009_bid_002 preserves printed item total 4648681.91 and reported bid total 4848345.71; difference=-199663.8.
+sd_sddot_20230201_item_009,bid_total_difference,sd_sddot_20230201_item_009_bid_003 preserves printed item total 4690444.43 and reported bid total 4934989.43; difference=-244545.
+sd_sddot_20230215_item_002,award_amount_difference,"Final award 18238025.8 resolves uniquely by vendor to abstract bid 20100025.8 for CENTRAL SPECIALTIES, INC."
+sd_sddot_20230215_item_002,bid_total_difference,sd_sddot_20230215_item_002_bid_001 preserves printed item total 18238025.8 and reported bid total 20100025.8; difference=-1862000.
+sd_sddot_20230215_item_002,bid_total_difference,sd_sddot_20230215_item_002_bid_002 preserves printed item total 17962903.75 and reported bid total 20342903.75; difference=-2380000.
+sd_sddot_20230215_item_002,bid_total_difference,sd_sddot_20230215_item_002_bid_003 preserves printed item total 18520010.5 and reported bid total 20961610.5; difference=-2441600.
+sd_sddot_20230301_item_006,abstract_parse,page 34 line 8: malformed quantity ''
+sd_sddot_20230301_item_006,abstract_parse,page 34 line 9: malformed quantity ''
+sd_sddot_20230301_item_006,bid_total_difference,sd_sddot_20230301_item_006_bid_001 preserves printed item total 560487.84 and reported bid total 599988.84; difference=-39501.
+sd_sddot_20230301_item_006,bid_total_difference,sd_sddot_20230301_item_006_bid_002 preserves printed item total 793647.6 and reported bid total 839794.8; difference=-46147.2.
+sd_sddot_20230405_item_004,abstract_parse,page 13 line 2: malformed quantity ''
+sd_sddot_20230405_item_004,abstract_parse,page 13 line 3: malformed quantity ''
+sd_sddot_20230405_item_004,abstract_parse,page 14 line 2: malformed quantity ''
+sd_sddot_20230405_item_004,abstract_parse,page 14 line 3: malformed quantity ''
+sd_sddot_20230405_item_004,bid_total_difference,sd_sddot_20230405_item_004_bid_001 preserves printed item total 73353.72 and reported bid total 188632.32; difference=-115278.6.
+sd_sddot_20230405_item_004,bid_total_difference,sd_sddot_20230405_item_004_bid_002 preserves printed item total 107296.32 and reported bid total 207976.32; difference=-100680.
+sd_sddot_20230405_item_004,bid_total_difference,sd_sddot_20230405_item_004_bid_003 preserves printed item total 124699.1 and reported bid total 223701.1; difference=-99002.
+sd_sddot_20230405_item_005,abstract_parse,page 15 line 23: malformed quantity ''
+sd_sddot_20230405_item_005,abstract_parse,page 15 line 25: malformed quantity ''
+sd_sddot_20230405_item_005,bid_total_difference,sd_sddot_20230405_item_005_bid_001 preserves printed item total 7966102.98 and reported bid total 7977577.98; difference=-11475.
+sd_sddot_20230405_item_005,bid_total_difference,sd_sddot_20230405_item_005_bid_002 preserves printed item total 8554930.25 and reported bid total 8565946.25; difference=-11016.
+sd_sddot_20230419_item_003,abstract_parse,page 9 line 9: malformed quantity ''
+sd_sddot_20230419_item_003,abstract_parse,page 9 line 10: malformed quantity ''
+sd_sddot_20230419_item_003,abstract_parse,page 11 line 9: malformed quantity ''
+sd_sddot_20230419_item_003,abstract_parse,page 11 line 10: malformed quantity ''
+sd_sddot_20230419_item_003,bid_total_difference,sd_sddot_20230419_item_003_bid_001 preserves printed item total 2609328.01 and reported bid total 2639136.01; difference=-29808.
+sd_sddot_20230419_item_003,bid_total_difference,sd_sddot_20230419_item_003_bid_002 preserves printed item total 2618243.43 and reported bid total 2641841.43; difference=-23598.
+sd_sddot_20230419_item_003,bid_total_difference,sd_sddot_20230419_item_003_bid_003 preserves printed item total 2975227 and reported bid total 2997997; difference=-22770.
+sd_sddot_20230503_item_001,abstract_parse,page 9 line 176: malformed quantity ''
+sd_sddot_20230503_item_001,abstract_parse,page 9 line 177: malformed quantity ''
+sd_sddot_20230503_item_001,abstract_parse,page 23 line 176: malformed quantity ''
+sd_sddot_20230503_item_001,abstract_parse,page 23 line 177: malformed quantity ''
+sd_sddot_20230503_item_001,bid_total_difference,sd_sddot_20230503_item_001_bid_001 preserves printed item total 47908630.62 and reported bid total 47933520.32; difference=-24889.7.
+sd_sddot_20230503_item_001,bid_total_difference,sd_sddot_20230503_item_001_bid_002 preserves printed item total 49249109.87 and reported bid total 49275575.75; difference=-26465.88.
+sd_sddot_20230503_item_001,bid_total_difference,sd_sddot_20230503_item_001_bid_003 preserves printed item total 68042634.8 and reported bid total 68067524.49; difference=-24889.69.
+sd_sddot_20230503_item_001,bid_total_difference,sd_sddot_20230503_item_001_bid_004 preserves printed item total 69885977.38 and reported bid total 69904757.77; difference=-18780.39.
+sd_sddot_20230503_item_001,project_pcn_cardinality,"Project No. values 'NH-TA 0100(108)407, NH 2115(00), P 1261(00), P 1353(00)' do not align with PCN values '01V6, 08DE, 08DF,'."
+sd_sddot_20230503_item_003,project_pcn_cardinality,"Project No. values 'BRO 8003(40), BRO 8030(23), BRO 8046(06), BRO 8054(06)' do not align with PCN values '08NF, 08NL, 08NM,'."
+sd_sddot_20230503_item_006,abstract_parse,page 51 line 3: malformed quantity ''
+sd_sddot_20230503_item_006,abstract_parse,page 51 line 4: malformed quantity ''
+sd_sddot_20230503_item_006,bid_total_difference,sd_sddot_20230503_item_006_bid_001 preserves printed item total 140309.8 and reported bid total 348857.8; difference=-208548.
+sd_sddot_20230503_item_006,bid_total_difference,sd_sddot_20230503_item_006_bid_002 preserves printed item total 197944.2 and reported bid total 460560.2; difference=-262616.
+sd_sddot_20230503_item_009,award_amount_difference,Final award 2523640.5 resolves uniquely by vendor to abstract bid 3283640.5 for Complete Concrete Inc dba Complete Contracting Sol.
+sd_sddot_20230503_item_009,bid_total_difference,sd_sddot_20230503_item_009_bid_001 preserves printed item total 2523640.5 and reported bid total 3283640.5; difference=-760000.
+sd_sddot_20230517_item_001,abstract_parse,page 9 line 178: malformed quantity ''
+sd_sddot_20230517_item_001,abstract_parse,page 9 line 179: malformed quantity ''
+sd_sddot_20230517_item_001,abstract_parse,page 20 line 178: malformed quantity ''
+sd_sddot_20230517_item_001,abstract_parse,page 20 line 179: malformed quantity ''
+sd_sddot_20230517_item_001,abstract_parse,page 31 line 178: malformed quantity ''
+sd_sddot_20230517_item_001,abstract_parse,page 31 line 179: malformed quantity ''
+sd_sddot_20230517_item_001,bid_total_difference,sd_sddot_20230517_item_001_bid_001 preserves printed item total 45534928 and reported bid total 45617461.59; difference=-82533.59.
+sd_sddot_20230517_item_001,bid_total_difference,sd_sddot_20230517_item_001_bid_002 preserves printed item total 46955172.71 and reported bid total 47035010.69; difference=-79837.98.
+sd_sddot_20230517_item_001,bid_total_difference,sd_sddot_20230517_item_001_bid_003 preserves printed item total 47715807.23 and reported bid total 47799999.99; difference=-84192.76.
+sd_sddot_20230517_item_001,bid_total_difference,sd_sddot_20230517_item_001_bid_004 preserves printed item total 49288331.93 and reported bid total 49372317.14; difference=-83985.21.
+sd_sddot_20230517_item_001,bid_total_difference,sd_sddot_20230517_item_001_bid_005 preserves printed item total 49837904 and reported bid total 49925000; difference=-87096.
+sd_sddot_20230517_item_005,abstract_parse,page 44 line 4: malformed quantity ''
+sd_sddot_20230517_item_005,bid_total_difference,sd_sddot_20230517_item_005_bid_001 preserves printed item total 661403.8 and reported bid total 677153.8; difference=-15750.
+sd_sddot_20230517_item_005,bid_total_difference,sd_sddot_20230517_item_005_bid_002 preserves printed item total 799862.8 and reported bid total 807212.8; difference=-7350.
+sd_sddot_20230517_item_006,abstract_parse,page 45 line 3: malformed quantity ''
+sd_sddot_20230517_item_006,abstract_parse,page 45 line 5: malformed quantity ''
+sd_sddot_20230517_item_006,bid_total_difference,sd_sddot_20230517_item_006_bid_001 preserves printed item total 1332210.2 and reported bid total 1493305.2; difference=-161095.
+sd_sddot_20230517_item_006,bid_total_difference,sd_sddot_20230517_item_006_bid_002 preserves printed item total 1338599.93 and reported bid total 1537098.26; difference=-198498.33.
+sd_sddot_20230607_item_002,abstract_parse,page 6 line 4: malformed quantity ''
+sd_sddot_20230607_item_002,abstract_parse,page 6 line 6: malformed quantity ''
+sd_sddot_20230607_item_002,bid_total_difference,sd_sddot_20230607_item_002_bid_001 preserves printed item total 1138985.54 and reported bid total 1754107.04; difference=-615121.5.
+sd_sddot_20230607_item_002,bid_total_difference,sd_sddot_20230607_item_002_bid_002 preserves printed item total 1315135.05 and reported bid total 1892873.05; difference=-577738.
+sd_sddot_20230906_item_007,abstract_parse,page 30 line 2: malformed quantity ''
+sd_sddot_20230906_item_007,abstract_parse,page 30 line 3: malformed quantity ''
+sd_sddot_20230906_item_007,bid_total_difference,sd_sddot_20230906_item_007_bid_001 preserves printed item total 186312.18 and reported bid total 246522.18; difference=-60210.
+sd_sddot_20230906_item_007,bid_total_difference,sd_sddot_20230906_item_007_bid_002 preserves printed item total 178695.88 and reported bid total 248940.88; difference=-70245.
+sd_sddot_20231018_item_005,line_extension_difference,"sd_sddot_20231018_item_005_line_0028_001 preserves printed quantity 479.5, unit price 32, and extension 47344; difference=-32000."
+sd_sddot_20231018_item_005,line_extension_difference,"sd_sddot_20231018_item_005_line_0028_002 preserves printed quantity 479.5, unit price 41, and extension 60659.5; difference=-41000."
+sd_sddot_20231115_item_003,project_pcn_cardinality,"Project No. values 'P 0044(212)172, 044-391, 044-392, 053-391, 073-391, P 0044(215)194, P 0063(62)54' do not align with PCN values '04X0, I7AJ, I7AH, I7AE,'."
+sd_sddot_20231115_item_006,line_extension_difference,"sd_sddot_20231115_item_006_line_0017_001 preserves printed quantity 942, unit price 37.5, and extension 110325; difference=-75000."
+sd_sddot_20231115_item_006,line_extension_difference,"sd_sddot_20231115_item_006_line_0017_002 preserves printed quantity 942, unit price 24, and extension 70608; difference=-48000."
+sd_sddot_20240227_item_001,abstract_parse,page 11 line 240: malformed quantity ''
+sd_sddot_20240227_item_001,abstract_parse,page 12 line 241: malformed quantity ''
+sd_sddot_20240227_item_001,abstract_parse,page 28 line 240: malformed quantity ''
+sd_sddot_20240227_item_001,abstract_parse,page 29 line 241: malformed quantity ''
+sd_sddot_20240227_item_001,bid_total_difference,sd_sddot_20240227_item_001_bid_001 preserves printed item total 41268293.08 and reported bid total 41275125.06; difference=-6831.98.
+sd_sddot_20240227_item_001,bid_total_difference,sd_sddot_20240227_item_001_bid_002 preserves printed item total 42096228.27 and reported bid total 42129505.26; difference=-33276.99.
+sd_sddot_20240227_item_001,bid_total_difference,sd_sddot_20240227_item_001_bid_003 preserves printed item total 42813466.43 and reported bid total 42845063.9; difference=-31597.47.
+sd_sddot_20240227_item_001,bid_total_difference,sd_sddot_20240227_item_001_bid_004 preserves printed item total 44152822.34 and reported bid total 44159654.34; difference=-6832.
+sd_sddot_20240227_item_001,line_extension_difference,"sd_sddot_20240227_item_001_line_0228_001 preserves printed quantity 666.4, unit price 26.13, and extension 43543.03; difference=-26130."
+sd_sddot_20240227_item_001,line_extension_difference,"sd_sddot_20240227_item_001_line_0228_002 preserves printed quantity 666.4, unit price 26.06, and extension 43426.38; difference=-26060."
+sd_sddot_20240227_item_001,line_extension_difference,"sd_sddot_20240227_item_001_line_0228_003 preserves printed quantity 666.4, unit price 33, and extension 54991.2; difference=-33000."
+sd_sddot_20240227_item_001,line_extension_difference,"sd_sddot_20240227_item_001_line_0228_004 preserves printed quantity 666.4, unit price 35.5, and extension 59157.2; difference=-35500."
+sd_sddot_20240306_item_001,abstract_parse,page 4 line 51: malformed quantity ''
+sd_sddot_20240306_item_001,abstract_parse,page 8 line 51: malformed quantity ''
+sd_sddot_20240306_item_001,bid_total_difference,sd_sddot_20240306_item_001_bid_001 preserves printed item total 10962162.75 and reported bid total 10983007; difference=-20844.25.
+sd_sddot_20240306_item_001,bid_total_difference,sd_sddot_20240306_item_001_bid_002 preserves printed item total 11441243.07 and reported bid total 11460808.07; difference=-19565.
+sd_sddot_20240306_item_001,bid_total_difference,sd_sddot_20240306_item_001_bid_003 preserves printed item total 11643190.04 and reported bid total 11662755.05; difference=-19565.01.
+sd_sddot_20240320_item_001,award_amount_difference,"Final award 14210000 resolves uniquely by vendor to abstract bid 14530000 for BX CIVIL & CONSTRUCTION, INC.."
+sd_sddot_20240320_item_001,bid_total_difference,sd_sddot_20240320_item_001_bid_001 preserves printed item total 14210000 and reported bid total 14530000; difference=-320000.
+sd_sddot_20240320_item_001,bid_total_difference,sd_sddot_20240320_item_001_bid_002 preserves printed item total 14542908.11 and reported bid total 14922908.11; difference=-380000.
+sd_sddot_20240320_item_001,bid_total_difference,sd_sddot_20240320_item_001_bid_003 preserves printed item total 15238073.29 and reported bid total 15813073.26; difference=-574999.97.
+sd_sddot_20240404_item_006,award_amount_difference,"Final award 1911334.4 resolves uniquely by vendor to abstract bid 2611334.4 for BX CIVIL & CONSTRUCTION, INC.."
+sd_sddot_20240404_item_006,bid_total_difference,sd_sddot_20240404_item_006_bid_001 preserves printed item total 1911334.4 and reported bid total 2611334.4; difference=-700000.
+sd_sddot_20240404_item_006,bid_total_difference,sd_sddot_20240404_item_006_bid_002 preserves printed item total 2838666.66 and reported bid total 3398666.66; difference=-560000.
+sd_sddot_20240417_item_001,abstract_parse,page 5 line 87: malformed quantity ''
+sd_sddot_20240417_item_001,abstract_parse,page 5 line 88: malformed quantity ''
+sd_sddot_20240417_item_001,bid_total_difference,sd_sddot_20240417_item_001_bid_001 preserves printed item total 10411023.65 and reported bid total 10418223.64; difference=-7199.99.
+sd_sddot_20240417_item_001,bid_total_difference,sd_sddot_20240417_item_001_bid_002 preserves printed item total 12332656 and reported bid total 12340000.02; difference=-7344.02.
+sd_sddot_20240417_item_009,abstract_parse,page 37 line 10: malformed quantity ''
+sd_sddot_20240417_item_009,bid_total_difference,sd_sddot_20240417_item_009_bid_001 preserves printed item total 5542414.39 and reported bid total 5639914.39; difference=-97500.
+sd_sddot_20240417_item_010,abstract_parse,page 38 line 2: malformed quantity ''
+sd_sddot_20240417_item_010,abstract_parse,page 38 line 3: malformed quantity ''
+sd_sddot_20240417_item_010,abstract_parse,page 39 line 2: malformed quantity ''
+sd_sddot_20240417_item_010,abstract_parse,page 39 line 3: malformed quantity ''
+sd_sddot_20240417_item_010,bid_total_difference,sd_sddot_20240417_item_010_bid_001 preserves printed item total 55787.2 and reported bid total 80097.2; difference=-24310.
+sd_sddot_20240417_item_010,bid_total_difference,sd_sddot_20240417_item_010_bid_002 preserves printed item total 64289.5 and reported bid total 96827.5; difference=-32538.
+sd_sddot_20240417_item_010,bid_total_difference,sd_sddot_20240417_item_010_bid_003 preserves printed item total 90464.5 and reported bid total 114734.5; difference=-24270.
+sd_sddot_20240501_item_003,line_extension_difference,"sd_sddot_20240501_item_003_line_0012_001 preserves printed quantity 42.6, unit price 24, and extension 529022.4; difference=-528000."
+sd_sddot_20240501_item_003,line_extension_difference,"sd_sddot_20240501_item_003_line_0012_002 preserves printed quantity 42.6, unit price 37, and extension 815576.2; difference=-814000."
+sd_sddot_20240501_item_005,award_amount_difference,"Final award 7790806.15 resolves uniquely by vendor to abstract bid 9820806.15 for BITUMINOUS PAVING, INC.."
+sd_sddot_20240501_item_005,bid_total_difference,sd_sddot_20240501_item_005_bid_001 preserves printed item total 7790806.15 and reported bid total 9820806.15; difference=-2030000.
+sd_sddot_20240501_item_005,bid_total_difference,sd_sddot_20240501_item_005_bid_002 preserves printed item total 10096445.64 and reported bid total 11053445.64; difference=-957000.
+sd_sddot_20240515_item_004,award_amount_difference,Final award 5659099 resolves uniquely by vendor to abstract bid 6099099 for Soukup Construction Inc.
+sd_sddot_20240515_item_004,bid_total_difference,sd_sddot_20240515_item_004_bid_001 preserves printed item total 5659099.03 and reported bid total 6099099; difference=-439999.97.
+sd_sddot_20240515_item_004,bid_total_difference,sd_sddot_20240515_item_004_bid_002 preserves printed item total 6205286.18 and reported bid total 7455286.17; difference=-1249999.99.
+sd_sddot_20240605_item_005,abstract_parse,page 24 line 16: malformed quantity ''
+sd_sddot_20240605_item_005,abstract_parse,page 24 line 17: malformed quantity ''
+sd_sddot_20240605_item_005,abstract_parse,page 26 line 16: malformed quantity ''
+sd_sddot_20240605_item_005,abstract_parse,page 26 line 17: malformed quantity ''
+sd_sddot_20240605_item_005,bid_total_difference,sd_sddot_20240605_item_005_bid_001 preserves printed item total 2347483.02 and reported bid total 2363913.77; difference=-16430.75.
+sd_sddot_20240605_item_005,bid_total_difference,sd_sddot_20240605_item_005_bid_002 preserves printed item total 2604457.7 and reported bid total 2620487.7; difference=-16030.
+sd_sddot_20240605_item_005,bid_total_difference,sd_sddot_20240605_item_005_bid_003 preserves printed item total 2733548.6 and reported bid total 2751410.6; difference=-17862.
+sd_sddot_20240605_item_005,bid_total_difference,sd_sddot_20240605_item_005_bid_004 preserves printed item total 2823924.19 and reported bid total 2839999.99; difference=-16075.8.
+sd_sddot_20240626_item_005,abstract_parse,page 15 line 36: malformed quantity ''
+sd_sddot_20240626_item_005,abstract_parse,page 15 line 37: malformed quantity ''
+sd_sddot_20240626_item_005,bid_total_difference,sd_sddot_20240626_item_005_bid_001 preserves printed item total 8065396 and reported bid total 8139124; difference=-73728.
+sd_sddot_20240626_item_005,bid_total_difference,sd_sddot_20240626_item_005_bid_002 preserves printed item total 9383548.62 and reported bid total 9452668.62; difference=-69120.
+sd_sddot_20240717_item_003,abstract_parse,page 18 line 4: malformed quantity ''
+sd_sddot_20240717_item_003,abstract_parse,page 18 line 5: malformed quantity ''
+sd_sddot_20240717_item_003,bid_total_difference,sd_sddot_20240717_item_003_bid_001 preserves printed item total 621187.55 and reported bid total 1015162.55; difference=-393975.
+sd_sddot_20240904_item_003,abstract_parse,page 15 line 121: malformed quantity ''
+sd_sddot_20240904_item_003,abstract_parse,page 15 line 122: malformed quantity ''
+sd_sddot_20240904_item_003,abstract_parse,page 23 line 121: malformed quantity ''
+sd_sddot_20240904_item_003,abstract_parse,page 23 line 122: malformed quantity ''
+sd_sddot_20240904_item_003,bid_total_difference,sd_sddot_20240904_item_003_bid_001 preserves printed item total 15092274.28 and reported bid total 15096437.98; difference=-4163.7.
+sd_sddot_20240904_item_003,bid_total_difference,sd_sddot_20240904_item_003_bid_002 preserves printed item total 19485431.16 and reported bid total 19489391.16; difference=-3960.
+sd_sddot_20240904_item_003,bid_total_difference,sd_sddot_20240904_item_003_bid_003 preserves printed item total 21933491.05 and reported bid total 21936930.94; difference=-3439.89.
+sd_sddot_20240904_item_004,award_amount_difference,"Final award 7419860.48 resolves uniquely by vendor to abstract bid 9099860.48 for GENERAL EXCAVATING, LLC."
+sd_sddot_20240904_item_004,bid_total_difference,sd_sddot_20240904_item_004_bid_001 preserves printed item total 7419860.48 and reported bid total 9099860.48; difference=-1680000.
+sd_sddot_20240904_item_004,bid_total_difference,sd_sddot_20240904_item_004_bid_002 preserves printed item total 7797075.54 and reported bid total 11097075.52; difference=-3299999.98.
+sd_sddot_20240904_item_004,bid_total_difference,sd_sddot_20240904_item_004_bid_003 preserves printed item total 7440000 and reported bid total 11340000; difference=-3900000.
+sd_sddot_20240904_item_004,bid_total_difference,sd_sddot_20240904_item_004_bid_004 preserves printed item total 9018533.35 and reported bid total 18018533.35; difference=-9000000.
+sd_sddot_20240918_item_001,project_pcn_cardinality,"Project No. values 'NH-CR-EM 0018(195)103' do not align with PCN values '04FC, 06N3'."
+sd_sddot_20241016_item_004,project_pcn_cardinality,"Project No. values 'EM 0073(73)62' do not align with PCN values '05HV, 08EH'."
+sd_sddot_20241016_item_007,abstract_parse,page 42 line 32: malformed quantity ''
+sd_sddot_20241016_item_007,abstract_parse,page 44 line 32: malformed quantity ''
+sd_sddot_20241016_item_007,abstract_parse,page 46 line 32: malformed quantity ''
+sd_sddot_20241016_item_007,bid_total_difference,sd_sddot_20241016_item_007_bid_001 preserves printed item total 6228848.75 and reported bid total 6244318.74; difference=-15469.99.
+sd_sddot_20241016_item_007,bid_total_difference,sd_sddot_20241016_item_007_bid_002 preserves printed item total 6511962.62 and reported bid total 6527450.82; difference=-15488.2.
+sd_sddot_20241016_item_007,bid_total_difference,sd_sddot_20241016_item_007_bid_003 preserves printed item total 7058507.99 and reported bid total 7074587.68; difference=-16079.69.
+sd_sddot_20241016_item_007,bid_total_difference,sd_sddot_20241016_item_007_bid_004 preserves printed item total 7083529.17 and reported bid total 7100000.17; difference=-16471.
+sd_sddot_20241016_item_007,bid_total_difference,sd_sddot_20241016_item_007_bid_005 preserves printed item total 7103610.3 and reported bid total 7120900.3; difference=-17290.
+sd_sddot_20241016_item_008,abstract_parse,page 47 line 23: malformed quantity ''
+sd_sddot_20241016_item_008,abstract_parse,page 49 line 23: malformed quantity ''
+sd_sddot_20241016_item_008,abstract_parse,page 51 line 23: malformed quantity ''
+sd_sddot_20241016_item_008,bid_total_difference,sd_sddot_20241016_item_008_bid_001 preserves printed item total 6926620.64 and reported bid total 6949645.61; difference=-23024.97.
+sd_sddot_20241016_item_008,bid_total_difference,sd_sddot_20241016_item_008_bid_002 preserves printed item total 7075440.17 and reported bid total 7100000.17; difference=-24560.
+sd_sddot_20241016_item_008,bid_total_difference,sd_sddot_20241016_item_008_bid_003 preserves printed item total 7150252.15 and reported bid total 7173277.15; difference=-23025.
+sd_sddot_20241016_item_008,bid_total_difference,sd_sddot_20241016_item_008_bid_004 preserves printed item total 7329320.57 and reported bid total 7352345.56; difference=-23024.99.
+sd_sddot_20241016_item_008,bid_total_difference,sd_sddot_20241016_item_008_bid_005 preserves printed item total 7673989.25 and reported bid total 7700084.25; difference=-26095.
+sd_sddot_20241106_item_008,abstract_parse,page 59 line 29: malformed quantity ''
+sd_sddot_20241106_item_008,abstract_parse,page 61 line 29: malformed quantity ''
+sd_sddot_20241106_item_008,abstract_parse,page 63 line 29: malformed quantity ''
+sd_sddot_20241106_item_008,bid_total_difference,sd_sddot_20241106_item_008_bid_001 preserves printed item total 3740544.92 and reported bid total 3747159.92; difference=-6615.
+sd_sddot_20241106_item_008,bid_total_difference,sd_sddot_20241106_item_008_bid_002 preserves printed item total 4182344.08 and reported bid total 4188959.08; difference=-6615.
+sd_sddot_20241106_item_008,bid_total_difference,sd_sddot_20241106_item_008_bid_003 preserves printed item total 4673863.85 and reported bid total 4680925.1; difference=-7061.25.
+sd_sddot_20241106_item_008,bid_total_difference,sd_sddot_20241106_item_008_bid_004 preserves printed item total 4747484.7 and reported bid total 4754204.7; difference=-6720.
+sd_sddot_20241106_item_008,bid_total_difference,sd_sddot_20241106_item_008_bid_005 preserves printed item total 4867678.76 and reported bid total 4874293.75; difference=-6614.99.
+sd_sddot_20241106_item_008,bid_total_difference,sd_sddot_20241106_item_008_bid_006 preserves printed item total 5475168.3 and reported bid total 5482518.3; difference=-7350.
+sd_sddot_20241120_item_007,project_pcn_cardinality,"Project No. values 'NH 0012(230)171, P 0063(59)252, P 1806(19)364, P 1806(20)370, P 1806(22)359' do not align with PCN values '05TY, 07CD, 06A1,'."
+sd_sddot_20241204_item_001,project_pcn_cardinality,"Project No. values 'NH-CR-EM 0018(195)103' do not align with PCN values '04FC, 06N3'."
+sd_sddot_20241211_item_007,abstract_parse,page 56 line 38: malformed quantity ''
+sd_sddot_20241211_item_007,abstract_parse,page 56 line 40: malformed quantity ''
+sd_sddot_20241211_item_007,abstract_parse,page 59 line 38: malformed quantity ''
+sd_sddot_20241211_item_007,abstract_parse,page 59 line 40: malformed quantity ''
+sd_sddot_20241211_item_007,bid_total_difference,sd_sddot_20241211_item_007_bid_001 preserves printed item total 2733872.56 and reported bid total 2741567.56; difference=-7695.
+sd_sddot_20241211_item_007,bid_total_difference,sd_sddot_20241211_item_007_bid_002 preserves printed item total 3276844.31 and reported bid total 3284458.31; difference=-7614.
+sd_sddot_20241211_item_007,bid_total_difference,sd_sddot_20241211_item_007_bid_003 preserves printed item total 3728673.33 and reported bid total 3735558.34; difference=-6885.01.
+sd_sddot_20241211_item_007,bid_total_difference,sd_sddot_20241211_item_007_bid_004 preserves printed item total 4052792.76 and reported bid total 4060892.76; difference=-8100.
+sd_sddot_20250122_item_010,abstract_parse,page 112 line 68: malformed quantity ''
+sd_sddot_20250122_item_010,abstract_parse,page 116 line 68: malformed quantity ''
+sd_sddot_20250122_item_010,bid_total_difference,sd_sddot_20250122_item_010_bid_001 preserves printed item total 6097902.93 and reported bid total 6122052.93; difference=-24150.
+sd_sddot_20250122_item_010,bid_total_difference,sd_sddot_20250122_item_010_bid_002 preserves printed item total 6370279.8 and reported bid total 6394429.8; difference=-24150.
+sd_sddot_20250122_item_010,bid_total_difference,sd_sddot_20250122_item_010_bid_003 preserves printed item total 6461761.15 and reported bid total 6489131.15; difference=-27370.
+sd_sddot_20250122_item_010,bid_total_difference,sd_sddot_20250122_item_010_bid_004 preserves printed item total 6571732.1 and reported bid total 6597331.1; difference=-25599.
+sd_sddot_20250212_item_001,abstract_parse,page 9 line 189: malformed quantity ''
+sd_sddot_20250212_item_001,abstract_parse,page 23 line 189: malformed quantity ''
+sd_sddot_20250212_item_001,bid_total_difference,sd_sddot_20250212_item_001_bid_001 preserves printed item total 40977558.81 and reported bid total 40996599.81; difference=-19041.
+sd_sddot_20250212_item_001,bid_total_difference,sd_sddot_20250212_item_001_bid_002 preserves printed item total 42239393.37 and reported bid total 42258434.36; difference=-19040.99.
+sd_sddot_20250212_item_001,bid_total_difference,sd_sddot_20250212_item_001_bid_003 preserves printed item total 43592047.31 and reported bid total 43612300; difference=-20252.69.
+sd_sddot_20250212_item_001,bid_total_difference,sd_sddot_20250212_item_001_bid_004 preserves printed item total 49342398.58 and reported bid total 49361439.57; difference=-19040.99.
+sd_sddot_20250212_item_004,award_amount_difference,"Final award 9956002.99 resolves uniquely by vendor to abstract bid 10668502.99 for BORDER STATES PAVING, INC.."
+sd_sddot_20250212_item_004,bid_total_difference,sd_sddot_20250212_item_004_bid_001 preserves printed item total 9956002.99 and reported bid total 10668502.99; difference=-712500.
+sd_sddot_20250212_item_004,bid_total_difference,sd_sddot_20250212_item_004_bid_002 preserves printed item total 10578462.35 and reported bid total 11135962.34; difference=-557499.99.
+sd_sddot_20250212_item_004,bid_total_difference,sd_sddot_20250212_item_004_bid_003 preserves printed item total 10758516.15 and reported bid total 11496016.15; difference=-737500.
+sd_sddot_20250212_item_004,bid_total_difference,sd_sddot_20250212_item_004_bid_004 preserves printed item total 11124537 and reported bid total 11624537; difference=-500000.
+sd_sddot_20250212_item_004,bid_total_difference,sd_sddot_20250212_item_004_bid_005 preserves printed item total 10884034.77 and reported bid total 12759034.77; difference=-1875000.
+sd_sddot_20250219_item_001,abstract_parse,page 13 line 274: malformed quantity ''
+sd_sddot_20250219_item_001,abstract_parse,page 13 line 276: malformed quantity ''
+sd_sddot_20250219_item_001,abstract_parse,page 33 line 274: malformed quantity ''
+sd_sddot_20250219_item_001,abstract_parse,page 33 line 276: malformed quantity ''
+sd_sddot_20250219_item_001,bid_total_difference,sd_sddot_20250219_item_001_bid_001 preserves printed item total 47998245.7 and reported bid total 48026131.12; difference=-27885.42.
+sd_sddot_20250219_item_001,bid_total_difference,sd_sddot_20250219_item_001_bid_002 preserves printed item total 48454999.85 and reported bid total 48482571.96; difference=-27572.11.
+sd_sddot_20250219_item_001,bid_total_difference,sd_sddot_20250219_item_001_bid_003 preserves printed item total 49968830.54 and reported bid total 49995089.73; difference=-26259.19.
+sd_sddot_20250219_item_001,line_extension_difference,"sd_sddot_20250219_item_001_line_0253_001 preserves printed quantity 270.1, unit price 29.68, and extension 37696.57; difference=-29680."
+sd_sddot_20250219_item_001,line_extension_difference,"sd_sddot_20250219_item_001_line_0253_002 preserves printed quantity 270.1, unit price 30.1, and extension 38230.01; difference=-30100."
+sd_sddot_20250219_item_001,line_extension_difference,"sd_sddot_20250219_item_001_line_0253_003 preserves printed quantity 270.1, unit price 29, and extension 36832.9; difference=-29000."
+sd_sddot_20250305_item_003,project_pcn_cardinality,"Project No. values 'BRO 8014(38), BRO 8014(39), BRO 8034(36), BRO 8068(18)' do not align with PCN values '08NG, 08NH, 08NN,'."
+sd_sddot_20250305_item_007,abstract_parse,page 57 line 10: malformed quantity ''
+sd_sddot_20250305_item_007,abstract_parse,page 57 line 11: malformed quantity ''
+sd_sddot_20250305_item_007,abstract_parse,page 58 line 10: malformed quantity ''
+sd_sddot_20250305_item_007,abstract_parse,page 58 line 11: malformed quantity ''
+sd_sddot_20250305_item_007,bid_total_difference,sd_sddot_20250305_item_007_bid_001 preserves printed item total 636385.7 and reported bid total 683245.7; difference=-46860.
+sd_sddot_20250305_item_007,bid_total_difference,sd_sddot_20250305_item_007_bid_002 preserves printed item total 668422.1 and reported bid total 713152.1; difference=-44730.
+sd_sddot_20250305_item_007,bid_total_difference,sd_sddot_20250305_item_007_bid_003 preserves printed item total 682650.5 and reported bid total 730220.5; difference=-47570.
+sd_sddot_20250312_item_001,abstract_parse,page 7 line 147: malformed quantity ''
+sd_sddot_20250312_item_001,abstract_parse,page 17 line 147: malformed quantity ''
+sd_sddot_20250312_item_001,abstract_parse,page 27 line 147: malformed quantity ''
+sd_sddot_20250312_item_001,bid_total_difference,sd_sddot_20250312_item_001_bid_001 preserves printed item total 12603586.66 and reported bid total 12614040.21; difference=-10453.55.
+sd_sddot_20250312_item_001,bid_total_difference,sd_sddot_20250312_item_001_bid_002 preserves printed item total 13334827.41 and reported bid total 13345482; difference=-10654.59.
+sd_sddot_20250312_item_001,bid_total_difference,sd_sddot_20250312_item_001_bid_003 preserves printed item total 13592948.5 and reported bid total 13603000; difference=-10051.5.
+sd_sddot_20250312_item_001,bid_total_difference,sd_sddot_20250312_item_001_bid_004 preserves printed item total 14646236.27 and reported bid total 14658298.07; difference=-12061.8.
+sd_sddot_20250312_item_001,bid_total_difference,sd_sddot_20250312_item_001_bid_005 preserves printed item total 16262079.79 and reported bid total 16273136.42; difference=-11056.63.
+sd_sddot_20250416_item_002,abstract_parse,page 12 line 60: malformed quantity ''
+sd_sddot_20250416_item_002,bid_total_difference,sd_sddot_20250416_item_002_bid_001 preserves printed item total 3106746.03 and reported bid total 3106914.03; difference=-168.
+sd_sddot_20250416_item_002,bid_total_difference,sd_sddot_20250416_item_002_bid_002 preserves printed item total 3167046.05 and reported bid total 3167246.05; difference=-200.
+sd_sddot_20250416_item_008,abstract_parse,page 34 line 19: malformed quantity ''
+sd_sddot_20250416_item_008,abstract_parse,page 36 line 19: malformed quantity ''
+sd_sddot_20250416_item_008,bid_total_difference,sd_sddot_20250416_item_008_bid_001 preserves printed item total 5172497.05 and reported bid total 5193497.05; difference=-21000.
+sd_sddot_20250416_item_008,bid_total_difference,sd_sddot_20250416_item_008_bid_002 preserves printed item total 5439118.35 and reported bid total 5458723.95; difference=-19605.6.
+sd_sddot_20250416_item_008,bid_total_difference,sd_sddot_20250416_item_008_bid_003 preserves printed item total 5591119.71 and reported bid total 5610964.71; difference=-19845.
+sd_sddot_20250416_item_010,project_pcn_cardinality,"Project No. values 'NH-P 0021(188), 0009-251, 0009-251, 0009-251, 0009-252, 0009-253, 0009-253, 0009-253' do not align with PCN values '09L0, I7KR, I7KT, I7QT,'."
+sd_sddot_20250507_item_004,award_amount_difference,Final award 1046857.45 resolves uniquely by vendor to abstract bid 1604857.45 for Complete Concrete Inc dba Complete Contracting Sol.
+sd_sddot_20250507_item_004,bid_total_difference,sd_sddot_20250507_item_004_bid_001 preserves printed item total 1046857.45 and reported bid total 1604857.45; difference=-558000.
+sd_sddot_20250507_item_004,bid_total_difference,sd_sddot_20250507_item_004_bid_002 preserves printed item total 1317182.5 and reported bid total 1834682.5; difference=-517500.
+sd_sddot_20250507_item_004,bid_total_difference,sd_sddot_20250507_item_004_bid_003 preserves printed item total 1567005.8 and reported bid total 2255505.8; difference=-688500.
+sd_sddot_20250507_item_004,bid_total_difference,sd_sddot_20250507_item_004_bid_004 preserves printed item total 2697049.38 and reported bid total 2877049.38; difference=-180000.
+sd_sddot_20250507_item_008,abstract_parse,page 28 line 8: malformed quantity ''
+sd_sddot_20250507_item_008,abstract_parse,page 28 line 9: malformed quantity ''
+sd_sddot_20250507_item_008,bid_total_difference,sd_sddot_20250507_item_008_bid_001 preserves printed item total 1405781.75 and reported bid total 1414631.75; difference=-8850.
+sd_sddot_20250507_item_008,bid_total_difference,sd_sddot_20250507_item_008_bid_002 preserves printed item total 1506203.3 and reported bid total 1510628.3; difference=-4425.
+sd_sddot_20250521_item_004,abstract_parse,page 34 line 8: malformed quantity ''
+sd_sddot_20250521_item_004,abstract_parse,page 34 line 9: malformed quantity ''
+sd_sddot_20250521_item_004,bid_total_difference,sd_sddot_20250521_item_004_bid_001 preserves printed item total 5892029.38 and reported bid total 6568274.23; difference=-676244.85.
+sd_sddot_20250604_item_002,abstract_parse,page 10 line 12: malformed quantity ''
+sd_sddot_20250604_item_002,abstract_parse,page 10 line 13: malformed quantity ''
+sd_sddot_20250604_item_002,bid_total_difference,sd_sddot_20250604_item_002_bid_001 preserves printed item total 2061028 and reported bid total 2068068; difference=-7040.
+sd_sddot_20250604_item_002,bid_total_difference,sd_sddot_20250604_item_002_bid_002 preserves printed item total 2329716.27 and reported bid total 2338516.27; difference=-8800.
+sd_sddot_20251001_item_004,project_pcn_cardinality,"Project No. values 'BRO-B 8005(17), BRO-B 8005(18), BRO-B 8030(24), BRO-B 8030(25), BRO-B 8044(15)' do not align with PCN values '099U, 099V, 09A0,'."
+sd_sddot_20251001_item_006,abstract_parse,page 54 line 46: malformed quantity ''
+sd_sddot_20251001_item_006,abstract_parse,page 54 line 47: malformed quantity ''
+sd_sddot_20251001_item_006,abstract_parse,page 57 line 46: malformed quantity ''
+sd_sddot_20251001_item_006,abstract_parse,page 57 line 47: malformed quantity ''
+sd_sddot_20251001_item_006,abstract_parse,page 60 line 46: malformed quantity ''
+sd_sddot_20251001_item_006,abstract_parse,page 60 line 47: malformed quantity ''
+sd_sddot_20251001_item_006,bid_total_difference,sd_sddot_20251001_item_006_bid_001 preserves printed item total 4337444.1 and reported bid total 4431811.51; difference=-94367.41.
+sd_sddot_20251001_item_006,bid_total_difference,sd_sddot_20251001_item_006_bid_002 preserves printed item total 4441676.45 and reported bid total 4533206.45; difference=-91530.
+sd_sddot_20251001_item_006,bid_total_difference,sd_sddot_20251001_item_006_bid_003 preserves printed item total 5012990.25 and reported bid total 5110622.25; difference=-97632.
+sd_sddot_20251001_item_006,bid_total_difference,sd_sddot_20251001_item_006_bid_004 preserves printed item total 5657673.81 and reported bid total 5739033.81; difference=-81360.
+sd_sddot_20251001_item_006,bid_total_difference,sd_sddot_20251001_item_006_bid_005 preserves printed item total 6802308.95 and reported bid total 6864651.05; difference=-62342.1.
+sd_sddot_20251015_item_001,abstract_parse,page 10 line 197: malformed quantity ''
+sd_sddot_20251015_item_001,abstract_parse,page 10 line 198: malformed quantity ''
+sd_sddot_20251015_item_001,abstract_parse,page 26 line 197: malformed quantity ''
+sd_sddot_20251015_item_001,abstract_parse,page 26 line 198: malformed quantity ''
+sd_sddot_20251015_item_001,abstract_parse,page 42 line 197: malformed quantity ''
+sd_sddot_20251015_item_001,abstract_parse,page 42 line 198: malformed quantity ''
+sd_sddot_20251015_item_001,abstract_parse,page 58 line 197: malformed quantity ''
+sd_sddot_20251015_item_001,abstract_parse,page 58 line 198: malformed quantity ''
+sd_sddot_20251015_item_001,bid_total_difference,sd_sddot_20251015_item_001_bid_001 preserves printed item total 53288098.24 and reported bid total 53313089.85; difference=-24991.61.
+sd_sddot_20251015_item_001,bid_total_difference,sd_sddot_20251015_item_001_bid_002 preserves printed item total 54222461.85 and reported bid total 54247132.05; difference=-24670.2.
+sd_sddot_20251015_item_001,bid_total_difference,sd_sddot_20251015_item_001_bid_003 preserves printed item total 54487634.47 and reported bid total 54513247.79; difference=-25613.32.
+sd_sddot_20251015_item_001,bid_total_difference,sd_sddot_20251015_item_001_bid_004 preserves printed item total 54901699.8 and reported bid total 54925276.79; difference=-23576.99.
+sd_sddot_20251015_item_001,bid_total_difference,sd_sddot_20251015_item_001_bid_005 preserves printed item total 56551699.67 and reported bid total 56579220.21; difference=-27520.54.
+sd_sddot_20251015_item_001,bid_total_difference,sd_sddot_20251015_item_001_bid_006 preserves printed item total 58500641.32 and reported bid total 58514154.82; difference=-13513.5.
+sd_sddot_20251015_item_001,bid_total_difference,sd_sddot_20251015_item_001_bid_007 preserves printed item total 58783234.3 and reported bid total 58806811.3; difference=-23577.
+sd_sddot_20251015_item_001,bid_total_difference,sd_sddot_20251015_item_001_bid_008 preserves printed item total 65986491.03 and reported bid total 66010068.03; difference=-23577.
+sd_sddot_20251015_item_001,line_extension_difference,"sd_sddot_20251015_item_001_line_0171_001 preserves printed quantity 369.3, unit price 24.8, and extension 133158.64; difference=-124000."
+sd_sddot_20251015_item_001,line_extension_difference,"sd_sddot_20251015_item_001_line_0171_002 preserves printed quantity 369.3, unit price 24.57, and extension 131923.7; difference=-122850."
+sd_sddot_20251015_item_001,line_extension_difference,"sd_sddot_20251015_item_001_line_0171_003 preserves printed quantity 369.3, unit price 25.44, and extension 136594.99; difference=-127200."
+sd_sddot_20251015_item_001,line_extension_difference,"sd_sddot_20251015_item_001_line_0171_004 preserves printed quantity 369.3, unit price 34, and extension 182556.2; difference=-170000."
+sd_sddot_20251015_item_001,line_extension_difference,"sd_sddot_20251015_item_001_line_0171_005 preserves printed quantity 369.3, unit price 27.37, and extension 146957.74; difference=-136850."
+sd_sddot_20251015_item_001,line_extension_difference,"sd_sddot_20251015_item_001_line_0171_006 preserves printed quantity 369.3, unit price 32.5, and extension 174502.25; difference=-162500."
+sd_sddot_20251015_item_001,line_extension_difference,"sd_sddot_20251015_item_001_line_0171_007 preserves printed quantity 369.3, unit price 25.22, and extension 135413.75; difference=-126100."
+sd_sddot_20251015_item_001,line_extension_difference,"sd_sddot_20251015_item_001_line_0171_008 preserves printed quantity 369.3, unit price 23.4, and extension 125641.62; difference=-117000."
+sd_sddot_20251105_item_004,line_extension_difference,"sd_sddot_20251105_item_004_line_0012_001 preserves printed quantity 601, unit price 32, and extension 275232; difference=-256000."
+sd_sddot_20251210_item_002,abstract_parse,page 22 line 57: malformed quantity ''
+sd_sddot_20251210_item_002,abstract_parse,page 22 line 58: malformed quantity ''
+sd_sddot_20251210_item_002,abstract_parse,page 26 line 57: malformed quantity ''
+sd_sddot_20251210_item_002,abstract_parse,page 26 line 58: malformed quantity ''
+sd_sddot_20251210_item_002,abstract_parse,page 30 line 57: malformed quantity ''
+sd_sddot_20251210_item_002,abstract_parse,page 30 line 58: malformed quantity ''
+sd_sddot_20251210_item_002,abstract_parse,page 34 line 57: malformed quantity ''
+sd_sddot_20251210_item_002,abstract_parse,page 34 line 58: malformed quantity ''
+sd_sddot_20251210_item_002,bid_total_difference,sd_sddot_20251210_item_002_bid_001 preserves printed item total 2668590.17 and reported bid total 2674667.67; difference=-6077.5.
+sd_sddot_20251210_item_002,bid_total_difference,sd_sddot_20251210_item_002_bid_002 preserves printed item total 2703032.34 and reported bid total 2708723.08; difference=-5690.74.
+sd_sddot_20251210_item_002,bid_total_difference,sd_sddot_20251210_item_002_bid_003 preserves printed item total 2740939.8 and reported bid total 2749389.8; difference=-8450.
+sd_sddot_20251210_item_002,bid_total_difference,sd_sddot_20251210_item_002_bid_004 preserves printed item total 2792194.85 and reported bid total 2798239.85; difference=-6045.
+sd_sddot_20251210_item_002,bid_total_difference,sd_sddot_20251210_item_002_bid_005 preserves printed item total 2902501.75 and reported bid total 2908351.75; difference=-5850.
+sd_sddot_20251210_item_002,bid_total_difference,sd_sddot_20251210_item_002_bid_006 preserves printed item total 3040671.94 and reported bid total 3046473.18; difference=-5801.24.
+sd_sddot_20251210_item_002,bid_total_difference,sd_sddot_20251210_item_002_bid_007 preserves printed item total 3222948.37 and reported bid total 3228473.36; difference=-5524.99.
+sd_sddot_20260218_item_005,abstract_parse,page 60 line 48: malformed quantity ''
+sd_sddot_20260218_item_005,abstract_parse,page 63 line 48: malformed quantity ''
+sd_sddot_20260218_item_005,abstract_parse,page 66 line 48: malformed quantity ''
+sd_sddot_20260218_item_005,bid_total_difference,sd_sddot_20260218_item_005_bid_001 preserves printed item total 1404349.69 and reported bid total 1405956.19; difference=-1606.5.
+sd_sddot_20260218_item_005,bid_total_difference,sd_sddot_20260218_item_005_bid_002 preserves printed item total 1557486.78 and reported bid total 1559110.38; difference=-1623.6.
+sd_sddot_20260218_item_005,bid_total_difference,sd_sddot_20260218_item_005_bid_003 preserves printed item total 1593200.26 and reported bid total 1595000.26; difference=-1800.
+sd_sddot_20260218_item_005,bid_total_difference,sd_sddot_20260218_item_005_bid_004 preserves printed item total 1782956 and reported bid total 1784612; difference=-1656.
+sd_sddot_20260218_item_005,bid_total_difference,sd_sddot_20260218_item_005_bid_005 preserves printed item total 1832631.5 and reported bid total 1834523.83; difference=-1892.33.
+sd_sddot_20260218_item_005,bid_total_difference,sd_sddot_20260218_item_005_bid_006 preserves printed item total 1959928.06 and reported bid total 1961458.06; difference=-1530.
+sd_sddot_20260318_item_008,abstract_parse,page 49 line 9: malformed quantity ''
+sd_sddot_20260318_item_008,abstract_parse,page 49 line 10: malformed quantity ''
+sd_sddot_20260318_item_008,bid_total_difference,sd_sddot_20260318_item_008_bid_001 preserves printed item total 450110.4 and reported bid total 1383200.4; difference=-933090.
+sd_sddot_20260318_item_008,bid_total_difference,sd_sddot_20260318_item_008_bid_002 preserves printed item total 722599 and reported bid total 1843944; difference=-1121345.
+sd_sddot_20260401_item_008,line_extension_difference,"sd_sddot_20260401_item_008_line_0016_001 preserves printed quantity 175.9, unit price 23, and extension 142045.7; difference=-138000."
+sd_sddot_20260401_item_008,line_extension_difference,"sd_sddot_20260401_item_008_line_0016_002 preserves printed quantity 175.9, unit price 33, and extension 203804.7; difference=-198000."
+sd_sddot_20260401_item_008,line_extension_difference,"sd_sddot_20260401_item_008_line_0018_001 preserves printed quantity 925.6, unit price 39, and extension 426098.4; difference=-390000."
+sd_sddot_20260401_item_008,line_extension_difference,"sd_sddot_20260401_item_008_line_0018_002 preserves printed quantity 925.6, unit price 44, and extension 480726.4; difference=-440000."
+sd_sddot_20260415_item_007,abstract_parse,page 71 line 41: malformed quantity ''
+sd_sddot_20260415_item_007,abstract_parse,page 71 line 42: malformed quantity ''
+sd_sddot_20260415_item_007,abstract_parse,page 74 line 41: malformed quantity ''
+sd_sddot_20260415_item_007,abstract_parse,page 74 line 42: malformed quantity ''
+sd_sddot_20260415_item_007,bid_total_difference,sd_sddot_20260415_item_007_bid_001 preserves printed item total 9357450.15 and reported bid total 9425110.15; difference=-67660.
+sd_sddot_20260415_item_007,bid_total_difference,sd_sddot_20260415_item_007_bid_002 preserves printed item total 10440157.5 and reported bid total 10499857.5; difference=-59700.
+sd_sddot_20260415_item_007,bid_total_difference,sd_sddot_20260415_item_007_bid_003 preserves printed item total 10669470 and reported bid total 10733150; difference=-63680.
+sd_sddot_20260506_item_002,abstract_parse,page 14 line 9: malformed quantity ''
+sd_sddot_20260506_item_002,bid_total_difference,sd_sddot_20260506_item_002_bid_001 preserves printed item total 828938.4 and reported bid total 911138.4; difference=-82200.
+sd_sddot_20260506_item_002,bid_total_difference,sd_sddot_20260506_item_002_bid_002 preserves printed item total 968318.3 and reported bid total 1042846.3; difference=-74528.
+sd_sddot_20260506_item_005,award_amount_difference,"Final award 2390000 resolves uniquely by vendor to abstract bid 3090000 for BX CIVIL & CONSTRUCTION, INC.."
+sd_sddot_20260506_item_005,bid_total_difference,sd_sddot_20260506_item_005_bid_001 preserves printed item total 2390000 and reported bid total 3090000; difference=-700000.
+sd_sddot_20260506_item_005,bid_total_difference,sd_sddot_20260506_item_005_bid_002 preserves printed item total 2691369.34 and reported bid total 3141369.34; difference=-450000.
+sd_sddot_20260506_item_005,bid_total_difference,sd_sddot_20260506_item_005_bid_003 preserves printed item total 2859323.83 and reported bid total 3606823.83; difference=-747500.
+sd_sddot_20260506_item_005,bid_total_difference,sd_sddot_20260506_item_005_bid_004 preserves printed item total 3132649.51 and reported bid total 3732649.51; difference=-600000.
+sd_sddot_20260506_item_005,bid_total_difference,sd_sddot_20260506_item_005_bid_005 preserves printed item total 3564367.15 and reported bid total 4314367.15; difference=-750000.
+sd_sddot_20260506_item_005,bid_total_difference,sd_sddot_20260506_item_005_bid_006 preserves printed item total 4184984.13 and reported bid total 4994984.13; difference=-810000.
+sd_sddot_20260513_item_001,abstract_parse,page 12 line 251: malformed quantity ''
+sd_sddot_20260513_item_001,abstract_parse,page 12 line 252: malformed quantity ''
+sd_sddot_20260513_item_001,abstract_parse,page 12 line 254: malformed quantity ''
+sd_sddot_20260513_item_001,abstract_parse,page 30 line 251: malformed quantity ''
+sd_sddot_20260513_item_001,abstract_parse,page 30 line 252: malformed quantity ''
+sd_sddot_20260513_item_001,abstract_parse,page 30 line 254: malformed quantity ''
+sd_sddot_20260513_item_001,bid_total_difference,sd_sddot_20260513_item_001_bid_001 preserves printed item total 77642540.72 and reported bid total 77697290.36; difference=-54749.64.
+sd_sddot_20260513_item_001,bid_total_difference,sd_sddot_20260513_item_001_bid_002 preserves printed item total 82618771.02 and reported bid total 82683149; difference=-64377.98.
+sd_sddot_20260513_item_001,bid_total_difference,sd_sddot_20260513_item_001_bid_003 preserves printed item total 83501681.76 and reported bid total 83554136.76; difference=-52455.
+sd_sddot_20260513_item_001,line_extension_difference,"sd_sddot_20260513_item_001_line_0239_001 preserves printed quantity 36.5, unit price 22.97, and extension 23808.41; difference=-22970."
+sd_sddot_20260513_item_001,line_extension_difference,"sd_sddot_20260513_item_001_line_0239_002 preserves printed quantity 36.5, unit price 26, and extension 26949; difference=-26000."
+sd_sddot_20260513_item_001,line_extension_difference,"sd_sddot_20260513_item_001_line_0239_003 preserves printed quantity 36.5, unit price 22, and extension 22803; difference=-22000."
+sd_sddot_20260513_item_001,project_pcn_cardinality,"Project No. values 'IM-CR-EM 0901(187)44' do not align with PCN values '034J, 0A9K'."
+sd_sddot_20260520_item_010,abstract_parse,page 46 line 3: malformed quantity ''
+sd_sddot_20260520_item_010,abstract_parse,page 46 line 4: malformed quantity ''
+sd_sddot_20260520_item_010,bid_total_difference,sd_sddot_20260520_item_010_bid_001 preserves printed item total 908178.56 and reported bid total 1030434.56; difference=-122256.

@@ -48,6 +48,7 @@ function renderSourceProjectList(data: AppData): string {
                 <article class="bid-tab-project-row">
                   <div>
                     <strong>${escapeHtml(projectTitle)}</strong>
+                    ${project.projectControlNumber ? `<small>PCN ${escapeHtml(project.projectControlNumber)}</small>` : ""}
                     <small>${escapeHtml(sourceLabel)}</small>
                   </div>
                   <div class="bid-tab-project-meta">
@@ -72,6 +73,9 @@ function renderSourceProjectList(data: AppData): string {
 function renderSourceProjectDetail(data: AppData, selectedProjectId: string): string {
   const project = data.projectById.get(selectedProjectId) ?? null;
   const source = project ? data.sourceById.get(project.sourceId) ?? null : null;
+  const sourceDocuments = source
+    ? data.sourceDocumentsBySourceId.get(source.sourceId) ?? []
+    : [];
   const items = project ? data.bidTabItemsByProjectId.get(project.projectId) ?? [] : [];
 
   if (!project) {
@@ -100,7 +104,17 @@ function renderSourceProjectDetail(data: AppData, selectedProjectId: string): st
       <div class="source-review-detail-heading">
         <p class="eyebrow">${detailEyebrow}</p>
         <h2 id="source-review-detail-title" tabindex="-1">${escapeHtml(project.projectNumber || "Project")} - ${escapeHtml(project.projectName)}</h2>
+        ${project.projectControlNumber ? `<p class="query-line">PCN ${escapeHtml(project.projectControlNumber)}</p>` : ""}
         <p class="query-line">${escapeHtml(source?.sourceLabel ?? "Unknown source")}</p>
+        ${sourceDocuments.length > 0 ? `
+          <p class="query-line">
+            ${sourceDocuments.map((document) => `
+              <a href="${escapeHtml(document.sourceUrl)}" target="_blank" rel="noopener noreferrer">
+                ${escapeHtml(sourceDocumentLabel(document.documentRole))}
+              </a>
+            `).join(" · ")}
+          </p>
+        ` : ""}
       </div>
       <div class="bidder-modal__summary">
         <span>Apparent low: <strong>${escapeHtml(apparentLowBid?.bidderName ?? "Not listed")}</strong></span>
@@ -175,7 +189,7 @@ function renderBidTabItemRow(
       ${supportsEngineerEstimate ? `<td>${formatCurrency(item.engineerEstimateUnitPrice)}</td>` : ""}
       <td>${formatCurrency(item.averageBidUnitPrice)}</td>
       ${isCostBook ? `<td>${formatCurrency(item.awardedBidUnitPrice)}</td>` : ""}
-      <td>${escapeHtml(matchStatusLabel(item.matchStatus))}</td>
+      <td>${escapeHtml(matchStatusLabel(item.mappingStatus || item.matchStatus))}</td>
       <td>${isCostBook
         ? escapeHtml(item.sourceLocator || "Not listed")
         : bidderPrices.length > 0 ? escapeHtml(bidderPrices.join("; ")) : "Not listed"}</td>
@@ -207,14 +221,27 @@ function compareBidderItems(
   return left.bidId.localeCompare(right.bidId);
 }
 
-function matchStatusLabel(status: BidTabItemRecord["matchStatus"]): string {
-  const labels: Record<BidTabItemRecord["matchStatus"], string> = {
+function matchStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
     matched: "Matched",
+    direct: "Matched",
+    historical: "Historical",
+    source_deleted: "Source deleted",
     unmatched: "Unmatched",
     source_cdot_prefix_only: "CDOT prefix only"
   };
 
-  return labels[status];
+  return labels[status] ?? status;
+}
+
+function sourceDocumentLabel(role: string): string {
+  const labels: Record<string, string> = {
+    bid_abstract: "Abstract of bids",
+    final_award_report: "Low Bid Final Report",
+    item_catalog_snapshot: "Standard bid item catalog"
+  };
+
+  return labels[role] ?? role.replace(/_/g, " ");
 }
 
 function formatCurrency(value: number | null): string {

@@ -249,7 +249,7 @@ export async function renderApp(
 
     const form = root.querySelector<HTMLFormElement>("#explorer-form");
     if (form) {
-      bindItemPicker(form, data.agencyItems, data.specSections);
+      bindItemPicker(form, data.agencyItems, data.specSections, data.stateConfig);
     }
 
     form?.addEventListener("submit", (event) => {

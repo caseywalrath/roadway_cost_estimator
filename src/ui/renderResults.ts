@@ -348,7 +348,11 @@ function formatProjectLocationSubtext(row: EvidenceRow): string {
 
 function renderProjectNumberCell(row: EvidenceRow): string {
   const label = row.project?.projectNumber || "Not listed";
-  const displayLabel = renderProjectNumberLines(label);
+  const controlNumber = row.project?.projectControlNumber || "";
+  const controlNumberLine = controlNumber
+    ? `<span class="row-subtext">PCN ${escapeHtml(controlNumber)}</span>`
+    : "";
+  const displayLabel = `${renderProjectNumberLines(label)}${controlNumberLine}`;
 
   if (!row.hasBidderDetails && !row.hasSourceDetails) {
     return displayLabel;

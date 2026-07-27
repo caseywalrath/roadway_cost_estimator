@@ -10,6 +10,7 @@ public/data/
   common/inflation_index.csv
   states/co/*.csv
   states/ia/*.csv
+  states/sd/*.csv
 ```
 
 State-native review records live under `data/staging/{state}/`. Raw source documents and downloads live under ignored `data/raw/{state}/`.
@@ -25,6 +26,14 @@ One publication/source identity.
 `source_id`, `source_type`, `agency_id`, `agency_name`, `state`, `source_label`, `source_date`, `data_year`, `source_url`, `source_file_name`, `sha256`, `parser_name`, `parser_version`, `notes`
 
 Colorado uses `cost_book`, `bid_tab`, and `estimate`. `estimate` identifies FHU engineer estimates that contain no bidder records and publish only `engineer_estimate` observations.
+
+### `source_documents.csv` (optional)
+
+One physical document within a source bundle.
+
+`source_document_id`, `source_id`, `document_role`, `source_url`, `source_file_name`, `sha256`, `media_type`, `published_on`, `retrieved_on`, `notes`
+
+South Dakota uses one letting-level source with `bid_abstract` and `final_award_report` children. States whose sources are already one file per source may omit this table.
 
 ### `lettings.csv`
 
@@ -42,7 +51,9 @@ One official contract. Contract evidence is never repeated for each associated p
 
 One project number associated with a contract.
 
-`contract_project_id`, `contract_id`, `project_number`, `project_name`, `work_type`, `county_region`, `route`, `location`, `project_award_amount`
+`contract_project_id`, `contract_id`, `project_number`, `project_control_number`, `project_name`, `work_type`, `county_region`, `route`, `location`, `project_award_amount`
+
+`project_control_number` is optional. South Dakota retains both the printed Project No. and PCN rather than overloading one identifier field.
 
 ### `contract_items.csv`
 
@@ -92,7 +103,7 @@ State-native item hierarchy.
 
 `taxonomy_id`, `state`, `agency_id`, `taxonomy_level`, `taxonomy_code`, `parent_taxonomy_id`, `taxonomy_label`, `match_prefix`, `source_year`, `source_url`
 
-Current levels are `division` and `section`. Colorado uses three-digit match prefixes; Iowa uses four digits.
+Current levels are `division` and `section`. Colorado and South Dakota use three-digit match prefixes; Iowa uses four digits.
 
 ### `item_mappings.csv`
 
@@ -114,7 +125,7 @@ Allowed generalized `price_type` values:
 - `average_bid`
 - `engineer_estimate`
 
-Iowa `average_bid` is the unweighted mean of valid bidder unit prices for the contract item. Iowa leaves `engineer_estimate` absent.
+Iowa and South Dakota `average_bid` values are the unweighted mean of valid bidder unit prices for the contract item. Both states leave `engineer_estimate` absent. South Dakota's annual three-lowest-bids statistic is a staging reconciliation field, not runtime evidence.
 
 Colorado master-workbook bid sources also use an unweighted mean of valid bidder unit prices. Engineer quantities may differ from the contract-item bid quantity and remain source-native on the engineer observation. Confirmed-award observations are created only when a public award record reconciles to the configured included schedule. Source Review compatibility price fields are nullable; missing engineer, average, or bidder prices render as `Not listed`, never zero.
 
@@ -142,7 +153,7 @@ Inflation adjustment affects optional display/summary calculations. Original sou
 
 ## Runtime Interfaces
 
-`AppData` exposes arrays and maps for sources, lettings, contracts, project numbers, agency items/versions, taxonomy, observations, bids, contract items, and bidder prices. `ensureBidItemPricesLoaded()` performs the lazy bidder-price fetch.
+`AppData` exposes arrays and maps for sources, optional source documents, lettings, contracts, project numbers/PCNs, agency items/versions, taxonomy, observations, bids, contract items, and bidder prices. `ensureBidItemPricesLoaded()` performs the lazy bidder-price fetch.
 
 `SearchQuery` includes `state`, `agencyId`, and `agencyItemId`. Evidence joins use `contractId` and `agencyItemId`. Compatibility aliases in `src/data/schema.ts` are temporary adapters for rendering modules migrated from schema v1; new logic must use normalized IDs.
 
@@ -171,3 +182,5 @@ python scripts/validate_data_package.py
 The validator checks manifest paths, required columns/values, unique IDs, all relationships, numeric fields, quantity-price reconciliation, bidder rank integrity, apparent-low/award flags, reviewed awarded-vendor resolution, source provenance, accepted item statuses, and promoted observation identity.
 
 Iowa archive acceptance additionally requires 3,727 catalog items, at least 43 parsed lettings, at least the original pilot row counts, rank 7 or higher, at least one multi-project contract, and alternate set `AA`. Iowa bidder item totals must reconcile to reported bid totals within two cents unless the excess is explained by preserved unselected added-option rows. Reported one- and two-cent source differences and documented added-option differences are warnings.
+
+South Dakota acceptance inventories every central completed letting from 2019 forward, requires an explicit reason for every non-parsed entry, reconciles the live catalog against native staging, validates confirmed award separately from apparent low, and checks that awarded and all-bid-average observations reproduce bidder price rows. The 2024 annual report remains staging-only and must contain 1,431 parsed QA rows plus a one-to-one reconciliation row that explicitly records catalog, unit, quantity, cost, and average-price differences.

@@ -1,0 +1,17 @@
+{
+  "archive_entries": 175,
+  "parsed_lettings": 172,
+  "failed_lettings": 3,
+  "catalog_rows": 5583,
+  "catalog_deleted_placeholders": 9,
+  "catalog_current_items": 5574,
+  "historical_items": 69,
+  "item_groups": 84,
+  "contracts": 1206,
+  "contract_projects": 1461,
+  "bids": 4020,
+  "contract_items": 68405,
+  "bid_item_prices": 253990,
+  "observations": 135854,
+  "review_exceptions": 486
+}

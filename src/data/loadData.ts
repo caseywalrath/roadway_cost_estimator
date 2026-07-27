@@ -15,6 +15,7 @@ import type {
   ItemObservationRecord,
   ItemTaxonomyRecord,
   LettingRecord,
+  SourceDocumentRecord,
   SourceRecord,
   StateConfig
 } from "./schema";
@@ -54,6 +55,7 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
   const files = stateConfig.files;
   const [
     sources,
+    sourceDocuments,
     lettings,
     rawContracts,
     contractProjects,
@@ -69,6 +71,7 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
     aliases
   ] = await Promise.all([
     loadCsvPath(files.sources, mapSource),
+    loadOptionalCsvPath(files.sourceDocuments, mapSourceDocument),
     loadCsvPath(files.lettings, mapLetting),
     loadCsvPath(files.contracts, mapContract),
     loadCsvPath(files.contractProjects, mapContractProject),
@@ -85,6 +88,7 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
   ]);
 
   const sourceById = new Map(sources.map((source) => [source.sourceId, source]));
+  const sourceDocumentsBySourceId = groupBy(sourceDocuments, (document) => document.sourceId);
   const lettingById = new Map(lettings.map((letting) => [letting.lettingId, letting]));
   const contractProjectsByContractId = groupBy(contractProjects, (project) => project.contractId);
   const agencyItemVersionById = new Map(
@@ -115,6 +119,10 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
     const projects = contractProjectsByContractId.get(contract.contractId) ?? [];
     const letting = lettingById.get(contract.lettingId);
     const projectNumbers = projects.map((project) => project.projectNumber).filter(Boolean).join("; ");
+    const projectControlNumbers = projects
+      .map((project) => project.projectControlNumber)
+      .filter(Boolean)
+      .join("; ");
     const projectNames = projects.map((project) => project.projectName).filter(Boolean).join("; ");
     return {
       ...contract,
@@ -124,6 +132,7 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
       countyRegion: contract.primaryCounty,
       estimateLetDate: letting?.lettingDate ?? "",
       projectNumber: projectNumbers || contract.officialContractId,
+      projectControlNumber: projectControlNumbers,
       projectLocationRaw: contract.location,
       contractor: contract.awardedVendor,
       awardedBidTotal: contract.awardedAmount
@@ -264,6 +273,7 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
     manifest,
     stateConfig,
     sources,
+    sourceDocuments,
     lettings,
     contracts,
     contractProjects,
@@ -279,6 +289,7 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
     contractItems,
     bidItemPrices,
     sourceById,
+    sourceDocumentsBySourceId,
     contractById,
     contractProjectsByContractId,
     canonicalById,
@@ -401,6 +412,21 @@ function mapSource(row: CsvRow): SourceRecord {
   };
 }
 
+function mapSourceDocument(row: CsvRow): SourceDocumentRecord {
+  return {
+    sourceDocumentId: row.source_document_id,
+    sourceId: row.source_id,
+    documentRole: row.document_role,
+    sourceUrl: row.source_url,
+    sourceFileName: row.source_file_name,
+    sha256: row.sha256,
+    mediaType: row.media_type,
+    publishedOn: row.published_on,
+    retrievedOn: row.retrieved_on,
+    notes: row.notes
+  };
+}
+
 function mapLetting(row: CsvRow): LettingRecord {
   return {
     lettingId: row.letting_id,
@@ -440,6 +466,7 @@ function mapContract(row: CsvRow): ContractRecord {
     countyRegion: row.primary_county,
     estimateLetDate: "",
     projectNumber: row.official_contract_id,
+    projectControlNumber: "",
     projectLocationRaw: row.location,
     contractor: row.awarded_vendor,
     awardedBidTotal: optionalNumber(row.awarded_amount)
@@ -451,6 +478,7 @@ function mapContractProject(row: CsvRow): ContractProjectRecord {
     contractProjectId: row.contract_project_id,
     contractId: row.contract_id,
     projectNumber: row.project_number,
+    projectControlNumber: row.project_control_number ?? "",
     projectName: row.project_name,
     workType: row.work_type,
     countyRegion: row.county_region,

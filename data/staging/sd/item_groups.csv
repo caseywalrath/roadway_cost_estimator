@@ -1,0 +1,85 @@
+group_code,group_label
+004,Traffic Diversions and Detours
+009,"Measurement, Payment, and Special Provision Payment Items"
+100,Clearing and Grubbing
+110,Removal of Structures and Obstructions
+120,Excavation and Embankment Construction
+205,Dust Control
+210,Roadway Shaping
+230,"Salvaging, Stockpiling, and Placing Topsoil"
+240,Obliterating Old Roads
+250,Incidental Work
+260,Granular Bases and Surfacing
+270,"Salvaging, Processing, and Stockpiling Granular and Asphalt Concrete Mix Material"
+280,Process In Place Surfacing
+320,Asphalt Concrete
+330,"Prime, Tack, Fog, and Flush Seal Coats"
+332,Cold Milling Asphalt Concrete
+340,Polymer-Modified Micro Surfacing
+350,Asphalt Concrete Crack Sealing
+355,Asphalt Concrete Crack Leveling
+360,Asphalt Surface Treatment
+370,Cold Recycling of Asphalt Concrete
+380,Portland Cement Concrete Pavement
+390,Concrete Spall Repair
+391,Undersealing
+392,Pavement Jacking
+393,Cracking and Seating of PCC Pavement
+395,High Friction Surface Treatment
+410,"Steel Structures, Bearings, Joints, and Misc. Related Items"
+411,New Structural Steel Painting
+412,Bridge Field Spot Painting
+413,Bridge Field Repainting
+420,Structure Excavation
+421,"Box, Pipe, and Plate Pipe Culvert Undercutting"
+423,Temporary Works
+430,Bridge End Backfill
+440,Structural Plate Pipe and Pipe Arches
+450,Pipe Culverts
+451,"Urban, Sewer and Water"
+460,Structural Concrete and Misc. Related Items
+462,Concrete for Incidental Construction Class M
+463,Cellular Grout
+464,Controlled Density Fill
+465,Drilled Shaft Construction
+470,Railing
+480,Reinforcing Steel
+491,Bridge Deck Epoxy Chip Seal
+510,"Timber, Prestressed Concrete, and Steel Piles"
+530,Retaining Walls
+541,Timber
+550,Bridge Deck Preparation and Resurfacing
+560,Precast and Prestressed Concrete
+600,Field Laboratories
+601,Haul Roads
+602,Detour Routes
+610,Cattle Guards
+620,Right-of-Way Fence
+621,Chain Link Fence
+628,Crash Cushions and Barriers
+629,Three Cable Guardrail
+630,Steel Beam Guardrail
+632,Highway Signs and Delineators
+633,Pavement Marking
+634,Traffic Control
+635,Traffic Signals and Roadway Lighting
+650,Concrete Curb and Gutter
+651,Concrete Sidewalk
+670,Drop Inlets
+671,Manholes
+680,Underdrains
+681,Edge Drains
+700,Riprap
+720,Bank and Channel Protection Gabions
+730,Seeding
+731,Fertilizing
+732,Mulching
+733,Sodding
+734,Erosion Control and Water Pollution Control
+735,Tree and Shrub Planting
+740,Crushed Aggregate for Maintenance Stockpiles
+831,Geotextiles and Impermeable Plastic Membranes
+900,Miscellaneous Construction
+910,Informal Miscellaneous Maintenance
+997,Railroads
+998,Railroad Protective Insurance
