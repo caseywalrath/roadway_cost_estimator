@@ -1511,14 +1511,22 @@ table {
   min-width: 1660px;
 }
 
+.evidence-table td {
+  padding: 8px 11px;
+}
+
 .project-line-table {
   min-width: 1060px;
 }
 
 .project-line-table th:nth-child(1),
 .project-line-table td:nth-child(1) {
-  width: 100px;
-  min-width: 100px;
+  width: 116px;
+  min-width: 116px;
+}
+
+.project-line-table td:nth-child(2) .project-line-text-input {
+  min-width: 124px;
 }
 
 .project-line-table td:nth-child(3) {
@@ -1540,6 +1548,7 @@ table {
 }
 
 .project-line-table td {
+  padding: 8px 11px;
   vertical-align: middle;
 }
 
@@ -1564,6 +1573,7 @@ th {
 
 .evidence-table th {
   padding: 0;
+  vertical-align: bottom;
 }
 
 .project-line-table th {
@@ -1716,8 +1726,8 @@ th {
 }
 
 .project-line-group-input {
-  width: 100px;
-  min-width: 100px;
+  width: 116px;
+  min-width: 116px;
 }
 
 .project-line-unit-input {
@@ -1728,7 +1738,7 @@ th {
 .project-line-number-input {
   width: 76px;
   min-width: 76px;
-  text-align: right;
+  text-align: left;
 }
 
 .project-line-notes-input {
