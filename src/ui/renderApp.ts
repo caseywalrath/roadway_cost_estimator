@@ -12,21 +12,32 @@ import type { InflationAdjustedSummary } from "../matching/inflationAdjustment";
 import type {
   ProjectEvidenceContext,
   ProjectLineItem,
+  ProjectSort,
+  ProjectSortKey,
   ProjectWorkspaceState,
   UserProject
 } from "../projects/projectWorkspace";
 import {
   addProject,
   addProjectLineItem,
+  createDefaultProjectSort,
   createUserProject,
   createProjectLineItem,
+  createCustomProjectLineItem,
   duplicateUserProject,
   getActiveProject,
+  projectConstructionCost,
+  projectContingencyCost,
+  projectGroupSuggestions,
+  projectLineTotal,
+  projectOtherCost,
+  projectTotal,
   removeProjectLineItem,
   removeProjectFromState,
   replaceProject,
   replaceProjectLineItem,
   setActiveProject,
+  updateProjectContingencyPercent,
   updateProjectLineItem
 } from "../projects/projectWorkspace";
 import { createImportedCopy, downloadProjectBackup, readProjectBackupFile } from "../projects/projectBackup";
@@ -51,7 +62,12 @@ import { renderSourceReview } from "./renderSourceReview";
 type AppView = "explorer" | "project" | "sourceReview";
 type ProjectSubview = "workspace" | "manager";
 type SaveStatus = "idle" | "saving" | "saved" | "failed";
-type PendingFocus = "sourceLauncher" | "sourceList" | "sourceDetail" | { sourceProjectId: string };
+type PendingFocus =
+  | "sourceLauncher"
+  | "sourceList"
+  | "sourceDetail"
+  | { sourceProjectId: string }
+  | { projectLineId: string; field: string };
 
 interface ProjectMetadataDraft extends ProjectMetadataEditorView {
   expectedRevision: number | null;
@@ -88,6 +104,7 @@ export async function renderApp(
   let query = { ...emptyQuery };
   let evidenceFilters = createDefaultEvidenceFilters(query);
   let evidenceSort = createDefaultEvidenceSort();
+  let projectSort = createDefaultProjectSort();
   let evidenceFiltersExpanded = true;
   let itemSearchCollapsed = false;
   let excludedSummaryRowIds = new Set<string>();
@@ -197,7 +214,7 @@ export async function renderApp(
           ` : activeView === "project"
             ? projectSubview === "manager"
               ? renderProjectManager(projectState.projects, data.manifest.states, data.stateConfig.code, projectManagerFilters, activeProject, projectReadOnly, projectMetadataDraft)
-              : renderProjectWorkspace(activeProject, projectState.projects, data.manifest.states, data.stateConfig.code, projectReadOnly, projectMetadataDraft)
+              : renderProjectWorkspace(activeProject, projectState.projects, data.manifest.states, data.stateConfig.code, projectReadOnly, projectMetadataDraft, projectSort)
             : renderSourceReview(data, selectedSourceProjectId)}
 
         <footer class="app-footer">
@@ -527,6 +544,7 @@ export async function renderApp(
     }
 
     const costInput = addForm.elements.namedItem("preferredUnitCost") as HTMLInputElement | null;
+    const groupInput = addForm.elements.namedItem("group") as HTMLInputElement | null;
     const costSourceInput = addForm.elements.namedItem("costSource") as HTMLInputElement | null;
 
     costInput?.addEventListener("input", () => {
@@ -584,6 +602,7 @@ export async function renderApp(
         itemCode: result.query.itemCode,
         description: result.interpretedDescription,
         unit: result.query.unit,
+        group: groupInput?.value ?? "",
         quantity,
         preferredUnitCost,
         notes: notesInput?.value ?? "",
@@ -598,7 +617,7 @@ export async function renderApp(
         )
       });
       const matchingLineIds = activeProject.lineItems
-        .filter((candidate) => candidate.agencyItemId === lineItem.agencyItemId)
+        .filter((candidate) => candidate.lineItemType === "explorer" && candidate.agencyItemId === lineItem.agencyItemId)
         .map((candidate) => candidate.lineItemId);
 
       if (matchingLineIds.length > 0) {
@@ -824,8 +843,54 @@ export async function renderApp(
       const activeProject = getActiveProject(projectState, data.stateConfig.code);
 
       if (activeProject) {
-        downloadProjectCsv(activeProject);
+        downloadProjectCsv(activeProject, projectSort);
       }
+    });
+
+    const updateProjectCostSummaryInDom = (project: UserProject): void => {
+      rootElement.querySelector<HTMLElement>("[data-project-construction-cost]")!.textContent = formatProjectCurrency(projectConstructionCost(project));
+      rootElement.querySelector<HTMLElement>("[data-project-other-cost]")!.textContent = formatProjectCurrency(projectOtherCost(project));
+      rootElement.querySelector<HTMLElement>("[data-project-contingency-cost]")!.textContent = formatProjectCurrency(projectContingencyCost(project));
+      rootElement.querySelector<HTMLElement>("[data-project-total]")!.textContent = formatProjectCurrency(projectTotal(project));
+    };
+
+    const updateProjectTotalsInDom = (row: HTMLTableRowElement, lineItemId: string): void => {
+      const activeProject = getActiveProject(projectState, data.stateConfig.code);
+      const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId);
+      if (!activeProject || !lineItem) return;
+      row.querySelector<HTMLElement>(`[data-project-line-total-id="${lineItemId}"]`)!.textContent = formatProjectCurrency(projectLineTotal(lineItem));
+      updateProjectCostSummaryInDom(activeProject);
+    };
+
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-add-custom-project-line]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const activeProject = getActiveProject(projectState, data.stateConfig.code);
+        if (!activeProject || projectReadOnly) return;
+        const lineItem = createCustomProjectLineItem(data.stateConfig.code);
+        pendingFocus = { projectLineId: lineItem.lineItemId, field: "itemCode" };
+        persistProjectState(addProjectLineItem(projectState, activeProject.projectId, lineItem), true);
+      });
+    });
+
+    root.querySelectorAll<HTMLButtonElement>("[data-project-sort-key]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const sortKey = button.dataset.projectSortKey as ProjectSortKey | undefined;
+
+        if (!sortKey) {
+          return;
+        }
+
+        projectSort = projectSort.key === sortKey
+          ? {
+              key: sortKey,
+              direction: projectSort.direction === "asc" ? "desc" : "asc"
+            }
+          : {
+              key: sortKey,
+              direction: "asc"
+            };
+        render();
+      });
     });
 
     rootElement.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-project-line-field]").forEach((input) => {
@@ -841,7 +906,43 @@ export async function renderApp(
 
         const quantityInput = row.querySelector<HTMLInputElement>('[data-project-line-field="quantity"]');
         const preferredUnitCostInput = row.querySelector<HTMLInputElement>('[data-project-line-field="preferredUnitCost"]');
+        const groupInput = row.querySelector<HTMLInputElement>('[data-project-line-field="group"]');
         const notesInput = row.querySelector<HTMLInputElement>('[data-project-line-field="notes"]');
+
+        if (lineItem.lineItemType === "custom") {
+          const quantityResult = readNullableProjectNumber(quantityInput);
+          const preferredUnitCostResult = readNullableProjectNumber(preferredUnitCostInput);
+          if (!quantityResult.valid || !preferredUnitCostResult.valid) {
+            if (validate) {
+              const invalidInput = !quantityResult.valid ? quantityInput : preferredUnitCostInput;
+              if (invalidInput) {
+                invalidInput.setCustomValidity("Enter a non-negative number or leave this field blank.");
+                invalidInput.reportValidity();
+              }
+            }
+            return;
+          }
+
+          if (quantityInput) quantityInput.setCustomValidity("");
+          if (preferredUnitCostInput) preferredUnitCostInput.setCustomValidity("");
+          const itemCodeInput = row.querySelector<HTMLInputElement>('[data-project-line-field="itemCode"]');
+          const descriptionInput = row.querySelector<HTMLInputElement>('[data-project-line-field="description"]');
+          const unitInput = row.querySelector<HTMLInputElement>('[data-project-line-field="unit"]');
+          const nextState = updateProjectLineItem(projectState, activeProject.projectId, lineItemId, {
+            group: groupInput?.value ?? "",
+            itemCode: itemCodeInput?.value ?? "",
+            description: descriptionInput?.value ?? "",
+            unit: unitInput?.value ?? "",
+            quantity: quantityResult.value,
+            preferredUnitCost: preferredUnitCostResult.value,
+            notes: notesInput?.value ?? ""
+          });
+          persistProjectState(nextState, false);
+          syncProjectGroupDatalists(rootElement, getActiveProject(projectState, data.stateConfig.code));
+          updateProjectTotalsInDom(row, lineItemId);
+          return;
+        }
+
         const quantity = validate
           ? readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero.")
           : readOptionalFormNumber(quantityInput?.value ?? "");
@@ -855,12 +956,15 @@ export async function renderApp(
 
         persistProjectState(
           updateProjectLineItem(projectState, activeProject.projectId, lineItemId, {
+            group: groupInput?.value ?? "",
             quantity,
             preferredUnitCost,
             notes: notesInput?.value ?? ""
           }),
           false
         );
+        syncProjectGroupDatalists(rootElement, getActiveProject(projectState, data.stateConfig.code));
+        updateProjectTotalsInDom(row, lineItemId);
       };
       input.addEventListener("input", () => updateLine(false));
       input.addEventListener("blur", () => {
@@ -868,6 +972,40 @@ export async function renderApp(
         void queueProjectSave();
       });
     });
+
+    const contingencyInput = rootElement.querySelector<HTMLInputElement>("[data-project-contingency-percent]");
+    if (contingencyInput) {
+      const updateContingency = (validate: boolean): void => {
+        const activeProject = getActiveProject(projectState, data.stateConfig.code);
+        if (!activeProject || projectReadOnly) return;
+
+        const rawValue = contingencyInput.value.trim();
+        const value = readOptionalFormNumber(rawValue);
+        if (rawValue && value === null) {
+          if (validate) {
+            contingencyInput.setCustomValidity("Enter a non-negative percentage.");
+            contingencyInput.reportValidity();
+          }
+          return;
+        }
+
+        contingencyInput.setCustomValidity("");
+        const nextState = updateProjectContingencyPercent(projectState, activeProject.projectId, value ?? 0);
+        persistProjectState(nextState, false);
+        const nextProject = getActiveProject(projectState, data.stateConfig.code);
+        if (nextProject) updateProjectCostSummaryInDom(nextProject);
+      };
+
+      contingencyInput.addEventListener("input", () => updateContingency(false));
+      contingencyInput.addEventListener("blur", () => {
+        updateContingency(true);
+        const activeProject = getActiveProject(projectState, data.stateConfig.code);
+        if (activeProject) {
+          contingencyInput.value = formatDecimalInput(activeProject.contingencyPercent);
+        }
+        void queueProjectSave();
+      });
+    }
 
     rootElement.querySelectorAll<HTMLButtonElement>("[data-remove-project-line-id]").forEach((button) => {
       button.addEventListener("click", async () => {
@@ -1152,6 +1290,17 @@ export async function renderApp(
   render();
 }
 
+function syncProjectGroupDatalists(rootElement: HTMLElement, project: UserProject | null): void {
+  const groups = projectGroupSuggestions(project);
+  rootElement.querySelectorAll<HTMLDataListElement>("[data-project-group-options]").forEach((datalist) => {
+    datalist.replaceChildren(...groups.map((group) => {
+      const option = document.createElement("option");
+      option.value = group;
+      return option;
+    }));
+  });
+}
+
 function applyPendingFocus(root: HTMLElement, pendingFocus: PendingFocus | null): void {
   if (!pendingFocus) {
     return;
@@ -1169,6 +1318,13 @@ function applyPendingFocus(root: HTMLElement, pendingFocus: PendingFocus | null)
 
   if (pendingFocus === "sourceDetail") {
     root.querySelector<HTMLElement>("#source-review-detail-title")?.focus();
+    return;
+  }
+
+  if ("projectLineId" in pendingFocus) {
+    [...root.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-project-line-field]")]
+      .find((input) => input.dataset.projectLineId === pendingFocus.projectLineId && input.dataset.projectLineField === pendingFocus.field)
+      ?.focus();
     return;
   }
 
@@ -1292,6 +1448,21 @@ function readOptionalFormNumber(value: string): number | null {
 
   const numberValue = Number(trimmedValue);
   return Number.isFinite(numberValue) && numberValue >= 0 ? numberValue : null;
+}
+
+function readNullableProjectNumber(input: HTMLInputElement | null): { value: number | null; valid: boolean } {
+  const rawValue = input?.value.trim() ?? "";
+  if (!rawValue) return { value: null, valid: true };
+  const value = readOptionalFormNumber(rawValue);
+  return { value, valid: value !== null };
+}
+
+function formatProjectCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: value >= 100 ? 0 : 2
+  }).format(value);
 }
 
 function roundToHundredth(value: number): number {

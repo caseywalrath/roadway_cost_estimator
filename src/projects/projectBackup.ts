@@ -1,7 +1,9 @@
 import {
   PROJECT_WORKSPACE_SCHEMA_VERSION,
   createId,
-  parseUserProjectV4,
+  projectCostSummary,
+  parseUserProjectV7,
+  type ProjectCostSummary,
   type UserProject
 } from "./projectWorkspace";
 
@@ -15,6 +17,7 @@ export interface ProjectBackupFile {
   projectSchemaVersion: typeof PROJECT_WORKSPACE_SCHEMA_VERSION;
   revision: number;
   project: UserProject;
+  summary: ProjectCostSummary;
 }
 
 export function buildProjectBackup(project: UserProject): ProjectBackupFile {
@@ -24,7 +27,8 @@ export function buildProjectBackup(project: UserProject): ProjectBackupFile {
     exportedAt: new Date().toISOString(),
     projectSchemaVersion: PROJECT_WORKSPACE_SCHEMA_VERSION,
     revision: project.revision,
-    project: structuredClone(project)
+    project: structuredClone(project),
+    summary: projectCostSummary(project)
   };
 }
 
@@ -32,13 +36,20 @@ export function parseProjectBackup(value: unknown): ProjectBackupFile | null {
   if (!isRecord(value)
     || value.fileFormat !== PROJECT_FILE_FORMAT
     || value.fileVersion !== PROJECT_FILE_VERSION
-    || value.projectSchemaVersion !== PROJECT_WORKSPACE_SCHEMA_VERSION
+    || (value.projectSchemaVersion !== 4 && value.projectSchemaVersion !== 5 && value.projectSchemaVersion !== 6 && value.projectSchemaVersion !== PROJECT_WORKSPACE_SCHEMA_VERSION)
     || typeof value.exportedAt !== "string"
     || typeof value.revision !== "number") {
     return null;
   }
-  const project = parseUserProjectV4(value.project);
-  return project && value.revision === project.revision ? { ...value, project } as ProjectBackupFile : null;
+  const project = parseUserProjectV7(value.project);
+  return project && value.revision === project.revision
+    ? {
+        ...value,
+        projectSchemaVersion: PROJECT_WORKSPACE_SCHEMA_VERSION,
+        project,
+        summary: projectCostSummary(project)
+      } as ProjectBackupFile
+    : null;
 }
 
 export function createImportedCopy(project: UserProject): UserProject {

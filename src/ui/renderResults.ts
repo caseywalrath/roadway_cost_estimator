@@ -92,7 +92,7 @@ function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: bo
     <div class="panel-heading evidence-table-heading">
       <div>
         <p class="eyebrow">Matching Projects</p>
-        <h3>${escapeHtml(result.query.itemCode ? result.interpretedDescription : "Select an official item")}</h3>
+        ${result.query.itemCode ? `<h3>${escapeHtml(result.interpretedDescription)}</h3>` : ""}
         <p class="query-line">
           Item code: ${escapeHtml(result.query.itemCode || "Not selected")} |
           Unit: ${escapeHtml(result.query.unit || "Not selected")}
@@ -272,7 +272,7 @@ function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): strin
   const columnClass = column.key === "projectNumber" ? " evidence-project-header" : "";
 
   return `
-    <th aria-sort="${ariaSort}" class="${isActive ? "evidence-table__sorted-column" : ""}${columnClass}">
+    <th aria-sort="${ariaSort}" class="${isActive ? "table-sorted-column" : ""}${columnClass}">
       <button
         type="button"
         class="table-sort-button"
@@ -534,7 +534,7 @@ function renderUnitPrice(value: number | null, adjustedValue: number | null): st
 }
 
 function renderEmptyTableMessage(): string {
-  return `<p class="muted evidence-empty">No project-item rows match the current filters.</p>`;
+  return `<p class="muted evidence-empty">No matching projects found</p>`;
 }
 
 function renderFilterChips(result: EvidenceResult, data: AppData): string {

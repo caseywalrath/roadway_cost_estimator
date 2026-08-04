@@ -1,5 +1,18 @@
 import type { EvidenceResult, StateConfig } from "../data/schema";
-import type { ProjectLineItem, UserProject } from "../projects/projectWorkspace";
+import {
+  DEFAULT_PROJECT_SORT,
+  projectConstructionCost,
+  projectContingencyCost,
+  projectLineTotal,
+  projectOtherCost,
+  projectGroupSuggestions,
+  projectTotal,
+  sortProjectLineItems,
+  type ProjectLineItem,
+  type ProjectSort,
+  type ProjectSortKey,
+  type UserProject
+} from "../projects/projectWorkspace";
 
 export interface PendingDuplicateProjectLine {
   lineItem: ProjectLineItem;
@@ -23,6 +36,17 @@ export interface ProjectMetadataEditorView {
 }
 
 export type ProjectWorkspaceSubview = "workspace" | "manager";
+
+const PROJECT_SORTABLE_COLUMNS: Array<{ key: ProjectSortKey; label: string }> = [
+  { key: "group", label: "Group" },
+  { key: "itemCode", label: "Item Code" },
+  { key: "description", label: "Description" },
+  { key: "preferredUnitCost", label: "Unit Cost" },
+  { key: "unit", label: "Unit" },
+  { key: "quantity", label: "Quantity" },
+  { key: "totalItemCost", label: "Total Item Cost" },
+  { key: "notes", label: "Notes" }
+];
 
 export function renderAddToProjectPanel(
   result: EvidenceResult,
@@ -51,11 +75,13 @@ export function renderAddToProjectPanel(
           <h3>Add Item to Project</h3>
           <p class="query-line">${escapeHtml(projectLabel(activeProject))} | ${escapeHtml(activeProject.location.trim() || "Location not specified")}</p>
         </div>
-        <button type="button" class="secondary-button project-tab-shortcut" data-app-view="project">Project</button>
+        <button type="button" class="secondary-button project-tab-shortcut" data-app-view="project">View Project</button>
       </div>
       ${projectLineNotice ? `<p class="project-line-notice" role="status" aria-live="polite" aria-atomic="true" data-project-line-notice>${escapeHtml(projectLineNotice)}</p>` : ""}
+      ${renderProjectGroupDatalist(activeProject)}
       <form id="add-project-item-form" class="add-project-form">
         <input type="hidden" name="costSource" value="manual" />
+        <label class="add-project-group-field"><span>Group</span><input name="group" list="${escapeHtml(projectGroupListId(activeProject))}" autocomplete="off" /></label>
         <label class="add-project-cost-field"><span>Unit cost</span><input name="preferredUnitCost" type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" required /></label>
         <label><span>Quantity</span><input name="quantity" type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" required /></label>
         <label class="add-project-notes-field"><span>Line notes</span><textarea name="notes" rows="2"></textarea></label>
@@ -71,10 +97,10 @@ export function renderProjectWorkspace(
   states: StateConfig[],
   currentStateCode: string,
   readOnly: boolean,
-  editor: ProjectMetadataEditorView | null
+  editor: ProjectMetadataEditorView | null,
+  projectSort: ProjectSort = DEFAULT_PROJECT_SORT
 ): string {
   const workspaceEditor = editor?.context === "workspace" ? editor : null;
-  const totalProjectCost = project ? projectTotal(project) : 0;
   return `
     <section class="project-workspace">
       ${project && readOnly ? `
@@ -89,7 +115,7 @@ export function renderProjectWorkspace(
             ? renderMetadataEditor(workspaceEditor, states, currentStateCode, "project-metadata-editor-form")
             : project
               ? renderProjectMetadata(project)
-              : `<div class="project-empty-heading"><p class="eyebrow">Project</p><h2>No active Project</h2></div>`}
+              : `<div class="project-empty-heading"><h2>No Active Project</h2></div>`}
           <div class="project-header-actions">
             ${renderProjectActions(project, projects, "workspace", readOnly)}
           </div>
@@ -99,10 +125,13 @@ export function renderProjectWorkspace(
       ${!project && !workspaceEditor ? `<section class="panel-block project-empty-workspace"><button type="button" class="primary-button" data-start-new-project>New Project</button></section>` : ""}
       ${project && workspaceEditor?.mode !== "create" ? `<section class="panel-block project-lines-panel">
         <div class="panel-heading project-lines-heading">
-          <div><p class="eyebrow">Project Items</p><h3>${formatNumber(project.lineItems.length)} line${project.lineItems.length === 1 ? "" : "s"}</h3></div>
-          <div class="project-total"><span>Total Project Cost</span><strong>${formatCurrency(totalProjectCost)}</strong></div>
+          <div>
+            <p class="eyebrow">Project Items</p>
+            <button type="button" class="secondary-button project-add-item-button" data-add-custom-project-line ${readOnly ? "disabled" : ""}>+Add Item</button>
+          </div>
+          ${renderProjectCostSummary(project, readOnly)}
         </div>
-        ${project.lineItems.length === 0 ? "" : renderProjectLineTable(project, readOnly)}
+        ${project.lineItems.length === 0 ? "" : renderProjectLineTable(project, readOnly, projectSort)}
       </section>` : ""}
     </section>
   `;
@@ -128,8 +157,9 @@ export function renderProjectManager(
   return `
     <section class="project-manager">
       <section class="panel-block project-manager-heading">
-        <div><p class="eyebrow">Projects</p><h2>Project manager</h2></div>
+        <div><h2>Project Manager</h2></div>
         <div class="project-manager-heading-actions">
+          <button type="button" class="primary-button" data-start-new-project>New Project</button>
           <button type="button" class="secondary-button" data-close-project-manager>Back to active Project</button>
           ${renderProjectActions(activeProject, projects, "manager", activeProjectReadOnly)}
         </div>
@@ -211,7 +241,7 @@ function renderMetadataEditor(
   const actionLabel = editor.mode === "create" ? "Create Project" : "Save Changes";
   return `
     <form id="${formId}" class="project-metadata-editor-form" data-project-editor-context="${editor.context}" data-project-editor-mode="${editor.mode}">
-      <div class="project-editor-heading"><p class="eyebrow">${editor.mode === "create" ? "New Project" : "Edit Project"}</p><h2>${editor.mode === "create" ? `Create a ${escapeHtml(stateName(states, stateCode))} Project` : escapeHtml(editor.name.trim() || "Unnamed Project")}</h2></div>
+      <div class="project-editor-heading"><h2>${editor.mode === "create" ? "New Project" : escapeHtml(editor.name.trim() || "Unnamed Project")}</h2></div>
       <label><span>Project name</span><input name="name" value="${escapeHtml(editor.name)}" required autocomplete="off" /></label>
       <label><span>State</span>${isManagerCreate
         ? `<select name="state">${states.map((state) => `<option value="${escapeHtml(state.code)}" ${state.code === stateCode ? "selected" : ""}>${escapeHtml(state.name)}</option>`).join("")}</select>`
@@ -251,24 +281,106 @@ function renderDuplicateProjectLinePanel(project: UserProject, pendingDuplicateL
     <section class="add-project-panel duplicate-project-panel">
       <div class="panel-heading"><h3>${escapeHtml(pendingDuplicateLine.lineItem.itemCode)} already exists in Project</h3></div>
       <form id="duplicate-project-item-form" class="duplicate-project-form">
-        <div class="duplicate-line-list">${existingLines.map((lineItem, index) => `<label class="duplicate-line-option"><input type="radio" name="lineItemId" value="${escapeHtml(lineItem.lineItemId)}" ${index === 0 ? "checked" : ""} /><span><strong>${escapeHtml(lineItem.itemCode)} - ${escapeHtml(lineItem.description)}</strong><small>${formatNumber(lineItem.quantity)} ${escapeHtml(lineItem.unit)} at ${formatCurrency(lineItem.preferredUnitCost)}</small></span></label>`).join("")}</div>
+        <p class="query-line">${pendingDuplicateLine.lineItem.group ? `Group: ${escapeHtml(pendingDuplicateLine.lineItem.group)}` : "No Group specified"}</p>
+        <div class="duplicate-line-list">${existingLines.map((lineItem, index) => `<label class="duplicate-line-option"><input type="radio" name="lineItemId" value="${escapeHtml(lineItem.lineItemId)}" ${index === 0 ? "checked" : ""} /><span><strong>${escapeHtml(lineItem.itemCode)} - ${escapeHtml(lineItem.description)}</strong><small>${lineItem.group ? `Group: ${escapeHtml(lineItem.group)} | ` : ""}${formatNumber(lineItem.quantity ?? 0)} ${escapeHtml(lineItem.unit)} at ${formatCurrency(lineItem.preferredUnitCost ?? 0)}</small></span></label>`).join("")}</div>
         <div class="duplicate-project-actions"><button type="button" class="secondary-button" data-duplicate-project-action="cancel">Cancel</button><button type="button" class="secondary-button" data-duplicate-project-action="add">Add as new line</button><button type="button" class="primary-button" data-duplicate-project-action="update">Update selected existing line</button></div>
       </form>
     </section>
   `;
 }
 
-function renderProjectLineTable(project: UserProject, readOnly: boolean): string {
-  return `<div class="table-scroll-shell project-table-shell"><div class="table-scroll" tabindex="0" aria-label="Project item table"><table class="project-line-table"><thead><tr><th>Item code</th><th>Description</th><th>Unit Cost</th><th>Unit</th><th>Quantity</th><th>Total Item Cost</th><th>Notes</th><th>Remove</th></tr></thead><tbody>${project.lineItems.map((lineItem) => renderProjectLineRow(lineItem, readOnly)).join("")}</tbody></table></div></div>`;
+function renderProjectLineTable(project: UserProject, readOnly: boolean, projectSort: ProjectSort): string {
+  const sortedLineItems = sortProjectLineItems(project.lineItems, projectSort);
+  const groupListId = projectGroupListId(project);
+  return `<div class="table-scroll-shell project-table-shell">${renderProjectGroupDatalist(project)}<div class="table-scroll" tabindex="0" aria-label="Project item table"><table class="project-line-table"><thead><tr>${PROJECT_SORTABLE_COLUMNS.map((column) => renderProjectSortableHeader(column, projectSort)).join("")}<th>Remove</th></tr></thead><tbody>${sortedLineItems.map((lineItem) => renderProjectLineRow(lineItem, readOnly, groupListId)).join("")}</tbody></table></div></div>`;
 }
 
-function renderProjectLineRow(lineItem: ProjectLineItem, readOnly: boolean): string {
-  return `<tr><td>${escapeHtml(lineItem.itemCode)}</td><td>${escapeHtml(lineItem.description)}</td><td><input name="preferredUnitCost" class="project-line-number-input" data-project-line-id="${escapeHtml(lineItem.lineItemId)}" data-project-line-field="preferredUnitCost" value="${lineItem.preferredUnitCost}" inputmode="decimal" ${readOnly ? "disabled" : ""} /></td><td>${escapeHtml(lineItem.unit)}</td><td><input name="quantity" class="project-line-number-input" data-project-line-id="${escapeHtml(lineItem.lineItemId)}" data-project-line-field="quantity" value="${lineItem.quantity}" inputmode="decimal" ${readOnly ? "disabled" : ""} /></td><td>${formatCurrency(lineItem.quantity * lineItem.preferredUnitCost)}</td><td><input name="notes" class="project-line-notes-input" data-project-line-id="${escapeHtml(lineItem.lineItemId)}" data-project-line-field="notes" value="${escapeHtml(lineItem.notes)}" ${readOnly ? "disabled" : ""} /></td><td><button type="button" class="project-line-remove-button" data-remove-project-line-id="${escapeHtml(lineItem.lineItemId)}" aria-label="Remove ${escapeHtml(lineItem.itemCode)} from project" title="Remove line" ${readOnly ? "disabled" : ""}>${trashIcon()}</button></td></tr>`;
+function renderProjectCostSummary(project: UserProject, readOnly: boolean): string {
+  return `
+    <div class="project-cost-summary" aria-label="Project cost summary">
+      <div class="project-cost-breakdown">
+        <div class="project-cost-metric">
+          <span>Construction bid items</span>
+          <strong data-project-construction-cost>${formatCurrency(projectConstructionCost(project))}</strong>
+        </div>
+        <div class="project-cost-metric">
+          <span>Other costs</span>
+          <strong data-project-other-cost>${formatCurrency(projectOtherCost(project))}</strong>
+        </div>
+        <div class="project-cost-metric project-cost-metric--contingency">
+          <span>Contingencies</span>
+          <div class="project-contingency-value">
+            <label class="project-contingency-percent">
+              <input type="text" inputmode="decimal" class="project-contingency-input" data-project-contingency-percent aria-label="Contingency percentage" value="${escapeHtml(formatNumber(project.contingencyPercent))}" ${readOnly ? "disabled" : ""} />
+              <span>%</span>
+            </label>
+            <strong data-project-contingency-cost>${formatCurrency(projectContingencyCost(project))}</strong>
+          </div>
+        </div>
+      </div>
+      <div class="project-total"><span>Total Project Cost</span><strong data-project-total>${formatCurrency(projectTotal(project))}</strong></div>
+    </div>
+  `;
+}
+
+function renderProjectSortableHeader(column: { key: ProjectSortKey; label: string }, sort: ProjectSort): string {
+  const isActive = sort.key === column.key;
+  const ariaSort = isActive ? (sort.direction === "asc" ? "ascending" : "descending") : "none";
+  const nextDirection = isActive && sort.direction === "asc" ? "descending" : "ascending";
+  return `
+    <th aria-sort="${ariaSort}" class="${isActive ? "table-sorted-column" : ""}">
+      <button
+        type="button"
+        class="table-sort-button"
+        data-project-sort-key="${column.key}"
+        aria-label="Sort by ${escapeHtml(column.label)} ${nextDirection}"
+      >
+        <span>${escapeHtml(column.label)}</span>
+        <span class="sort-indicator sort-indicator--${isActive ? sort.direction : "inactive"}" aria-hidden="true"></span>
+      </button>
+    </th>
+  `;
+}
+
+function renderProjectLineRow(lineItem: ProjectLineItem, readOnly: boolean, groupListId: string): string {
+  const custom = lineItem.lineItemType === "custom";
+  const disabled = readOnly ? "disabled" : "";
+  return `<tr class="${custom ? "project-line-row--custom" : ""}">
+    <td>${renderProjectLineInput(lineItem, "group", "Group", "project-line-group-input", disabled, "text", groupListId)}</td>
+    <td>${custom ? renderProjectLineInput(lineItem, "itemCode", "Item Code", "project-line-text-input", disabled) : escapeHtml(lineItem.itemCode)}</td>
+    <td>${custom ? renderProjectLineInput(lineItem, "description", "Description", "project-line-text-input", disabled) : escapeHtml(lineItem.description)}</td>
+    <td>${renderProjectLineInput(lineItem, "preferredUnitCost", "Unit Cost", "project-line-number-input", disabled, "decimal")}</td>
+    <td>${custom ? renderProjectLineInput(lineItem, "unit", "Unit", "project-line-unit-input", disabled) : escapeHtml(lineItem.unit)}</td>
+    <td>${renderProjectLineInput(lineItem, "quantity", "Quantity", "project-line-number-input", disabled, "decimal")}</td>
+    <td data-project-line-total-id="${escapeHtml(lineItem.lineItemId)}">${formatCurrency(projectLineTotal(lineItem))}</td>
+    <td>${renderProjectLineInput(lineItem, "notes", "Notes", "project-line-notes-input", disabled)}</td>
+    <td><button type="button" class="project-line-remove-button" data-remove-project-line-id="${escapeHtml(lineItem.lineItemId)}" aria-label="Remove ${escapeHtml(lineItem.itemCode || "custom item")} from project" title="Remove line" ${disabled}>${trashIcon()}</button></td>
+  </tr>`;
+}
+
+function renderProjectLineInput(
+  lineItem: ProjectLineItem,
+  field: "group" | "itemCode" | "description" | "preferredUnitCost" | "unit" | "quantity" | "notes",
+  label: string,
+  className: string,
+  disabled: string,
+  inputMode = "text",
+  listId?: string
+): string {
+  const value = lineItem[field] ?? "";
+  return `<input name="${field}" aria-label="${label}" class="${className}" data-project-line-id="${escapeHtml(lineItem.lineItemId)}" data-project-line-field="${field}" value="${escapeHtml(String(value))}" inputmode="${inputMode}" ${listId ? `list="${escapeHtml(listId)}"` : ""} ${disabled} />`;
+}
+
+function renderProjectGroupDatalist(project: UserProject): string {
+  return `<datalist id="${escapeHtml(projectGroupListId(project))}" data-project-group-options>${projectGroupSuggestions(project).map((group) => `<option value="${escapeHtml(group)}"></option>`).join("")}</datalist>`;
+}
+
+function projectGroupListId(project: UserProject): string {
+  return `project-group-options-${project.projectId}`;
 }
 
 function trashIcon(): string { return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Z" /><path d="M6 9h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Zm4 0v8h2v-8h-2Z" /></svg>`; }
 function projectLabel(project: UserProject): string { return project.name.trim() || "Unnamed Project"; }
-function projectTotal(project: UserProject): number { return project.lineItems.reduce((sum, line) => sum + line.quantity * line.preferredUnitCost, 0); }
 function formatCurrency(value: number): string { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: value >= 100 ? 0 : 2 }).format(value); }
 function formatNumber(value: number): string { return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value); }
 function formatDateTime(value: string): string { const date = new Date(value); return Number.isNaN(date.valueOf()) ? "—" : date.toLocaleString([], { dateStyle: "short", timeStyle: "short" }); }

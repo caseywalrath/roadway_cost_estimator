@@ -157,7 +157,7 @@ Inflation adjustment affects optional display/summary calculations. Original sou
 
 `SearchQuery` includes `state`, `agencyId`, and `agencyItemId`. Evidence joins use `contractId` and `agencyItemId`. Compatibility aliases in `src/data/schema.ts` are temporary adapters for rendering modules migrated from schema v1; new logic must use normalized IDs.
 
-## Project Browser Storage v4
+## Project Browser Storage v7
 
 IndexedDB database: `roadway-cost-estimator`.
 
@@ -165,10 +165,16 @@ IndexedDB database: `roadway-cost-estimator`.
 - `settings`: active Project ID per state, migration status, and one-time legacy-placeholder cleanup version.
 - `revisions`: bounded restorable snapshots keyed by Project and revision.
 - `migrationBackups`: exact legacy storage values and migration reports.
-- Project: `projectId`, `state`, metadata, `status`, `archivedAt`, `revision`, backup metadata, timestamps, and line items.
-- Line item: `lineItemId`, `state`, `agencyId`, `agencyItemId`, code, description, unit, quantity, preferred cost, notes, evidence context, and timestamps.
+- Project: `projectId`, `state`, metadata, `status`, `archivedAt`, `revision`, backup metadata, `contingencyPercent`, timestamps, and line items.
+- Line item: `lineItemId`, `lineItemType`, `state`, `agencyId`, `agencyItemId`, optional Project-specific group, code, description, unit, nullable quantity, nullable preferred cost, notes, optional evidence context, and timestamps.
+- `lineItemType=explorer` represents an item selected from Explorer and requires agency identity, positive quantity/cost, and evidence context. `lineItemType=custom` represents a manually entered line; agency identity and evidence context are blank/null, and quantity/cost may remain blank while the row is being completed.
+- Blank custom quantity or preferred cost contributes zero to Total Item Cost and Total Project Cost. Custom lines are included in Project CSV exports with blank agency/evidence fields.
+- Project Construction bid items are the sum of Explorer-backed line totals. Other Costs are the sum of custom line totals. A non-negative Project-level `contingencyPercent` applies to the combined Construction and Other Costs base; Total Project Cost adds the calculated contingency amount. This percentage and the derived summary amounts do not alter line totals or create group subtotals.
+- Project CSV exports append a separate two-column Project Cost Summary section after the line-item rows. Project JSON backups persist `contingencyPercent` and include derived `constructionCost`, `otherCost`, `contingencyCost`, and `totalProjectCost` summary values; import recalculates these values from the Project.
+- Group is a trimmed, optional Project-specific label used for Project-table sorting and current-Project datalist suggestions only; it does not affect totals or create subtotals.
+- v4-v6 Project records and v1-v3 browser records normalize existing Projects with a zero contingency percentage and existing lines as Explorer-backed lines with a blank Group. Legacy browser keys remain preserved during migration.
 - v1/v2 records migrate to state `CO` and agency `co_cdot`; v3 state identities are retained. Legacy keys are not deleted during migration. Migration reports identify blank zero-line automatic placeholders removed from the usable Project list and reconcile those removals separately from invalid Projects.
-- `.rce-project.json` file format v1 stores one complete schema-v4 Project for round-trip recovery.
+- `.rce-project.json` file format v1 stores one complete schema-v7 Project for round-trip recovery; v4-v6 backups are accepted and normalized during import.
 - Permanently deleting an archived Project removes its aggregate and associated revision snapshots in one IndexedDB transaction.
 
 ## Validation Rules
