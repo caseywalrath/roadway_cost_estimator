@@ -28,7 +28,7 @@ The schema-v2 loader reads the manifest, loads only the selected state's core ta
 4. `src/data/schema.ts` defines the shared contract, project-number, agency-item, bid, item-price, observation, taxonomy, and manifest interfaces.
 5. `src/matching/buildEvidenceResult.ts` groups generalized observations by contract item and filters exact `agencyItemId` evidence.
 6. `src/ui` renders manifest-provided labels, capabilities, columns, source filters, details, and exports. Source Review is a state-specific auxiliary view with list and full-width project-detail states.
-7. `src/projects/projectRepository.ts` opens IndexedDB, preserves and migrates legacy v1-v3 storage, and exposes asynchronous Project operations. `src/projects/projectWorkspace.ts` defines Project schema v4 and pure workspace mutations.
+7. `src/projects/projectRepository.ts` opens IndexedDB, preserves and migrates legacy v1-v3 storage, and exposes asynchronous Project operations. `src/projects/projectWorkspace.ts` defines the current Project workspace schema and pure workspace mutations.
 
 ## Data Model
 
@@ -118,7 +118,8 @@ The 2024 Bid Item Price Report is parsed into committed staging and reconciled a
 
 ## Project Workspace Rules
 
-- Schema v4 stores each Project independently in IndexedDB and retains `state`, `agencyId`, and `agencyItemId` on every line.
+- Schema v7 stores each Project independently in IndexedDB. Each Project stores a non-negative `contingencyPercent`; each line identifies its origin as `explorer` or `custom` and stores an optional Project-specific `group`.
+- Explorer-backed lines retain `state`, `agencyId`, `agencyItemId`, and evidence context. Custom lines accept free-form group, item code, description, unit, notes, and nullable Unit Cost/Quantity without catalog identity or evidence context.
 - Project status, revision, archive time, and backup revision are persisted with the Project.
 - Active Project identity is stored independently per state. Switching states restores the last active Project for that state and never creates a Project implicitly.
 - v1-v3 browser storage migrates without deleting the legacy keys. Exact raw values and migration reports remain in the `migrationBackups` store. Blank zero-line Projects traceable to the former automatic-default behavior are removed once; named Projects and Projects containing metadata or lines are preserved.
@@ -131,6 +132,11 @@ The 2024 Bid Item Price Report is parsed into committed staging and reconciled a
 - `Project Actions` remains available in active, empty, editor, and manager views and contains recent-Project switching, explicit creation/editing, management, CSV reporting export, and JSON recovery import/export.
 - Project JSON files (`.rce-project.json`) are the round-trip recovery format. CSV remains a reporting export.
 - Project metadata is read-only until an explicit Edit action and changes only on Save. Line-field edits autosave after 400 milliseconds; structural changes and metadata saves persist immediately. The footer reports the last successful Project write.
+- The Project Items header shows Construction bid-item cost, Other Costs, a Project-level editable contingency percentage and calculated contingency amount, plus Total Project Cost in one horizontal summary strip. Construction is the sum of Explorer-backed lines; Other Costs is the sum of custom lines; contingencies apply to their combined base; blank or legacy percentages are zero.
+- Project CSV exports retain the line-item table and append a separate two-column Project Cost Summary section. Project JSON backups persist the contingency percentage and include a derived summary snapshot that is recalculated on import.
+- The Project Items section provides `+Add Item` for immediately persisted custom rows. Custom rows are appended, fully inline-editable, included in project totals and CSV exports, and may remain incomplete until the user edits or removes them. Group is editable on both line types; Explorer identity fields remain read-only while existing project-specific cost, quantity, and notes edits remain available.
+- Project Items open sorted by Group ascending. Header sorting is session-local display state and does not reorder stored lines; Project CSV export follows the active Project Items sort. Group values are used for sorting and suggestions only and do not create subtotals or change totals.
+- Group suggestions use unique nonblank values already used in the active Project and remain open-ended through a datalist input. Explorer's Add Item to Project form accepts the same Project-scoped Group values.
 - Local revisions retain the most recent 20 internal recovery snapshots per Project. They are removed with a permanently deleted archived Project. BroadcastChannel edit claims prevent silent concurrent-tab overwrites.
 
 ## Data Governance and Validation

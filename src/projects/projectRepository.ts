@@ -4,7 +4,7 @@ import {
   createEmptyProjectWorkspaceState,
   isLegacyPlaceholderProject,
   migrateLegacyWorkspace,
-  parseUserProjectV4,
+  parseUserProjectV7,
   removeProjectFromState,
   type LegacyMigrationResult,
   type ProjectWorkspaceState,
@@ -166,7 +166,7 @@ class IndexedDbProjectRepository implements ProjectRepository {
     return {
       schemaVersion: PROJECT_WORKSPACE_SCHEMA_VERSION,
       activeProjectIdByState: sanitizeActiveProjectIds(settings?.activeProjectIdByState ?? {}, projects),
-      projects: projects.map((project) => parseUserProjectV4(project)).filter((project): project is UserProject => project !== null)
+      projects: projects.map((project) => parseUserProjectV7(project)).filter((project): project is UserProject => project !== null)
     };
   }
 
@@ -271,7 +271,7 @@ class IndexedDbProjectRepository implements ProjectRepository {
     const transaction = this.database.transaction("projects", "readonly");
     const project = await requestResult<UserProject | undefined>(transaction.objectStore("projects").get(projectId));
     await transactionDone(transaction);
-    return project ?? null;
+    return project ? parseUserProjectV7(project) : null;
   }
 
   private async getSettings(): Promise<WorkspaceSettingsRecord | undefined> {
