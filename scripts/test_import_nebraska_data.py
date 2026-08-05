@@ -71,8 +71,14 @@ def run_package_tests() -> int:
     conflict_ids = {row.get("conflict_id") for row in read_rows(STAGING_DIR / "item_identity_conflicts.csv")}
     if not conflict_ids.issubset(resolution_ids):
         raise AssertionError("every material identity conflict must have a resolution row")
+    if conflict_ids:
+        raise AssertionError(f"unresolved Nebraska identity conflicts remain: {sorted(conflict_ids)[:5]}")
+    if read_rows(STAGING_DIR / "item_identity_human_review.csv"):
+        raise AssertionError("human-only Nebraska semantic review queue must be empty before enablement")
     if any(not row.get("automatic_classification") or not row.get("resolution_status") for row in resolutions):
         raise AssertionError("identity resolution rows must record automatic classification and status")
+    if any(row.get("resolution_status") == "needs_review" for row in resolutions):
+        raise AssertionError("identity resolution file contains unresolved rows")
     config = {
         "code": "NE", "defaultAgencyId": "ne_ndot",
         "files": {

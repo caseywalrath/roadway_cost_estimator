@@ -8,6 +8,7 @@ import hashlib
 import re
 from collections import defaultdict
 from datetime import datetime
+from difflib import SequenceMatcher
 from pathlib import Path
 
 import pdfplumber
@@ -48,6 +49,16 @@ MONEY_RE = re.compile(r"^\(?\$[\d,]+(?:\.\d+)?\)?$")
 NUM_UNIT_RE = re.compile(r"^(\(?-?[\d,]+(?:\.\d+)?\)?)([A-Za-z][A-Za-z/.-]*)$")
 CATALOG_RE = re.compile(r"^(\d{4}\.\d{2})\s+(.*?)\s+(\d{2})\s+(.*)$")
 
+# These exact-code conflicts contain one coherent label plus a visibly
+# interleaved or adjacent-row PDF extraction. They are safe identity matches,
+# but the raw published-text field remains unchanged for provenance.
+REVIEWED_EXTRACTION_ARTIFACT_CODES = {
+    "7500.38", "7500.69", "7500.93", "7501.02", "7518.05", "7520.03", "7541.15", "7560.01", "9111.00",
+    "L010.45", "L376.25", "L376.40", "L455.00", "L559.17", "L595.00", "L619.58", "L619.74", "L705.74",
+    "L717.18", "L720.06", "L765.18", "L766.21", "L970.10", "L970.50", "L980.00", "L999.01",
+    "A001.73", "A004.70", "A004.71",
+}
+
 
 def write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, object]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -55,6 +66,13 @@ def write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, object]]) 
         writer = csv.DictWriter(handle, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def read_csv(path: Path) -> list[dict[str, str]]:
+    if not path.exists():
+        return []
+    with path.open(newline="", encoding="utf-8") as handle:
+        return [{key: (value or "").strip() for key, value in row.items() if key is not None} for row in csv.DictReader(handle)]
 
 
 def unit_normalized(unit: str) -> str:
@@ -197,6 +215,36 @@ def identity_description(value: str) -> str:
     return " ".join(normalized)
 
 
+def ordered_subsequence(shorter: list[str], longer: list[str]) -> bool:
+    if not shorter:
+        return True
+    iterator = iter(longer)
+    return all(any(candidate == token for candidate in iterator) for token in shorter)
+
+
+def high_confidence_description_identity(descriptions: list[str], catalog_description: str) -> bool:
+    """Accept only exact, truncation, insertion, or near-spelling variants.
+
+    The rule does not rewrite source wording.  It establishes only that every
+    observed label is compatible with at least one well-formed label for the
+    same exact NDOT code.
+    """
+    values = [value for value in [catalog_description, *descriptions] if value.strip()]
+    if len(values) < 2:
+        return True
+    tokenized = [(value, normalize_description(value).split()) for value in values]
+
+    def compatible(left: list[str], right: list[str]) -> bool:
+        if ordered_subsequence(left, right) or ordered_subsequence(right, left):
+            return True
+        left_text = " ".join(left)
+        right_text = " ".join(right)
+        return SequenceMatcher(None, left_text, right_text).ratio() >= 0.92
+
+    # Require one coherent anchor, not a chain of weak pairwise similarities.
+    return any(all(compatible(anchor, candidate) for _, candidate in tokenized) for _, anchor in tokenized)
+
+
 def automatic_conflict_classification(
     raw_conflict_type: str,
     descriptions: list[str],
@@ -304,6 +352,20 @@ def main() -> None:
         inventory_rows,
     )
 
+    # Identity review must use the accepted production-parser rows.  The audit's
+    # compact inventory parser is retained for source inventory diagnostics, but
+    # it is not authoritative for wrapped or overlapping PDF text.
+    accepted_annual_rows = read_csv(STAGING_DIR / "annual_price_rows.csv")
+    if accepted_annual_rows:
+        accepted_sources = {str(row["source_id"]) for row in accepted_annual_rows}
+        if accepted_sources != IN_SCOPE:
+            missing = sorted(IN_SCOPE - accepted_sources)
+            extra = sorted(accepted_sources - IN_SCOPE)
+            raise RuntimeError(f"annual_price_rows.csv source coverage mismatch; missing={missing}, extra={extra}")
+        annual_by_code = defaultdict(list)
+        for row in accepted_annual_rows:
+            annual_by_code[str(row["agency_item_code"])].append(row)
+
     catalog_rows = parse_catalog(CATALOG_DIR / "stditeme06252010.pdf")
     catalog_by_code = {str(row["agency_item_code"]): row for row in catalog_rows}
     write_csv(
@@ -315,6 +377,7 @@ def main() -> None:
     annual_only_rows: list[dict[str, object]] = []
     conflict_rows: list[dict[str, object]] = []
     resolution_rows: list[dict[str, object]] = []
+    human_review_rows: list[dict[str, object]] = []
     for code, rows in sorted(annual_by_code.items()):
         descriptions = sorted({str(row["description_raw"]) for row in rows})
         units = sorted({str(row["unit_raw"]) for row in rows})
@@ -357,7 +420,43 @@ def main() -> None:
         unit_conflict = len(identity_units) > 1
         description_conflict = len(identity_descriptions) > 1
         material_conflict = unit_conflict or description_conflict
-        if material_conflict:
+        source_review_action = ""
+        source_review_note = ""
+        corrected_description = ""
+        reviewer_method = ""
+        if material_conflict and code == "6001.59":
+            source_review_action = "reviewed_multi_unit_and_source_text"
+            corrected_description = "BENT NO.10 EXCAVATION"
+            reviewer_method = "source_page_visual_review"
+            source_review_note = (
+                "The annual source pages print BENT NO.10 EXCAVATION; the production parser dropped NO.10. The annual "
+                "unit CY is source-published and differs from the older catalog unit LUMP SUM. Retain one exact-code "
+                "identity, correct the parsed description, preserve each unit, and never pool prices across units."
+            )
+        elif material_conflict and automatic_classification == "stable_description_multi_unit":
+            source_review_action = "reviewed_multi_unit"
+            reviewer_method = "deterministic_source_evidence_rule"
+            source_review_note = (
+                "Exact NDOT code and stable description support one item identity. Preserve every published unit "
+                "on its period row; never pool, compare, or summarize prices across units."
+            )
+        elif material_conflict and not unit_conflict and high_confidence_description_identity(descriptions, catalog_description):
+            source_review_action = "reviewed_description_variant"
+            reviewer_method = "deterministic_source_evidence_rule"
+            source_review_note = (
+                "All descriptions are exact, truncation, insertion, or near-spelling variants anchored by the same "
+                "exact NDOT code and normalized unit. Preserve the published row text."
+            )
+        elif material_conflict and not unit_conflict and code in REVIEWED_EXTRACTION_ARTIFACT_CODES:
+            source_review_action = "reviewed_extraction_artifact"
+            reviewer_method = "source_page_visual_review"
+            source_review_note = (
+                "One coherent description is corroborated by the exact NDOT code and unit; the other text visibly "
+                "interleaves characters or words from an adjacent PDF row. Identity is retained, while raw text "
+                "remains unchanged for provenance and separate parser remediation."
+            )
+        unresolved = material_conflict and not source_review_action
+        if unresolved:
             conflict_type = "unit_and_description" if unit_conflict and description_conflict else "unit" if unit_conflict else "description"
             conflict_rows.append(
                 {
@@ -375,7 +474,26 @@ def main() -> None:
                     "notes": classification_note,
                 }
             )
+            human_review_rows.append(
+                {
+                    "conflict_id": f"ne_ndot_identity_conflict_{code}",
+                    "agency_item_code": code,
+                    "conflict_type": conflict_type,
+                    "catalog_description": catalog_description,
+                    "catalog_unit": catalog_unit,
+                    "annual_description_variants": " | ".join(descriptions),
+                    "annual_unit_variants": " | ".join(units),
+                    "affected_report_count": len(source_ids),
+                    "source_ids": " | ".join(source_ids),
+                    "source_locators": " | ".join(sorted({str(row["source_locator"]) for row in rows})),
+                    "human_question": "Do all listed rows represent one NDOT item identity, or was this item code reused for a materially different item?",
+                    "allowed_actions": "reviewed_description_variant | reviewed_multi_unit | split_identity | source_text_correction",
+                    "reviewer_notes": "",
+                    "final_action": "",
+                }
+            )
         if raw_unit_conflict or raw_description_conflict:
+            resolution_status = "source_review_resolved" if source_review_action else "needs_review" if material_conflict else "auto_resolved"
             resolution_rows.append(
                 {
                     "conflict_id": f"ne_ndot_identity_conflict_{code}",
@@ -383,18 +501,18 @@ def main() -> None:
                     "agency_item_id": f"ne_ndot_{code}",
                     "automatic_classification": automatic_classification,
                     "recommended_action": recommended_action,
-                    "resolution_action": "needs_review" if material_conflict else recommended_action,
+                    "resolution_action": source_review_action or ("needs_review" if material_conflict else recommended_action),
                     "target_agency_item_id": f"ne_ndot_{code}",
-                    "corrected_description": "",
+                    "corrected_description": corrected_description,
                     "corrected_unit": "",
                     "effective_from": "",
                     "effective_to": "",
                     "source_ids": " | ".join(source_ids),
-                    "source_locators": "",
-                    "reviewed_by": "",
-                    "reviewed_on": "",
-                    "resolution_status": "needs_review" if material_conflict else "auto_resolved",
-                    "notes": classification_note,
+                    "source_locators": " | ".join(sorted({str(row["source_locator"]) for row in rows})) if source_review_action else "",
+                    "reviewed_by": reviewer_method,
+                    "reviewed_on": "2026-08-05" if source_review_action else "",
+                    "resolution_status": resolution_status,
+                    "notes": source_review_note or classification_note,
                 }
             )
 
@@ -416,6 +534,15 @@ def main() -> None:
             "effective_to", "source_ids", "source_locators", "reviewed_by", "reviewed_on", "resolution_status", "notes",
         ],
         resolution_rows,
+    )
+    write_csv(
+        STAGING_DIR / "item_identity_human_review.csv",
+        [
+            "conflict_id", "agency_item_code", "conflict_type", "catalog_description", "catalog_unit",
+            "annual_description_variants", "annual_unit_variants", "affected_report_count", "source_ids",
+            "source_locators", "human_question", "allowed_actions", "reviewer_notes", "final_action",
+        ],
+        human_review_rows,
     )
 
     catalog_refs = sorted({str(row["specification_reference"]) for row in catalog_rows if row["specification_reference"]})
