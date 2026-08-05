@@ -1,0 +1,20 @@
+{
+  "name": "wrapped description continuation",
+  "page_number": 23,
+  "words": [
+    {"text": "4365.11", "x0": 38, "top": 100},
+    {"text": "INSTALL", "x0": 99, "top": 100},
+    {"text": "BENTOMAT", "x0": 145, "top": 100},
+    {"text": "CLAY", "x0": 205, "top": 100},
+    {"text": "75", "x0": 530, "top": 100},
+    {"text": "LF", "x0": 570, "top": 100},
+    {"text": "$53.00", "x0": 650, "top": 100},
+    {"text": "$3,975.00", "x0": 700, "top": 100},
+    {"text": "LINER", "x0": 99, "top": 112},
+    {"text": "FOR", "x0": 145, "top": 112},
+    {"text": "INSTALLATION", "x0": 175, "top": 112}
+  ],
+  "expected_rows": [
+    {"agency_item_code": "4365.11", "description_raw": "INSTALL BENTOMAT CLAY LINER FOR INSTALLATION", "total_quantity": "75", "unit_raw": "LF", "published_average_unit_price": "53.00", "total_bid": "3975.00"}
+  ]
+}

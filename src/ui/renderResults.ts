@@ -12,6 +12,9 @@ import type {
   EvidenceSummaryStats
 } from "../data/schema";
 import type { InflationAdjustedPriceSet, InflationAdjustedSummary } from "../matching/inflationAdjustment";
+import type { AnnualInflationAdjustedPriceSet } from "../matching/inflationAdjustment";
+import type { ItemPriceHistoryResult } from "../matching/buildItemPriceHistoryResult";
+import { renderItemPriceHistory } from "./renderItemPriceHistory";
 
 export function renderResults(
   result: EvidenceResult,
@@ -27,7 +30,9 @@ export function renderResults(
   inflationAdjustmentEnabled: boolean,
   inflationAdjustedSummary: InflationAdjustedSummary | null,
   inflationAdjustedPriceSet: InflationAdjustedPriceSet | null,
-  addToProjectPanelHtml: string
+  addToProjectPanelHtml: string,
+  itemPriceHistoryResult: ItemPriceHistoryResult,
+  annualInflationAdjustedPriceSet: AnnualInflationAdjustedPriceSet | null
 ): string {
   const displayedSummaryStats = inflationAdjustmentEnabled
     ? inflationAdjustedSummary?.summaryStats ?? includedSummaryStats
@@ -37,10 +42,13 @@ export function renderResults(
     average: displayedSummaryStats.average,
     engineer: displayedSummaryStats.engineer
   };
+  const hasPeriodPriceHistory = data.stateConfig.capabilities.periodPriceHistory;
+  const hasProjectEvidence = data.contracts.length > 0 || data.observations.length > 0;
 
   return `
     <section class="results-panel">
-      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, inflationAdjustedPriceSet, data)}
+      ${renderItemPriceHistory(itemPriceHistoryResult, data.stateConfig, inflationAdjustmentEnabled, annualInflationAdjustedPriceSet, itemSearchCollapsed)}
+      ${hasProjectEvidence ? renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, inflationAdjustedPriceSet, data) : ""}
       ${renderUnitPriceSummaryPanel(
         displayedStats,
         result.filteredRows.length,
@@ -48,11 +56,15 @@ export function renderResults(
         inflationAdjustmentEnabled,
         inflationAdjustedSummary,
         addToProjectPanelHtml,
-        data.stateConfig.capabilities.engineerEstimate
+        data.stateConfig.capabilities.engineerEstimate,
+        hasPeriodPriceHistory && itemPriceHistoryResult.allExactRows.length > 0
+          ? data.stateConfig.summaryExclusionNote ?? "NDOT average price data excluded"
+          : "",
+        hasProjectEvidence
       )}
-      <div class="source-review-link-row">
+      ${hasProjectEvidence ? `<div class="source-review-link-row">
         <a href="#source-review" class="source-review-link" data-open-source-review>Source review</a>
-      </div>
+      </div>` : ""}
     </section>
     ${renderBidderDetailModal(result, data, selectedBidderDetailKey)}
   `;
@@ -393,10 +405,12 @@ function renderUnitPriceSummaryPanel(
   inflationAdjustmentEnabled: boolean,
   inflationAdjustedSummary: InflationAdjustedSummary | null,
   addToProjectPanelHtml: string,
-  supportsEngineerEstimate: boolean
+  supportsEngineerEstimate: boolean,
+  summaryExclusionNote: string,
+  hasProjectEvidence: boolean
 ): string {
   const inflationControl = renderInflationAdjustmentControl(inflationAdjustmentEnabled);
-  const inflationNote = renderInflationAdjustmentNote(inflationAdjustmentEnabled, inflationAdjustedSummary);
+  const inflationNote = renderInflationAdjustmentNote(inflationAdjustmentEnabled, inflationAdjustedSummary, Boolean(summaryExclusionNote), hasProjectEvidence);
   const allRowsExcludedMessage = filteredRowCount > 0 && includedRowCount === 0
     ? `<p class="muted summary-status-note">All current evidence rows are excluded from the Unit Price Summary.</p>`
     : "";
@@ -411,6 +425,7 @@ function renderUnitPriceSummaryPanel(
       <div class="summary-heading-row">
         <div class="panel-heading">
           <p class="eyebrow">Unit Price Summary</p>
+          ${summaryExclusionNote ? `<p class="summary-exclusion-note">${escapeHtml(summaryExclusionNote)}</p>` : ""}
         </div>
         ${inflationControl}
       </div>
@@ -497,7 +512,9 @@ function renderInflationAdjustmentControl(enabled: boolean): string {
 
 function renderInflationAdjustmentNote(
   enabled: boolean,
-  summary: InflationAdjustedSummary | null
+  summary: InflationAdjustedSummary | null,
+  hasAnnualHistory: boolean,
+  hasProjectEvidence: boolean
 ): string {
   if (!enabled) {
     return "";
@@ -505,6 +522,10 @@ function renderInflationAdjustmentNote(
 
   if (!summary?.targetPeriod) {
     return `<p class="summary-adjustment-note">Inflation Adjustment is on, but no FHWA NHCCI index values are loaded.</p>`;
+  }
+
+  if (hasAnnualHistory && !hasProjectEvidence) {
+    return `<p class="summary-adjustment-note">Inflation Adjustment is on. Annual Unit Price History adjusts NDOT published average unit prices when all four report-period quarters are available. Unit Price Summary values, Total Bid, and CSV export remain unchanged.</p>`;
   }
 
   const missingNote = summary.missingIndexCount > 0

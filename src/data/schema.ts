@@ -3,11 +3,13 @@ export type PriceTypeScope = "awarded" | "average" | "engineer" | "all";
 export type EvidenceSourceTypeFilter = string;
 export type MatchType = "exact_code" | "canonical_alias" | "keyword_fallback";
 export type ConfidenceLevel = "High" | "Medium" | "Low" | "Not supportable";
+export type SectionPickerMode = "division-dependent" | "independent-flat";
 
 export interface StateCapabilities {
   districtFilter: boolean;
   engineerEstimate: boolean;
   bidderDetail: boolean;
+  periodPriceHistory: boolean;
 }
 
 export interface StateDataFiles {
@@ -22,8 +24,10 @@ export interface StateDataFiles {
   agencyItems: string;
   agencyItemVersions: string;
   itemTaxonomy: string;
+  itemTaxonomyMemberships?: string;
   itemMappings: string;
   observations: string;
+  itemPriceSummaries?: string;
   canonicalItems?: string;
   aliases?: string;
 }
@@ -36,8 +40,19 @@ export interface StateConfig {
   divisionLabel: string;
   sectionLabel: string;
   sectionPrefixLength: number;
+  sectionPickerMode?: SectionPickerMode;
+  /** Defaults to true. Set false when `historical` is source-provenance metadata, not a user-facing item-status claim. */
+  showHistoricalItemStatus?: boolean;
   capabilities: StateCapabilities;
   sourceTypeLabels: Record<string, string>;
+  periodPriceHistoryTitle?: string;
+  periodPriceMeasureLabel?: string;
+  summaryExclusionNote?: string;
+  itemCodeSeries?: Array<{
+    value: string;
+    label: string;
+    prefixes: string[];
+  }>;
   files: StateDataFiles;
 }
 
@@ -297,6 +312,41 @@ export interface ItemTaxonomyRecord {
 
 export type SpecSectionRecord = ItemTaxonomyRecord;
 
+export type TaxonomyMembershipMatchStatus = "catalog_exact" | "reviewed_override" | "unclassified" | string;
+
+export interface ItemTaxonomyMembershipRecord {
+  membershipId: string;
+  state: string;
+  agencyId: string;
+  agencyItemId: string;
+  taxonomyId: string;
+  sourceId: string;
+  matchStatus: TaxonomyMembershipMatchStatus;
+  notes: string;
+}
+
+export interface ItemPriceSummaryRecord {
+  summaryId: string;
+  sourceId: string;
+  state: string;
+  agencyId: string;
+  agencyItemId: string;
+  agencyItemCode: string;
+  periodStartDate: string;
+  periodEndDate: string;
+  periodLabel: string;
+  reportSeries: "calendar_year" | "july_june" | string;
+  descriptionRaw: string;
+  totalQuantity: number;
+  unitRaw: string;
+  unitNormalized: string;
+  publishedAverageUnitPrice: number;
+  totalBid: number;
+  sourcePage: number;
+  sourceLocator: string;
+  derivationMethod: string;
+}
+
 export interface ItemMappingRecord {
   mappingId: string;
   state: string;
@@ -347,7 +397,9 @@ export interface AppData {
   agencyItems: AgencyItemRecord[];
   agencyItemVersions: AgencyItemVersionRecord[];
   itemTaxonomy: ItemTaxonomyRecord[];
+  itemTaxonomyMemberships: ItemTaxonomyMembershipRecord[];
   itemMappings: ItemMappingRecord[];
+  itemPriceSummaries: ItemPriceSummaryRecord[];
   inflationIndexes: InflationIndexRecord[];
   aliases: AliasRecord[];
   bids: BidRecord[];
@@ -364,6 +416,8 @@ export interface AppData {
   sectionsByDivisionId: Map<string, ItemTaxonomyRecord[]>;
   specSectionByPrefix: Map<string, ItemTaxonomyRecord>;
   specSectionsByDivision: Map<string, ItemTaxonomyRecord[]>;
+  itemTaxonomyMembershipsByAgencyItemId: Map<string, ItemTaxonomyMembershipRecord[]>;
+  itemPriceSummariesByAgencyItemId: Map<string, ItemPriceSummaryRecord[]>;
   inflationIndexByPeriod: Map<string, InflationIndexRecord>;
   bidsByContractId: Map<string, BidRecord[]>;
   contractItemsByContractId: Map<string, ContractItemRecord[]>;

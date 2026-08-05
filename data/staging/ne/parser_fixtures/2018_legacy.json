@@ -1,0 +1,16 @@
+{
+  "name": "2018 legacy combined quantity unit",
+  "page_number": 1,
+  "words": [
+    {"text": "0001.00", "x0": 38, "top": 100},
+    {"text": "SURVEILLANCE", "x0": 99, "top": 100},
+    {"text": "OF", "x0": 190, "top": 100},
+    {"text": "TEMPORARY", "x0": 210, "top": 100},
+    {"text": "1419.00CDAY", "x0": 520, "top": 100},
+    {"text": "$260.51", "x0": 650, "top": 100},
+    {"text": "$369,662.12", "x0": 700, "top": 100}
+  ],
+  "expected_rows": [
+    {"agency_item_code": "0001.00", "description_raw": "SURVEILLANCE OF TEMPORARY", "total_quantity": "1419.00", "unit_raw": "CDAY", "published_average_unit_price": "260.51", "total_bid": "369662.12"}
+  ]
+}

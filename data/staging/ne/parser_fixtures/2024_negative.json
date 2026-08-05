@@ -1,0 +1,17 @@
+{
+  "name": "2024 negative published price",
+  "page_number": 2,
+  "words": [
+    {"text": "0005.11", "x0": 38, "top": 100},
+    {"text": "TRAFFIC", "x0": 99, "top": 100},
+    {"text": "CONTROL", "x0": 140, "top": 100},
+    {"text": "DEFICIENCY", "x0": 190, "top": 100},
+    {"text": "34", "x0": 546, "top": 100},
+    {"text": "DAY", "x0": 574, "top": 100},
+    {"text": "($500.00)", "x0": 637, "top": 100},
+    {"text": "($17,000.00)", "x0": 694, "top": 100}
+  ],
+  "expected_rows": [
+    {"agency_item_code": "0005.11", "description_raw": "TRAFFIC CONTROL DEFICIENCY", "total_quantity": "34", "unit_raw": "DAY", "published_average_unit_price": "-500.00", "total_bid": "-17000.00"}
+  ]
+}

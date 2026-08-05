@@ -2,7 +2,7 @@
 
 ## Current Product
 
-This repository contains **Roadway Cost Estimator**, a static multi-state roadway bid-item evidence application. Colorado, Iowa, and South Dakota are enabled. A user must select a state on first visit; the browser remembers that choice. Search results never combine states.
+This repository contains **Roadway Cost Estimator**, a static multi-state roadway bid-item evidence application. Colorado, Iowa, Nebraska, and South Dakota are enabled. A user must select a state on first visit; the browser remembers that choice. Search results never combine states.
 
 The app is an evidence browser and limited local project workspace. It is not an automatic estimating recommendation system. Its primary output is a contract-item evidence table with source prices and provenance. Summary statistics, inflation adjustment, bidder detail, CSV export, and saved project lines support user review.
 
@@ -19,6 +19,8 @@ The app is an evidence browser and limited local project workspace. It is not an
 - Browser project storage: IndexedDB database `roadway-cost-estimator`, with independent Project, settings, revision, and migration-backup stores.
 
 The schema-v2 loader reads the manifest, loads only the selected state's core tables, builds relationship maps, and defers `bid_item_prices.csv` until a bidder or source-detail view is opened.
+
+Optional state partitions may also declare `item_price_summaries.csv` for non-contract period aggregates and `item_taxonomy_memberships.csv` for explicit item-to-section relationships. These are loaded into dedicated `AppData` arrays/maps and remain separate from contract observations; existing states omit both files without changing behavior.
 
 ## Runtime Flow
 
@@ -44,13 +46,17 @@ The shared model uses these normalized tables:
 - `agency_items`
 - `agency_item_versions`
 - `item_taxonomy`
+- optional `item_taxonomy_memberships`
 - `item_mappings`
 - `item_observations`
+- optional `item_price_summaries`
 - optional `source_documents`
 
 `contract_id` is the evidence parent. Project numbers and project control numbers are one-to-many children and never duplicate contract-item evidence. `agency_item_id` is the item identity; raw item codes are display and source fields. Generalized price types are `awarded_bid`, `average_bid`, and `engineer_estimate`.
 
 State-native differences remain in normalized nullable fields, taxonomy rows, capability metadata, source provenance, and staging artifacts. They are not hidden by Colorado-specific enums.
+
+Period-level published aggregates are not materialized observations. A state with `periodPriceHistory` capability presents those rows through an independent history workflow and must not use them for contract evidence, Matching Projects, or contract summary statistics.
 
 See `docs/data_schema.md` for table contracts and `docs/multistate_data_architecture.md` for design boundaries.
 
@@ -94,6 +100,12 @@ Each parsed letting is one `sources` bundle with child `source_documents` rows f
 
 The 2024 Bid Item Price Report is parsed into committed staging and reconciled as a QA source. Its 1,431 annual rows are not runtime contract evidence. Raw HTML and PDFs remain ignored under `data/raw/sd/`; the importer supports cached operation and explicit refresh/download options.
 
+## Nebraska NDOT Annual-Price Package
+
+`scripts/import_nebraska_data.py` is an offline-first, coordinate-aware importer for the 17 approved NDOT reports: January--December 2018--2025 and July--June 2017--18 through 2025--26. It preserves both overlapping report series as independent `item_price_summaries.csv` rows and writes no letting, contract, bid, or observation rows. The importer joins legacy split currency digits, handles portrait and landscape layouts, preserves signed and zero values, records one-based PDF pages, and rejects malformed rows into `data/staging/ne/annual_price_parse_failures.csv`.
+
+The staged package currently contains 23,636 parsed annual rows, five committed coordinate fixtures, frozen per-report acceptance counts, and a quantity-times-average reconciliation report. NDOT's published average and total-bid aggregates are retained independently because the aggregation method is undocumented; reconciliation differences remain review evidence and do not become contract observations. The generic Explorer supports explicit taxonomy memberships and an independent, sortable period-history table with report-series and reported-unit filters, direct source links, and CSV export. Annual average prices use the mean of all four FHWA NHCCI quarters in the published report window; incomplete quarter coverage leaves the source value unchanged and visibly unavailable for adjustment. Period rows remain excluded from Matching Projects, Source Review, Unit Price Summary statistics, Total Bid adjustment, CSV adjustment, and quick-fill controls. An NDOT `historical` item status is internal source-provenance metadata only: the older linked Standard Item List did not contain the identity, but one or more published annual reports did. It does not establish that an item is obsolete or inapplicable. Nebraska suppresses this marker in the user interface while retaining it in normalized data and validation. Identity review uses the accepted production-parser rows, not the audit inventory parser. `annual_price_text_corrections.csv` contains 39 reviewed, locator-specific repairs for interleaved or truncated PDF text; the importer validates each expected pre-correction string before applying it. The reproducible resolution artifact records 761 normalized equivalents, 64 reviewed multi-unit identities, 114 reviewed description variants, and one combined source-text/multi-unit resolution. `item_identity_conflicts.csv` and `item_identity_human_review.csv` contain no unresolved rows. Nebraska is enabled in `public/data/manifest.json` with the `periodPriceHistory` capability.
+
 ## UI Rules
 
 - State choice is required initially and remembered afterward.
@@ -102,7 +114,11 @@ The 2024 Bid Item Price Report is parsed into committed staging and reconciled a
 - Colorado adds District and Engineer Estimate.
 - Iowa and South Dakota hide unsupported District and Engineer Estimate controls/columns.
 - Item-prefix extraction uses each state's manifest-defined leading-digit length. South Dakota therefore supports codes such as `009E0010` without a state-specific UI parser.
-- Historical identities and source-deleted lines retain distinct labels. South Dakota project displays and exports include both Project No. and PCN, and Source Review links the named abstract and final-report documents.
+- A state may declare a manifest-driven section-picker mode. South Dakota uses a flat, independent `Division / Bid Item Group` selector whose options include the Division and group prefixes; Colorado, Iowa, and Nebraska retain Division-dependent section selectors.
+- Dependent Item Search dropdowns remain semantically disabled until their prerequisite filter is selected and use a muted label/control treatment to make that dependency visible.
+- A state may declare manifest-driven item-code series. Nebraska exposes independent 0000–9999 and A/L/P/R/W series filtering below Specification Section; the series filter can be used alone or combined with Division, Section, and text search.
+- Period-history-only states render `Edit Item Search` in the annual-price-history header because they do not render the Matching Projects header that owns this action for contract-evidence states.
+- Historical identities and source-deleted lines retain distinct labels unless a state manifest explicitly disables historical item-status display. Nebraska disables it because its `historical` status records annual-report versus older-catalog provenance, not an engineer-facing item-status claim. South Dakota project displays and exports include both Project No. and PCN, and Source Review links the named abstract and final-report documents.
 - Explorer exposes Source Review through a subdued text link aligned with the results column. The dedicated view keeps long source-project lists and wide source details out of the primary evidence workflow and never stacks a project-detail modal over a source list. Matching Projects links continue to open bidder detail when bidder rows exist; otherwise, reviewable Cost Data Book and estimate projects open directly in Source Review.
 - Contract CSV export includes state, agency item identity, call order, status, route, project numbers, contract period, DBE goal, bid metadata, and source identity.
 - Bid item prices load on demand.

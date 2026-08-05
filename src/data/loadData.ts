@@ -11,6 +11,8 @@ import type {
   ContractProjectRecord,
   ContractRecord,
   InflationIndexRecord,
+  ItemPriceSummaryRecord,
+  ItemTaxonomyMembershipRecord,
   ItemMappingRecord,
   ItemObservationRecord,
   ItemTaxonomyRecord,
@@ -64,8 +66,10 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
     rawAgencyItems,
     agencyItemVersions,
     rawTaxonomy,
+    itemTaxonomyMemberships,
     itemMappings,
     observations,
+    itemPriceSummaries,
     inflationIndexes,
     canonicalItems,
     aliases
@@ -80,8 +84,10 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
     loadCsvPath(files.agencyItems, mapAgencyItem),
     loadCsvPath(files.agencyItemVersions, mapAgencyItemVersion),
     loadCsvPath(files.itemTaxonomy, mapTaxonomy),
+    loadOptionalCsvPath(files.itemTaxonomyMemberships, mapItemTaxonomyMembership),
     loadCsvPath(files.itemMappings, mapItemMapping),
     loadCsvPath(files.observations, mapObservation),
+    loadOptionalCsvPath(files.itemPriceSummaries, mapItemPriceSummary),
     loadCsvPath(manifest.common.inflationIndexes, mapInflationIndex),
     loadOptionalCsvPath(files.canonicalItems, mapCanonicalItem),
     loadOptionalCsvPath(files.aliases, mapAlias)
@@ -114,6 +120,8 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
   const sectionsByDivisionId = groupBy(specSections, (row) => row.parentTaxonomyId);
   const specSectionByPrefix = new Map(specSections.map((row) => [row.sectionPrefix, row]));
   const specSectionsByDivision = groupBy(specSections, (row) => row.divisionPrefix);
+  const itemTaxonomyMembershipsByAgencyItemId = groupBy(itemTaxonomyMemberships, (row) => row.agencyItemId);
+  const itemPriceSummariesByAgencyItemId = groupBy(itemPriceSummaries, (row) => row.agencyItemId);
 
   const contracts = rawContracts.map((contract) => {
     const projects = contractProjectsByContractId.get(contract.contractId) ?? [];
@@ -282,7 +290,9 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
     agencyItems,
     agencyItemVersions,
     itemTaxonomy,
+    itemTaxonomyMemberships,
     itemMappings,
+    itemPriceSummaries,
     inflationIndexes,
     aliases,
     bids,
@@ -299,6 +309,8 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
     sectionsByDivisionId,
     specSectionByPrefix,
     specSectionsByDivision,
+    itemTaxonomyMembershipsByAgencyItemId,
+    itemPriceSummariesByAgencyItemId,
     inflationIndexByPeriod,
     bidsByContractId,
     contractItemsByContractId,
@@ -511,6 +523,30 @@ function mapObservation(row: CsvRow): ItemObservationRecord {
   };
 }
 
+export function mapItemPriceSummary(row: CsvRow): ItemPriceSummaryRecord {
+  return {
+    summaryId: row.summary_id,
+    sourceId: row.source_id,
+    state: row.state.toUpperCase(),
+    agencyId: row.agency_id,
+    agencyItemId: row.agency_item_id,
+    agencyItemCode: row.agency_item_code.toUpperCase(),
+    periodStartDate: row.period_start_date,
+    periodEndDate: row.period_end_date,
+    periodLabel: row.period_label,
+    reportSeries: row.report_series,
+    descriptionRaw: row.description_raw,
+    totalQuantity: requiredNumber(row.total_quantity),
+    unitRaw: row.unit_raw,
+    unitNormalized: normalizeUnit(row.unit_normalized || row.unit_raw),
+    publishedAverageUnitPrice: requiredNumber(row.published_average_unit_price),
+    totalBid: requiredNumber(row.total_bid),
+    sourcePage: requiredNumber(row.source_page),
+    sourceLocator: row.source_locator,
+    derivationMethod: row.derivation_method
+  };
+}
+
 function mapBid(row: CsvRow): BidRecord {
   return {
     bidId: row.bid_id,
@@ -640,6 +676,19 @@ function mapTaxonomy(row: CsvRow): ItemTaxonomyRecord {
     divisionPrefix: "",
     divisionTitle: "",
     sectionTitle: row.taxonomy_label
+  };
+}
+
+export function mapItemTaxonomyMembership(row: CsvRow): ItemTaxonomyMembershipRecord {
+  return {
+    membershipId: row.membership_id,
+    state: row.state.toUpperCase(),
+    agencyId: row.agency_id,
+    agencyItemId: row.agency_item_id,
+    taxonomyId: row.taxonomy_id,
+    sourceId: row.source_id,
+    matchStatus: row.match_status,
+    notes: row.notes
   };
 }
 

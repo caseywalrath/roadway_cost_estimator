@@ -1,0 +1,4 @@
+source_id,source_kind,source_url,access_status,machine_readable_status,selection_decision,notes
+ne_ndot_item_master,item_master_search,https://ndorpubreports.nebraska.gov,internal_error_during_audit,not_verified,not_used,The live Item History link targets a search endpoint; no stable machine-readable export was verified in Phase 1.
+ne_ndot_english_standard_item_list_2010,english_standard_item_list,https://dot.nebraska.gov/media/qr3pibex/stditeme06252010.pdf,available,text_extractable_pdf,used_as_catalog_authority,"Linked by the NDOT Item History page; 4,276 item rows extracted."
+ne_ndot_2017_standard_specifications,standard_specifications,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf,available,text_extractable_pdf,used_for_taxonomy_audit,Official 2017 hierarchy used to validate catalog specification references.

@@ -16,7 +16,8 @@
       "capabilities": {
         "districtFilter": true,
         "engineerEstimate": true,
-        "bidderDetail": true
+        "bidderDetail": true,
+        "periodPriceHistory": false
       },
       "sourceTypeLabels": {
         "cost_book": "Public CDOT cost book",
@@ -51,7 +52,8 @@
       "capabilities": {
         "districtFilter": false,
         "engineerEstimate": false,
-        "bidderDetail": true
+        "bidderDetail": true,
+        "periodPriceHistory": false
       },
       "sourceTypeLabels": {
         "item_catalog": "Iowa DOT item catalog",
@@ -78,12 +80,14 @@
       "defaultAgencyId": "sd_sddot",
       "defaultAgencyName": "South Dakota Department of Transportation",
       "divisionLabel": "Division",
-      "sectionLabel": "Standard Bid Item Group",
+      "sectionLabel": "Division / Bid Item Group",
       "sectionPrefixLength": 3,
+      "sectionPickerMode": "independent-flat",
       "capabilities": {
         "districtFilter": false,
         "engineerEstimate": false,
-        "bidderDetail": true
+        "bidderDetail": true,
+        "periodPriceHistory": false
       },
       "sourceTypeLabels": {
         "item_catalog": "SDDOT item catalog",
@@ -103,6 +107,58 @@
         "itemTaxonomy": "states/sd/item_taxonomy.csv",
         "itemMappings": "states/sd/item_mappings.csv",
         "observations": "states/sd/item_observations.csv"
+      }
+    },
+    {
+      "code": "NE",
+      "name": "Nebraska",
+      "defaultAgencyId": "ne_ndot",
+      "defaultAgencyName": "Nebraska Department of Transportation",
+      "divisionLabel": "Division",
+      "sectionLabel": "Specification section",
+      "sectionPrefixLength": 4,
+      "showHistoricalItemStatus": false,
+      "itemCodeSeries": [
+        { "value": "0", "label": "0000–0999", "prefixes": ["0"] },
+        { "value": "1", "label": "1000–1999", "prefixes": ["1"] },
+        { "value": "2", "label": "2000–2999", "prefixes": ["2"] },
+        { "value": "3", "label": "3000–3999", "prefixes": ["3"] },
+        { "value": "4", "label": "4000–4999", "prefixes": ["4"] },
+        { "value": "5", "label": "5000–5999", "prefixes": ["5"] },
+        { "value": "6", "label": "6000–6999", "prefixes": ["6"] },
+        { "value": "7", "label": "7000–7999", "prefixes": ["7"] },
+        { "value": "8", "label": "8000–8999", "prefixes": ["8"] },
+        { "value": "9", "label": "9000–9999", "prefixes": ["9"] },
+        { "value": "A", "label": "A-series", "prefixes": ["A"] },
+        { "value": "L", "label": "L-series", "prefixes": ["L"] },
+        { "value": "P", "label": "P-series", "prefixes": ["P"] },
+        { "value": "R", "label": "R-series", "prefixes": ["R"] },
+        { "value": "W", "label": "W-series", "prefixes": ["W"] }
+      ],
+      "capabilities": {
+        "districtFilter": false,
+        "engineerEstimate": false,
+        "bidderDetail": false,
+        "periodPriceHistory": true
+      },
+      "sourceTypeLabels": {
+        "item_catalog": "NDOT standard item list",
+        "annual_price_report": "NDOT average unit-price report"
+      },
+      "files": {
+        "sources": "states/ne/sources.csv",
+        "lettings": "states/ne/lettings.csv",
+        "contracts": "states/ne/contracts.csv",
+        "contractProjects": "states/ne/contract_projects.csv",
+        "contractItems": "states/ne/contract_items.csv",
+        "bids": "states/ne/bids.csv",
+        "agencyItems": "states/ne/agency_items.csv",
+        "agencyItemVersions": "states/ne/agency_item_versions.csv",
+        "itemTaxonomy": "states/ne/item_taxonomy.csv",
+        "itemTaxonomyMemberships": "states/ne/item_taxonomy_memberships.csv",
+        "itemMappings": "states/ne/item_mappings.csv",
+        "observations": "states/ne/item_observations.csv",
+        "itemPriceSummaries": "states/ne/item_price_summaries.csv"
       }
     }
   ]

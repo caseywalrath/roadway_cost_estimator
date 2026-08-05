@@ -5,6 +5,7 @@ import csv
 import json
 import re
 from collections import Counter, defaultdict
+from datetime import date
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -21,8 +22,10 @@ FILE_KEYS = {
     "agencyItems": "agency_items.csv",
     "agencyItemVersions": "agency_item_versions.csv",
     "itemTaxonomy": "item_taxonomy.csv",
+    "itemTaxonomyMemberships": "item_taxonomy_memberships.csv",
     "itemMappings": "item_mappings.csv",
     "observations": "item_observations.csv",
+    "itemPriceSummaries": "item_price_summaries.csv",
 }
 
 ID_FIELDS = {
@@ -37,8 +40,10 @@ ID_FIELDS = {
     "agencyItems": "agency_item_id",
     "agencyItemVersions": "agency_item_version_id",
     "itemTaxonomy": "taxonomy_id",
+    "itemTaxonomyMemberships": "membership_id",
     "itemMappings": "mapping_id",
     "observations": "observation_id",
+    "itemPriceSummaries": "summary_id",
 }
 
 REQUIRED = {
@@ -53,14 +58,19 @@ REQUIRED = {
     "agencyItems": ["agency_item_id", "state", "agency_id", "item_code", "current_version_id", "item_status"],
     "agencyItemVersions": ["agency_item_version_id", "agency_item_id", "official_description", "official_unit", "source_id", "is_current"],
     "itemTaxonomy": ["taxonomy_id", "state", "agency_id", "taxonomy_level", "taxonomy_code", "taxonomy_label", "match_prefix"],
+    "itemTaxonomyMemberships": ["membership_id", "state", "agency_id", "agency_item_id", "taxonomy_id", "source_id", "match_status", "notes"],
     "itemMappings": ["mapping_id", "state", "source_agency_id", "source_item_code", "target_agency_item_id", "match_status"],
     "observations": ["observation_id", "contract_id", "source_id", "agency_item_id", "agency_item_code", "description_raw", "unit_raw", "unit_normalized", "quantity", "unit_price", "extended_price", "price_type", "date_basis", "derivation_method"],
+    "itemPriceSummaries": ["summary_id", "source_id", "state", "agency_id", "agency_item_id", "agency_item_code", "period_start_date", "period_end_date", "period_label", "report_series", "description_raw", "total_quantity", "unit_raw", "unit_normalized", "published_average_unit_price", "total_bid", "source_page", "source_locator", "derivation_method"],
 }
 
 PRICE_TYPES = {"awarded_bid", "average_bid", "engineer_estimate"}
 INFLATION_FIELDS = ["index_id", "index_name", "period_year", "period_quarter", "period_label", "period_start_date", "period_end_date", "index_value", "source_url"]
 CONFIRMED_AWARD_STATUSES = {"AWARDED", "SIGNED CONTRACT"}
-OPTIONAL_TABLES = {"sourceDocuments", "bidItemPrices"}
+OPTIONAL_TABLES = {"sourceDocuments", "bidItemPrices", "itemTaxonomyMemberships", "itemPriceSummaries"}
+REPORT_SERIES = {"calendar_year", "july_june"}
+TAXONOMY_MEMBERSHIP_STATUSES = {"catalog_exact", "reviewed_override", "unclassified"}
+PERIOD_SUMMARY_DERIVATION = "ndot_published_period_aggregate"
 
 
 def read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
@@ -104,6 +114,126 @@ def awarded_vendor_matches(awarded_vendor: str, bidder_name: str) -> bool:
 
 def add(error_list: list[str], state: str, table: str, message: str) -> None:
     error_list.append(f"{state}/{table}: {message}")
+
+
+def validate_period_summary_rows(
+    state: str,
+    config: dict,
+    rows: list[dict[str, str]],
+    headers: list[str],
+    sources: dict[str, dict[str, str]],
+    agency_items: dict[str, dict[str, str]],
+    errors: list[str],
+) -> None:
+    forbidden_fields = {"contract_id", "letting_id", "bid_id", "price_type", "bidder_count"}
+    for field in sorted(forbidden_fields.intersection(headers)):
+        add(errors, state, "item_price_summaries.csv", f"must not include contract-level field {field}")
+
+    seen_locators: dict[tuple[str, str, str, str, str], set[str]] = defaultdict(set)
+    for index, row in enumerate(rows, 2):
+        source = sources.get(row.get("source_id", ""))
+        item = agency_items.get(row.get("agency_item_id", ""))
+        if source is None:
+            add(errors, state, "item_price_summaries.csv", f"line {index} references missing source {row.get('source_id', '')}")
+        if item is None:
+            add(errors, state, "item_price_summaries.csv", f"line {index} references missing agency item {row.get('agency_item_id', '')}")
+        if row.get("state", "").upper() != state.upper():
+            add(errors, state, "item_price_summaries.csv", f"line {index} has state {row.get('state', '')}")
+        if row.get("agency_id", "") != config.get("defaultAgencyId", ""):
+            add(errors, state, "item_price_summaries.csv", f"line {index} has agency {row.get('agency_id', '')}")
+        if item and (item.get("state", "").upper() != state.upper() or item.get("agency_id", "") != row.get("agency_id", "")):
+            add(errors, state, "item_price_summaries.csv", f"line {index} does not match agency item state/agency")
+        if source and (source.get("state", "").upper() != state.upper() or source.get("agency_id", "") != row.get("agency_id", "")):
+            add(errors, state, "item_price_summaries.csv", f"line {index} does not match source state/agency")
+
+        start = row.get("period_start_date", "")
+        end = row.get("period_end_date", "")
+        try:
+            start_date = date.fromisoformat(start)
+            end_date = date.fromisoformat(end)
+            if start_date > end_date:
+                add(errors, state, "item_price_summaries.csv", f"line {index} period start is after period end")
+        except ValueError:
+            add(errors, state, "item_price_summaries.csv", f"line {index} has invalid ISO period dates")
+
+        if row.get("report_series", "") not in REPORT_SERIES:
+            add(errors, state, "item_price_summaries.csv", f"line {index} has unsupported report_series {row.get('report_series', '')}")
+        quantity = number(row.get("total_quantity", ""))
+        average = number(row.get("published_average_unit_price", ""))
+        total_bid = number(row.get("total_bid", ""))
+        if quantity is None or average is None or total_bid is None:
+            add(errors, state, "item_price_summaries.csv", f"line {index} has malformed numeric values")
+        source_page = number(row.get("source_page", ""))
+        if source_page is None or source_page <= 0 or source_page != source_page.to_integral_value():
+            add(errors, state, "item_price_summaries.csv", f"line {index} has invalid source_page")
+        if not row.get("source_locator", ""):
+            add(errors, state, "item_price_summaries.csv", f"line {index} has blank source_locator")
+        if row.get("derivation_method", "") != PERIOD_SUMMARY_DERIVATION:
+            add(errors, state, "item_price_summaries.csv", f"line {index} has unsupported derivation_method")
+
+        duplicate_key = (
+            row.get("source_id", ""),
+            row.get("agency_item_id", ""),
+            row.get("unit_raw", ""),
+            start,
+            end,
+        )
+        locator = row.get("source_locator", "")
+        if locator in seen_locators[duplicate_key]:
+            add(errors, state, "item_price_summaries.csv", f"line {index} duplicates source/item/unit/period locator")
+        seen_locators[duplicate_key].add(locator)
+
+        # NDOT publishes the average unit price and total bid as separate
+        # period aggregates.  Their documented calculation method is not
+        # available, so a rounded-unit-price multiplication is a QA report,
+        # not a validity condition for annual_price_summary sources.
+        if quantity is not None and average is not None and total_bid is not None and quantity != 0 and not (source and source.get("source_type") == "annual_price_summary"):
+            difference = abs(total_bid - quantity * average)
+            tolerance = max(Decimal("0.02"), abs(quantity) * Decimal("0.005") + Decimal("0.01"))
+            if difference > tolerance:
+                add(errors, state, "item_price_summaries.csv", f"line {index} total_bid does not reconcile to rounded average")
+
+
+def validate_taxonomy_membership_rows(
+    state: str,
+    config: dict,
+    rows: list[dict[str, str]],
+    sources: dict[str, dict[str, str]],
+    agency_items: dict[str, dict[str, str]],
+    taxonomy: dict[str, dict[str, str]],
+    errors: list[str],
+) -> None:
+    memberships_by_item: defaultdict[str, list[dict[str, str]]] = defaultdict(list)
+    for index, row in enumerate(rows, 2):
+        source = sources.get(row.get("source_id", ""))
+        item = agency_items.get(row.get("agency_item_id", ""))
+        section = taxonomy.get(row.get("taxonomy_id", ""))
+        if source is None:
+            add(errors, state, "item_taxonomy_memberships.csv", f"line {index} references missing source")
+        if item is None:
+            add(errors, state, "item_taxonomy_memberships.csv", f"line {index} references missing agency item")
+        if section is None:
+            add(errors, state, "item_taxonomy_memberships.csv", f"line {index} references missing taxonomy")
+        if row.get("state", "").upper() != state.upper():
+            add(errors, state, "item_taxonomy_memberships.csv", f"line {index} has state {row.get('state', '')}")
+        if row.get("agency_id", "") != config.get("defaultAgencyId", ""):
+            add(errors, state, "item_taxonomy_memberships.csv", f"line {index} has agency {row.get('agency_id', '')}")
+        if item and (item.get("state", "").upper() != state.upper() or item.get("agency_id", "") != row.get("agency_id", "")):
+            add(errors, state, "item_taxonomy_memberships.csv", f"line {index} does not match agency item state/agency")
+        if source and (source.get("state", "").upper() != state.upper() or source.get("agency_id", "") != row.get("agency_id", "")):
+            add(errors, state, "item_taxonomy_memberships.csv", f"line {index} does not match source state/agency")
+        if section and (section.get("state", "").upper() != state.upper() or section.get("agency_id", "") != row.get("agency_id", "")):
+            add(errors, state, "item_taxonomy_memberships.csv", f"line {index} does not match taxonomy state/agency")
+        if section and section.get("taxonomy_level", "") != "section":
+            add(errors, state, "item_taxonomy_memberships.csv", f"line {index} target taxonomy is not a section")
+        if row.get("match_status", "") not in TAXONOMY_MEMBERSHIP_STATUSES:
+            add(errors, state, "item_taxonomy_memberships.csv", f"line {index} has unsupported match_status")
+        memberships_by_item[row.get("agency_item_id", "")].append(row)
+
+    if config.get("files", {}).get("itemTaxonomyMemberships"):
+        for item_id, item in agency_items.items():
+            if item.get("item_status", "") == "current" and not memberships_by_item.get(item_id):
+                add(errors, state, "item_taxonomy_memberships.csv", f"searchable item {item_id} has no taxonomy membership")
 
 
 def validate_state(data_dir: Path, config: dict, errors: list[str], warnings: list[str]) -> dict[str, list[dict[str, str]]]:
@@ -275,6 +405,25 @@ def validate_state(data_dir: Path, config: dict, errors: list[str], warnings: li
     for row in tables["itemMappings"]:
         if row["target_agency_item_id"] not in agency_items:
             add(errors, state, "item_mappings.csv", f"{row['mapping_id']} references missing target agency item")
+
+    validate_period_summary_rows(
+        state,
+        config,
+        tables["itemPriceSummaries"],
+        headers_by_key.get("itemPriceSummaries", []),
+        sources,
+        agency_items,
+        errors,
+    )
+    validate_taxonomy_membership_rows(
+        state,
+        config,
+        tables["itemTaxonomyMemberships"],
+        sources,
+        agency_items,
+        taxonomy,
+        errors,
+    )
 
     observations_by_item_type: dict[tuple[str, str], dict[str, str]] = {}
     for row in tables["observations"]:
@@ -650,6 +799,8 @@ def main() -> None:
 
     summaries = []
     for config in manifest.get("states", []):
+        if "periodPriceHistory" not in config.get("capabilities", {}):
+            errors.append(f"{config.get('code', '(unknown)')}/manifest.json: capabilities.periodPriceHistory is required")
         tables = validate_state(args.data_dir, config, errors, warnings)
         if config["code"] == "IA":
             validate_iowa_acceptance(args.data_dir, config, tables, errors)
