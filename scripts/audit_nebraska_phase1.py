@@ -43,7 +43,7 @@ REPORTS = [
 
 IN_SCOPE = {source_id for source_id, *_ in REPORTS if source_id not in {"ne_ndot_aup_calendar_2017", "ne_ndot_aup_july_june_2016_2017"}}
 
-CODE_RE = re.compile(r"^\d{4}\.\d{2}$")
+CODE_RE = re.compile(r"^[A-Z0-9]+\.\d{2}$")
 MONEY_RE = re.compile(r"^\(?\$[\d,]+(?:\.\d+)?\)?$")
 NUM_UNIT_RE = re.compile(r"^(\(?-?[\d,]+(?:\.\d+)?\)?)([A-Za-z][A-Za-z/.-]*)$")
 CATALOG_RE = re.compile(r"^(\d{4}\.\d{2})\s+(.*?)\s+(\d{2})\s+(.*)$")

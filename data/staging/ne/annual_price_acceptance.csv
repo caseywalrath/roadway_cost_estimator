@@ -1,0 +1,18 @@
+source_id,report_series,period_start_date,period_end_date,period_label,expected_row_count,parsed_row_count,parse_failure_count,negative_price_row_count,acceptance_status
+ne_ndot_aup_july_june_2017_2018,july_june,2017-07-01,2018-06-30,July 2017 - June 2018,1409,1409,0,0,accepted
+ne_ndot_aup_calendar_2018,calendar_year,2018-01-01,2018-12-31,January 2018 - December 2018,1671,1671,0,0,accepted
+ne_ndot_aup_july_june_2018_2019,july_june,2018-07-01,2019-06-30,July 2018 - June 2019,1557,1557,0,1,accepted
+ne_ndot_aup_calendar_2019,calendar_year,2019-01-01,2019-12-31,January 2019 - December 2019,1541,1541,0,3,accepted
+ne_ndot_aup_july_june_2019_2020,july_june,2019-07-01,2020-06-30,July 2019 - June 2020,1709,1709,0,3,accepted
+ne_ndot_aup_calendar_2020,calendar_year,2020-01-01,2020-12-31,January 2020 - December 2020,1615,1615,0,2,accepted
+ne_ndot_aup_july_june_2020_2021,july_june,2020-07-01,2021-06-30,July 2020 - June 2021,1338,1338,0,2,accepted
+ne_ndot_aup_calendar_2021,calendar_year,2021-01-01,2021-12-31,January 2021 - December 2021,1207,1207,0,1,accepted
+ne_ndot_aup_july_june_2021_2022,july_june,2021-07-01,2022-06-30,July 2021 - June 2022,1290,1290,0,1,accepted
+ne_ndot_aup_calendar_2022,calendar_year,2022-01-01,2022-12-31,January 2022 - December 2022,1341,1341,0,1,accepted
+ne_ndot_aup_july_june_2022_2023,july_june,2022-07-01,2023-06-30,July 2022 - June 2023,1243,1243,0,1,accepted
+ne_ndot_aup_calendar_2023,calendar_year,2023-01-01,2023-12-31,January 2023 - December 2023,1240,1240,0,1,accepted
+ne_ndot_aup_july_june_2023_2024,july_june,2023-07-01,2024-06-30,July 2023 - June 2024,1378,1378,0,1,accepted
+ne_ndot_aup_calendar_2024,calendar_year,2024-01-01,2024-12-31,January 2024 - December 2024,1222,1222,0,3,accepted
+ne_ndot_aup_july_june_2024_2025,july_june,2024-07-01,2025-06-30,July 2024 - June 2025,1082,1082,0,3,accepted
+ne_ndot_aup_calendar_2025,calendar_year,2025-01-01,2025-12-31,January 2025 - December 2025,1366,1366,0,3,accepted
+ne_ndot_aup_july_june_2025_2026,july_june,2025-07-01,2026-06-30,July 2025 - June 2026,1427,1427,0,3,accepted

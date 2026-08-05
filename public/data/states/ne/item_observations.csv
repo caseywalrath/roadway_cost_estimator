@@ -1,0 +1,1 @@
+observation_id,contract_id,source_id,agency_item_id,agency_item_code,description_raw,description_normalized,unit_raw,unit_normalized,quantity,unit_price,extended_price,discipline,price_type,date_basis,derivation_method,derivation_input_count

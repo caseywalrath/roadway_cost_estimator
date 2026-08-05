@@ -1,0 +1,115 @@
+taxonomy_id,state,agency_id,taxonomy_level,taxonomy_code,parent_taxonomy_id,taxonomy_label,match_prefix,source_year,source_url
+ne_ndot_div_100,NE,ne_ndot,division,100,,Division 100 - General Requirements and Covenants,1,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_div_1000,NE,ne_ndot,division,1000,,Division 1000 - Material Details,1,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_div_200,NE,ne_ndot,division,200,,Division 200 - Earthwork,2,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_div_300,NE,ne_ndot,division,300,,"Division 300 - Subgrade Preparation, Foundation Courses, Base Courses, Shoulder Construction, and Aggregate Surfacing",3,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_div_400,NE,ne_ndot,division,400,,"Division 400 - Lighting, Signs, and Traffic Control",4,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_div_500,NE,ne_ndot,division,500,,Division 500 - Bituminous Pavement,5,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_div_600,NE,ne_ndot,division,600,,Division 600 - Portland Cement Concrete Pavements,6,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_div_700,NE,ne_ndot,division,700,,"Division 700 - Bridges, Culverts, and Related Construction",7,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_div_800,NE,ne_ndot,division,800,,Division 800 - Roadside Development and Erosion Control,8,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_div_900,NE,ne_ndot,division,900,,Division 900 - Incidental Construction,9,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_div_unclassified,NE,ne_ndot,division,UNCLASSIFIED,,Unclassified / special items,U,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_112,NE,ne_ndot,section,112,ne_ndot_div_100,Section 112 - MOBILIZATION,112,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_114,NE,ne_ndot,section,114,ne_ndot_div_100,Section 114 - CONSTRUCTION STAKING,114,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_202,NE,ne_ndot,section,202,ne_ndot_div_200,Section 202 - CLEARING AND GRUBBING,202,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_203,NE,ne_ndot,section,203,ne_ndot_div_200,Section 203 - REMOVAL OF STRUCTURES AND OBSTRUCTIONS,203,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_205,NE,ne_ndot,section,205,ne_ndot_div_200,Section 205 - EXCAVATION AND EMBANKMENT,205,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_206,NE,ne_ndot,section,206,ne_ndot_div_200,Section 206 - ROADWAY GRADING,206,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_207,NE,ne_ndot,section,207,ne_ndot_div_200,Section 207 - SALVAGING AND PLACING TOPSOIL,207,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_208,NE,ne_ndot,section,208,ne_ndot_div_200,Section 208 - BORROW AND WASTE SITE RESTORATION,208,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_209,NE,ne_ndot,section,209,ne_ndot_div_200,Section 209 - OVERHAUL,209,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_302,NE,ne_ndot,section,302,ne_ndot_div_300,"Section 302 - SUBGRADE PREPARATION, SHOULDER SUBGRADE",302,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_303,NE,ne_ndot,section,303,ne_ndot_div_300,Section 303 - SUBGRADE STABILIZATION,303,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_304,NE,ne_ndot,section,304,ne_ndot_div_300,Section 304 - EARTH SHOULDER CONSTRUCTION,304,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_305,NE,ne_ndot,section,305,ne_ndot_div_300,Section 305 - CRUSHED ROCK BASE COURSE,305,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_306,NE,ne_ndot,section,306,ne_ndot_div_300,Section 306 - GRANULAR FILL,306,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_307,NE,ne_ndot,section,307,ne_ndot_div_300,Section 307 - FOUNDATION COURSE,307,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_308,NE,ne_ndot,section,308,ne_ndot_div_300,Section 308 - MEDIAN CONSTRUCTION,308,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_309,NE,ne_ndot,section,309,ne_ndot_div_300,Section 309 - CALCIUM CHLORIDE TREATMENT,309,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_310,NE,ne_ndot,section,310,ne_ndot_div_300,Section 310 - ROCK OR GRAVEL SURFACING,310,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_311,NE,ne_ndot,section,311,ne_ndot_div_300,Section 311 - FURNISH ROCK OR GRAVEL,311,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_312,NE,ne_ndot,section,312,ne_ndot_div_300,Section 312 - REMOVAL AND PROCESSING OF CONCRETE PAVEMENT,312,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_405,NE,ne_ndot,section,405,ne_ndot_div_400,Section 405 - CONDUIT,405,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_417,NE,ne_ndot,section,417,ne_ndot_div_400,Section 417 - HIGHWAY SIGNS,417,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_418,NE,ne_ndot,section,418,ne_ndot_div_400,Section 418 - OVERHEAD SIGN SUPPORTS,418,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_419,NE,ne_ndot,section,419,ne_ndot_div_400,Section 419 - TRAFFIC CONTROL MANAGEMENT AND SURVEILLANCE,419,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_420,NE,ne_ndot,section,420,ne_ndot_div_400,Section 420 - DELINEATORS,420,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_421,NE,ne_ndot,section,421,ne_ndot_div_400,Section 421 - REMOVING AND RESETTING DELINEATORS,421,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_422,NE,ne_ndot,section,422,ne_ndot_div_400,Section 422 - TEMPORARY TRAFFIC CONTROL SIGNS AND DEVICES,422,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_423,NE,ne_ndot,section,423,ne_ndot_div_400,Section 423 - PERMANENT PAVEMENT MARKING,423,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_503,NE,ne_ndot,section,503,ne_ndot_div_500,Section 503 - ASPHALTIC CONCRETE,503,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_504,NE,ne_ndot,section,504,ne_ndot_div_500,Section 504 - TACK COAT,504,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_505,NE,ne_ndot,section,505,ne_ndot_div_500,Section 505 - ASPHALTIC CONCRETE CURB,505,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_506,NE,ne_ndot,section,506,ne_ndot_div_500,Section 506 - ASPHALTIC CONCRETE ISLAND NOSES AND MEDIANS,506,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_507,NE,ne_ndot,section,507,ne_ndot_div_500,Section 507 - ASPHALTIC CONCRETE FOR STATE MAINTENANCE PATCHING,507,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_508,NE,ne_ndot,section,508,ne_ndot_div_500,Section 508 - JOINT SEALING - ASPHALT TO CONCRETE,508,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_509,NE,ne_ndot,section,509,ne_ndot_div_500,Section 509 - BITUMINOUS SAND BASE COURSE,509,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_510,NE,ne_ndot,section,510,ne_ndot_div_500,Section 510 - COLD MILLING,510,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_512,NE,ne_ndot,section,512,ne_ndot_div_500,Section 512 - BITUMINOUS SURFACE COURSE,512,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_513,NE,ne_ndot,section,513,ne_ndot_div_500,Section 513 - FOG SEAL,513,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_514,NE,ne_ndot,section,514,ne_ndot_div_500,Section 514 - MICROSURFACING,514,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_515,NE,ne_ndot,section,515,ne_ndot_div_500,Section 515 - ARMOR COAT OR CHIP SEAL,515,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_516,NE,ne_ndot,section,516,ne_ndot_div_500,Section 516 - BITUMINOUS PAVEMENT PATCHING,516,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_518,NE,ne_ndot,section,518,ne_ndot_div_500,Section 518 - FABRIC REINFORCEMENT,518,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_519,NE,ne_ndot,section,519,ne_ndot_div_500,Section 519 - CRACK SEALING BITUMINOUS SURFACING,519,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_520,NE,ne_ndot,section,520,ne_ndot_div_500,Section 520 - BITUMINOUS PATCHING OF CONCRETE PAVEMENT,520,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_603,NE,ne_ndot,section,603,ne_ndot_div_600,Section 603 - CONCRETE PAVEMENT,603,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_604,NE,ne_ndot,section,604,ne_ndot_div_600,Section 604 - CONCRETE BASE COURSE,604,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_605,NE,ne_ndot,section,605,ne_ndot_div_600,Section 605 - CONCRETE PAVEMENT REPAIR,605,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_606,NE,ne_ndot,section,606,ne_ndot_div_600,Section 606 - CONCRETE CURB AND CONCRETE GUTTER,606,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_608,NE,ne_ndot,section,608,ne_ndot_div_600,Section 608 - CONCRETE ISLAND NOSE,608,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_609,NE,ne_ndot,section,609,ne_ndot_div_600,Section 609 - CONCRETE DRIVEWAYS,609,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_611,NE,ne_ndot,section,611,ne_ndot_div_600,Section 611 - SEALING CRACKS,611,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_612,NE,ne_ndot,section,612,ne_ndot_div_600,Section 612 - SEALING JOINTS,612,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_702,NE,ne_ndot,section,702,ne_ndot_div_700,Section 702 - EXCAVATION FOR STRUCTURES,702,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_703,NE,ne_ndot,section,703,ne_ndot_div_700,Section 703 - PILES AND PILE DRIVING,703,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_704,NE,ne_ndot,section,704,ne_ndot_div_700,Section 704 - CONCRETE CONSTRUCTION,704,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_705,NE,ne_ndot,section,705,ne_ndot_div_700,Section 705 - PRECAST OR PRECAST/PRESTRESSED CONCRETE,705,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_706,NE,ne_ndot,section,706,ne_ndot_div_700,Section 706 - CONCRETE BRIDGE FLOORS,706,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_707,NE,ne_ndot,section,707,ne_ndot_div_700,Section 707 - REINFORCEMENT,707,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_708,NE,ne_ndot,section,708,ne_ndot_div_700,Section 708 - STEEL STRUCTURES,708,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_709,NE,ne_ndot,section,709,ne_ndot_div_700,Section 709 - PAINTING,709,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_710,NE,ne_ndot,section,710,ne_ndot_div_700,Section 710 - CONCRETE BRIDGE DECK REPAIR WITH CLASS 47BD 4000,710,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_711,NE,ne_ndot,section,711,ne_ndot_div_700,Section 711 - CONCRETE BRIDGE DECK REPAIR AND OVERLAY,711,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_712,NE,ne_ndot,section,712,ne_ndot_div_700,"Section 712 - FIXED BEARINGS AND EXPANSION BEARINGS, PTFE TYPE",712,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_713,NE,ne_ndot,section,713,ne_ndot_div_700,Section 713 - CONFINED ELASTOMERIC BEARING DEVICES (POT BEARINGS),713,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_714,NE,ne_ndot,section,714,ne_ndot_div_700,Section 714 - MECHANICALLY STABILIZED EARTH (MSE) WALLS WITH,714,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_715,NE,ne_ndot,section,715,ne_ndot_div_700,Section 715 - MECHANICALLY STABILIZED EARTH (MSE) WALLS WITH,715,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_716,NE,ne_ndot,section,716,ne_ndot_div_700,Section 716 - STEEL RAILINGS,716,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_718,NE,ne_ndot,section,718,ne_ndot_div_700,Section 718 - CULVERT PIPE,718,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_719,NE,ne_ndot,section,719,ne_ndot_div_700,Section 719 - FLEXIBLE PIPE CULVERTS (CORRUGATED METAL AND,719,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_720,NE,ne_ndot,section,720,ne_ndot_div_700,Section 720 - CONCRETE PIPE CULVERTS,720,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_721,NE,ne_ndot,section,721,ne_ndot_div_700,Section 721 - DRIVEWAY CULVERT PIPE,721,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_722,NE,ne_ndot,section,722,ne_ndot_div_700,Section 722 - SEWERS,722,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_723,NE,ne_ndot,section,723,ne_ndot_div_700,Section 723 - TAPPING EXISTING DRAINAGE,723,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_724,NE,ne_ndot,section,724,ne_ndot_div_700,Section 724 - INSTALLATION AND REMOVAL OF FLARED-END SECTIONS,724,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_725,NE,ne_ndot,section,725,ne_ndot_div_700,Section 725 - BAR GRATES FOR FLARED-END SECTIONS,725,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_726,NE,ne_ndot,section,726,ne_ndot_div_700,Section 726 - CULVERT SANDFILL,726,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_727,NE,ne_ndot,section,727,ne_ndot_div_700,Section 727 - SUBSURFACE DRAINAGE MATTING,727,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_728,NE,ne_ndot,section,728,ne_ndot_div_700,Section 728 - RIPRAP FILTER FABRIC,728,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_729,NE,ne_ndot,section,729,ne_ndot_div_700,Section 729 - DECK JOINT SEALS,729,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_730,NE,ne_ndot,section,730,ne_ndot_div_700,Section 730 - STRIP SEALS,730,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_731,NE,ne_ndot,section,731,ne_ndot_div_700,"Section 731 - JACKING CULVERT PIPE, SEWER PIPE, AND CASING",731,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_734,NE,ne_ndot,section,734,ne_ndot_div_700,Section 734 - PRECOMPRESSED POLYURETHANE FOAM (PPF) JOINT,734,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_810,NE,ne_ndot,section,810,ne_ndot_div_800,Section 810 - EROSION CONTROL,810,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_902,NE,ne_ndot,section,902,ne_ndot_div_900,Section 902 - GUARDRAIL AND GUARD POSTS,902,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_903,NE,ne_ndot,section,903,ne_ndot_div_900,Section 903 - REMOVE AND RESET GUARDRAIL,903,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_905,NE,ne_ndot,section,905,ne_ndot_div_900,Section 905 - ROCK RIPRAP,905,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_906,NE,ne_ndot,section,906,ne_ndot_div_900,Section 906 - BROKEN CONCRETE RIPRAP,906,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_907,NE,ne_ndot,section,907,ne_ndot_div_900,Section 907 - GABIONS AND REVET MATTRESSES,907,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_908,NE,ne_ndot,section,908,ne_ndot_div_900,"Section 908 - CONCRETE SLOPE PROTECTION, DITCH LINING, FLUMES AND",908,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_909,NE,ne_ndot,section,909,ne_ndot_div_900,Section 909 - INSTALLING TIE BARS,909,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_910,NE,ne_ndot,section,910,ne_ndot_div_900,Section 910 - RIGHT-OF-WAY AND BARBED WIRE FENCE,910,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_911,NE,ne_ndot,section,911,ne_ndot_div_900,Section 911 - CHAIN-LINK FENCE,911,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_912,NE,ne_ndot,section,912,ne_ndot_div_900,Section 912 - SPECIAL SURFACE COURSE FOR MAILBOX TURNOUTS,912,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_913,NE,ne_ndot,section,913,ne_ndot_div_900,Section 913 - RIGHT-OF-WAY MARKERS,913,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_914,NE,ne_ndot,section,914,ne_ndot_div_900,Section 914 - PIPE UNDERDRAINS,914,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_915,NE,ne_ndot,section,915,ne_ndot_div_900,Section 915 - GRANULAR SUBDRAINS,915,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_916,NE,ne_ndot,section,916,ne_ndot_div_900,"Section 916 - CATCH BASINS, MANHOLES, INLETS, AND JUNCTION BOXES",916,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_917,NE,ne_ndot,section,917,ne_ndot_div_900,Section 917 - RECONSTRUCTION OF MANHOLES AND ADJUSTING,917,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_918,NE,ne_ndot,section,918,ne_ndot_div_900,"Section 918 - ABANDONING MANHOLES, INLETS, AND JUNCTION BOXES",918,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_919,NE,ne_ndot,section,919,ne_ndot_div_900,Section 919 - EQUIPMENT RENTAL,919,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_920,NE,ne_ndot,section,920,ne_ndot_div_900,Section 920 - DAMPPROOFING,920,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_921,NE,ne_ndot,section,921,ne_ndot_div_900,Section 921 - MAILBOX POSTS,921,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf
+ne_ndot_sec_unclassified,NE,ne_ndot,section,UNCLASSIFIED,ne_ndot_div_unclassified,Unclassified / special items,U,2017,https://dot.nebraska.gov/media/g4qp4y0d/2017-specbook.pdf

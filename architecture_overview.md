@@ -100,6 +100,12 @@ Each parsed letting is one `sources` bundle with child `source_documents` rows f
 
 The 2024 Bid Item Price Report is parsed into committed staging and reconciled as a QA source. Its 1,431 annual rows are not runtime contract evidence. Raw HTML and PDFs remain ignored under `data/raw/sd/`; the importer supports cached operation and explicit refresh/download options.
 
+## Nebraska NDOT Annual-Price Package
+
+`scripts/import_nebraska_data.py` is an offline-first, coordinate-aware importer for the 17 approved NDOT reports: January--December 2018--2025 and July--June 2017--18 through 2025--26. It preserves both overlapping report series as independent `item_price_summaries.csv` rows and writes no letting, contract, bid, or observation rows. The importer joins legacy split currency digits, handles portrait and landscape layouts, preserves signed and zero values, records one-based PDF pages, and rejects malformed rows into `data/staging/ne/annual_price_parse_failures.csv`.
+
+The staged package currently contains 23,636 parsed annual rows, five committed coordinate fixtures, frozen per-report acceptance counts, and a quantity-times-average reconciliation report. NDOT's published average and total-bid aggregates are retained independently because the aggregation method is undocumented; reconciliation differences remain review evidence and do not become contract observations. The NE state partition is intentionally not declared in `public/data/manifest.json` until the staged identity-conflict review is complete. The current audit reports 145 material item-identity conflicts requiring review; this is an explicit enablement gate rather than an automatic merge.
+
 ## UI Rules
 
 - State choice is required initially and remembered afterward.

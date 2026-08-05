@@ -1,0 +1,16 @@
+{
+  "name": "zero quantity and price",
+  "page_number": 1,
+  "words": [
+    {"text": "9000.00", "x0": 38, "top": 100},
+    {"text": "SPECIAL", "x0": 99, "top": 100},
+    {"text": "ITEM", "x0": 150, "top": 100},
+    {"text": "0.000", "x0": 530, "top": 100},
+    {"text": "EACH", "x0": 570, "top": 100},
+    {"text": "$0.00", "x0": 650, "top": 100},
+    {"text": "$0.00", "x0": 700, "top": 100}
+  ],
+  "expected_rows": [
+    {"agency_item_code": "9000.00", "description_raw": "SPECIAL ITEM", "total_quantity": "0.000", "unit_raw": "EACH", "published_average_unit_price": "0.00", "total_bid": "0.00"}
+  ]
+}

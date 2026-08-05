@@ -183,7 +183,11 @@ def validate_period_summary_rows(
             add(errors, state, "item_price_summaries.csv", f"line {index} duplicates source/item/unit/period locator")
         seen_locators[duplicate_key].add(locator)
 
-        if quantity is not None and average is not None and total_bid is not None and quantity != 0:
+        # NDOT publishes the average unit price and total bid as separate
+        # period aggregates.  Their documented calculation method is not
+        # available, so a rounded-unit-price multiplication is a QA report,
+        # not a validity condition for annual_price_summary sources.
+        if quantity is not None and average is not None and total_bid is not None and quantity != 0 and not (source and source.get("source_type") == "annual_price_summary"):
             difference = abs(total_bid - quantity * average)
             tolerance = max(Decimal("0.02"), abs(quantity) * Decimal("0.005") + Decimal("0.01"))
             if difference > tolerance:

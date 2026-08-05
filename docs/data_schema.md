@@ -148,6 +148,8 @@ Period-level agency-published price summaries that are not contract evidence. Th
 
 Supported `report_series` values are `calendar_year` and `july_june`. `derivation_method` identifies the agency-published aggregate calculation; the application must preserve positive, zero, and negative values without converting them into contract observations. Optional state capabilities and labels identify states that expose period price history.
 
+For NDOT annual-price sources, `total_bid` and `published_average_unit_price` are retained independently. The importer records a quantity-times-average reconciliation in staging, but the validator does not reject a source row when those published aggregates differ because NDOT's aggregation method and rounding basis are not documented.
+
 ## Colorado Master-Workbook Inclusion Policy
 
 The committed configuration at `data/staging/co/cost_estimate_master_sources.json` is the reviewable inclusion authority for the attached master workbook. It records source identity, evidence date, owner, project identifier, explicit row ranges, selected price columns, bidder blocks, and published total cells.
