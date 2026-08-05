@@ -16,7 +16,8 @@
       "capabilities": {
         "districtFilter": true,
         "engineerEstimate": true,
-        "bidderDetail": true
+        "bidderDetail": true,
+        "periodPriceHistory": false
       },
       "sourceTypeLabels": {
         "cost_book": "Public CDOT cost book",
@@ -51,7 +52,8 @@
       "capabilities": {
         "districtFilter": false,
         "engineerEstimate": false,
-        "bidderDetail": true
+        "bidderDetail": true,
+        "periodPriceHistory": false
       },
       "sourceTypeLabels": {
         "item_catalog": "Iowa DOT item catalog",
@@ -83,7 +85,8 @@
       "capabilities": {
         "districtFilter": false,
         "engineerEstimate": false,
-        "bidderDetail": true
+        "bidderDetail": true,
+        "periodPriceHistory": false
       },
       "sourceTypeLabels": {
         "item_catalog": "SDDOT item catalog",

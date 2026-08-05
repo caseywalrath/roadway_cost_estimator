@@ -11,6 +11,7 @@ public/data/
   states/co/*.csv
   states/ia/*.csv
   states/sd/*.csv
+  states/ne/*.csv (when Nebraska is enabled)
 ```
 
 State-native review records live under `data/staging/{state}/`. Raw source documents and downloads live under ignored `data/raw/{state}/`.
@@ -105,6 +106,14 @@ State-native item hierarchy.
 
 Current levels are `division` and `section`. Colorado and South Dakota use three-digit match prefixes; Iowa uses four digits.
 
+### `item_taxonomy_memberships.csv` (optional)
+
+Explicit item-to-section memberships for states whose agency item codes do not encode the official specification hierarchy.
+
+`membership_id`, `state`, `agency_id`, `agency_item_id`, `taxonomy_id`, `source_id`, `match_status`, `notes`
+
+Allowed `match_status` values are `catalog_exact`, `reviewed_override`, and `unclassified`. When a state declares this file, the item picker must use these memberships rather than deriving sections from item-code prefixes. Every searchable current item must have at least one membership; unclassified items use an explicit fallback section.
+
 ### `item_mappings.csv`
 
 Explicit reviewed mapping from a municipal/source agency item to a state item.
@@ -131,6 +140,14 @@ Colorado master-workbook bid sources also use an unweighted mean of valid bidder
 
 Colorado Cost Data Book items retain one awarded, one average, and one engineer observation per source row. The associated contract supplies awarded contractor, awarded total, and bid count. No `bids` or `bid_item_prices` rows are inferred because the Cost Data Book does not publish individual bidder item prices.
 
+### `item_price_summaries.csv` (optional)
+
+Period-level agency-published price summaries that are not contract evidence. These rows are independent of contracts, lettings, bids, bidder counts, and `item_observations`.
+
+`summary_id`, `source_id`, `state`, `agency_id`, `agency_item_id`, `agency_item_code`, `period_start_date`, `period_end_date`, `period_label`, `report_series`, `description_raw`, `total_quantity`, `unit_raw`, `unit_normalized`, `published_average_unit_price`, `total_bid`, `source_page`, `source_locator`, `derivation_method`
+
+Supported `report_series` values are `calendar_year` and `july_june`. `derivation_method` identifies the agency-published aggregate calculation; the application must preserve positive, zero, and negative values without converting them into contract observations. Optional state capabilities and labels identify states that expose period price history.
+
 ## Colorado Master-Workbook Inclusion Policy
 
 The committed configuration at `data/staging/co/cost_estimate_master_sources.json` is the reviewable inclusion authority for the attached master workbook. It records source identity, evidence date, owner, project identifier, explicit row ranges, selected price columns, bidder blocks, and published total cells.
@@ -153,7 +170,7 @@ Inflation adjustment affects optional display/summary calculations. Original sou
 
 ## Runtime Interfaces
 
-`AppData` exposes arrays and maps for sources, optional source documents, lettings, contracts, project numbers/PCNs, agency items/versions, taxonomy, observations, bids, contract items, and bidder prices. `ensureBidItemPricesLoaded()` performs the lazy bidder-price fetch.
+`AppData` exposes arrays and maps for sources, optional source documents, lettings, contracts, project numbers/PCNs, agency items/versions, taxonomy, optional explicit taxonomy memberships, observations, optional period price summaries, bids, contract items, and bidder prices. `ensureBidItemPricesLoaded()` performs the lazy bidder-price fetch.
 
 `SearchQuery` includes `state`, `agencyId`, and `agencyItemId`. Evidence joins use `contractId` and `agencyItemId`. Compatibility aliases in `src/data/schema.ts` are temporary adapters for rendering modules migrated from schema v1; new logic must use normalized IDs.
 

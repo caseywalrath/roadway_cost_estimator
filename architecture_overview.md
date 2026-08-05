@@ -20,6 +20,8 @@ The app is an evidence browser and limited local project workspace. It is not an
 
 The schema-v2 loader reads the manifest, loads only the selected state's core tables, builds relationship maps, and defers `bid_item_prices.csv` until a bidder or source-detail view is opened.
 
+Optional state partitions may also declare `item_price_summaries.csv` for non-contract period aggregates and `item_taxonomy_memberships.csv` for explicit item-to-section relationships. These are loaded into dedicated `AppData` arrays/maps and remain separate from contract observations; existing states omit both files without changing behavior.
+
 ## Runtime Flow
 
 1. `src/main.ts` loads the manifest and resolves the remembered state preference.
@@ -44,13 +46,17 @@ The shared model uses these normalized tables:
 - `agency_items`
 - `agency_item_versions`
 - `item_taxonomy`
+- optional `item_taxonomy_memberships`
 - `item_mappings`
 - `item_observations`
+- optional `item_price_summaries`
 - optional `source_documents`
 
 `contract_id` is the evidence parent. Project numbers and project control numbers are one-to-many children and never duplicate contract-item evidence. `agency_item_id` is the item identity; raw item codes are display and source fields. Generalized price types are `awarded_bid`, `average_bid`, and `engineer_estimate`.
 
 State-native differences remain in normalized nullable fields, taxonomy rows, capability metadata, source provenance, and staging artifacts. They are not hidden by Colorado-specific enums.
+
+Period-level published aggregates are not materialized observations. A state with `periodPriceHistory` capability presents those rows through an independent history workflow and must not use them for contract evidence, Matching Projects, or contract summary statistics.
 
 See `docs/data_schema.md` for table contracts and `docs/multistate_data_architecture.md` for design boundaries.
 
