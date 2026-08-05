@@ -120,7 +120,7 @@ def unit_normalized(unit: str) -> str:
         "CAL DAY": "DAY", "BARR DAY": "DAY", "CDAY": "DAY", "BDAY": "DAY",
         "LUMP SUM": "LS", "LS/MILES": "LS/MILE", "LIN FT": "LF", "SQ FT": "SF",
         "SQ YD": "SY", "CU YD": "CY", "POUND": "LB", "GALLON": "GAL", "M GAL": "MGAL",
-        "STATION": "STA",
+        "STATION": "STA", "VERT FT": "VFT",
     }
     return aliases.get(unit.strip().upper(), unit.strip().upper())
 

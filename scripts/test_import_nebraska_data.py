@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from scripts.import_nebraska_data import parse_words_page
+from scripts.import_nebraska_data import parse_words_page, unit_normalized
 from scripts.validate_data_package import validate_state
 
 FIXTURE_DIR = ROOT / "data" / "staging" / "ne" / "parser_fixtures"
@@ -43,6 +43,8 @@ def run_fixture_tests() -> int:
 
 def run_package_tests() -> int:
     run_fixture_tests()
+    if unit_normalized("VERT FT") != "VFT":
+        raise AssertionError("VERT FT must normalize to VFT for identity comparison")
     inventory = read_rows(STAGING_DIR / "annual_price_report_inventory.csv")
     in_scope = [row for row in inventory if row.get("inventory_status") == "parsed"]
     if len(in_scope) != 17:
@@ -62,6 +64,15 @@ def run_package_tests() -> int:
         raise AssertionError("annual acceptance counts are not frozen and accepted")
     if read_rows(STATE_DIR / "item_observations.csv"):
         raise AssertionError("period summaries must not synthesize observations")
+    resolutions = read_rows(STAGING_DIR / "item_identity_resolutions.csv")
+    if not resolutions:
+        raise AssertionError("item_identity_resolutions.csv is empty")
+    resolution_ids = {row.get("conflict_id") for row in resolutions}
+    conflict_ids = {row.get("conflict_id") for row in read_rows(STAGING_DIR / "item_identity_conflicts.csv")}
+    if not conflict_ids.issubset(resolution_ids):
+        raise AssertionError("every material identity conflict must have a resolution row")
+    if any(not row.get("automatic_classification") or not row.get("resolution_status") for row in resolutions):
+        raise AssertionError("identity resolution rows must record automatic classification and status")
     config = {
         "code": "NE", "defaultAgencyId": "ne_ndot",
         "files": {

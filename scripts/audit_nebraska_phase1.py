@@ -73,6 +73,7 @@ def unit_normalized(unit: str) -> str:
         "GALLON": "GAL",
         "M GAL": "MGAL",
         "STATION": "STA",
+        "VERT FT": "VFT",
     }.get(unit.upper(), unit.upper())
 
 
@@ -185,6 +186,62 @@ def normalize_description(value: str) -> str:
     return re.sub(r"[^A-Z0-9]+", " ", value).strip()
 
 
+def identity_description(value: str) -> str:
+    """Normalize harmless description morphology without rewriting source text."""
+    tokens = normalize_description(value).split()
+    normalized: list[str] = []
+    for token in tokens:
+        if len(token) > 4 and token.endswith("S") and not token.endswith(("SS", "US")):
+            token = token[:-1]
+        normalized.append(token)
+    return " ".join(normalized)
+
+
+def automatic_conflict_classification(
+    raw_conflict_type: str,
+    descriptions: list[str],
+    catalog_description: str,
+    units: list[str],
+    catalog_unit: str,
+) -> tuple[str, str, str]:
+    description_keys = {identity_description(description) for description in descriptions if description}
+    if catalog_description:
+        description_keys.add(identity_description(catalog_description))
+    unit_keys = {unit_normalized(unit) for unit in units if unit}
+    if catalog_unit:
+        unit_keys.add(unit_normalized(catalog_unit))
+
+    if len(description_keys) <= 1 and len(unit_keys) > 1:
+        return (
+            "stable_description_multi_unit",
+            "reviewed_multi_unit",
+            "Same identity candidate with multiple reported units; retain every raw unit and require unit-aware review.",
+        )
+    if len(description_keys) <= 1 and len(unit_keys) <= 1:
+        return (
+            "normalized_equivalent",
+            "normalized_equivalent",
+            "Raw description or unit variants collapse under the conservative identity normalizer.",
+        )
+    if raw_conflict_type == "description":
+        return (
+            "description_variant",
+            "source_text_correction_or_reviewed_variant",
+            "Description variants remain after conservative normalization; inspect source pages before changing identity.",
+        )
+    if raw_conflict_type == "unit":
+        return (
+            "unit_and_description_context",
+            "needs_review",
+            "Unit variation is accompanied by unresolved description context; do not merge automatically.",
+        )
+    return (
+        "semantic_identity_candidate",
+        "needs_review",
+        "Description and unit context remain materially different after conservative normalization.",
+    )
+
+
 def main() -> None:
     STAGING_DIR.mkdir(parents=True, exist_ok=True)
     inventory_rows: list[dict[str, object]] = []
@@ -257,6 +314,7 @@ def main() -> None:
 
     annual_only_rows: list[dict[str, object]] = []
     conflict_rows: list[dict[str, object]] = []
+    resolution_rows: list[dict[str, object]] = []
     for code, rows in sorted(annual_by_code.items()):
         descriptions = sorted({str(row["description_raw"]) for row in rows})
         units = sorted({str(row["unit_raw"]) for row in rows})
@@ -280,9 +338,26 @@ def main() -> None:
             )
         catalog_unit = str(catalog["unit_raw"]) if catalog else ""
         catalog_description = str(catalog["description"]) if catalog else ""
-        unit_conflict = len(units) > 1 or (catalog_unit and any(unit_normalized(unit) != unit_normalized(catalog_unit) for unit in units))
-        description_conflict = len(normalized_descriptions) > 1 or (catalog_description and any(normalize_description(description) != normalize_description(catalog_description) for description in descriptions))
-        if unit_conflict or description_conflict:
+        raw_unit_conflict = len(units) > 1 or (catalog_unit and any(unit.upper() != catalog_unit.upper() for unit in units))
+        raw_description_conflict = len(normalized_descriptions) > 1 or (catalog_description and any(normalize_description(description) != normalize_description(catalog_description) for description in descriptions))
+        raw_conflict_type = "unit_and_description" if raw_unit_conflict and raw_description_conflict else "unit" if raw_unit_conflict else "description"
+        automatic_classification, recommended_action, classification_note = automatic_conflict_classification(
+            raw_conflict_type,
+            descriptions,
+            catalog_description,
+            units,
+            catalog_unit,
+        ) if raw_unit_conflict or raw_description_conflict else ("none", "none", "No identity variation detected.")
+        identity_units = {unit_normalized(unit) for unit in units if unit}
+        if catalog_unit:
+            identity_units.add(unit_normalized(catalog_unit))
+        identity_descriptions = {identity_description(description) for description in descriptions if description}
+        if catalog_description:
+            identity_descriptions.add(identity_description(catalog_description))
+        unit_conflict = len(identity_units) > 1
+        description_conflict = len(identity_descriptions) > 1
+        material_conflict = unit_conflict or description_conflict
+        if material_conflict:
             conflict_type = "unit_and_description" if unit_conflict and description_conflict else "unit" if unit_conflict else "description"
             conflict_rows.append(
                 {
@@ -297,7 +372,29 @@ def main() -> None:
                     "affected_report_count": len(source_ids),
                     "affected_source_ids": " | ".join(source_ids),
                     "resolution_status": "needs_review",
-                    "notes": "Do not merge incompatible meanings or units automatically. Review source period, catalog authority, and any effective-date evidence before enabling Nebraska.",
+                    "notes": classification_note,
+                }
+            )
+        if raw_unit_conflict or raw_description_conflict:
+            resolution_rows.append(
+                {
+                    "conflict_id": f"ne_ndot_identity_conflict_{code}",
+                    "agency_item_code": code,
+                    "agency_item_id": f"ne_ndot_{code}",
+                    "automatic_classification": automatic_classification,
+                    "recommended_action": recommended_action,
+                    "resolution_action": "needs_review" if material_conflict else recommended_action,
+                    "target_agency_item_id": f"ne_ndot_{code}",
+                    "corrected_description": "",
+                    "corrected_unit": "",
+                    "effective_from": "",
+                    "effective_to": "",
+                    "source_ids": " | ".join(source_ids),
+                    "source_locators": "",
+                    "reviewed_by": "",
+                    "reviewed_on": "",
+                    "resolution_status": "needs_review" if material_conflict else "auto_resolved",
+                    "notes": classification_note,
                 }
             )
 
@@ -310,6 +407,15 @@ def main() -> None:
         STAGING_DIR / "item_identity_conflicts.csv",
         ["conflict_id", "agency_item_code", "agency_item_id", "conflict_type", "catalog_description", "catalog_unit", "annual_description_variants", "annual_unit_variants", "affected_report_count", "affected_source_ids", "resolution_status", "notes"],
         conflict_rows,
+    )
+    write_csv(
+        STAGING_DIR / "item_identity_resolutions.csv",
+        [
+            "conflict_id", "agency_item_code", "agency_item_id", "automatic_classification", "recommended_action",
+            "resolution_action", "target_agency_item_id", "corrected_description", "corrected_unit", "effective_from",
+            "effective_to", "source_ids", "source_locators", "reviewed_by", "reviewed_on", "resolution_status", "notes",
+        ],
+        resolution_rows,
     )
 
     catalog_refs = sorted({str(row["specification_reference"]) for row in catalog_rows if row["specification_reference"]})
