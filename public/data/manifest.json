@@ -107,6 +107,40 @@
         "itemMappings": "states/sd/item_mappings.csv",
         "observations": "states/sd/item_observations.csv"
       }
+    },
+    {
+      "code": "NE",
+      "name": "Nebraska",
+      "defaultAgencyId": "ne_ndot",
+      "defaultAgencyName": "Nebraska Department of Transportation",
+      "divisionLabel": "Division",
+      "sectionLabel": "Specification section",
+      "sectionPrefixLength": 4,
+      "capabilities": {
+        "districtFilter": false,
+        "engineerEstimate": false,
+        "bidderDetail": false,
+        "periodPriceHistory": true
+      },
+      "sourceTypeLabels": {
+        "item_catalog": "NDOT standard item list",
+        "annual_price_report": "NDOT average unit-price report"
+      },
+      "files": {
+        "sources": "states/ne/sources.csv",
+        "lettings": "states/ne/lettings.csv",
+        "contracts": "states/ne/contracts.csv",
+        "contractProjects": "states/ne/contract_projects.csv",
+        "contractItems": "states/ne/contract_items.csv",
+        "bids": "states/ne/bids.csv",
+        "agencyItems": "states/ne/agency_items.csv",
+        "agencyItemVersions": "states/ne/agency_item_versions.csv",
+        "itemTaxonomy": "states/ne/item_taxonomy.csv",
+        "itemTaxonomyMemberships": "states/ne/item_taxonomy_memberships.csv",
+        "itemMappings": "states/ne/item_mappings.csv",
+        "observations": "states/ne/item_observations.csv",
+        "itemPriceSummaries": "states/ne/item_price_summaries.csv"
+      }
     }
   ]
 }
