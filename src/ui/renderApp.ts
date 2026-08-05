@@ -7,6 +7,12 @@ import {
   createDefaultEvidenceFilters,
   createDefaultEvidenceSort
 } from "../matching/buildEvidenceResult";
+import {
+  buildItemPriceHistoryResult,
+  createDefaultItemPriceHistoryFilters,
+  createDefaultItemPriceHistorySort
+} from "../matching/buildItemPriceHistoryResult";
+import type { ItemPriceHistorySortKey } from "../matching/buildItemPriceHistoryResult";
 import { buildInflationAdjustedPriceSet, buildInflationAdjustedSummary } from "../matching/inflationAdjustment";
 import type { InflationAdjustedSummary } from "../matching/inflationAdjustment";
 import type {
@@ -44,6 +50,7 @@ import { createImportedCopy, downloadProjectBackup, readProjectBackupFile } from
 import { openProjectRepository, ProjectConflictError, type ProjectRepository } from "../projects/projectRepository";
 import { ProjectEditCoordinator } from "../projects/projectEditCoordinator";
 import { downloadEvidenceCsv } from "./exportEvidenceCsv";
+import { downloadItemPriceHistoryCsv } from "./exportItemPriceHistoryCsv";
 import { downloadProjectCsv } from "./exportProjectCsv";
 import {
   bindItemPicker,
@@ -57,6 +64,7 @@ import {
 } from "./renderProjectWorkspace";
 import type { PendingDuplicateProjectLine, ProjectManagerFilters, ProjectMetadataEditorView } from "./renderProjectWorkspace";
 import { readEvidenceFiltersFromForm, renderResults } from "./renderResults";
+import { readItemPriceHistoryFiltersFromForm } from "./renderItemPriceHistory";
 import { renderSourceReview } from "./renderSourceReview";
 
 type AppView = "explorer" | "project" | "sourceReview";
@@ -104,6 +112,8 @@ export async function renderApp(
   let query = { ...emptyQuery };
   let evidenceFilters = createDefaultEvidenceFilters(query);
   let evidenceSort = createDefaultEvidenceSort();
+  let itemPriceHistoryFilters = createDefaultItemPriceHistoryFilters();
+  let itemPriceHistorySort = createDefaultItemPriceHistorySort();
   let projectSort = createDefaultProjectSort();
   let evidenceFiltersExpanded = true;
   let itemSearchCollapsed = false;
@@ -148,6 +158,7 @@ export async function renderApp(
 
   function render(): void {
     const result = buildEvidenceResult(data, query, evidenceFilters, evidenceSort);
+    const itemPriceHistoryResult = buildItemPriceHistoryResult(data, result.query, itemPriceHistoryFilters, itemPriceHistorySort);
     const includedRows = includedEvidenceRows(result.filteredRows, excludedSummaryRowIds);
     const includedStats = buildEvidenceStats(includedRows);
     const includedSummaryStats = buildEvidenceSummaryStats(includedRows);
@@ -193,7 +204,7 @@ export async function renderApp(
 
         ${activeView === "explorer" ? `
             <section class="workspace-grid ${itemSearchCollapsed ? "workspace-grid--item-search-collapsed" : ""}">
-              ${itemSearchCollapsed ? "" : renderExplorer(query, data.agencyItems, data.specSections, data.stateConfig)}
+              ${itemSearchCollapsed ? "" : renderExplorer(query, data.agencyItems, data.specSections, data.stateConfig, data.itemTaxonomyMembershipsByAgencyItemId)}
               ${renderResults(
                 result,
                 evidenceFiltersExpanded,
@@ -208,7 +219,8 @@ export async function renderApp(
                 inflationAdjustmentEnabled,
                 inflationAdjustedSummary,
                 inflationAdjustedPriceSet,
-                addToProjectPanelHtml
+                addToProjectPanelHtml,
+                itemPriceHistoryResult
               )}
             </section>
           ` : activeView === "project"
@@ -266,7 +278,7 @@ export async function renderApp(
 
     const form = root.querySelector<HTMLFormElement>("#explorer-form");
     if (form) {
-      bindItemPicker(form, data.agencyItems, data.specSections, data.stateConfig);
+      bindItemPicker(form, data.agencyItems, data.specSections, data.stateConfig, data.itemTaxonomyMembershipsByAgencyItemId);
     }
 
     form?.addEventListener("submit", (event) => {
@@ -274,6 +286,8 @@ export async function renderApp(
       query = readQueryFromForm(form, query);
       evidenceFilters = createDefaultEvidenceFilters(query);
       evidenceSort = createDefaultEvidenceSort();
+      itemPriceHistoryFilters = createDefaultItemPriceHistoryFilters();
+      itemPriceHistorySort = createDefaultItemPriceHistorySort();
       excludedSummaryRowIds = new Set<string>();
       selectedBidderDetailKey = null;
       selectedSourceProjectId = null;
@@ -316,10 +330,36 @@ export async function renderApp(
       render();
     });
 
+    const itemPriceHistoryFiltersForm = root.querySelector<HTMLFormElement>("#item-price-history-filters-form");
+    itemPriceHistoryFiltersForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      itemPriceHistoryFilters = readItemPriceHistoryFiltersFromForm(itemPriceHistoryFiltersForm);
+      render();
+    });
+    root.querySelector<HTMLButtonElement>("#clear-item-price-history-filters")?.addEventListener("click", () => {
+      itemPriceHistoryFilters = createDefaultItemPriceHistoryFilters();
+      render();
+    });
+    root.querySelectorAll<HTMLButtonElement>("[data-item-price-history-sort-key]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const key = button.dataset.itemPriceHistorySortKey as ItemPriceHistorySortKey | undefined;
+        if (!key) return;
+        itemPriceHistorySort = itemPriceHistorySort.key === key
+          ? { key, direction: itemPriceHistorySort.direction === "asc" ? "desc" : "asc" }
+          : { key, direction: key === "period" || key === "quantity" || key === "averageUnitPrice" || key === "totalBid" ? "desc" : "asc" };
+        render();
+      });
+    });
+    root.querySelector<HTMLButtonElement>("#download-item-price-history-csv")?.addEventListener("click", () => {
+      downloadItemPriceHistoryCsv(itemPriceHistoryResult);
+    });
+
     root.querySelector<HTMLButtonElement>("#clear-query")?.addEventListener("click", () => {
       query = { ...emptyQuery };
       evidenceFilters = createDefaultEvidenceFilters(query);
       evidenceSort = createDefaultEvidenceSort();
+      itemPriceHistoryFilters = createDefaultItemPriceHistoryFilters();
+      itemPriceHistorySort = createDefaultItemPriceHistorySort();
       excludedSummaryRowIds = new Set<string>();
       selectedBidderDetailKey = null;
       selectedSourceProjectId = null;

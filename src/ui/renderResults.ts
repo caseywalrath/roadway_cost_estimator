@@ -12,6 +12,8 @@ import type {
   EvidenceSummaryStats
 } from "../data/schema";
 import type { InflationAdjustedPriceSet, InflationAdjustedSummary } from "../matching/inflationAdjustment";
+import type { ItemPriceHistoryResult } from "../matching/buildItemPriceHistoryResult";
+import { renderItemPriceHistory } from "./renderItemPriceHistory";
 
 export function renderResults(
   result: EvidenceResult,
@@ -27,7 +29,8 @@ export function renderResults(
   inflationAdjustmentEnabled: boolean,
   inflationAdjustedSummary: InflationAdjustedSummary | null,
   inflationAdjustedPriceSet: InflationAdjustedPriceSet | null,
-  addToProjectPanelHtml: string
+  addToProjectPanelHtml: string,
+  itemPriceHistoryResult: ItemPriceHistoryResult
 ): string {
   const displayedSummaryStats = inflationAdjustmentEnabled
     ? inflationAdjustedSummary?.summaryStats ?? includedSummaryStats
@@ -37,10 +40,13 @@ export function renderResults(
     average: displayedSummaryStats.average,
     engineer: displayedSummaryStats.engineer
   };
+  const hasPeriodPriceHistory = data.stateConfig.capabilities.periodPriceHistory;
+  const hasProjectEvidence = data.contracts.length > 0 || data.observations.length > 0;
 
   return `
     <section class="results-panel">
-      ${renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, inflationAdjustedPriceSet, data)}
+      ${renderItemPriceHistory(itemPriceHistoryResult, data.stateConfig)}
+      ${hasProjectEvidence ? renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, inflationAdjustedPriceSet, data) : ""}
       ${renderUnitPriceSummaryPanel(
         displayedStats,
         result.filteredRows.length,
@@ -48,11 +54,14 @@ export function renderResults(
         inflationAdjustmentEnabled,
         inflationAdjustedSummary,
         addToProjectPanelHtml,
-        data.stateConfig.capabilities.engineerEstimate
+        data.stateConfig.capabilities.engineerEstimate,
+        hasPeriodPriceHistory && itemPriceHistoryResult.allExactRows.length > 0
+          ? data.stateConfig.summaryExclusionNote ?? "NDOT average price data excluded"
+          : ""
       )}
-      <div class="source-review-link-row">
+      ${hasProjectEvidence ? `<div class="source-review-link-row">
         <a href="#source-review" class="source-review-link" data-open-source-review>Source review</a>
-      </div>
+      </div>` : ""}
     </section>
     ${renderBidderDetailModal(result, data, selectedBidderDetailKey)}
   `;
@@ -393,7 +402,8 @@ function renderUnitPriceSummaryPanel(
   inflationAdjustmentEnabled: boolean,
   inflationAdjustedSummary: InflationAdjustedSummary | null,
   addToProjectPanelHtml: string,
-  supportsEngineerEstimate: boolean
+  supportsEngineerEstimate: boolean,
+  summaryExclusionNote: string
 ): string {
   const inflationControl = renderInflationAdjustmentControl(inflationAdjustmentEnabled);
   const inflationNote = renderInflationAdjustmentNote(inflationAdjustmentEnabled, inflationAdjustedSummary);
@@ -411,6 +421,7 @@ function renderUnitPriceSummaryPanel(
       <div class="summary-heading-row">
         <div class="panel-heading">
           <p class="eyebrow">Unit Price Summary</p>
+          ${summaryExclusionNote ? `<p class="summary-exclusion-note">${escapeHtml(summaryExclusionNote)}</p>` : ""}
         </div>
         ${inflationControl}
       </div>

@@ -1,4 +1,4 @@
-import type { AgencyItemRecord, SearchQuery, SpecSectionRecord, StateConfig } from "../data/schema";
+import type { AgencyItemRecord, ItemTaxonomyMembershipRecord, SearchQuery, SpecSectionRecord, StateConfig } from "../data/schema";
 import { normalizeDescription } from "../matching/normalizeDescription";
 
 const DEFAULT_STATE = "CO";
@@ -8,17 +8,18 @@ export function renderExplorer(
   query: SearchQuery,
   agencyItems: AgencyItemRecord[],
   specSections: SpecSectionRecord[],
-  stateConfig: StateConfig
+  stateConfig: StateConfig,
+  membershipsByAgencyItemId: ReadonlyMap<string, ItemTaxonomyMembershipRecord[]> = new Map()
 ): string {
-  const resolvedAgencyItem = findAgencyItem(agencyItems, query.itemCode, query.state);
+  const resolvedAgencyItem = findAgencyItem(agencyItems, query.agencyItemId, query.itemCode, query.state);
   const hasResolvedItem = Boolean(resolvedAgencyItem);
   const resolvedUnit = resolvedAgencyItem?.officialUnit ?? query.unit;
   const selectedUnit = hasResolvedItem ? resolvedUnit : "";
   const itemSearchValue = hasResolvedItem ? "" : query.description;
-  const selectedSectionPrefix = sectionPrefixFromItemCode(
-    query.itemCode,
-    stateConfig.sectionPrefixLength
-  );
+  const explicitMemberships = Boolean(stateConfig.files.itemTaxonomyMemberships);
+  const selectedSectionPrefix = explicitMemberships && resolvedAgencyItem
+    ? findMembershipSectionPrefix(resolvedAgencyItem.agencyItemId, membershipsByAgencyItemId, specSections)
+    : sectionPrefixFromItemCode(query.itemCode, stateConfig.sectionPrefixLength);
   const selectedSection = selectedSectionPrefix
     ? findSpecSection(specSections, selectedSectionPrefix)
     : null;
@@ -76,7 +77,10 @@ export function renderExplorer(
             selectedSectionPrefix,
             itemSearchValue,
             query.itemCode,
-            stateConfig.sectionPrefixLength
+            stateConfig.sectionPrefixLength,
+            membershipsByAgencyItemId,
+            explicitMemberships,
+            query.agencyItemId
           )}
         </div>
       </section>
@@ -102,7 +106,8 @@ export function bindItemPicker(
   form: HTMLFormElement,
   agencyItems: AgencyItemRecord[],
   specSections: SpecSectionRecord[],
-  stateConfig: StateConfig
+  stateConfig: StateConfig,
+  membershipsByAgencyItemId: ReadonlyMap<string, ItemTaxonomyMembershipRecord[]> = new Map()
 ): void {
   const itemCodeInput = form.elements.namedItem("itemCode") as HTMLInputElement | null;
   const agencyItemIdInput = form.elements.namedItem("agencyItemId") as HTMLInputElement | null;
@@ -156,7 +161,10 @@ export function bindItemPicker(
       selectedSectionPrefix,
       searchText,
       itemCodeInput?.value ?? "",
-      stateConfig.sectionPrefixLength
+      stateConfig.sectionPrefixLength,
+      membershipsByAgencyItemId,
+      Boolean(stateConfig.files.itemTaxonomyMemberships),
+      agencyItemIdInput?.value ?? ""
     );
     updateItemResultScrollCue(itemResults);
   }
@@ -188,8 +196,9 @@ export function bindItemPicker(
     const agencyItemId = button.dataset.agencyItemId ?? "";
     const unit = button.dataset.unit ?? "";
     const selectedItemCode = itemCodeInput?.value ?? "";
+    const selectedAgencyItemId = agencyItemIdInput?.value ?? "";
 
-    if (selectedItemCode === itemCode) {
+    if (selectedAgencyItemId === agencyItemId || (!selectedAgencyItemId && selectedItemCode === itemCode)) {
       clearSelectedItem();
       renderCurrentResults();
       return;
@@ -250,7 +259,10 @@ function renderItemResults(
   selectedSectionPrefix: string,
   searchText: string,
   selectedItemCode: string,
-  sectionPrefixLength: number
+  sectionPrefixLength: number,
+  membershipsByAgencyItemId: ReadonlyMap<string, ItemTaxonomyMembershipRecord[]>,
+  useExplicitMemberships: boolean,
+  selectedAgencyItemId: string
 ): string {
   const normalizedSearchText = searchText.trim().toUpperCase();
   const searchHasStarted = Boolean(
@@ -271,14 +283,17 @@ function renderItemResults(
         sectionByPrefix,
         selectedDivisionPrefix,
         selectedSectionPrefix,
-        sectionPrefixLength
+        sectionPrefixLength,
+        membershipsByAgencyItemId,
+        useExplicitMemberships
       )
     )
     .sort((left, right) => left.itemCode.localeCompare(right.itemCode));
 
   const matchingItems = filteredItems.filter((agencyItem) => itemMatchesSearch(agencyItem, normalizedSearchText));
-  const selectedItem = selectedItemCode
-    ? agencyItems.find((agencyItem) => agencyItem.itemCode === selectedItemCode)
+  const selectedItem = selectedAgencyItemId || selectedItemCode
+    ? agencyItems.find((agencyItem) => agencyItem.agencyItemId === selectedAgencyItemId)
+      ?? agencyItems.find((agencyItem) => agencyItem.itemCode === selectedItemCode)
     : null;
   const displayedItems = selectedItem ? [selectedItem] : matchingItems;
 
@@ -294,7 +309,7 @@ function renderItemResults(
     <div class="item-result-count">${matchingItems.length} matching item${matchingItems.length === 1 ? "" : "s"}</div>
     <div class="item-result-buttons" data-item-result-scroll>
       ${displayedItems
-        .map((agencyItem) => renderItemResultButton(agencyItem, agencyItem.itemCode === selectedItemCode))
+        .map((agencyItem) => renderItemResultButton(agencyItem, agencyItem.agencyItemId === selectedAgencyItemId || (!selectedAgencyItemId && agencyItem.itemCode === selectedItemCode)))
         .join("")}
     </div>
   `;
@@ -406,8 +421,17 @@ function itemMatchesSelectedFilters(
   sectionByPrefix: Map<string, SpecSectionRecord>,
   selectedDivisionPrefix: string,
   selectedSectionPrefix: string,
-  sectionPrefixLength: number
+  sectionPrefixLength: number,
+  membershipsByAgencyItemId: ReadonlyMap<string, ItemTaxonomyMembershipRecord[]>,
+  useExplicitMemberships: boolean
 ): boolean {
+  if (useExplicitMemberships) {
+    const membershipSections = (membershipsByAgencyItemId.get(agencyItem.agencyItemId) ?? [])
+      .map((membership) => specSectionForMembership(sectionByPrefix, membership))
+      .filter((section): section is SpecSectionRecord => Boolean(section));
+    if (selectedSectionPrefix && !membershipSections.some((section) => section.sectionPrefix === selectedSectionPrefix)) return false;
+    return !selectedDivisionPrefix || membershipSections.some((section) => section.divisionPrefix === selectedDivisionPrefix);
+  }
   const sectionPrefix = sectionPrefixFromItemCode(agencyItem.itemCode, sectionPrefixLength);
 
   if (selectedSectionPrefix && sectionPrefix !== selectedSectionPrefix) {
@@ -430,15 +454,32 @@ function findSpecSection(
 
 function findAgencyItem(
   agencyItems: AgencyItemRecord[],
+  agencyItemId: string,
   itemCode: string,
   state: string
 ): AgencyItemRecord | null {
   const normalizedItemCode = itemCode.trim().toUpperCase();
   const normalizedState = state.trim().toUpperCase();
 
-  return agencyItems.find((agencyItem) =>
+  return agencyItems.find((agencyItem) => agencyItem.agencyItemId === agencyItemId) ?? agencyItems.find((agencyItem) =>
     agencyItem.itemCode === normalizedItemCode && agencyItem.state === normalizedState
   ) ?? null;
+}
+
+function findMembershipSectionPrefix(
+  agencyItemId: string,
+  membershipsByAgencyItemId: ReadonlyMap<string, ItemTaxonomyMembershipRecord[]>,
+  specSections: SpecSectionRecord[]
+): string {
+  const taxonomyIds = new Set((membershipsByAgencyItemId.get(agencyItemId) ?? []).map((membership) => membership.taxonomyId));
+  return specSections.find((section) => taxonomyIds.has(section.taxonomyId))?.sectionPrefix ?? "";
+}
+
+function specSectionForMembership(
+  sectionByPrefix: Map<string, SpecSectionRecord>,
+  membership: ItemTaxonomyMembershipRecord
+): SpecSectionRecord | null {
+  return [...sectionByPrefix.values()].find((section) => section.taxonomyId === membership.taxonomyId) ?? null;
 }
 
 function sectionPrefixFromItemCode(itemCode: string, prefixLength: number): string {
