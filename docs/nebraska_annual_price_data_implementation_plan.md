@@ -879,7 +879,7 @@ Use the repository's canonical executables and commands from `codex.md`.
 Minimum verification:
 
 ```text
-python -m unittest scripts.test_import_nebraska_data
+python scripts/test_import_nebraska_data.py
 python scripts/validate_data_package.py
 C:\Users\Casey.Walrath\Tools\node\node.exe ./node_modules/typescript/bin/tsc
 C:\Users\Casey.Walrath\Tools\node\node.exe ./node_modules/vite/bin/vite.js build --outDir dist-check --configLoader native
