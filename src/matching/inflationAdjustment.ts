@@ -1,4 +1,5 @@
 import type { EvidenceRow, EvidenceStats, EvidenceSummaryStats, InflationIndexRecord } from "../data/schema";
+import type { ItemPriceHistoryRow } from "./buildItemPriceHistoryResult";
 import { buildEvidenceStatsFromPrices } from "./buildEvidenceResult";
 
 type InflationAdjustablePriceField =
@@ -20,6 +21,12 @@ export interface InflationAdjustedPriceSet {
   awardedBidUnitPriceByRowId: Map<string, number>;
   averageBidUnitPriceByRowId: Map<string, number>;
   engineerEstimateUnitPriceByRowId: Map<string, number>;
+}
+
+export interface AnnualInflationAdjustedPriceSet {
+  targetPeriod: InflationIndexRecord | null;
+  adjustedAverageUnitPriceBySummaryId: Map<string, number>;
+  unavailableSummaryIds: Set<string>;
 }
 
 export function buildInflationAdjustedSummary(
@@ -76,6 +83,41 @@ export function buildInflationAdjustedPriceSet(
     if (adjustedEngineerPrice !== null) {
       priceSet.engineerEstimateUnitPriceByRowId.set(row.rowId, adjustedEngineerPrice);
     }
+  }
+
+  return priceSet;
+}
+
+/**
+ * Adjusts only the source-published average price for a complete annual report window.
+ * Total bid values are intentionally absent because NDOT's aggregation method is not documented.
+ */
+export function buildAnnualInflationAdjustedPriceSet(
+  rows: ItemPriceHistoryRow[],
+  indexByPeriod: ReadonlyMap<string, InflationIndexRecord>
+): AnnualInflationAdjustedPriceSet {
+  const targetPeriod = latestInflationIndex([...indexByPeriod.values()]);
+  const priceSet: AnnualInflationAdjustedPriceSet = {
+    targetPeriod,
+    adjustedAverageUnitPriceBySummaryId: new Map<string, number>(),
+    unavailableSummaryIds: new Set<string>()
+  };
+
+  for (const row of rows) {
+    const summaryId = row.summary.summaryId;
+    const sourceQuarters = reportWindowQuarterLabels(row.summary.periodStartDate, row.summary.periodEndDate);
+    const sourceIndexes = sourceQuarters.map((periodLabel) => indexByPeriod.get(periodLabel) ?? null);
+
+    if (!targetPeriod || sourceQuarters.length !== 4 || sourceIndexes.some((index) => !index || index.indexValue <= 0)) {
+      priceSet.unavailableSummaryIds.add(summaryId);
+      continue;
+    }
+
+    const sourceIndex = sourceIndexes.reduce((sum, index) => sum + index!.indexValue, 0) / 4;
+    priceSet.adjustedAverageUnitPriceBySummaryId.set(
+      summaryId,
+      row.summary.publishedAverageUnitPrice * (targetPeriod.indexValue / sourceIndex)
+    );
   }
 
   return priceSet;
@@ -174,4 +216,30 @@ function latestInflationIndex(indexes: InflationIndexRecord[]): InflationIndexRe
     .sort((left, right) =>
       right.periodYear - left.periodYear || right.periodQuarter - left.periodQuarter
     )[0] ?? null;
+}
+
+function reportWindowQuarterLabels(periodStartDate: string, periodEndDate: string): string[] {
+  const start = parseQuarter(periodStartDate);
+  const end = parseQuarter(periodEndDate);
+  if (!start || !end) return [];
+
+  const labels: string[] = [];
+  let year = start.year;
+  let quarter = start.quarter;
+  while (year < end.year || (year === end.year && quarter <= end.quarter)) {
+    labels.push(`${year} Q${quarter}`);
+    quarter += 1;
+    if (quarter === 5) {
+      quarter = 1;
+      year += 1;
+    }
+    if (labels.length > 8) return [];
+  }
+  return labels;
+}
+
+function parseQuarter(value: string): { year: number; quarter: number } | null {
+  const periodLabel = periodLabelFromDate(value);
+  const match = periodLabel ? /^(\d{4}) Q([1-4])$/.exec(periodLabel) : null;
+  return match ? { year: Number(match[1]), quarter: Number(match[2]) } : null;
 }

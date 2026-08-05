@@ -13,7 +13,7 @@ import {
   createDefaultItemPriceHistorySort
 } from "../matching/buildItemPriceHistoryResult";
 import type { ItemPriceHistorySortKey } from "../matching/buildItemPriceHistoryResult";
-import { buildInflationAdjustedPriceSet, buildInflationAdjustedSummary } from "../matching/inflationAdjustment";
+import { buildAnnualInflationAdjustedPriceSet, buildInflationAdjustedPriceSet, buildInflationAdjustedSummary } from "../matching/inflationAdjustment";
 import type { InflationAdjustedSummary } from "../matching/inflationAdjustment";
 import type {
   ProjectEvidenceContext,
@@ -159,6 +159,9 @@ export async function renderApp(
   function render(): void {
     const result = buildEvidenceResult(data, query, evidenceFilters, evidenceSort);
     const itemPriceHistoryResult = buildItemPriceHistoryResult(data, result.query, itemPriceHistoryFilters, itemPriceHistorySort);
+    const annualInflationAdjustedPriceSet = inflationAdjustmentEnabled
+      ? buildAnnualInflationAdjustedPriceSet(itemPriceHistoryResult.filteredRows, data.inflationIndexByPeriod)
+      : null;
     const includedRows = includedEvidenceRows(result.filteredRows, excludedSummaryRowIds);
     const includedStats = buildEvidenceStats(includedRows);
     const includedSummaryStats = buildEvidenceSummaryStats(includedRows);
@@ -220,7 +223,8 @@ export async function renderApp(
                 inflationAdjustedSummary,
                 inflationAdjustedPriceSet,
                 addToProjectPanelHtml,
-                itemPriceHistoryResult
+                itemPriceHistoryResult,
+                annualInflationAdjustedPriceSet
               )}
             </section>
           ` : activeView === "project"
