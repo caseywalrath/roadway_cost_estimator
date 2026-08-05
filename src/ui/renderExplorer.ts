@@ -3,6 +3,7 @@ import { normalizeDescription } from "../matching/normalizeDescription";
 
 const DEFAULT_STATE = "CO";
 const DEFAULT_WORK_TYPE = "Roadway";
+type ItemCodeSeriesOption = NonNullable<StateConfig["itemCodeSeries"]>[number];
 
 export function renderExplorer(
   query: SearchQuery,
@@ -24,6 +25,9 @@ export function renderExplorer(
     ? findSpecSection(specSections, selectedSectionPrefix)
     : null;
   const selectedDivisionPrefix = selectedSection?.divisionPrefix ?? "";
+  const selectedItemCodeSeries = resolvedAgencyItem
+    ? itemCodeSeriesForCode(resolvedAgencyItem.itemCode, stateConfig.itemCodeSeries ?? [])
+    : "";
 
   return `
     <form id="explorer-form" class="search-panel">
@@ -58,6 +62,14 @@ export function renderExplorer(
             </select>
           </label>
 
+          ${stateConfig.itemCodeSeries?.length ? `<label>
+            <span class="label-row">Item Code Series</span>
+            <select name="itemCodeSeries" data-item-code-series-select>
+              <option value="" ${selectedItemCodeSeries ? "" : "selected"}>All item code series</option>
+              ${renderItemCodeSeriesOptions(stateConfig.itemCodeSeries, selectedItemCodeSeries)}
+            </select>
+          </label>` : ""}
+
           <label>
             <span class="label-row">
               Item code or description
@@ -75,12 +87,14 @@ export function renderExplorer(
             specSections,
             selectedDivisionPrefix,
             selectedSectionPrefix,
+            selectedItemCodeSeries,
             itemSearchValue,
             query.itemCode,
             stateConfig.sectionPrefixLength,
             membershipsByAgencyItemId,
             explicitMemberships,
-            query.agencyItemId
+            query.agencyItemId,
+            stateConfig.itemCodeSeries ?? []
           )}
         </div>
       </section>
@@ -115,6 +129,7 @@ export function bindItemPicker(
   const unitInput = form.elements.namedItem("unit") as HTMLInputElement | null;
   const divisionSelect = form.querySelector<HTMLSelectElement>("[data-division-select]");
   const sectionSelect = form.querySelector<HTMLSelectElement>("[data-section-select]");
+  const itemCodeSeriesSelect = form.querySelector<HTMLSelectElement>("[data-item-code-series-select]");
   const itemSearchInput = form.querySelector<HTMLInputElement>("[data-item-search]");
   const itemResults = form.querySelector<HTMLElement>("[data-item-results]");
 
@@ -153,18 +168,21 @@ export function bindItemPicker(
 
     const selectedSectionPrefix = sectionSelect.value;
     const selectedDivisionPrefix = divisionSelect?.value ?? "";
+    const selectedItemCodeSeries = itemCodeSeriesSelect?.value ?? "";
     const searchText = itemSearchInput?.value ?? "";
     itemResults.innerHTML = renderItemResults(
       agencyItems,
       specSections,
       selectedDivisionPrefix,
       selectedSectionPrefix,
+      selectedItemCodeSeries,
       searchText,
       itemCodeInput?.value ?? "",
       stateConfig.sectionPrefixLength,
       membershipsByAgencyItemId,
       Boolean(stateConfig.files.itemTaxonomyMemberships),
-      agencyItemIdInput?.value ?? ""
+      agencyItemIdInput?.value ?? "",
+      stateConfig.itemCodeSeries ?? []
     );
     updateItemResultScrollCue(itemResults);
   }
@@ -176,6 +194,11 @@ export function bindItemPicker(
   });
 
   sectionSelect?.addEventListener("change", () => {
+    clearSelectedItem();
+    renderCurrentResults();
+  });
+
+  itemCodeSeriesSelect?.addEventListener("change", () => {
     clearSelectedItem();
     renderCurrentResults();
   });
@@ -252,21 +275,29 @@ function renderSectionOptions(
     .join("");
 }
 
+function renderItemCodeSeriesOptions(series: ItemCodeSeriesOption[], selectedSeries: string): string {
+  return series
+    .map((option) => `<option value="${escapeHtml(option.value)}" ${option.value === selectedSeries ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
+    .join("");
+}
+
 function renderItemResults(
   agencyItems: AgencyItemRecord[],
   specSections: SpecSectionRecord[],
   selectedDivisionPrefix: string,
   selectedSectionPrefix: string,
+  selectedItemCodeSeries: string,
   searchText: string,
   selectedItemCode: string,
   sectionPrefixLength: number,
   membershipsByAgencyItemId: ReadonlyMap<string, ItemTaxonomyMembershipRecord[]>,
   useExplicitMemberships: boolean,
-  selectedAgencyItemId: string
+  selectedAgencyItemId: string,
+  itemCodeSeries: ItemCodeSeriesOption[]
 ): string {
   const normalizedSearchText = searchText.trim().toUpperCase();
   const searchHasStarted = Boolean(
-    selectedDivisionPrefix || selectedSectionPrefix || normalizedSearchText || selectedItemCode
+    selectedDivisionPrefix || selectedSectionPrefix || selectedItemCodeSeries || normalizedSearchText || selectedItemCode
   );
 
   if (!searchHasStarted) {
@@ -288,6 +319,7 @@ function renderItemResults(
         useExplicitMemberships
       )
     )
+    .filter((agencyItem) => itemMatchesCodeSeries(agencyItem.itemCode, selectedItemCodeSeries, itemCodeSeries))
     .sort((left, right) => left.itemCode.localeCompare(right.itemCode));
 
   const matchingItems = filteredItems.filter((agencyItem) => itemMatchesSearch(agencyItem, normalizedSearchText));
@@ -298,8 +330,8 @@ function renderItemResults(
   const displayedItems = selectedItem ? [selectedItem] : matchingItems;
 
   if (matchingItems.length === 0) {
-    if (selectedDivisionPrefix || selectedSectionPrefix) {
-      return `<p class="item-result-message">No loaded items match this search in the selected division or section. Clear Division or Section / prefix to search all loaded items.</p>`;
+    if (selectedDivisionPrefix || selectedSectionPrefix || selectedItemCodeSeries) {
+      return `<p class="item-result-message">No loaded items match the selected filters. Clear Division, Specification Section, or Item Code Series to search all loaded items.</p>`;
     }
 
     return `<p class="item-result-message">No loaded items match this search. Select an official item code before reviewing project evidence.</p>`;
@@ -464,6 +496,16 @@ function findAgencyItem(
   return agencyItems.find((agencyItem) => agencyItem.agencyItemId === agencyItemId) ?? agencyItems.find((agencyItem) =>
     agencyItem.itemCode === normalizedItemCode && agencyItem.state === normalizedState
   ) ?? null;
+}
+
+function itemMatchesCodeSeries(itemCode: string, selectedSeries: string, series: ItemCodeSeriesOption[]): boolean {
+  if (!selectedSeries) return true;
+  const option = series.find((candidate) => candidate.value === selectedSeries);
+  return Boolean(option?.prefixes.some((prefix) => itemCode.toUpperCase().startsWith(prefix.toUpperCase())));
+}
+
+function itemCodeSeriesForCode(itemCode: string, series: ItemCodeSeriesOption[]): string {
+  return series.find((option) => option.prefixes.some((prefix) => itemCode.toUpperCase().startsWith(prefix.toUpperCase())))?.value ?? "";
 }
 
 function findMembershipSectionPrefix(

@@ -44,6 +44,11 @@ export interface StateConfig {
   periodPriceHistoryTitle?: string;
   periodPriceMeasureLabel?: string;
   summaryExclusionNote?: string;
+  itemCodeSeries?: Array<{
+    value: string;
+    label: string;
+    prefixes: string[];
+  }>;
   files: StateDataFiles;
 }
 

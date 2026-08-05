@@ -47,7 +47,7 @@ export function renderResults(
 
   return `
     <section class="results-panel">
-      ${renderItemPriceHistory(itemPriceHistoryResult, data.stateConfig, inflationAdjustmentEnabled, annualInflationAdjustedPriceSet)}
+      ${renderItemPriceHistory(itemPriceHistoryResult, data.stateConfig, inflationAdjustmentEnabled, annualInflationAdjustedPriceSet, itemSearchCollapsed)}
       ${hasProjectEvidence ? renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, inflationAdjustedPriceSet, data) : ""}
       ${renderUnitPriceSummaryPanel(
         displayedStats,

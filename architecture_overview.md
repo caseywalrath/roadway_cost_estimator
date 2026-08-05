@@ -2,7 +2,7 @@
 
 ## Current Product
 
-This repository contains **Roadway Cost Estimator**, a static multi-state roadway bid-item evidence application. Colorado, Iowa, and South Dakota are enabled. A user must select a state on first visit; the browser remembers that choice. Search results never combine states.
+This repository contains **Roadway Cost Estimator**, a static multi-state roadway bid-item evidence application. Colorado, Iowa, Nebraska, and South Dakota are enabled. A user must select a state on first visit; the browser remembers that choice. Search results never combine states.
 
 The app is an evidence browser and limited local project workspace. It is not an automatic estimating recommendation system. Its primary output is a contract-item evidence table with source prices and provenance. Summary statistics, inflation adjustment, bidder detail, CSV export, and saved project lines support user review.
 
@@ -114,6 +114,8 @@ The staged package currently contains 23,636 parsed annual rows, five committed 
 - Colorado adds District and Engineer Estimate.
 - Iowa and South Dakota hide unsupported District and Engineer Estimate controls/columns.
 - Item-prefix extraction uses each state's manifest-defined leading-digit length. South Dakota therefore supports codes such as `009E0010` without a state-specific UI parser.
+- A state may declare manifest-driven item-code series. Nebraska exposes independent 0000–9999 and A/L/P/R/W series filtering below Specification Section; the series filter can be used alone or combined with Division, Section, and text search.
+- Period-history-only states render `Edit Item Search` in the annual-price-history header because they do not render the Matching Projects header that owns this action for contract-evidence states.
 - Historical identities and source-deleted lines retain distinct labels. South Dakota project displays and exports include both Project No. and PCN, and Source Review links the named abstract and final-report documents.
 - Explorer exposes Source Review through a subdued text link aligned with the results column. The dedicated view keeps long source-project lists and wide source details out of the primary evidence workflow and never stacks a project-detail modal over a source list. Matching Projects links continue to open bidder detail when bidder rows exist; otherwise, reviewable Cost Data Book and estimate projects open directly in Source Review.
 - Contract CSV export includes state, agency item identity, call order, status, route, project numbers, contract period, DBE goal, bid metadata, and source identity.

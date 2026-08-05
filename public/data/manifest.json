@@ -116,6 +116,23 @@
       "divisionLabel": "Division",
       "sectionLabel": "Specification section",
       "sectionPrefixLength": 4,
+      "itemCodeSeries": [
+        { "value": "0", "label": "0000–0999", "prefixes": ["0"] },
+        { "value": "1", "label": "1000–1999", "prefixes": ["1"] },
+        { "value": "2", "label": "2000–2999", "prefixes": ["2"] },
+        { "value": "3", "label": "3000–3999", "prefixes": ["3"] },
+        { "value": "4", "label": "4000–4999", "prefixes": ["4"] },
+        { "value": "5", "label": "5000–5999", "prefixes": ["5"] },
+        { "value": "6", "label": "6000–6999", "prefixes": ["6"] },
+        { "value": "7", "label": "7000–7999", "prefixes": ["7"] },
+        { "value": "8", "label": "8000–8999", "prefixes": ["8"] },
+        { "value": "9", "label": "9000–9999", "prefixes": ["9"] },
+        { "value": "A", "label": "A-series", "prefixes": ["A"] },
+        { "value": "L", "label": "L-series", "prefixes": ["L"] },
+        { "value": "P", "label": "P-series", "prefixes": ["P"] },
+        { "value": "R", "label": "R-series", "prefixes": ["R"] },
+        { "value": "W", "label": "W-series", "prefixes": ["W"] }
+      ],
       "capabilities": {
         "districtFilter": false,
         "engineerEstimate": false,

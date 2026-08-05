@@ -8,7 +8,8 @@ export function renderItemPriceHistory(
   result: ItemPriceHistoryResult,
   stateConfig: StateConfig,
   inflationAdjustmentEnabled: boolean,
-  annualInflationAdjustedPriceSet: AnnualInflationAdjustedPriceSet | null
+  annualInflationAdjustedPriceSet: AnnualInflationAdjustedPriceSet | null,
+  showEditButton = false
 ): string {
   if (!stateConfig.capabilities.periodPriceHistory || !result.query.itemCode) return "";
   const title = stateConfig.periodPriceHistoryTitle ?? "Item Price History";
@@ -22,7 +23,10 @@ export function renderItemPriceHistory(
           <h3>${escapeHtml(result.query.description || result.query.itemCode)}</h3>
           <p class="query-line">${queryLine}</p>
         </div>
-        <button type="button" id="download-item-price-history-csv" class="secondary-button matching-projects-export-button" ${result.filteredRows.length === 0 ? "disabled" : ""}>Download CSV</button>
+        <div class="matching-projects-actions">
+          <button type="button" id="download-item-price-history-csv" class="secondary-button matching-projects-export-button" ${result.filteredRows.length === 0 ? "disabled" : ""}>Download CSV</button>
+          ${showEditButton ? `<button type="button" id="edit-item-search" class="primary-button matching-projects-edit-button">Edit Item Search</button>` : ""}
+        </div>
       </div>
       <p class="item-price-history-note">NDOT publishes average item prices for overlapping reporting periods. Rows are reported values and are not individual project bids.</p>
       ${renderFilters(result)}
