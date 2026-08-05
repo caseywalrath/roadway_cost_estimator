@@ -56,6 +56,18 @@ def run_package_tests() -> int:
         raise AssertionError("both NDOT report series must be present")
     if any(row["published_average_unit_price"].startswith("-") for row in summaries) is False:
         raise AssertionError("negative published price was not preserved")
+    corrections = read_rows(STAGING_DIR / "annual_price_text_corrections.csv")
+    if len(corrections) != 39:
+        raise AssertionError(f"expected 39 reviewed text corrections, found {len(corrections)}")
+    summary_by_locator = {row["source_locator"]: row for row in summaries}
+    for correction in corrections:
+        locator = correction["source_locator"]
+        row = summary_by_locator.get(locator)
+        if row is None or row["description_raw"] != correction["corrected_description"]:
+            raise AssertionError(f"reviewed text correction was not applied at {locator}")
+    corrupt_tokens = ("PPRR", "GWRR", "CCAELL", "RCEOM", "PCAON", "CVIOB", "GACREO", "PGAR", "WOPA", "GYIRE")
+    if any(token in row["description_raw"] for row in summaries for token in corrupt_tokens):
+        raise AssertionError("interleaved extraction text remains in Nebraska annual summaries")
     failures = read_rows(STAGING_DIR / "annual_price_parse_failures.csv")
     if failures:
         raise AssertionError(f"parser failures remain: {failures[:2]}")

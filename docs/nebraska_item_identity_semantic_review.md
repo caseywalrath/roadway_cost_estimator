@@ -2,14 +2,14 @@
 
 ## Outcome
 
-The semantic review found no remaining case that requires a human to infer item meaning. All 966 raw identity differences now have a documented resolution:
+The semantic review found no remaining case that requires a human to infer item meaning. The current audit contains the following documented identity resolutions; locator-specific text corrections are tracked separately because they repair parser output before identity comparison:
 
 | Resolution | Count | Basis |
 |---|---:|---|
 | Normalized equivalent | 758 | Reviewed unit aliases and harmless description morphology |
 | Reviewed multi-unit identity | 64 | Exact NDOT code and stable description; period rows and units remain independent |
 | Reviewed description variant | 114 | Exact code and unit plus one coherent wording anchor; only truncation, insertion, or near-spelling differences |
-| Reviewed extraction artifact | 29 | Direct PDF-page evidence showed interleaved or adjacent wrapped-row text |
+| Reviewed extraction artifact | 29 | Direct PDF-page evidence showed interleaved or adjacent wrapped-row text; locator-specific corrections now clean the runtime text |
 | Multi-unit and source-text resolution | 1 | Item `6001.59`; direct PDF evidence confirms the description and the annual `CY` unit |
 
 The unresolved artifacts are intentionally empty:
@@ -49,4 +49,4 @@ No open semantic decision remains. Human review is therefore a verification and 
 
 ## Remaining Non-Semantic Data Quality Work
 
-The identity review does not certify every raw description string as clean display text. Several rows retain interleaved PDF extraction text for provenance. Before enablement, decide whether the UI may display those raw strings or whether the importer should apply locator-specific reviewed text corrections. This is parser/data-cleaning work, not item-identity interpretation.
+The 39 confirmed interleaved or truncated descriptions are now repaired by `data/staging/ne/annual_price_text_corrections.csv`. Each correction records its immutable source locator, expected pre-correction extraction, reviewed display text, reason, reviewer method, and date. The importer rejects a correction if that expected source text changes, so parser changes cannot silently apply stale repairs. This is source-text cleaning; it does not alter quantities, units, prices, totals, identities, or source locators.

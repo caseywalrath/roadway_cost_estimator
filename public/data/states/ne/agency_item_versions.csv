@@ -4441,7 +4441,7 @@ ne_ndot_version_7500.52_current,ne_ndot_7500.52,,,"YIELD LINE, PREFORMED PAVEMEN
 ne_ndot_version_7500.53_current,ne_ndot_7500.53,,,"HANDICAPPED SYMBOL PREFORMED PAVEMENT MARKING, TYPE 4 GROOVED",,EACH,423.00,ne_ndot_english_standard_item_list_2010,true
 ne_ndot_version_7500.54_current,ne_ndot_7500.54,,,"RUMBLE STRIPS, STOP AHEAD",,LUMP SUM,,ne_ndot_english_standard_item_list_2010,true
 ne_ndot_version_7500.56_historical,ne_ndot_7500.56,,,"CHEVRON PREFORMED PAVEMENT MARKING, TYPE 4 GROOVED",,EACH,,ne_ndot_aup_calendar_2020,false
-ne_ndot_version_7500.57_historical,ne_ndot_7500.57,,,"STOP AHEAD SYMBOL, WET REFLECTIVE PREFORMED PAVEMENT MARKING, TYPE 4, GYIREOLDO VLIENDE,",,EACH,,ne_ndot_aup_july_june_2022_2023,false
+ne_ndot_version_7500.57_historical,ne_ndot_7500.57,,,"STOP AHEAD SYMBOL, WET REFLECTIVE PREFORMED PAVEMENT MARKING, TYPE 4, GROOVED",,EACH,,ne_ndot_aup_july_june_2022_2023,false
 ne_ndot_version_7500.60_current,ne_ndot_7500.60,,,"ARROW, POLYUREA PAVEMENT MARKING, GROOVED",,EACH,,ne_ndot_english_standard_item_list_2010,true
 ne_ndot_version_7500.63_current,ne_ndot_7500.63,,,"ONLY, POLYUREA PAVEMENT MARKING, GROOVED",,EACH,,ne_ndot_english_standard_item_list_2010,true
 ne_ndot_version_7500.64_historical,ne_ndot_7500.64,,,"STOP AHEAD SYMBOL, PERMANENT PAVEMENT MARKING",,EACH,,ne_ndot_aup_july_june_2025_2026,false
@@ -4460,7 +4460,7 @@ ne_ndot_version_7500.86_historical,ne_ndot_7500.86,,,"LANE, PREFORMED PAVEMENT M
 ne_ndot_version_7500.87_historical,ne_ndot_7500.87,,,"RIGHT ARROW, PREFORMED PAVEMENT MARKING, TYPE 4",,EACH,,ne_ndot_aup_july_june_2021_2022,false
 ne_ndot_version_7500.90_historical,ne_ndot_7500.90,,,ARROW,,EACH,,ne_ndot_aup_calendar_2020,false
 ne_ndot_version_7500.92_historical,ne_ndot_7500.92,,,"LEFT ARROW, WET REFLECTIVE PREFORMED PAVEMENT MARKING, TYPE 4 RGIRGOHOTV AERDROW,",,EACH,,ne_ndot_aup_july_june_2023_2024,false
-ne_ndot_version_7500.93_historical,ne_ndot_7500.93,,,"RGIRGOHOTV AERDROW, WET REFLECTIVE PREFORMED PAVEMENT MARKING, TYPE 4 GWRROOONVGE WD",,EACH,,ne_ndot_aup_july_june_2023_2024,false
+ne_ndot_version_7500.93_historical,ne_ndot_7500.93,,,"RIGHT ARROW, WET REFLECTIVE PREFORMED PAVEMENT MARKING, TYPE 4",,EACH,,ne_ndot_aup_july_june_2023_2024,false
 ne_ndot_version_7500.96_historical,ne_ndot_7500.96,,,RIGHT ARROW,,EACH,,ne_ndot_aup_calendar_2020,false
 ne_ndot_version_7501.00_current,ne_ndot_7501.00,,,STRIPING LAYOUT,,LUMP SUM,,ne_ndot_english_standard_item_list_2010,true
 ne_ndot_version_7501.02_historical,ne_ndot_7501.02,,,"WRONG WAY ARROW, PERMANENT PAVEMENT MARKING",,EACH,,ne_ndot_aup_calendar_2024,false
@@ -5251,7 +5251,7 @@ ne_ndot_version_A001.58_historical,ne_ndot_A001.58,,,SPLICE CONDUIT,,EACH,,ne_nd
 ne_ndot_version_A001.65_historical,ne_ndot_A001.65,,,"I.D. TAPE, UNDERGROUND",,LF,,ne_ndot_aup_calendar_2018,false
 ne_ndot_version_A001.66_historical,ne_ndot_A001.66,,,"BASE, BASEMENT TYPE, 63""W X 69""L X 20""D FOR SWITCHGEAR",,EACH,,ne_ndot_aup_calendar_2018,false
 ne_ndot_version_A001.72_historical,ne_ndot_A001.72,,,PROVIDE AND INSTALL DUAL PORT EV CHARGING STATION WITH WALL MOUNTING,,EACH,,ne_ndot_aup_calendar_2021,false
-ne_ndot_version_A001.73_historical,ne_ndot_A001.73,,,PPRROOVVIIDDEE AANNDD IINNSSTTAALLLL DSIUNAGLL PEO PROTR ETV E CV HCAHRAGRIGNIGN GST SATTAIOTINO NW WITHIT HPE WDAELSLT AMLO UNTING,,EACH,,ne_ndot_aup_calendar_2021,false
+ne_ndot_version_A001.73_historical,ne_ndot_A001.73,,,PROVIDE AND INSTALL SINGLE PORT EV CHARGING STATION WITH WALL MOUNTING,,EACH,,ne_ndot_aup_calendar_2021,false
 ne_ndot_version_A001.74_historical,ne_ndot_A001.74,,,MOUNTING,,EACH,,ne_ndot_aup_calendar_2021,false
 ne_ndot_version_A001.77_historical,ne_ndot_A001.77,,,VIBRATION MITIGATION DEVICE,,EACH,,ne_ndot_aup_calendar_2024,false
 ne_ndot_version_A001.78_historical,ne_ndot_A001.78,,,MAST ARM POLE VIBRATION MITIGATION DEVICE,,EACH,,ne_ndot_aup_july_june_2018_2019,false
@@ -5309,8 +5309,8 @@ ne_ndot_version_A004.57_historical,ne_ndot_A004.57,,,"TRAFFIC SIGNAL, TYPE TS-1R
 ne_ndot_version_A004.60_historical,ne_ndot_A004.60,,,"TRAFFIC SIGNAL, TYPE TS-1LFR",,EACH,,ne_ndot_aup_calendar_2025,false
 ne_ndot_version_A004.61_historical,ne_ndot_A004.61,,,"TRAFFIC SIGNAL, TYPE TS-1LRFF",,EACH,,ne_ndot_aup_calendar_2025,false
 ne_ndot_version_A004.62_historical,ne_ndot_A004.62,,,"TRAFFIC SIGNAL, TYPE TS-1RFA",,EACH,,ne_ndot_aup_calendar_2018,false
-ne_ndot_version_A004.70_historical,ne_ndot_A004.70,,,"MOUNTING) TRAFFIC SIGNAL, TYPE LS-1B, T16 FACE (W/BACKPLATE & B-4 ALTERNATE",,EACH,,ne_ndot_aup_july_june_2020_2021,false
-ne_ndot_version_A004.71_historical,ne_ndot_A004.71,,,"MOUNTING) TRAFFIC SIGNAL, TYPE LS-1A, T15 FACE (W/BACKPLATE & B-4 ALTERNATE",,EACH,,ne_ndot_aup_july_june_2020_2021,false
+ne_ndot_version_A004.70_historical,ne_ndot_A004.70,,,"TRAFFIC SIGNAL, TYPE LS-1A, T11 FACE (W/BACKPLATE & B-4 ALTERNATE MOUNTING)",,EACH,,ne_ndot_aup_july_june_2020_2021,false
+ne_ndot_version_A004.71_historical,ne_ndot_A004.71,,,"TRAFFIC SIGNAL, TYPE LS-1B, T16 FACE (W/BACKPLATE & B-4 ALTERNATE MOUNTING)",,EACH,,ne_ndot_aup_july_june_2020_2021,false
 ne_ndot_version_A004.72_historical,ne_ndot_A004.72,,,MOUNTING),,EACH,,ne_ndot_aup_july_june_2020_2021,false
 ne_ndot_version_A004.73_historical,ne_ndot_A004.73,,,"TRAFFIC SIGNAL, TYPE LS-1C, T25 FACE (W/ BACKPLATE & B-4 ALT. MOUNTING",,EACH,,ne_ndot_aup_july_june_2020_2021,false
 ne_ndot_version_A004.74_historical,ne_ndot_A004.74,,,"TRAFFIC SIGNAL, TYPE TS-1X, T45 FACE (W/ BACKPLATE & MA-5 ALT. MOUNTING)",,EACH,,ne_ndot_aup_july_june_2020_2021,false
@@ -6237,13 +6237,13 @@ ne_ndot_version_L619.74_historical,ne_ndot_L619.74,,,"VIBURNUM LANTANA 'MOHICAN'
 ne_ndot_version_L700.81_historical,ne_ndot_L700.81,,,"ACER X FREEMANII 'JEFFERSRED' (AUTUMN BLAZE MAPLE) 1 1/2"" CALIPER, B&B OR CONTAINER GROWN",,EACH,,ne_ndot_aup_calendar_2018,false
 ne_ndot_version_L701.12_historical,ne_ndot_L701.12,,,"ACER GINNALA 'FLAME' (FLAME AMUR MAPLE) 1 1/2"" CALB&B",,EACH,,ne_ndot_aup_july_june_2017_2018,false
 ne_ndot_version_L705.20_historical,ne_ndot_L705.20,,,"ACER SACCHARINUM (SILVER QUEEN MAPLE) 1 1/2"" CALIPER B&B",,EACH,,ne_ndot_aup_july_june_2017_2018,false
-ne_ndot_version_L705.74_historical,ne_ndot_L705.74,,,"ACER SACCHARUM ""GREEN MOUNTAIN"" (GREEN MOUNTAIN SUGAR MAPLE) 1 1/2"" CCAELRICPIESR BA&NBADENSIS",,EACH,,ne_ndot_aup_july_june_2022_2023,false
+ne_ndot_version_L705.74_historical,ne_ndot_L705.74,,,"ACER SACCHARUM ""GREEN MOUNTAIN"" (GREEN MOUNTAIN SUGAR MAPLE) 1 1/2"" CALIPER B&B",,EACH,,ne_ndot_aup_july_june_2022_2023,false
 ne_ndot_version_L707.11_historical,ne_ndot_L707.11,,,"AESCULUS HIPPOCASTANUM 'BAUMANNII' (BAUMANN'S HORSE CHESTNUT) 1 1/2"" CALIPER B&B",,EACH,,ne_ndot_aup_calendar_2022,false
-ne_ndot_version_L717.18_historical,ne_ndot_L717.18,,,"CCAELLITPISE RO BC&CBIDENTALIS (PRAIRIE PRIDE HACKBERY) 2"" CALIPER B&B",,EACH,,ne_ndot_aup_july_june_2019_2020,false
+ne_ndot_version_L717.18_historical,ne_ndot_L717.18,,,"CELTIS OCCIDENTALIS (PRAIRIE PRIDE HACKBERY) 2"" CALIPER B&B",,EACH,,ne_ndot_aup_july_june_2019_2020,false
 ne_ndot_version_L717.19_historical,ne_ndot_L717.19,,,"CELTIS OCCIDENTALIS 'CHICAGOLAND' (CHICAGOLAND HACKBERRY) 1 1/2"" CALIPER, B&B",,EACH,,ne_ndot_aup_calendar_2022,false
 ne_ndot_version_L717.21_historical,ne_ndot_L717.21,,,"CELTIS OCCIDENTALIS 'WINDY CITY' (WINDY CITY HACKBERRY) 1 1/2"" CALIPER, B&B",,EACH,,ne_ndot_aup_calendar_2022,false
 ne_ndot_version_L717.35_historical,ne_ndot_L717.35,,,"CELTIS OCCIDENTALIS 'PRAIRIE PRIDE' (HACKBERRY) 1 1/4"" CALIPER B&B OR CONTAINER GROWN",,EACH,,ne_ndot_aup_calendar_2022,false
-ne_ndot_version_L720.06_historical,ne_ndot_L720.06,,,CCAELRICPIESR BA&NBADENSIS C (REDBUD) 6' B&B,,EACH,,ne_ndot_aup_july_june_2022_2023,false
+ne_ndot_version_L720.06_historical,ne_ndot_L720.06,,,CERCIS CANADENSIS (REDBUD) 6' B&B,,EACH,,ne_ndot_aup_july_june_2022_2023,false
 ne_ndot_version_L720.14_historical,ne_ndot_L720.14,,,"CERCIS CANADENSIS (REDBUD) 1"" CALIPER B&B",,EACH,,ne_ndot_aup_july_june_2020_2021,false
 ne_ndot_version_L720.18_historical,ne_ndot_L720.18,,,"CERCIS CANADENSIS (RED BUD) 1 1/2"" CALIPER B&B",,EACH,,ne_ndot_aup_calendar_2020,false
 ne_ndot_version_L741.02_historical,ne_ndot_L741.02,,,"TILIA CORDATA 'GREENSPIRE' (GREEN SPIRE LINDEN) 1 1/2"" CAL B&B",,EACH,,ne_ndot_aup_calendar_2022,false
@@ -6256,7 +6256,7 @@ ne_ndot_version_L743.00_historical,ne_ndot_L743.00,,,"MALUS 'SPRING SNOW' (SPRIN
 ne_ndot_version_L760.00_historical,ne_ndot_L760.00,,,"GINKGO BILOBA MALE (MALE MAIDENHAIR TREE) 1 1/2"" CALIPER B&B",,EACH,,ne_ndot_aup_calendar_2022,false
 ne_ndot_version_L760.02_historical,ne_ndot_L760.02,,,"GINKGO BILOBA 'AUTUMN GOLD' MALE (MALE AUTUMN GOLD GINKGO) 1 1/2"" CALIPER B&B",,EACH,,ne_ndot_aup_calendar_2022,false
 ne_ndot_version_L765.13_historical,ne_ndot_L765.13,,,"GLEDITSIA TRIACANTHOS INERMIS ""SHADEMASTER"" (SHADEMASTER HONEY LOCUST) 1 1/2"" CALIPER B&B",,EACH,,ne_ndot_aup_calendar_2022,false
-ne_ndot_version_L765.18_historical,ne_ndot_L765.18,,,"GLEDITSIA TRIACANTHOS INERMIS 'SHADEMASTER' (SHADEMASTER HGOYMNENYOLCOLCAUDSUTS) D2""IO CIACLUISP E(KRE BN&TBUCKY",,EACH,,ne_ndot_aup_july_june_2019_2020,false
+ne_ndot_version_L765.18_historical,ne_ndot_L765.18,,,"GLEDITSIA TRIACANTHOS INERMIS 'SHADEMASTER' (SHADEMASTER HONEYLOCUST) 2"" CALIPER B&B",,EACH,,ne_ndot_aup_july_june_2019_2020,false
 ne_ndot_version_L765.23_historical,ne_ndot_L765.23,,,"GLEDITSIA TRICANTHOS INERMIS ""SKYLINE"" (SKYLINE HONEYLOCUST) 1 1/2"" CALIPER CONTAINER GROWN",,EACH,,ne_ndot_aup_calendar_2022,false
 ne_ndot_version_L765.27_historical,ne_ndot_L765.27,,,"GLEDITSIA TRICANTHOS VAR. INERMIS (THORNLESS HONEYLOCUST) 1 1/2"" CALIPER B&B",,EACH,,ne_ndot_aup_calendar_2022,false
 ne_ndot_version_L765.28_historical,ne_ndot_L765.28,,,"GLEDITSIA TRICANTHOS VAR. INERMIS 'CHRISTIE' (HALKA HONEYLOCUST) 1 1/2"" CALIPER B&B",,EACH,,ne_ndot_aup_calendar_2022,false
@@ -6265,7 +6265,7 @@ ne_ndot_version_L766.13_historical,ne_ndot_L766.13,,,B&B,,EACH,,ne_ndot_aup_cale
 ne_ndot_version_L766.14_historical,ne_ndot_L766.14,,,"GYMNOCLADUS DIOCUS 'ESPRESSO' MALE (MALE ESPRESSO KENTUCY COFFEETREE) 1 1/2"" CALIPER B&B",,EACH,,ne_ndot_aup_calendar_2022,false
 ne_ndot_version_L766.17_historical,ne_ndot_L766.17,,,"GYMNOCLADUS DIOCUS(KENTUCKY COFFEETREE) 1 1/2"" CALIPER B&B OR CONTAINER GROWN",,EACH,,ne_ndot_aup_calendar_2022,false
 ne_ndot_version_L766.18_historical,ne_ndot_L766.18,,,"GYMNOCLADUS DIOCUS(KENTUCKY COFFEETREE) 1 1/2"" CALIPER CONTAINER JGURGOLWANNS",,EACH,,ne_ndot_aup_july_june_2022_2023,false
-ne_ndot_version_L766.21_historical,ne_ndot_L766.21,,,"HGOYMNENYOLCOLCAUDSUTS) D2""IO CIACLUISP E(KRE BN&TBUCKY COFFEETREE) 2"" CALIPER B&B",,EACH,,ne_ndot_aup_july_june_2019_2020,false
+ne_ndot_version_L766.21_historical,ne_ndot_L766.21,,,"GYMNOCLADUS DIOICUS (KENTUCKY COFFEETREE) 2"" CALIPER B&B",,EACH,,ne_ndot_aup_july_june_2019_2020,false
 ne_ndot_version_L766.30_historical,ne_ndot_L766.30,,,"NYSSA SYLVATICA (TUPELO) 1 1/2"" CALIPER B&B",,EACH,,ne_ndot_aup_calendar_2022,false
 ne_ndot_version_L768.04_historical,ne_ndot_L768.04,,,"JGURGOLWANNS NIGRA (BLACK WALNUT) 1 1/2"" CALIPER B&B",,EACH,,ne_ndot_aup_july_june_2022_2023,false
 ne_ndot_version_L774.17_historical,ne_ndot_L774.17,,,"MALUS 'INDIAN SUMMER' (INDIAN SUMMER CRABAPPLE) 1 1/2"" CALIP",,EACH,,ne_ndot_aup_july_june_2017_2018,false

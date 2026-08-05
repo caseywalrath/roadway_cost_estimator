@@ -30,6 +30,7 @@ RAW_REPORT_DIR = ROOT / "data" / "raw" / "ne" / "annual_price_reports"
 RAW_CATALOG_DIR = ROOT / "data" / "raw" / "ne" / "catalog"
 STAGING_DIR = ROOT / "data" / "staging" / "ne"
 STATE_DIR = ROOT / "public" / "data" / "states" / "ne"
+TEXT_CORRECTIONS_PATH = STAGING_DIR / "annual_price_text_corrections.csv"
 LISTING_URL = "https://dot.nebraska.gov/business-center/hwy-bridge-lp/item-history/"
 RETRIEVED_ON = "2026-08-05"
 
@@ -98,6 +99,33 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return []
     with path.open(newline="", encoding="utf-8") as handle:
         return [{key: (value or "").strip() for key, value in row.items() if key is not None} for row in csv.DictReader(handle)]
+
+
+def apply_text_corrections(rows: list[dict[str, object]]) -> None:
+    """Apply reviewed, locator-specific description repairs after PDF parsing."""
+    corrections = read_csv(TEXT_CORRECTIONS_PATH)
+    if not corrections:
+        raise RuntimeError(f"missing reviewed Nebraska text corrections: {TEXT_CORRECTIONS_PATH}")
+    by_locator = {str(row["source_locator"]): row for row in rows}
+    seen: set[str] = set()
+    for correction in corrections:
+        locator = correction.get("source_locator", "")
+        if not locator or locator in seen:
+            raise RuntimeError(f"duplicate or blank text-correction locator: {locator!r}")
+        seen.add(locator)
+        row = by_locator.get(locator)
+        if row is None:
+            raise RuntimeError(f"text correction locator was not parsed: {locator}")
+        expected = correction.get("expected_description_raw", "")
+        actual = str(row.get("description_raw", ""))
+        if actual != expected:
+            raise RuntimeError(
+                f"text correction source changed at {locator}; expected {expected!r}, found {actual!r}"
+            )
+        corrected = correction.get("corrected_description", "")
+        if not corrected:
+            raise RuntimeError(f"blank corrected description at {locator}")
+        row["description_raw"] = corrected
 
 
 def decimal_value(raw: str) -> Decimal:
@@ -418,6 +446,7 @@ def main() -> int:
         parsed_rows.extend(rows)
         failures.extend(report_failures)
         acceptance.append({"source_id": source_id, "report_series": series, "period_start_date": start, "period_end_date": end, "period_label": label, "expected_row_count": str(metadata["row_count"]), "parsed_row_count": str(metadata["row_count"]), "parse_failure_count": str(len(report_failures)), "negative_price_row_count": str(metadata["negative_price_row_count"]), "acceptance_status": "accepted" if not report_failures else "review"})
+    apply_text_corrections(parsed_rows)
     write_csv(STAGING_DIR / "annual_price_rows.csv", ROW_FIELDS, sorted(parsed_rows, key=lambda row: (str(row["period_start_date"]), str(row["source_id"]), int(row["source_page"]), str(row["agency_item_code"]))))
     write_csv(STAGING_DIR / "annual_price_parse_failures.csv", FAILURE_FIELDS, sorted(failures, key=lambda row: (str(row.get("source_id", "")), int(row.get("source_page", 0) or 0), str(row.get("row_number", "")))))
     acceptance_path = STAGING_DIR / "annual_price_acceptance.csv"
