@@ -88,7 +88,7 @@ Stable agency item identity.
 
 `agency_item_id`, `state`, `agency_id`, `agency_name`, `item_code`, `current_version_id`, `item_status`, `canonical_item_id`
 
-`item_status` is `current` or `historical`. Raw item codes are scoped by agency and are not globally unique.
+`item_status` is `current` or `historical`. Raw item codes are scoped by agency and are not globally unique. For Nebraska, `historical` is a retained source-provenance marker: the identity is absent from the older linked Standard Item List but present in one or more NDOT average unit-price reports. It is not evidence that an item is inactive, obsolete, or unsuitable for an estimate. Nebraska's manifest sets `showHistoricalItemStatus` to `false`; the status remains available to importers and validators but is not rendered to users.
 
 ### `agency_item_versions.csv`
 

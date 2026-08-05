@@ -31,6 +31,24 @@ const result = {
 } as unknown as ItemPriceHistoryResult;
 
 describe("renderItemPriceHistory", () => {
+  it("explains repeated official item descriptions without referring to project bids", () => {
+    const html = renderItemPriceHistory(result, config, false, null, false);
+    expect(html).toContain("NDOT publishes average item prices for overlapping reporting periods.");
+    expect(html).toContain("Some NDOT item numbers share the same official description; use the item number and unit to distinguish them.");
+    expect(html).not.toContain("individual project bids");
+  });
+
+  it("calls the unit filter the reported unit without exposing catalog status", () => {
+    const html = renderItemPriceHistory(result, config, false, null, false);
+    expect(html).toContain("Reported unit");
+    expect(html).not.toContain("Historical unit");
+  });
+
+  it("uses the published period label without repeating the report series in each row", () => {
+    const html = renderItemPriceHistory(result, config, false, null, false);
+    expect(html).toContain("<tbody><tr><td>2025</td>");
+  });
+
   it("shows Edit Item Search when the search panel is collapsed", () => {
     const html = renderItemPriceHistory(result, config, false, null, true);
     expect(html).toContain('id="edit-item-search"');

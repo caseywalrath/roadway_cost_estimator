@@ -322,9 +322,9 @@ Use this source priority:
 
 1. NDOT public Item Master information if a stable machine-readable catalog can be retrieved.
 2. The English Standard Item List linked from the NDOT Item History page.
-3. Annual-report rows only for historical identities absent from the catalog.
+3. Annual-report rows only for identities absent from the catalog.
 
-Do not claim annual-only items are currently active.
+An annual-report-only identity has valid published price provenance but no current-status implication. The English Standard Item List is an older linked catalog reference, not proof that an omitted identity is obsolete or unsuitable for an estimate.
 
 Catalog rules:
 
@@ -332,7 +332,8 @@ Catalog rules:
 - Use the catalog description and unit for the current display version when catalog authority exists.
 - Preserve each annual row's description and unit in `item_price_summaries.csv` even when they differ from the current display version.
 - Mark catalog items `current`.
-- Mark annual-only items absent from catalog authority `historical`.
+- Mark annual-only items absent from catalog authority `historical` internally for source provenance and validation.
+- Set Nebraska's manifest `showHistoricalItemStatus` to `false`. Do not render this internal marker, or a derivative current/obsolete claim, in the Item Search or Annual Unit Price History UI.
 - If one printed item code has materially incompatible meanings or units across the source period, stop and produce a review report. Do not merge the identities automatically.
 - Do not assign unsupported official effective dates.
 
@@ -480,7 +481,7 @@ The result builder must:
 - Default-sort by `period_end_date` descending, then `period_start_date` descending.
 - Support sorting by every displayed numeric and text column.
 - Support a report-series filter with `All`, `Calendar year`, and `July-June`.
-- Support unit filtering without automatically excluding historical units on first load.
+- Support filtering by the unit reported in the published rows without automatically excluding any reported units on first load.
 - Support period-end-year minimum and maximum filters if period filtering is included.
 - Never calculate summary statistics.
 - Return a note that overlapping report periods are displayed independently.
@@ -497,7 +498,7 @@ Update `src/ui/renderExplorer.ts` generically:
 - If the state declares memberships, filter by membership.
 - Otherwise preserve the existing prefix-based behavior exactly.
 - Keep exact item-code and description search.
-- Keep current and historical item labels.
+- Preserve `item_status` for identity validation. Nebraska must not render its annual-report-versus-catalog provenance marker to users.
 - Use Nebraska's manifest-provided division and section labels.
 
 Add tests proving Colorado, Iowa, and South Dakota still use their existing prefix behavior.

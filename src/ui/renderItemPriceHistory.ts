@@ -28,7 +28,7 @@ export function renderItemPriceHistory(
           ${showEditButton ? `<button type="button" id="edit-item-search" class="primary-button matching-projects-edit-button">Edit Item Search</button>` : ""}
         </div>
       </div>
-      <p class="item-price-history-note">NDOT publishes average item prices for overlapping reporting periods. Rows are reported values and are not individual project bids.</p>
+      <p class="item-price-history-note">NDOT publishes average item prices for overlapping reporting periods. Some NDOT item numbers share the same official description; use the item number and unit to distinguish them.</p>
       ${renderFilters(result)}
       ${result.filteredRows.length ? renderHistoryTable(result, measureLabel, inflationAdjustmentEnabled, annualInflationAdjustedPriceSet) : `<p class="evidence-empty">No published annual price rows match the selected report series and unit.</p>`}
       ${renderAnnualInflationNote(inflationAdjustmentEnabled, annualInflationAdjustedPriceSet)}
@@ -54,7 +54,7 @@ function renderFilters(result: ItemPriceHistoryResult): string {
           <option value="july_june" ${result.filters.reportSeries === "july_june" ? "selected" : ""}>July–June</option>
         </select>
       </label>
-      <label>Historical unit
+      <label>Reported unit
         <select name="unit">
           <option value="">All units</option>
           ${result.availableUnits.map((unit) => `<option value="${escapeHtml(unit)}" ${unit === result.filters.unit ? "selected" : ""}>${escapeHtml(unit)}</option>`).join("")}
@@ -79,7 +79,7 @@ function renderHistoryTable(
     { key: "quantity", label: "Total Quantity" }, { key: "unit", label: "Unit" }, { key: "averageUnitPrice", label: measureLabel },
     { key: "totalBid", label: "Total Bid" }, { key: "source", label: "Source" }
   ];
-  return `<div class="table-scroll-shell"><div class="table-scroll-affordance" aria-hidden="true"><span></span></div><div class="table-scroll" tabindex="0" aria-label="Annual item price history table"><table class="evidence-table item-price-history-table"><thead><tr>${columns.map((column) => sortableHeader(column, result.sort)).join("")}</tr></thead><tbody>${result.filteredRows.map((row) => `<tr><td>${escapeHtml(row.summary.periodLabel)}<div class="row-subtext">${escapeHtml(row.summary.reportSeries === "calendar_year" ? "January–December" : "July–June")}</div></td><td>${escapeHtml(row.summary.agencyItemCode)}</td><td>${escapeHtml(row.summary.descriptionRaw)}</td><td>${formatNumber(row.summary.totalQuantity)}</td><td>${escapeHtml(row.summary.unitRaw)}</td><td>${renderAnnualUnitPrice(row.summary.publishedAverageUnitPrice, row.summary.summaryId, inflationAdjustmentEnabled, annualInflationAdjustedPriceSet)}</td><td>${formatCurrency(row.summary.totalBid)}</td><td>${renderSource(row.source?.sourceUrl ?? "", row.source?.sourceLabel ?? "Source not available")}</td></tr>`).join("")}</tbody></table></div></div>`;
+  return `<div class="table-scroll-shell"><div class="table-scroll-affordance" aria-hidden="true"><span></span></div><div class="table-scroll" tabindex="0" aria-label="Annual item price history table"><table class="evidence-table item-price-history-table"><thead><tr>${columns.map((column) => sortableHeader(column, result.sort)).join("")}</tr></thead><tbody>${result.filteredRows.map((row) => `<tr><td>${escapeHtml(row.summary.periodLabel)}</td><td>${escapeHtml(row.summary.agencyItemCode)}</td><td>${escapeHtml(row.summary.descriptionRaw)}</td><td>${formatNumber(row.summary.totalQuantity)}</td><td>${escapeHtml(row.summary.unitRaw)}</td><td>${renderAnnualUnitPrice(row.summary.publishedAverageUnitPrice, row.summary.summaryId, inflationAdjustmentEnabled, annualInflationAdjustedPriceSet)}</td><td>${formatCurrency(row.summary.totalBid)}</td><td>${renderSource(row.source?.sourceUrl ?? "", row.source?.sourceLabel ?? "Source not available")}</td></tr>`).join("")}</tbody></table></div></div>`;
 }
 
 function renderAnnualUnitPrice(

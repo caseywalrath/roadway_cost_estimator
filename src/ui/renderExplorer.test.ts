@@ -30,4 +30,62 @@ describe("renderExplorer", () => {
     expect(form.querySelector("[data-item-results]")?.textContent).toContain("Seven series item");
     expect(form.querySelector("[data-item-results]")?.textContent).not.toContain("Explicit section item");
   });
+
+  it("keeps Division-dependent pickers disabled until a Division is selected", () => {
+    const container = document.createElement("div");
+    container.innerHTML = renderExplorer(query, [item], [section], config);
+    expect(container.querySelector("[data-division-select]")).not.toBeNull();
+    expect(container.querySelector<HTMLSelectElement>("[data-section-select]")?.disabled).toBe(true);
+  });
+
+  it("hides Nebraska annual-report catalog-provenance labels while retaining them by default elsewhere", () => {
+    const historicalItem = { ...item, itemStatus: "historical" } satisfies AgencyItemRecord;
+    const defaultHtml = renderExplorer({ ...query, description: "Explicit" }, [historicalItem], [section], config);
+    const neHtml = renderExplorer(
+      { ...query, description: "Explicit" },
+      [historicalItem],
+      [section],
+      { ...config, showHistoricalItemStatus: false }
+    );
+
+    expect(defaultHtml).toContain("Historical");
+    expect(neHtml).not.toContain("Historical");
+    expect(neHtml).toContain("Explicit section item");
+  });
+
+  it("renders South Dakota as a flat Division / Bid Item Group picker", () => {
+    const sdConfig = {
+      ...config,
+      code: "SD",
+      name: "South Dakota",
+      defaultAgencyId: "sd_sddot",
+      defaultAgencyName: "SDDOT",
+      sectionLabel: "Division / Bid Item Group",
+      sectionPickerMode: "independent-flat",
+      itemCodeSeries: undefined,
+      files: { ...config.files, itemTaxonomyMemberships: undefined }
+    } satisfies StateConfig;
+    const trafficGroup = { ...section, state: "SD", agencyId: "sd_sddot", taxonomyId: "sd:004", taxonomyCode: "004", sectionPrefix: "004", divisionPrefix: "I", divisionTitle: "Division I", sectionTitle: "Traffic Diversions" } satisfies SpecSectionRecord;
+    const pipeGroup = { ...section, state: "SD", agencyId: "sd_sddot", taxonomyId: "sd:450", taxonomyCode: "450", sectionPrefix: "450", divisionPrefix: "II", divisionTitle: "Division II", sectionTitle: "Pipe Culverts" } satisfies SpecSectionRecord;
+    const trafficItem = { ...item, state: "SD", agencyId: "sd_sddot", agencyItemId: "sd:004", itemCode: "004E0010", officialDescription: "Traffic diversion" };
+    const pipeItem = { ...item, state: "SD", agencyId: "sd_sddot", agencyItemId: "sd:450", itemCode: "450E0010", officialDescription: "Pipe culvert" };
+    const container = document.createElement("div");
+    container.innerHTML = renderExplorer(query, [trafficItem, pipeItem], [trafficGroup, pipeGroup], sdConfig);
+    const form = container.querySelector<HTMLFormElement>("#explorer-form");
+    if (!form) throw new Error("Explorer form was not rendered");
+    bindItemPicker(form, [trafficItem, pipeItem], [trafficGroup, pipeGroup], sdConfig);
+
+    const sectionSelect = form.querySelector<HTMLSelectElement>("[data-section-select]");
+    if (!sectionSelect) throw new Error("Section select was not rendered");
+    expect(form.querySelector("[data-division-select]")).toBeNull();
+    expect(sectionSelect.disabled).toBe(false);
+    expect(sectionSelect.innerHTML).toContain("I - 004 - Traffic Diversions");
+    expect(sectionSelect.innerHTML).toContain("II - 450 - Pipe Culverts");
+    expect(sectionSelect.innerHTML).not.toContain("optgroup");
+
+    sectionSelect.value = "450";
+    sectionSelect.dispatchEvent(new Event("change"));
+    expect(form.querySelector("[data-item-results]")?.textContent).toContain("Pipe culvert");
+    expect(form.querySelector("[data-item-results]")?.textContent).not.toContain("Traffic diversion");
+  });
 });

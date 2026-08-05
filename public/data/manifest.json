@@ -80,8 +80,9 @@
       "defaultAgencyId": "sd_sddot",
       "defaultAgencyName": "South Dakota Department of Transportation",
       "divisionLabel": "Division",
-      "sectionLabel": "Standard Bid Item Group",
+      "sectionLabel": "Division / Bid Item Group",
       "sectionPrefixLength": 3,
+      "sectionPickerMode": "independent-flat",
       "capabilities": {
         "districtFilter": false,
         "engineerEstimate": false,
@@ -116,6 +117,7 @@
       "divisionLabel": "Division",
       "sectionLabel": "Specification section",
       "sectionPrefixLength": 4,
+      "showHistoricalItemStatus": false,
       "itemCodeSeries": [
         { "value": "0", "label": "0000–0999", "prefixes": ["0"] },
         { "value": "1", "label": "1000–1999", "prefixes": ["1"] },

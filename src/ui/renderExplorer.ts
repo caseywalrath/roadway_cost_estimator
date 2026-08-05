@@ -24,7 +24,10 @@ export function renderExplorer(
   const selectedSection = selectedSectionPrefix
     ? findSpecSection(specSections, selectedSectionPrefix)
     : null;
-  const selectedDivisionPrefix = selectedSection?.divisionPrefix ?? "";
+  const sectionPickerMode = stateConfig.sectionPickerMode ?? "division-dependent";
+  const selectedDivisionPrefix = sectionPickerMode === "division-dependent"
+    ? selectedSection?.divisionPrefix ?? ""
+    : "";
   const selectedItemCodeSeries = resolvedAgencyItem
     ? itemCodeSeriesForCode(resolvedAgencyItem.itemCode, stateConfig.itemCodeSeries ?? [])
     : "";
@@ -42,7 +45,7 @@ export function renderExplorer(
       <section class="workflow-step">
         ${renderStepHeading("1", "Locate Item")}
         <div class="item-picker" data-item-picker>
-          <label>
+          ${sectionPickerMode === "division-dependent" ? `<label>
             <span class="label-row">
               ${escapeHtml(stateConfig.divisionLabel)}
             </span>
@@ -50,15 +53,15 @@ export function renderExplorer(
               <option value="" ${selectedDivisionPrefix ? "" : "selected"}>Select division</option>
               ${renderDivisionOptions(specSections, selectedDivisionPrefix)}
             </select>
-          </label>
+          </label>` : ""}
 
           <label>
             <span class="label-row">
               ${escapeHtml(stateConfig.sectionLabel)}
             </span>
-            <select name="sectionPrefix" data-section-select ${selectedDivisionPrefix ? "" : "disabled"}>
-              <option value="" ${selectedSectionPrefix ? "" : "selected"}>Select section</option>
-              ${renderSectionOptions(specSections, selectedDivisionPrefix, selectedSectionPrefix)}
+            <select name="sectionPrefix" data-section-select ${sectionPickerMode === "division-dependent" && !selectedDivisionPrefix ? "disabled" : ""}>
+              <option value="" ${selectedSectionPrefix ? "" : "selected"}>Select ${escapeHtml(stateConfig.sectionLabel)}</option>
+              ${renderSectionOptions(specSections, selectedDivisionPrefix, selectedSectionPrefix, sectionPickerMode === "independent-flat")}
             </select>
           </label>
 
@@ -94,7 +97,8 @@ export function renderExplorer(
             membershipsByAgencyItemId,
             explicitMemberships,
             query.agencyItemId,
-            stateConfig.itemCodeSeries ?? []
+            stateConfig.itemCodeSeries ?? [],
+            stateConfig.showHistoricalItemStatus ?? true
           )}
         </div>
       </section>
@@ -154,9 +158,19 @@ export function bindItemPicker(
     }
 
     const divisionPrefix = divisionSelect.value;
+    const selectedSectionPrefix = sectionSelect.value;
+    const selectedSectionStillMatchesDivision = !divisionPrefix || specSections.some(
+      (section) => section.sectionPrefix === selectedSectionPrefix && section.divisionPrefix === divisionPrefix
+    );
+    const preservedSectionPrefix = selectedSectionStillMatchesDivision ? selectedSectionPrefix : "";
     sectionSelect.innerHTML = `
-      <option value="">Select section</option>
-      ${renderSectionOptions(specSections, divisionPrefix, "")}
+      <option value="">Select ${escapeHtml(stateConfig.sectionLabel)}</option>
+      ${renderSectionOptions(
+        specSections,
+        divisionPrefix,
+        preservedSectionPrefix,
+        false
+      )}
     `;
     sectionSelect.disabled = !divisionPrefix;
   }
@@ -182,7 +196,8 @@ export function bindItemPicker(
       membershipsByAgencyItemId,
       Boolean(stateConfig.files.itemTaxonomyMemberships),
       agencyItemIdInput?.value ?? "",
-      stateConfig.itemCodeSeries ?? []
+      stateConfig.itemCodeSeries ?? [],
+      stateConfig.showHistoricalItemStatus ?? true
     );
     updateItemResultScrollCue(itemResults);
   }
@@ -262,17 +277,22 @@ function renderDivisionOptions(
 function renderSectionOptions(
   specSections: SpecSectionRecord[],
   selectedDivisionPrefix: string,
-  selectedSectionPrefix: string
+  selectedSectionPrefix: string,
+  includeDivisionPrefix = false
 ): string {
-  return specSections
-    .filter((specSection) => specSection.divisionPrefix === selectedDivisionPrefix)
-    .sort((left, right) => left.sectionPrefix.localeCompare(right.sectionPrefix))
+  const matchingSections = specSections
+    .filter((specSection) => !selectedDivisionPrefix || specSection.divisionPrefix === selectedDivisionPrefix)
+    .sort((left, right) => left.sectionPrefix.localeCompare(right.sectionPrefix));
+
+  const renderOptions = (sections: SpecSectionRecord[]): string => sections
     .map((specSection) => {
       const selected = specSection.sectionPrefix === selectedSectionPrefix ? "selected" : "";
-      const label = `${specSection.sectionPrefix} - ${specSection.sectionTitle}`;
+      const label = `${includeDivisionPrefix ? `${specSection.divisionPrefix} - ` : ""}${specSection.sectionPrefix} - ${specSection.sectionTitle}`;
       return `<option value="${escapeHtml(specSection.sectionPrefix)}" ${selected}>${escapeHtml(label)}</option>`;
     })
     .join("");
+
+  return renderOptions(matchingSections);
 }
 
 function renderItemCodeSeriesOptions(series: ItemCodeSeriesOption[], selectedSeries: string): string {
@@ -293,7 +313,8 @@ function renderItemResults(
   membershipsByAgencyItemId: ReadonlyMap<string, ItemTaxonomyMembershipRecord[]>,
   useExplicitMemberships: boolean,
   selectedAgencyItemId: string,
-  itemCodeSeries: ItemCodeSeriesOption[]
+  itemCodeSeries: ItemCodeSeriesOption[],
+  showHistoricalItemStatus: boolean
 ): string {
   const normalizedSearchText = searchText.trim().toUpperCase();
   const searchHasStarted = Boolean(
@@ -341,7 +362,7 @@ function renderItemResults(
     <div class="item-result-count">${matchingItems.length} matching item${matchingItems.length === 1 ? "" : "s"}</div>
     <div class="item-result-buttons" data-item-result-scroll>
       ${displayedItems
-        .map((agencyItem) => renderItemResultButton(agencyItem, agencyItem.agencyItemId === selectedAgencyItemId || (!selectedAgencyItemId && agencyItem.itemCode === selectedItemCode)))
+        .map((agencyItem) => renderItemResultButton(agencyItem, agencyItem.agencyItemId === selectedAgencyItemId || (!selectedAgencyItemId && agencyItem.itemCode === selectedItemCode), showHistoricalItemStatus))
         .join("")}
     </div>
   `;
@@ -362,7 +383,11 @@ function updateItemResultScrollCue(root: HTMLElement): void {
   );
 }
 
-function renderItemResultButton(agencyItem: AgencyItemRecord, selected: boolean): string {
+function renderItemResultButton(
+  agencyItem: AgencyItemRecord,
+  selected: boolean,
+  showHistoricalItemStatus: boolean
+): string {
   return `
     <button
       type="button"
@@ -376,7 +401,7 @@ function renderItemResultButton(agencyItem: AgencyItemRecord, selected: boolean)
     >
       <strong>${escapeHtml(agencyItem.itemCode)}</strong>
       <span>${escapeHtml(agencyItem.officialDescription)}</span>
-      <small>${escapeHtml(agencyItem.officialUnit)}${agencyItem.itemStatus === "historical" ? " · Historical" : ""}</small>
+      <small>${escapeHtml(agencyItem.officialUnit)}${showHistoricalItemStatus && agencyItem.itemStatus === "historical" ? " · Historical" : ""}</small>
     </button>
   `;
 }

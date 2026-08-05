@@ -3,6 +3,7 @@ export type PriceTypeScope = "awarded" | "average" | "engineer" | "all";
 export type EvidenceSourceTypeFilter = string;
 export type MatchType = "exact_code" | "canonical_alias" | "keyword_fallback";
 export type ConfidenceLevel = "High" | "Medium" | "Low" | "Not supportable";
+export type SectionPickerMode = "division-dependent" | "independent-flat";
 
 export interface StateCapabilities {
   districtFilter: boolean;
@@ -39,6 +40,9 @@ export interface StateConfig {
   divisionLabel: string;
   sectionLabel: string;
   sectionPrefixLength: number;
+  sectionPickerMode?: SectionPickerMode;
+  /** Defaults to true. Set false when `historical` is source-provenance metadata, not a user-facing item-status claim. */
+  showHistoricalItemStatus?: boolean;
   capabilities: StateCapabilities;
   sourceTypeLabels: Record<string, string>;
   periodPriceHistoryTitle?: string;
