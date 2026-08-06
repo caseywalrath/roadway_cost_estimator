@@ -49,6 +49,12 @@ describe("renderItemPriceHistory", () => {
     expect(html).toContain("<tbody><tr><td>2025</td>");
   });
 
+  it("uses the Nebraska table measure label without the published qualifier", () => {
+    const html = renderItemPriceHistory(result, { ...config, periodPriceMeasureLabel: "Average Unit Price" }, false, null, false);
+    expect(html).toContain(">Average Unit Price</span>");
+    expect(html).not.toContain(">Published Average Unit Price</span>");
+  });
+
   it("shows Edit Item Search when the search panel is collapsed", () => {
     const html = renderItemPriceHistory(result, config, false, null, true);
     expect(html).toContain('id="edit-item-search"');

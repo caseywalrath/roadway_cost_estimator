@@ -268,7 +268,7 @@ function renderDivisionOptions(
   return divisions
     .map((division) => {
       const selected = division.divisionPrefix === selectedDivisionPrefix ? "selected" : "";
-      const label = `${division.divisionPrefix} - ${division.divisionTitle}`;
+      const label = divisionLabel(division);
       return `<option value="${escapeHtml(division.divisionPrefix)}" ${selected}>${escapeHtml(label)}</option>`;
     })
     .join("");
@@ -287,12 +287,22 @@ function renderSectionOptions(
   const renderOptions = (sections: SpecSectionRecord[]): string => sections
     .map((specSection) => {
       const selected = specSection.sectionPrefix === selectedSectionPrefix ? "selected" : "";
-      const label = `${includeDivisionPrefix ? `${specSection.divisionPrefix} - ` : ""}${specSection.sectionPrefix} - ${specSection.sectionTitle}`;
+      const label = `${includeDivisionPrefix ? `${specSection.divisionPrefix} - ` : ""}${sectionLabel(specSection)}`;
       return `<option value="${escapeHtml(specSection.sectionPrefix)}" ${selected}>${escapeHtml(label)}</option>`;
     })
     .join("");
 
   return renderOptions(matchingSections);
+}
+
+function divisionLabel(division: SpecSectionRecord): string {
+  const title = division.divisionTitle.replace(/^Division\s+\d+\s*-\s*/i, "");
+  return `${division.divisionTitle.match(/^Division\s+(\d+)/i)?.[1] ?? division.divisionPrefix} - ${title}`;
+}
+
+function sectionLabel(section: SpecSectionRecord): string {
+  const title = section.sectionTitle.replace(/^Section\s+\d+\s*-\s*/i, "");
+  return `${section.sectionPrefix} - ${title}`;
 }
 
 function renderItemCodeSeriesOptions(series: ItemCodeSeriesOption[], selectedSeries: string): string {

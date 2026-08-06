@@ -145,6 +145,7 @@
         "item_catalog": "NDOT standard item list",
         "annual_price_report": "NDOT average unit-price report"
       },
+      "periodPriceMeasureLabel": "Average Unit Price",
       "files": {
         "sources": "states/ne/sources.csv",
         "lettings": "states/ne/lettings.csv",

@@ -53,6 +53,18 @@ describe("renderExplorer", () => {
     expect(neHtml).toContain("Explicit section item");
   });
 
+  it("removes redundant Nebraska Division and Section label prefixes", () => {
+    const container = document.createElement("div");
+    container.innerHTML = renderExplorer(query, [item], [
+      { ...section, sectionPrefix: "112", divisionPrefix: "1", divisionTitle: "Division 100 - General Requirements", sectionTitle: "Section 112 - MOBILIZATION" }
+    ], config);
+
+    expect(container.querySelector("[data-division-select]")?.innerHTML).toContain(">100 - General Requirements</option>");
+    expect(container.querySelector("[data-section-select]")?.innerHTML).toContain(">112 - MOBILIZATION</option>");
+    expect(container.querySelector("[data-division-select]")?.innerHTML).not.toContain("1 - Division");
+    expect(container.querySelector("[data-section-select]")?.innerHTML).not.toContain("Section 112");
+  });
+
   it("renders South Dakota as a flat Division / Bid Item Group picker", () => {
     const sdConfig = {
       ...config,
