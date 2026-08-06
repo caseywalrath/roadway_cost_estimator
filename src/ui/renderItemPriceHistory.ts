@@ -30,7 +30,7 @@ export function renderItemPriceHistory(
       </div>
       <p class="item-price-history-note">NDOT publishes average item prices for overlapping reporting periods. Some NDOT item numbers share the same official description; use the item number and unit to distinguish them.</p>
       ${renderFilters(result)}
-      ${result.filteredRows.length ? renderHistoryTable(result, measureLabel, inflationAdjustmentEnabled, annualInflationAdjustedPriceSet) : `<p class="evidence-empty">No published annual price rows match the selected report series and unit.</p>`}
+      ${result.filteredRows.length ? renderHistoryTable(result, measureLabel, inflationAdjustmentEnabled, annualInflationAdjustedPriceSet, stateConfig.code === "NE") : `<p class="evidence-empty">No published annual price rows match the selected report series and unit.</p>`}
       ${renderAnnualInflationNote(inflationAdjustmentEnabled, annualInflationAdjustedPriceSet)}
     </section>
   `;
@@ -72,25 +72,28 @@ function renderHistoryTable(
   result: ItemPriceHistoryResult,
   measureLabel: string,
   inflationAdjustmentEnabled: boolean,
-  annualInflationAdjustedPriceSet: AnnualInflationAdjustedPriceSet | null
+  annualInflationAdjustedPriceSet: AnnualInflationAdjustedPriceSet | null,
+  suppressUnavailableReason: boolean
 ): string {
   const columns: HistoryColumn[] = [
     { key: "period", label: "Period" }, { key: "itemCode", label: "Item No." }, { key: "description", label: "Item Description" },
     { key: "quantity", label: "Total Quantity" }, { key: "unit", label: "Unit" }, { key: "averageUnitPrice", label: measureLabel },
     { key: "totalBid", label: "Total Bid" }, { key: "source", label: "Source" }
   ];
-  return `<div class="table-scroll-shell"><div class="table-scroll-affordance" aria-hidden="true"><span></span></div><div class="table-scroll" tabindex="0" aria-label="Annual item price history table"><table class="evidence-table item-price-history-table"><thead><tr>${columns.map((column) => sortableHeader(column, result.sort)).join("")}</tr></thead><tbody>${result.filteredRows.map((row) => `<tr><td>${escapeHtml(row.summary.periodLabel)}</td><td>${escapeHtml(row.summary.agencyItemCode)}</td><td>${escapeHtml(row.summary.descriptionRaw)}</td><td>${formatNumber(row.summary.totalQuantity)}</td><td>${escapeHtml(row.summary.unitRaw)}</td><td>${renderAnnualUnitPrice(row.summary.publishedAverageUnitPrice, row.summary.summaryId, inflationAdjustmentEnabled, annualInflationAdjustedPriceSet)}</td><td>${formatCurrency(row.summary.totalBid)}</td><td>${renderSource(row.source?.sourceUrl ?? "", row.source?.sourceLabel ?? "Source not available")}</td></tr>`).join("")}</tbody></table></div></div>`;
+  return `<div class="table-scroll-shell"><div class="table-scroll-affordance" aria-hidden="true"><span></span></div><div class="table-scroll" tabindex="0" aria-label="Annual item price history table"><table class="evidence-table item-price-history-table"><thead><tr>${columns.map((column) => sortableHeader(column, result.sort)).join("")}</tr></thead><tbody>${result.filteredRows.map((row) => `<tr><td>${escapeHtml(row.summary.periodLabel)}</td><td>${escapeHtml(row.summary.agencyItemCode)}</td><td>${escapeHtml(row.summary.descriptionRaw)}</td><td>${formatNumber(row.summary.totalQuantity)}</td><td>${escapeHtml(row.summary.unitRaw)}</td><td>${renderAnnualUnitPrice(row.summary.publishedAverageUnitPrice, row.summary.summaryId, inflationAdjustmentEnabled, annualInflationAdjustedPriceSet, suppressUnavailableReason)}</td><td>${formatCurrency(row.summary.totalBid)}</td><td>${renderSource(row.source?.sourceUrl ?? "", row.source?.sourceLabel ?? "Source not available")}</td></tr>`).join("")}</tbody></table></div></div>`;
 }
 
 function renderAnnualUnitPrice(
   publishedValue: number,
   summaryId: string,
   inflationAdjustmentEnabled: boolean,
-  annualInflationAdjustedPriceSet: AnnualInflationAdjustedPriceSet | null
+  annualInflationAdjustedPriceSet: AnnualInflationAdjustedPriceSet | null,
+  suppressUnavailableReason: boolean
 ): string {
   if (!inflationAdjustmentEnabled) return formatCurrency(publishedValue);
   const adjustedValue = annualInflationAdjustedPriceSet?.adjustedAverageUnitPriceBySummaryId.get(summaryId) ?? null;
   if (adjustedValue === null) {
+    if (suppressUnavailableReason) return formatCurrency(publishedValue);
     const reason = annualInflationAdjustedPriceSet?.targetPeriod
       ? "Adjustment unavailable: incomplete report-quarter coverage"
       : "Adjustment unavailable: no FHWA NHCCI target index";

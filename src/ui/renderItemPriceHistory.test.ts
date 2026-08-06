@@ -55,6 +55,15 @@ describe("renderItemPriceHistory", () => {
     expect(html).not.toContain(">Published Average Unit Price</span>");
   });
 
+  it("omits unavailable adjustment reasons for Nebraska annual prices", () => {
+    const html = renderItemPriceHistory(result, config, true, {
+      adjustedAverageUnitPriceBySummaryId: new Map(),
+      unavailableSummaryIds: new Set(["row"]),
+      targetPeriod: { periodLabel: "2026 Q1" }
+    } as never, false);
+    expect(html).not.toContain("Adjustment unavailable: incomplete report-quarter coverage");
+  });
+
   it("shows Edit Item Search when the search panel is collapsed", () => {
     const html = renderItemPriceHistory(result, config, false, null, true);
     expect(html).toContain('id="edit-item-search"');
