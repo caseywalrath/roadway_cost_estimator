@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "fake-indexeddb/auto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { StateConfig } from "../data/schema";
+import type { AgencyItemRecord, StateConfig } from "../data/schema";
 import { buildProjectBackup, createImportedCopy, parseProjectBackup } from "./projectBackup";
 import { PROJECT_EDIT_STALE_AFTER_MS, ProjectEditCoordinator } from "./projectEditCoordinator";
 import { openProjectRepository, ProjectConflictError, type ProjectRepository } from "./projectRepository";
@@ -14,9 +14,12 @@ import {
   createProjectLineItem,
   createUserProject,
   duplicateUserProject,
+  findExactProjectCatalogItem,
   getActiveProject,
+  linkProjectLineItemToCatalog,
   migrateLegacyWorkspace,
   parseUserProjectV7,
+  parseUserProjectV8,
   parseUserProjectV6,
   parseUserProjectV5,
   projectConstructionCost,
@@ -47,7 +50,7 @@ afterEach(async () => {
   await deleteDatabase();
 });
 
-describe("Project workspace v7", () => {
+describe("Project workspace v8", () => {
   it("renders one Project Actions menu without a duplicate workspace state selector", () => {
     const project = createUserProject("Header test", "CO");
     const html = renderProjectWorkspace(project, [project], testStates(), "CO", false, null);
@@ -224,6 +227,66 @@ describe("Project workspace v7", () => {
     expect(updated.lineItems[0].description).toBe("Soft costs");
     expect(updated.lineItems[0].group).toBe("Construction");
     expect(projectTotal(updated)).toBe(50);
+  });
+
+  it("links an exact state catalog code and locks official identity fields", () => {
+    const agencyItem = {
+      agencyItemId: "co_cdot_502-001000",
+      state: "CO",
+      agencyId: "co_cdot",
+      agencyName: "Colorado Department of Transportation",
+      itemCode: "502-001000",
+      currentVersionId: "co_cdot_502-001000_current",
+      itemStatus: "current",
+      canonicalItemId: "",
+      officialDescription: "Drilling Hole to Facilitate Pile Driving",
+      officialAbbreviatedDescription: "",
+      officialUnit: "EACH",
+      specReferenceCode: "",
+      agency: "CDOT"
+    } satisfies AgencyItemRecord;
+    const custom = createCustomProjectLineItem("CO");
+    custom.itemCode = " 502-001000 ";
+    custom.quantity = 2;
+    custom.preferredUnitCost = 50;
+
+    expect(findExactProjectCatalogItem([agencyItem], "CO", "co_cdot", custom.itemCode)).toBe(agencyItem);
+    expect(findExactProjectCatalogItem([agencyItem], "IA", "co_cdot", custom.itemCode)).toBeNull();
+
+    const linked = linkProjectLineItemToCatalog(custom, agencyItem);
+    expect(linked).toMatchObject({
+      lineItemType: "catalog",
+      agencyId: "co_cdot",
+      agencyItemId: "co_cdot_502-001000",
+      itemCode: "502-001000",
+      description: "Drilling Hole to Facilitate Pile Driving",
+      unit: "EACH",
+      quantity: 2,
+      evidenceContext: null
+    });
+
+    const project = createUserProject("Catalog item", "CO");
+    project.lineItems = [linked];
+    const parsed = parseUserProjectV8(project);
+    expect(parsed?.lineItems[0].lineItemType).toBe("catalog");
+    expect(projectConstructionCost(project)).toBe(100);
+    const state = updateProjectLineItem(
+      addProject(createEmptyProjectWorkspaceState(), project),
+      project.projectId,
+      linked.lineItemId,
+      { itemCode: "changed", description: "changed", unit: "changed", quantity: 3 }
+    );
+    expect(state.projects[0].lineItems[0]).toMatchObject({
+      itemCode: "502-001000",
+      description: "Drilling Hole to Facilitate Pile Driving",
+      unit: "EACH",
+      quantity: 3
+    });
+    const html = renderProjectWorkspace(project, [project], testStates(), "CO", false, null);
+    expect(html).toContain("502-001000");
+    expect(html).not.toContain('data-project-line-field="itemCode"');
+    expect(html).not.toContain('data-project-line-field="description"');
+    expect(html).not.toContain('data-project-line-field="unit"');
   });
 
   it("splits Construction and Other Costs and applies persisted contingencies", () => {
@@ -471,7 +534,7 @@ describe("Project workspace v7", () => {
 });
 
 describe("Project backup format", () => {
-  it("round trips a v7 Project with custom lines and creates collision-safe copies", () => {
+  it("round trips a v8 Project with custom lines and creates collision-safe copies", () => {
     const project = { ...createUserProject("Backup test", "IA"), contingencyPercent: 12.5, revision: 7 };
     const custom = createCustomProjectLineItem("IA");
     custom.itemCode = "SOFT";
@@ -481,7 +544,7 @@ describe("Project backup format", () => {
     project.lineItems = [custom];
     const parsed = parseProjectBackup(JSON.parse(JSON.stringify(buildProjectBackup(project))) as unknown);
     expect(parsed?.project).toEqual(project);
-    expect(parsed?.projectSchemaVersion).toBe(7);
+    expect(parsed?.projectSchemaVersion).toBe(8);
     expect(parsed?.summary).toEqual({
       constructionCost: 0,
       otherCost: 50,
@@ -496,12 +559,12 @@ describe("Project backup format", () => {
     expect(copy.revision).toBe(0);
   });
 
-  it("accepts v4 Project backups and normalizes them to v7", () => {
+  it("accepts v4 Project backups and normalizes them to v8", () => {
     const project = createUserProject("Legacy backup", "CO");
     const backup = buildProjectBackup(project);
     const legacyBackup = { ...backup, projectSchemaVersion: 4 };
     const parsed = parseProjectBackup(legacyBackup);
-    expect(parsed?.projectSchemaVersion).toBe(7);
+    expect(parsed?.projectSchemaVersion).toBe(8);
     expect(parsed?.project).toEqual(project);
     expect(parsed?.summary.totalProjectCost).toBe(0);
   });
@@ -518,7 +581,7 @@ describe("Project backup format", () => {
     };
     const parsed = parseProjectBackup({ ...backup, projectSchemaVersion: 5, project: legacyProject });
 
-    expect(parsed?.projectSchemaVersion).toBe(7);
+    expect(parsed?.projectSchemaVersion).toBe(8);
     expect(parsed?.project.lineItems[0].group).toBe("");
   });
 
@@ -533,7 +596,7 @@ describe("Project backup format", () => {
       project: legacyProject
     });
 
-    expect(parsed?.projectSchemaVersion).toBe(7);
+    expect(parsed?.projectSchemaVersion).toBe(8);
     expect(parsed?.project.contingencyPercent).toBe(0);
     expect(parsed?.summary.totalProjectCost).toBe(0);
   });

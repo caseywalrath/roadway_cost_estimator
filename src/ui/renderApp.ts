@@ -31,7 +31,9 @@ import {
   createProjectLineItem,
   createCustomProjectLineItem,
   duplicateUserProject,
+  findExactProjectCatalogItem,
   getActiveProject,
+  linkProjectLineItemToCatalog,
   projectConstructionCost,
   projectContingencyCost,
   projectGroupSuggestions,
@@ -138,6 +140,7 @@ export async function renderApp(
   let pendingDuplicateLine: PendingDuplicateProjectLine | null = null;
   let projectLineNotice: string | null = null;
   let projectLineNoticeToken = 0;
+  const dismissedCatalogMatchByLineId = new Map<string, string>();
   let projectMetadataDraft: ProjectMetadataDraft | null = null;
   const editCoordinator = new ProjectEditCoordinator();
   editCoordinator.setLostOwnershipHandler(() => {
@@ -661,7 +664,7 @@ export async function renderApp(
         )
       });
       const matchingLineIds = activeProject.lineItems
-        .filter((candidate) => candidate.lineItemType === "explorer" && candidate.agencyItemId === lineItem.agencyItemId)
+        .filter((candidate) => candidate.lineItemType !== "custom" && candidate.agencyItemId === lineItem.agencyItemId)
         .map((candidate) => candidate.lineItemId);
 
       if (matchingLineIds.length > 0) {
@@ -953,7 +956,7 @@ export async function renderApp(
         const groupInput = row.querySelector<HTMLInputElement>('[data-project-line-field="group"]');
         const notesInput = row.querySelector<HTMLInputElement>('[data-project-line-field="notes"]');
 
-        if (lineItem.lineItemType === "custom") {
+        if (lineItem.lineItemType !== "explorer") {
           const quantityResult = readNullableProjectNumber(quantityInput);
           const preferredUnitCostResult = readNullableProjectNumber(preferredUnitCostInput);
           if (!quantityResult.valid || !preferredUnitCostResult.valid) {
@@ -969,14 +972,22 @@ export async function renderApp(
 
           if (quantityInput) quantityInput.setCustomValidity("");
           if (preferredUnitCostInput) preferredUnitCostInput.setCustomValidity("");
-          const itemCodeInput = row.querySelector<HTMLInputElement>('[data-project-line-field="itemCode"]');
-          const descriptionInput = row.querySelector<HTMLInputElement>('[data-project-line-field="description"]');
-          const unitInput = row.querySelector<HTMLInputElement>('[data-project-line-field="unit"]');
+          const itemCodeInput = lineItem.lineItemType === "custom"
+            ? row.querySelector<HTMLInputElement>('[data-project-line-field="itemCode"]')
+            : null;
+          const descriptionInput = lineItem.lineItemType === "custom"
+            ? row.querySelector<HTMLInputElement>('[data-project-line-field="description"]')
+            : null;
+          const unitInput = lineItem.lineItemType === "custom"
+            ? row.querySelector<HTMLInputElement>('[data-project-line-field="unit"]')
+            : null;
           const nextState = updateProjectLineItem(projectState, activeProject.projectId, lineItemId, {
             group: groupInput?.value ?? "",
-            itemCode: itemCodeInput?.value ?? "",
-            description: descriptionInput?.value ?? "",
-            unit: unitInput?.value ?? "",
+            ...(lineItem.lineItemType === "custom" ? {
+              itemCode: itemCodeInput?.value ?? "",
+              description: descriptionInput?.value ?? "",
+              unit: unitInput?.value ?? ""
+            } : {}),
             quantity: quantityResult.value,
             preferredUnitCost: preferredUnitCostResult.value,
             notes: notesInput?.value ?? ""
@@ -1010,9 +1021,17 @@ export async function renderApp(
         syncProjectGroupDatalists(rootElement, getActiveProject(projectState, data.stateConfig.code));
         updateProjectTotalsInDom(row, lineItemId);
       };
-      input.addEventListener("input", () => updateLine(false));
+      input.addEventListener("input", () => {
+        if (input.dataset.projectLineField === "itemCode") {
+          dismissedCatalogMatchByLineId.delete(input.dataset.projectLineId ?? "");
+        }
+        updateLine(false);
+      });
       input.addEventListener("blur", () => {
         updateLine(true);
+        if (input.dataset.projectLineField === "itemCode") {
+          confirmExactProjectCatalogMatch(input.dataset.projectLineId ?? "");
+        }
         void queueProjectSave();
       });
     });
@@ -1096,6 +1115,47 @@ export async function renderApp(
       projectStorageWarning = null;
       render();
     });
+  }
+
+  function confirmExactProjectCatalogMatch(lineItemId: string): void {
+    const activeProject = getActiveProject(projectState, data.stateConfig.code);
+    const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId) ?? null;
+    if (!activeProject || !lineItem || lineItem.lineItemType !== "custom") return;
+
+    const normalizedCode = lineItem.itemCode.trim().toUpperCase();
+    if (!normalizedCode || dismissedCatalogMatchByLineId.get(lineItemId) === normalizedCode) return;
+
+    const agencyItem = findExactProjectCatalogItem(
+      data.agencyItems,
+      activeProject.state,
+      data.stateConfig.defaultAgencyId,
+      normalizedCode
+    );
+    if (!agencyItem) return;
+
+    const duplicateExists = activeProject.lineItems.some((candidate) =>
+      candidate.lineItemId !== lineItemId && candidate.agencyItemId === agencyItem.agencyItemId
+    );
+    const statusLabel = agencyItem.itemStatus === "historical" ? " [Historical item]" : "";
+    const duplicateWarning = duplicateExists ? "\n\nThis item is already in the Project. Add another line?" : "";
+    const accepted = window.confirm(
+      `Add item ${agencyItem.itemCode} — ${agencyItem.officialDescription} (${agencyItem.officialUnit})?${statusLabel}${duplicateWarning}`
+    );
+    if (!accepted) {
+      dismissedCatalogMatchByLineId.set(lineItemId, normalizedCode);
+      return;
+    }
+
+    dismissedCatalogMatchByLineId.delete(lineItemId);
+    persistProjectState(
+      replaceProjectLineItem(
+        projectState,
+        activeProject.projectId,
+        lineItemId,
+        linkProjectLineItemToCatalog(lineItem, agencyItem)
+      ),
+      true
+    );
   }
 
   function bindProjectManager(rootElement: HTMLElement): void {
