@@ -6,7 +6,7 @@ import type {
   SearchQuery
 } from "../data/schema";
 
-export const PROJECT_WORKSPACE_SCHEMA_VERSION = 8;
+export const PROJECT_WORKSPACE_SCHEMA_VERSION = 9;
 export const LEGACY_PROJECT_WORKSPACE_KEYS = [
   "roadway-cost-estimator:projects:v3",
   "roadway-cost-estimator:projects:v2",
@@ -16,7 +16,7 @@ export const LEGACY_PROJECT_WORKSPACE_KEYS = [
 export type ProjectStatus = "active" | "archived";
 
 export interface ProjectWorkspaceState {
-  schemaVersion: 8;
+  schemaVersion: 9;
   activeProjectIdByState: Record<string, string | null>;
   projects: UserProject[];
 }
@@ -48,7 +48,8 @@ export interface ProjectCostSummary {
 
 export interface ProjectLineItem {
   lineItemId: string;
-  lineItemType: ProjectLineItemType;
+  /** Legacy Explorer is accepted only while older stored Projects are normalized. */
+  lineItemType: ProjectLineItemType | "explorer";
   state: string;
   agencyId: string;
   agencyItemId: string;
@@ -64,7 +65,7 @@ export interface ProjectLineItem {
   updatedAt: string;
 }
 
-export type ProjectLineItemType = "explorer" | "catalog" | "custom";
+export type ProjectLineItemType = "catalog" | "custom";
 
 export type ProjectSortKey =
   | "group"
@@ -115,10 +116,10 @@ export interface CreateProjectLineItemInput {
   itemCode: string;
   description: string;
   unit: string;
-  quantity: number;
-  preferredUnitCost: number;
+  quantity: number | null;
+  preferredUnitCost: number | null;
   notes: string;
-  evidenceContext: ProjectEvidenceContext;
+  evidenceContext: ProjectEvidenceContext | null;
 }
 
 export interface ProjectLineItemEditableFields {
@@ -197,11 +198,11 @@ export function addProject(state: ProjectWorkspaceState, project: UserProject): 
   return setActiveProject({ ...state, projects: [...state.projects, project] }, project.projectId, project.state);
 }
 
-export function createProjectLineItem(input: CreateProjectLineItemInput): ProjectLineItem {
+export function createCatalogProjectLineItem(input: CreateProjectLineItemInput): ProjectLineItem {
   const now = currentTimestamp();
   return {
     lineItemId: createId("line"),
-    lineItemType: "explorer",
+    lineItemType: "catalog",
     ...input,
     group: normalizeProjectGroup(input.group),
     createdAt: now,
@@ -246,6 +247,13 @@ export function findExactProjectCatalogItem(
   ) ?? null;
 }
 
+export function findDuplicateCatalogLineItemIds(project: UserProject, agencyItemId: string): string[] {
+  if (!agencyItemId) return [];
+  return project.lineItems
+    .filter((lineItem) => lineItem.lineItemType === "catalog" && lineItem.agencyItemId === agencyItemId)
+    .map((lineItem) => lineItem.lineItemId);
+}
+
 export function linkProjectLineItemToCatalog(
   lineItem: ProjectLineItem,
   agencyItem: AgencyItemRecord
@@ -262,6 +270,11 @@ export function linkProjectLineItemToCatalog(
     evidenceContext: null,
     updatedAt: currentTimestamp()
   };
+}
+
+/** @deprecated Use createCatalogProjectLineItem. */
+export function createProjectLineItem(input: CreateProjectLineItemInput): ProjectLineItem {
+  return createCatalogProjectLineItem(input);
 }
 
 export function addProjectLineItem(
@@ -348,7 +361,7 @@ export function projectLineTotal(lineItem: ProjectLineItem): number {
 
 export function projectConstructionCost(project: UserProject): number {
   return project.lineItems
-    .filter((lineItem) => lineItem.lineItemType !== "custom")
+    .filter((lineItem) => lineItem.lineItemType === "catalog")
     .reduce((sum, lineItem) => sum + projectLineTotal(lineItem), 0);
 }
 
@@ -524,6 +537,10 @@ export function parseUserProjectV8(value: unknown): UserProject | null {
   return parseUserProject(value, 8);
 }
 
+export function parseUserProjectV9(value: unknown): UserProject | null {
+  return parseUserProject(value, 9);
+}
+
 export function migrateLegacyWorkspace(value: unknown, schemaVersion: 1 | 2 | 3): LegacyMigrationResult {
   const empty = createEmptyProjectWorkspaceState();
   if (!isRecord(value) || value.schemaVersion !== schemaVersion || !Array.isArray(value.projects)) {
@@ -589,7 +606,7 @@ function updateProject(state: ProjectWorkspaceState, projectId: string, nextProj
   };
 }
 
-function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8): UserProject | null {
+function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9): UserProject | null {
   if (!isRecord(value) || typeof value.projectId !== "string" || !value.projectId.trim()) return null;
   if (schemaVersion >= 4) {
     if (value.status !== "active" && value.status !== "archived") return null;
@@ -625,14 +642,15 @@ function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 |
   };
 }
 
-function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8): ProjectLineItem | null {
+function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9): ProjectLineItem | null {
   if (!isRecord(value) || typeof value.lineItemId !== "string" || !value.lineItemId.trim()) return null;
+  const legacyExplorer = value.lineItemType === undefined || value.lineItemType === "explorer";
   const lineItemType = value.lineItemType === "custom"
     ? "custom"
     : schemaVersion >= 8 && value.lineItemType === "catalog"
       ? "catalog"
-      : value.lineItemType === undefined || value.lineItemType === "explorer"
-        ? "explorer"
+      : legacyExplorer
+        ? "catalog"
         : null;
   if (!lineItemType) return null;
   const state = schemaVersion >= 3 ? stringValue(value.state) : "CO";
@@ -644,34 +662,15 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
   const description = stringValue(value.description);
   const unit = stringValue(value.unit);
   if (!state) return null;
-  if (lineItemType === "explorer") {
-    const quantity = positiveNumberValue(value.quantity);
-    const preferredUnitCost = positiveNumberValue(value.preferredUnitCost);
-    const evidenceContext = parseProjectEvidenceContext(value.evidenceContext);
-    if (quantity === null || preferredUnitCost === null || !evidenceContext || !agencyId || !agencyItemId || !itemCode || !description || !unit) return null;
-    return {
-      lineItemId: value.lineItemId,
-      lineItemType,
-      state,
-      agencyId,
-      agencyItemId,
-      group: normalizeProjectGroup(value.group),
-      itemCode,
-      description,
-      unit,
-      quantity,
-      preferredUnitCost,
-      notes: stringValue(value.notes),
-      evidenceContext,
-      createdAt: stringValue(value.createdAt) || currentTimestamp(),
-      updatedAt: stringValue(value.updatedAt) || currentTimestamp()
-    };
-  }
-
   const quantity = nullableNumberValue(value.quantity);
   const preferredUnitCost = nullableNumberValue(value.preferredUnitCost);
   if (quantity === undefined || preferredUnitCost === undefined) return null;
   if (lineItemType === "catalog") {
+    const evidenceContext = value.evidenceContext === null || value.evidenceContext === undefined
+      ? null
+      : parseProjectEvidenceContext(value.evidenceContext);
+    if (legacyExplorer && (quantity === null || preferredUnitCost === null || !evidenceContext)) return null;
+    if (value.evidenceContext !== null && value.evidenceContext !== undefined && !evidenceContext) return null;
     if (!agencyId || !agencyItemId || !itemCode || !description || !unit) return null;
     return {
       lineItemId: value.lineItemId,
@@ -686,7 +685,7 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
       quantity,
       preferredUnitCost,
       notes: stringValue(value.notes),
-      evidenceContext: null,
+      evidenceContext,
       createdAt: stringValue(value.createdAt) || currentTimestamp(),
       updatedAt: stringValue(value.updatedAt) || currentTimestamp()
     };
@@ -713,22 +712,34 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
 function parseProjectEvidenceContext(value: unknown): ProjectEvidenceContext | null {
   if (!isRecord(value)) return null;
   const summarySnapshot = parseProjectEvidenceSummarySnapshot(value.summarySnapshot);
-  if (!isRecord(value.query) || !isRecord(value.filters) || !isRecord(value.sort) || !summarySnapshot) return null;
+  const includedRowCount = value.includedRowCount;
+  const includedObservationIds = value.includedObservationIds;
+  if (!isRecord(value.query)
+    || !isRecord(value.filters)
+    || !isRecord(value.sort)
+    || !summarySnapshot
+    || !isNonNegativeInteger(includedRowCount)
+    || !Array.isArray(includedObservationIds)
+    || includedObservationIds.some((observationId) => typeof observationId !== "string")
+    || (value.costSource !== "manual" && value.costSource !== "quick_fill")) return null;
   return {
     query: value.query as unknown as SearchQuery,
     filters: value.filters as unknown as EvidenceFilters,
     sort: value.sort as unknown as EvidenceSort,
-    includedRowCount: numberValue(value.includedRowCount) ?? 0,
-    includedObservationIds: Array.isArray(value.includedObservationIds)
-      ? value.includedObservationIds.map(String).filter(Boolean)
-      : [],
+    includedRowCount,
+    includedObservationIds: [...includedObservationIds],
     summarySnapshot,
-    costSource: value.costSource === "quick_fill" ? "quick_fill" : "manual"
+    costSource: value.costSource
   };
 }
 
 function parseProjectEvidenceSummarySnapshot(value: unknown): ProjectEvidenceSummarySnapshot | null {
   if (!isRecord(value)) return null;
+  if (typeof value.inflationAdjustmentEnabled !== "boolean"
+    || typeof value.valuesAreInflationAdjusted !== "boolean"
+    || (value.inflationTargetPeriodLabel !== null && typeof value.inflationTargetPeriodLabel !== "string")) return null;
+  const statsKeys = ["awarded", "average", "engineer"] as const;
+  if (statsKeys.some((key) => !(key in value) || (value[key] !== null && !parseEvidenceStats(value[key])))) return null;
   return {
     awarded: parseEvidenceStats(value.awarded),
     average: parseEvidenceStats(value.average),

@@ -28,10 +28,11 @@ import {
   addProjectLineItem,
   createDefaultProjectSort,
   createUserProject,
-  createProjectLineItem,
+  createCatalogProjectLineItem,
   createCustomProjectLineItem,
   duplicateUserProject,
   findExactProjectCatalogItem,
+  findDuplicateCatalogLineItemIds,
   getActiveProject,
   linkProjectLineItemToCatalog,
   projectConstructionCost,
@@ -78,6 +79,19 @@ type PendingFocus =
   | "sourceDetail"
   | { sourceProjectId: string }
   | { projectLineId: string; field: string };
+
+export function createFreshCatalogExplorerQuery(emptyQuery: SearchQuery, lineItem: ProjectLineItem): SearchQuery {
+  return {
+    ...emptyQuery,
+    state: lineItem.state,
+    agencyId: lineItem.agencyId,
+    agencyItemId: lineItem.agencyItemId,
+    itemCode: lineItem.itemCode,
+    description: lineItem.description,
+    unit: lineItem.unit,
+    quantity: null
+  };
+}
 
 interface ProjectMetadataDraft extends ProjectMetadataEditorView {
   expectedRevision: number | null;
@@ -642,7 +656,7 @@ export async function renderApp(
       }
 
       const costSource = costSourceInput?.value === "quick_fill" ? "quick_fill" : "manual";
-      const lineItem = createProjectLineItem({
+      const lineItem = createCatalogProjectLineItem({
         state: data.stateConfig.code,
         agencyId: result.query.agencyId,
         agencyItemId: result.query.agencyItemId,
@@ -663,9 +677,7 @@ export async function renderApp(
           costSource
         )
       });
-      const matchingLineIds = activeProject.lineItems
-        .filter((candidate) => candidate.lineItemType !== "custom" && candidate.agencyItemId === lineItem.agencyItemId)
-        .map((candidate) => candidate.lineItemId);
+      const matchingLineIds = findDuplicateCatalogLineItemIds(activeProject, lineItem.agencyItemId);
 
       if (matchingLineIds.length > 0) {
         pendingDuplicateLine = {
@@ -919,6 +931,30 @@ export async function renderApp(
       });
     });
 
+    rootElement.querySelectorAll<HTMLAnchorElement>("[data-open-catalog-explorer]").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const lineItemId = link.dataset.projectLineId ?? "";
+        const activeProject = getActiveProject(projectState, data.stateConfig.code);
+        const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId) ?? null;
+        if (!lineItem || lineItem.lineItemType !== "catalog") return;
+
+        query = createFreshCatalogExplorerQuery(emptyQuery, lineItem);
+        evidenceFilters = createDefaultEvidenceFilters(query);
+        evidenceSort = createDefaultEvidenceSort();
+        itemPriceHistoryFilters = createDefaultItemPriceHistoryFilters();
+        itemPriceHistorySort = createDefaultItemPriceHistorySort();
+        excludedSummaryRowIds = new Set<string>();
+        inflationAdjustmentEnabled = false;
+        selectedBidderDetailKey = null;
+        selectedSourceProjectId = null;
+        evidenceFiltersExpanded = true;
+        itemSearchCollapsed = true;
+        activeView = "explorer";
+        render();
+      });
+    });
+
     root.querySelectorAll<HTMLButtonElement>("[data-project-sort-key]").forEach((button) => {
       button.addEventListener("click", () => {
         const sortKey = button.dataset.projectSortKey as ProjectSortKey | undefined;
@@ -956,68 +992,42 @@ export async function renderApp(
         const groupInput = row.querySelector<HTMLInputElement>('[data-project-line-field="group"]');
         const notesInput = row.querySelector<HTMLInputElement>('[data-project-line-field="notes"]');
 
-        if (lineItem.lineItemType !== "explorer") {
-          const quantityResult = readNullableProjectNumber(quantityInput);
-          const preferredUnitCostResult = readNullableProjectNumber(preferredUnitCostInput);
-          if (!quantityResult.valid || !preferredUnitCostResult.valid) {
-            if (validate) {
-              const invalidInput = !quantityResult.valid ? quantityInput : preferredUnitCostInput;
-              if (invalidInput) {
-                invalidInput.setCustomValidity("Enter a non-negative number or leave this field blank.");
-                invalidInput.reportValidity();
-              }
+        const quantityResult = readNullableProjectNumber(quantityInput);
+        const preferredUnitCostResult = readNullableProjectNumber(preferredUnitCostInput);
+        if (!quantityResult.valid || !preferredUnitCostResult.valid) {
+          if (validate) {
+            const invalidInput = !quantityResult.valid ? quantityInput : preferredUnitCostInput;
+            if (invalidInput) {
+              invalidInput.setCustomValidity("Enter a non-negative number or leave this field blank.");
+              invalidInput.reportValidity();
             }
-            return;
           }
-
-          if (quantityInput) quantityInput.setCustomValidity("");
-          if (preferredUnitCostInput) preferredUnitCostInput.setCustomValidity("");
-          const itemCodeInput = lineItem.lineItemType === "custom"
-            ? row.querySelector<HTMLInputElement>('[data-project-line-field="itemCode"]')
-            : null;
-          const descriptionInput = lineItem.lineItemType === "custom"
-            ? row.querySelector<HTMLInputElement>('[data-project-line-field="description"]')
-            : null;
-          const unitInput = lineItem.lineItemType === "custom"
-            ? row.querySelector<HTMLInputElement>('[data-project-line-field="unit"]')
-            : null;
-          const nextState = updateProjectLineItem(projectState, activeProject.projectId, lineItemId, {
-            group: groupInput?.value ?? "",
-            ...(lineItem.lineItemType === "custom" ? {
-              itemCode: itemCodeInput?.value ?? "",
-              description: descriptionInput?.value ?? "",
-              unit: unitInput?.value ?? ""
-            } : {}),
-            quantity: quantityResult.value,
-            preferredUnitCost: preferredUnitCostResult.value,
-            notes: notesInput?.value ?? ""
-          });
-          persistProjectState(nextState, false);
-          syncProjectGroupDatalists(rootElement, getActiveProject(projectState, data.stateConfig.code));
-          updateProjectTotalsInDom(row, lineItemId);
           return;
         }
 
-        const quantity = validate
-          ? readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero.")
-          : readOptionalFormNumber(quantityInput?.value ?? "");
-        const preferredUnitCost = validate
-          ? readRequiredPositiveNumber(preferredUnitCostInput, "Enter a unit cost greater than zero.")
-          : readOptionalFormNumber(preferredUnitCostInput?.value ?? "");
-
-        if (quantity === null || preferredUnitCost === null) {
-          return;
-        }
-
-        persistProjectState(
-          updateProjectLineItem(projectState, activeProject.projectId, lineItemId, {
-            group: groupInput?.value ?? "",
-            quantity,
-            preferredUnitCost,
-            notes: notesInput?.value ?? ""
-          }),
-          false
-        );
+        if (quantityInput) quantityInput.setCustomValidity("");
+        if (preferredUnitCostInput) preferredUnitCostInput.setCustomValidity("");
+        const itemCodeInput = lineItem.lineItemType === "custom"
+          ? row.querySelector<HTMLInputElement>('[data-project-line-field="itemCode"]')
+          : null;
+        const descriptionInput = lineItem.lineItemType === "custom"
+          ? row.querySelector<HTMLInputElement>('[data-project-line-field="description"]')
+          : null;
+        const unitInput = lineItem.lineItemType === "custom"
+          ? row.querySelector<HTMLInputElement>('[data-project-line-field="unit"]')
+          : null;
+        const nextState = updateProjectLineItem(projectState, activeProject.projectId, lineItemId, {
+          group: groupInput?.value ?? "",
+          ...(lineItem.lineItemType === "custom" ? {
+            itemCode: itemCodeInput?.value ?? "",
+            description: descriptionInput?.value ?? "",
+            unit: unitInput?.value ?? ""
+          } : {}),
+          quantity: quantityResult.value,
+          preferredUnitCost: preferredUnitCostResult.value,
+          notes: notesInput?.value ?? ""
+        });
+        persistProjectState(nextState, false);
         syncProjectGroupDatalists(rootElement, getActiveProject(projectState, data.stateConfig.code));
         updateProjectTotalsInDom(row, lineItemId);
       };
