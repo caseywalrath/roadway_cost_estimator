@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createCustomProjectLineItem, createUserProject } from "../projects/projectWorkspace";
+import { createCatalogProjectLineItem, createCustomProjectLineItem, createUserProject } from "../projects/projectWorkspace";
 import { buildProjectCsv } from "./exportProjectCsv";
 
 describe("Project CSV export", () => {
@@ -29,6 +29,63 @@ describe("Project CSV export", () => {
     expect(rows[summaryStart + 3]).toBe("Contingency percentage,0");
     expect(rows[summaryStart + 4]).toBe("Contingencies,0");
     expect(rows[summaryStart + 5]).toBe("Total Project Cost,50");
+  });
+
+  it("exports catalog lines with optional evidence fields", () => {
+    const project = createUserProject("Catalog export", "CO");
+    const withoutEvidence = createCatalogProjectLineItem({
+      state: "CO",
+      agencyId: "co_cdot",
+      agencyItemId: "co_cdot_001",
+      group: "Construction",
+      itemCode: "001",
+      description: "Catalog item",
+      unit: "EACH",
+      quantity: null,
+      preferredUnitCost: null,
+      notes: "",
+      evidenceContext: null
+    });
+    const withEvidence = createCatalogProjectLineItem({
+      ...withoutEvidence,
+      state: "CO",
+      agencyId: "co_cdot",
+      agencyItemId: "co_cdot_002",
+      group: "Construction",
+      itemCode: "002",
+      description: "Evidence item",
+      unit: "LS",
+      quantity: 1,
+      preferredUnitCost: 25,
+      notes: "",
+      evidenceContext: {
+        query: {} as never,
+        filters: {} as never,
+        sort: {} as never,
+        includedRowCount: 2,
+        includedObservationIds: ["observation_1", "observation_2"],
+        summarySnapshot: {
+          awarded: null,
+          average: null,
+          engineer: null,
+          inflationAdjustmentEnabled: false,
+          inflationTargetPeriodLabel: null,
+          valuesAreInflationAdjusted: false
+        },
+        costSource: "manual"
+      }
+    });
+    project.lineItems = [withoutEvidence, withEvidence];
+
+    const rows = buildProjectCsv(project).split("\r\n");
+    const headers = rows[0].split(",");
+    const evidenceCountColumn = headers.indexOf("Evidence Row Count");
+    const observationIdsColumn = headers.indexOf("Included Observation IDs");
+
+    expect(rows[1].split(",")[evidenceCountColumn]).toBe("0");
+    expect(rows[1].split(",")[observationIdsColumn]).toBe("");
+    expect(rows[2].split(",")[evidenceCountColumn]).toBe("2");
+    expect(rows[2].split(",")[observationIdsColumn]).toBe("observation_1;observation_2");
   });
 
   it("exports the active Project sort without changing stored line order", () => {

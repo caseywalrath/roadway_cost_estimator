@@ -1580,6 +1580,18 @@ table {
   min-width: 124px;
 }
 
+.project-catalog-explorer-link {
+  color: var(--accent-dark);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.project-catalog-explorer-link:hover,
+.project-catalog-explorer-link:focus-visible {
+  color: var(--accent);
+}
+
 .project-line-table td:nth-child(3) {
   min-width: 220px;
 }

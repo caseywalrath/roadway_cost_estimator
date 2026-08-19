@@ -344,10 +344,11 @@ function renderProjectSortableHeader(column: { key: ProjectSortKey; label: strin
 
 function renderProjectLineRow(lineItem: ProjectLineItem, readOnly: boolean, groupListId: string): string {
   const custom = lineItem.lineItemType === "custom";
+  const catalog = lineItem.lineItemType === "catalog";
   const disabled = readOnly ? "disabled" : "";
   return `<tr class="${custom ? "project-line-row--custom" : ""}">
     <td>${renderProjectLineInput(lineItem, "group", "Group", "project-line-group-input", disabled, "text", groupListId)}</td>
-    <td>${custom ? renderProjectLineInput(lineItem, "itemCode", "Item Code", "project-line-text-input", disabled) : escapeHtml(lineItem.itemCode)}</td>
+    <td>${custom ? renderProjectLineInput(lineItem, "itemCode", "Item Code", "project-line-text-input", disabled) : catalog ? renderCatalogExplorerLink(lineItem) : escapeHtml(lineItem.itemCode)}</td>
     <td>${custom ? renderProjectLineInput(lineItem, "description", "Description", "project-line-text-input", disabled) : escapeHtml(lineItem.description)}</td>
     <td>${renderProjectLineInput(lineItem, "preferredUnitCost", "Unit Cost", "project-line-number-input", disabled, "decimal")}</td>
     <td>${custom ? renderProjectLineInput(lineItem, "unit", "Unit", "project-line-unit-input", disabled) : escapeHtml(lineItem.unit)}</td>
@@ -356,6 +357,11 @@ function renderProjectLineRow(lineItem: ProjectLineItem, readOnly: boolean, grou
     <td>${renderProjectLineInput(lineItem, "notes", "Notes", "project-line-notes-input", disabled)}</td>
     <td><button type="button" class="project-line-remove-button" data-remove-project-line-id="${escapeHtml(lineItem.lineItemId)}" aria-label="Remove ${escapeHtml(lineItem.itemCode || "custom item")} from project" title="Remove line" ${disabled}>${trashIcon()}</button></td>
   </tr>`;
+}
+
+function renderCatalogExplorerLink(lineItem: ProjectLineItem): string {
+  const label = `Open Explorer results for ${lineItem.itemCode}${lineItem.description ? ` — ${lineItem.description}` : ""}`;
+  return `<a href="#explorer" class="project-catalog-explorer-link" data-open-catalog-explorer data-project-line-id="${escapeHtml(lineItem.lineItemId)}" aria-label="${escapeHtml(label)}">${escapeHtml(lineItem.itemCode)}</a>`;
 }
 
 function renderProjectLineInput(

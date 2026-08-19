@@ -1,22 +1,28 @@
 // @vitest-environment jsdom
 import "fake-indexeddb/auto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { StateConfig } from "../data/schema";
+import type { AgencyItemRecord, SearchQuery, StateConfig } from "../data/schema";
 import { buildProjectBackup, createImportedCopy, parseProjectBackup } from "./projectBackup";
 import { PROJECT_EDIT_STALE_AFTER_MS, ProjectEditCoordinator } from "./projectEditCoordinator";
 import { openProjectRepository, ProjectConflictError, type ProjectRepository } from "./projectRepository";
+import { createFreshCatalogExplorerQuery } from "../ui/renderApp";
 import { renderAddToProjectPanel, renderProjectManager, renderProjectWorkspace } from "../ui/renderProjectWorkspace";
 import {
   addProject,
   addProjectLineItem,
   createEmptyProjectWorkspaceState,
+  createCatalogProjectLineItem,
   createCustomProjectLineItem,
-  createProjectLineItem,
   createUserProject,
   duplicateUserProject,
+  findDuplicateCatalogLineItemIds,
+  findExactProjectCatalogItem,
   getActiveProject,
+  linkProjectLineItemToCatalog,
   migrateLegacyWorkspace,
   parseUserProjectV7,
+  parseUserProjectV8,
+  parseUserProjectV9,
   parseUserProjectV6,
   parseUserProjectV5,
   projectConstructionCost,
@@ -27,7 +33,8 @@ import {
   setActiveProject,
   sortProjectLineItems,
   updateProjectContingencyPercent,
-  updateProjectLineItem
+  updateProjectLineItem,
+  type ProjectEvidenceContext
 } from "./projectWorkspace";
 
 let repository: ProjectRepository | null = null;
@@ -47,7 +54,7 @@ afterEach(async () => {
   await deleteDatabase();
 });
 
-describe("Project workspace v7", () => {
+describe("Project workspace v9", () => {
   it("renders one Project Actions menu without a duplicate workspace state selector", () => {
     const project = createUserProject("Header test", "CO");
     const html = renderProjectWorkspace(project, [project], testStates(), "CO", false, null);
@@ -126,7 +133,7 @@ describe("Project workspace v7", () => {
     expect(html).not.toContain("No project items have been added");
   });
 
-  it("renders custom rows with editable fields and keeps Explorer identity fields read-only", () => {
+  it("renders custom rows with editable fields and keeps catalog identity fields read-only", () => {
     const project = createUserProject("Mixed", "CO");
     const custom = createCustomProjectLineItem("CO");
     custom.itemCode = "SOFT";
@@ -143,24 +150,74 @@ describe("Project workspace v7", () => {
     expect(html).toContain('value="Construction"');
     expect(html).toContain('data-project-line-field="description"');
     expect(html).toContain('data-project-line-field="unit"');
+    expect(html).not.toContain("data-open-catalog-explorer");
     expect(html).toContain("$50.00");
     expect(html.indexOf("SOFT")).toBeGreaterThan(html.indexOf("+Add Item"));
 
-    const explorer = { ...custom, lineItemId: "explorer_line", lineItemType: "explorer" as const, agencyId: "co_cdot", agencyItemId: "co_cdot_soft", evidenceContext: {
-      query: {} as never,
-      filters: {} as never,
-      sort: {} as never,
-      includedRowCount: 0,
-      includedObservationIds: [],
-      summarySnapshot: { awarded: null, average: null, engineer: null, inflationAdjustmentEnabled: false, inflationTargetPeriodLabel: null, valuesAreInflationAdjusted: false },
-      costSource: "manual" as const
-    } };
-    project.lineItems = [explorer];
-    const explorerHtml = renderProjectWorkspace(project, [project], testStates(), "CO", false, null);
-    expect(explorerHtml).toContain('data-project-line-field="group"');
-    expect(explorerHtml).not.toContain('data-project-line-field="itemCode"');
-    expect(explorerHtml).not.toContain('data-project-line-field="description"');
-    expect(explorerHtml).not.toContain('data-project-line-field="unit"');
+    const catalog = createCatalogProjectLineItem({
+      state: "CO",
+      agencyId: "co_cdot",
+      agencyItemId: "co_cdot_001",
+      group: "Construction",
+      itemCode: "001",
+      description: "Catalog item",
+      unit: "EACH",
+      quantity: null,
+      preferredUnitCost: null,
+      notes: "",
+      evidenceContext: testEvidenceContext()
+    });
+    project.lineItems = [catalog];
+    const catalogHtml = renderProjectWorkspace(project, [project], testStates(), "CO", false, null);
+    expect(catalogHtml).toContain('data-project-line-field="group"');
+    expect(catalogHtml).not.toContain('data-project-line-field="itemCode"');
+    expect(catalogHtml).not.toContain('data-project-line-field="description"');
+    expect(catalogHtml).not.toContain('data-project-line-field="unit"');
+    expect(catalogHtml).toContain('data-project-line-field="preferredUnitCost"');
+    expect(catalogHtml).toContain('data-project-line-field="quantity"');
+    expect(catalogHtml).toContain("data-open-catalog-explorer");
+    expect(catalogHtml).toContain('aria-label="Open Explorer results for 001 — Catalog item"');
+  });
+
+  it("builds a fresh state-specific Explorer query for a catalog line", () => {
+    const emptyQuery: SearchQuery = {
+      state: "IA",
+      agencyId: "ia_dot",
+      agencyItemId: "",
+      countyRegion: "",
+      workType: "Roadway",
+      estimateYear: 2026,
+      sourceScope: "both",
+      priceTypeScope: "awarded",
+      itemCode: "",
+      description: "",
+      unit: "",
+      quantity: null
+    };
+    const lineItem = createCatalogProjectLineItem({
+      state: "IA",
+      agencyId: "ia_dot",
+      agencyItemId: "ia_dot_2510-0000000",
+      group: "",
+      itemCode: "2510-0000000",
+      description: "Steel Sheet Piling (Type II)",
+      unit: "SQ FT",
+      quantity: 10,
+      preferredUnitCost: 25,
+      notes: "",
+      evidenceContext: testEvidenceContext("saved_observation")
+    });
+
+    expect(createFreshCatalogExplorerQuery(emptyQuery, lineItem)).toEqual({
+      ...emptyQuery,
+      state: "IA",
+      agencyId: "ia_dot",
+      agencyItemId: "ia_dot_2510-0000000",
+      itemCode: "2510-0000000",
+      description: "Steel Sheet Piling (Type II)",
+      unit: "SQ FT",
+      quantity: null
+    });
   });
 
   it("renders sortable Project headers and keeps custom rows editable after sorting", () => {
@@ -226,9 +283,142 @@ describe("Project workspace v7", () => {
     expect(projectTotal(updated)).toBe(50);
   });
 
+  it("links an exact state catalog code and locks official identity fields", () => {
+    const agencyItem = {
+      agencyItemId: "co_cdot_502-001000",
+      state: "CO",
+      agencyId: "co_cdot",
+      agencyName: "Colorado Department of Transportation",
+      itemCode: "502-001000",
+      currentVersionId: "co_cdot_502-001000_current",
+      itemStatus: "current",
+      canonicalItemId: "",
+      officialDescription: "Drilling Hole to Facilitate Pile Driving",
+      officialAbbreviatedDescription: "",
+      officialUnit: "EACH",
+      specReferenceCode: "",
+      agency: "CDOT"
+    } satisfies AgencyItemRecord;
+    const custom = createCustomProjectLineItem("CO");
+    custom.itemCode = " 502-001000 ";
+    custom.quantity = 2;
+    custom.preferredUnitCost = 50;
+
+    expect(findExactProjectCatalogItem([agencyItem], "CO", "co_cdot", custom.itemCode)).toBe(agencyItem);
+    expect(findExactProjectCatalogItem([agencyItem], "IA", "co_cdot", custom.itemCode)).toBeNull();
+
+    const linked = linkProjectLineItemToCatalog(custom, agencyItem);
+    expect(linked).toMatchObject({
+      lineItemType: "catalog",
+      agencyId: "co_cdot",
+      agencyItemId: "co_cdot_502-001000",
+      itemCode: "502-001000",
+      description: "Drilling Hole to Facilitate Pile Driving",
+      unit: "EACH",
+      quantity: 2,
+      evidenceContext: null
+    });
+
+    const project = createUserProject("Catalog item", "CO");
+    project.lineItems = [linked];
+    const parsed = parseUserProjectV8(project);
+    expect(parsed?.lineItems[0].lineItemType).toBe("catalog");
+    expect(projectConstructionCost(project)).toBe(100);
+    const state = updateProjectLineItem(
+      addProject(createEmptyProjectWorkspaceState(), project),
+      project.projectId,
+      linked.lineItemId,
+      { itemCode: "changed", description: "changed", unit: "changed", quantity: 3 }
+    );
+    expect(state.projects[0].lineItems[0]).toMatchObject({
+      itemCode: "502-001000",
+      description: "Drilling Hole to Facilitate Pile Driving",
+      unit: "EACH",
+      quantity: 3
+    });
+    const html = renderProjectWorkspace(project, [project], testStates(), "CO", false, null);
+    expect(html).toContain("502-001000");
+    expect(html).not.toContain('data-project-line-field="itemCode"');
+    expect(html).not.toContain('data-project-line-field="description"');
+    expect(html).not.toContain('data-project-line-field="unit"');
+  });
+
+  it("uses the same catalog identity for Item Search and exact-code Project entry", () => {
+    const itemSearchLine = createCatalogProjectLineItem({
+      state: "CO",
+      agencyId: "co_cdot",
+      agencyItemId: "co_cdot_502-001000",
+      group: "Construction",
+      itemCode: "502-001000",
+      description: "Drilling Hole to Facilitate Pile Driving",
+      unit: "EACH",
+      quantity: 2,
+      preferredUnitCost: 50,
+      notes: "",
+      evidenceContext: testEvidenceContext()
+    });
+    const directEntry = linkProjectLineItemToCatalog(createCustomProjectLineItem("CO"), {
+      agencyItemId: "co_cdot_502-001000",
+      state: "CO",
+      agencyId: "co_cdot",
+      agencyName: "Colorado Department of Transportation",
+      itemCode: "502-001000",
+      currentVersionId: "co_cdot_502-001000_current",
+      itemStatus: "current",
+      canonicalItemId: "",
+      officialDescription: "Drilling Hole to Facilitate Pile Driving",
+      officialAbbreviatedDescription: "",
+      officialUnit: "EACH",
+      specReferenceCode: "",
+      agency: "CDOT"
+    });
+
+    expect(itemSearchLine.lineItemType).toBe("catalog");
+    expect(directEntry.lineItemType).toBe("catalog");
+    expect(itemSearchLine.agencyItemId).toBe(directEntry.agencyItemId);
+    expect(itemSearchLine.itemCode).toBe(directEntry.itemCode);
+    expect(itemSearchLine.description).toBe(directEntry.description);
+    expect(itemSearchLine.unit).toBe(directEntry.unit);
+    expect(directEntry.evidenceContext).toBeNull();
+  });
+
+  it("treats catalog lines from both entry paths identically for duplicate detection", () => {
+    const project = createUserProject("Duplicate catalog", "CO");
+    const first = createCatalogProjectLineItem({
+      state: "CO",
+      agencyId: "co_cdot",
+      agencyItemId: "co_cdot_001",
+      group: "",
+      itemCode: "001",
+      description: "Catalog item",
+      unit: "EACH",
+      quantity: null,
+      preferredUnitCost: null,
+      notes: "",
+      evidenceContext: null
+    });
+    const second = createCatalogProjectLineItem({
+      state: first.state,
+      agencyId: first.agencyId,
+      agencyItemId: first.agencyItemId,
+      group: first.group,
+      itemCode: first.itemCode,
+      description: first.description,
+      unit: first.unit,
+      quantity: first.quantity,
+      preferredUnitCost: first.preferredUnitCost,
+      notes: first.notes,
+      evidenceContext: testEvidenceContext()
+    });
+    project.lineItems = [first, second];
+
+    expect(findDuplicateCatalogLineItemIds(project, "co_cdot_001")).toEqual([first.lineItemId, second.lineItemId]);
+    expect(findDuplicateCatalogLineItemIds(project, "co_cdot_missing")).toEqual([]);
+  });
+
   it("splits Construction and Other Costs and applies persisted contingencies", () => {
     const project = createUserProject("Cost summary", "CO");
-    const explorer = createProjectLineItem({
+    const catalog = createCatalogProjectLineItem({
       state: "CO",
       agencyId: "co_cdot",
       agencyItemId: "co_cdot_001",
@@ -239,13 +429,13 @@ describe("Project workspace v7", () => {
       quantity: 2,
       preferredUnitCost: 100,
       notes: "",
-      evidenceContext: {} as never
+      evidenceContext: testEvidenceContext()
     });
     const custom = createCustomProjectLineItem("CO");
     custom.itemCode = "SOFT";
     custom.quantity = 1;
     custom.preferredUnitCost = 50;
-    project.lineItems = [explorer, custom];
+    project.lineItems = [catalog, custom];
     project.contingencyPercent = 15;
 
     expect(projectConstructionCost(project)).toBe(200);
@@ -275,14 +465,14 @@ describe("Project workspace v7", () => {
     expect(readOnlyHtml).toContain('data-project-contingency-percent aria-label="Contingency percentage" value="20" disabled');
   });
 
-  it("migrates missing v5 Groups as blank and permits Explorer Group edits", () => {
+  it("migrates missing v5 Groups as blank and permits catalog Group edits", () => {
     const project = createUserProject("Group migration", "CO");
     const custom = createCustomProjectLineItem("CO");
     const rawProject = { ...project, lineItems: [{ ...custom, lineItemType: "custom" as const, group: undefined }] };
     const parsed = parseUserProjectV6(rawProject);
     expect(parsed?.lineItems[0].group).toBe("");
 
-    const explorer = createProjectLineItem({
+    const catalog = createCatalogProjectLineItem({
       state: "CO",
       agencyId: "co_cdot",
       agencyItemId: "co_cdot_001",
@@ -293,13 +483,13 @@ describe("Project workspace v7", () => {
       quantity: 1,
       preferredUnitCost: 2,
       notes: "",
-      evidenceContext: {} as never
+      evidenceContext: testEvidenceContext()
     });
-    project.lineItems = [explorer];
+    project.lineItems = [catalog];
     const state = updateProjectLineItem(
       addProject(createEmptyProjectWorkspaceState(), project),
       project.projectId,
-      explorer.lineItemId,
+      catalog.lineItemId,
       { group: "  Maintenance  " }
     );
     expect(state.projects[0].lineItems[0].group).toBe("Maintenance");
@@ -334,7 +524,7 @@ describe("Project workspace v7", () => {
     expect(explorerHtml).toContain('value="Construction"');
   });
 
-  it("normalizes v4 Project lines as Explorer-backed lines", () => {
+  it("normalizes legacy Project lines as catalog lines with evidence", () => {
     const project = createUserProject("Legacy v4", "CO");
     const custom = createCustomProjectLineItem("CO");
     const legacyLine = {
@@ -359,7 +549,84 @@ describe("Project workspace v7", () => {
     };
     const rawProject = { ...project, lineItems: [{ ...legacyLine, lineItemType: undefined }] };
     const parsed = parseUserProjectV5(rawProject);
-    expect(parsed?.lineItems[0].lineItemType).toBe("explorer");
+    expect(parsed?.lineItems[0].lineItemType).toBe("catalog");
+    expect(parsed?.lineItems[0].evidenceContext).toEqual(legacyLine.evidenceContext);
+  });
+
+  it("normalizes a schema-v8 Explorer line to catalog while preserving its full evidence snapshot", () => {
+    const project = createUserProject("Explorer migration", "CO");
+    const legacyLine = {
+      ...createCatalogProjectLineItem({
+        state: "CO",
+        agencyId: "co_cdot",
+        agencyItemId: "co_cdot_001",
+        group: "Construction",
+        itemCode: "001",
+        description: "Catalog item",
+        unit: "EACH",
+        quantity: 2,
+        preferredUnitCost: 10,
+        notes: "Legacy",
+        evidenceContext: testEvidenceContext("observation_1")
+      }),
+      lineItemType: "explorer" as const
+    };
+    const parsed = parseUserProjectV9({ ...project, lineItems: [legacyLine] });
+
+    expect(parsed?.lineItems[0].lineItemType).toBe("catalog");
+    expect(parsed?.lineItems[0].evidenceContext).toEqual(legacyLine.evidenceContext);
+    expect(parsed?.lineItems[0]).toMatchObject({
+      lineItemId: legacyLine.lineItemId,
+      quantity: 2,
+      preferredUnitCost: 10,
+      notes: "Legacy",
+      group: "Construction"
+    });
+  });
+
+  it("keeps schema-v8 catalog lines without evidence as catalog lines", () => {
+    const project = createUserProject("Catalog migration", "CO");
+    const line = createCatalogProjectLineItem({
+      state: "CO",
+      agencyId: "co_cdot",
+      agencyItemId: "co_cdot_001",
+      group: "",
+      itemCode: "001",
+      description: "Catalog item",
+      unit: "EACH",
+      quantity: null,
+      preferredUnitCost: null,
+      notes: "",
+      evidenceContext: null
+    });
+
+    const parsed = parseUserProjectV9({ ...project, lineItems: [line] });
+    expect(parsed?.lineItems[0].lineItemType).toBe("catalog");
+    expect(parsed?.lineItems[0].evidenceContext).toBeNull();
+    expect(parsed?.lineItems[0].quantity).toBeNull();
+    expect(parsed?.lineItems[0].preferredUnitCost).toBeNull();
+  });
+
+  it("rejects a Project containing malformed non-null evidence", () => {
+    const project = createUserProject("Malformed evidence", "CO");
+    const line = createCatalogProjectLineItem({
+      state: "CO",
+      agencyId: "co_cdot",
+      agencyItemId: "co_cdot_001",
+      group: "",
+      itemCode: "001",
+      description: "Catalog item",
+      unit: "EACH",
+      quantity: null,
+      preferredUnitCost: null,
+      notes: "",
+      evidenceContext: null
+    });
+
+    expect(parseUserProjectV9({
+      ...project,
+      lineItems: [{ ...line, evidenceContext: { invalid: true } }]
+    })).toBeNull();
   });
 
   it("tracks an independent active Project for each state", () => {
@@ -378,7 +645,7 @@ describe("Project workspace v7", () => {
     project.contingencyPercent = 12.5;
     project.lineItems = [{
       lineItemId: "line_original",
-      lineItemType: "explorer",
+      lineItemType: "catalog",
       state: "CO",
       agencyId: "co_cdot",
       agencyItemId: "co_cdot_001",
@@ -471,7 +738,7 @@ describe("Project workspace v7", () => {
 });
 
 describe("Project backup format", () => {
-  it("round trips a v7 Project with custom lines and creates collision-safe copies", () => {
+  it("round trips a v9 Project with custom lines and creates collision-safe copies", () => {
     const project = { ...createUserProject("Backup test", "IA"), contingencyPercent: 12.5, revision: 7 };
     const custom = createCustomProjectLineItem("IA");
     custom.itemCode = "SOFT";
@@ -481,7 +748,7 @@ describe("Project backup format", () => {
     project.lineItems = [custom];
     const parsed = parseProjectBackup(JSON.parse(JSON.stringify(buildProjectBackup(project))) as unknown);
     expect(parsed?.project).toEqual(project);
-    expect(parsed?.projectSchemaVersion).toBe(7);
+    expect(parsed?.projectSchemaVersion).toBe(9);
     expect(parsed?.summary).toEqual({
       constructionCost: 0,
       otherCost: 50,
@@ -496,12 +763,12 @@ describe("Project backup format", () => {
     expect(copy.revision).toBe(0);
   });
 
-  it("accepts v4 Project backups and normalizes them to v7", () => {
+  it("accepts v4 Project backups and normalizes them to v9", () => {
     const project = createUserProject("Legacy backup", "CO");
     const backup = buildProjectBackup(project);
     const legacyBackup = { ...backup, projectSchemaVersion: 4 };
     const parsed = parseProjectBackup(legacyBackup);
-    expect(parsed?.projectSchemaVersion).toBe(7);
+    expect(parsed?.projectSchemaVersion).toBe(9);
     expect(parsed?.project).toEqual(project);
     expect(parsed?.summary.totalProjectCost).toBe(0);
   });
@@ -518,7 +785,7 @@ describe("Project backup format", () => {
     };
     const parsed = parseProjectBackup({ ...backup, projectSchemaVersion: 5, project: legacyProject });
 
-    expect(parsed?.projectSchemaVersion).toBe(7);
+    expect(parsed?.projectSchemaVersion).toBe(9);
     expect(parsed?.project.lineItems[0].group).toBe("");
   });
 
@@ -533,9 +800,18 @@ describe("Project backup format", () => {
       project: legacyProject
     });
 
-    expect(parsed?.projectSchemaVersion).toBe(7);
+    expect(parsed?.projectSchemaVersion).toBe(9);
     expect(parsed?.project.contingencyPercent).toBe(0);
     expect(parsed?.summary.totalProjectCost).toBe(0);
+  });
+
+  it.each([4, 5, 6, 7, 8] as const)("accepts v%s Project backups and exports schema v9", (schemaVersion) => {
+    const project = createUserProject(`Legacy v${schemaVersion}`, "CO");
+    const backup = buildProjectBackup(project);
+    const parsed = parseProjectBackup({ ...backup, projectSchemaVersion: schemaVersion });
+
+    expect(parsed?.projectSchemaVersion).toBe(9);
+    expect(parsed?.project.projectId).toBe(project.projectId);
   });
 
   it("rejects unsupported JSON files", () => {
@@ -628,6 +904,34 @@ describe.sequential("IndexedDB Project repository", () => {
     expect(loaded?.contingencyPercent).toBe(12.5);
   });
 
+  it("persists incomplete catalog lines with nullable quantity and cost", async () => {
+    const initialized = await openProjectRepository();
+    repository = initialized.repository;
+    const project = createUserProject("Catalog persistence", "CO");
+    project.lineItems = [createCatalogProjectLineItem({
+      state: "CO",
+      agencyId: "co_cdot",
+      agencyItemId: "co_cdot_001",
+      group: "Construction",
+      itemCode: "001",
+      description: "Catalog item",
+      unit: "EACH",
+      quantity: null,
+      preferredUnitCost: null,
+      notes: "",
+      evidenceContext: null
+    })];
+    const saved = await repository.createProject(project);
+
+    const loaded = await repository.getProject(saved.projectId);
+    expect(loaded?.lineItems[0]).toMatchObject({
+      lineItemType: "catalog",
+      quantity: null,
+      preferredUnitCost: null,
+      evidenceContext: null
+    });
+  });
+
   it("retains only the latest 20 snapshots", async () => {
     const initialized = await openProjectRepository();
     repository = initialized.repository;
@@ -700,6 +1004,25 @@ describe("Project edit coordination", () => {
     second.close();
   });
 });
+
+function testEvidenceContext(observationId = ""): ProjectEvidenceContext {
+  return {
+    query: {} as never,
+    filters: {} as never,
+    sort: {} as never,
+    includedRowCount: observationId ? 1 : 0,
+    includedObservationIds: observationId ? [observationId] : [],
+    summarySnapshot: {
+      awarded: null,
+      average: null,
+      engineer: null,
+      inflationAdjustmentEnabled: false,
+      inflationTargetPeriodLabel: null,
+      valuesAreInflationAdjusted: false
+    },
+    costSource: "manual"
+  };
+}
 
 function legacyProject(projectId: string, state: string, name: string): Record<string, unknown> {
   return {
