@@ -28,6 +28,9 @@ export function renderExplorer(
   const selectedDivisionPrefix = sectionPickerMode === "division-dependent"
     ? selectedSection?.divisionPrefix ?? ""
     : "";
+  const selectedDivision = selectedDivisionPrefix
+    ? uniqueSpecDivisions(specSections).find((division) => division.divisionPrefix === selectedDivisionPrefix) ?? null
+    : null;
   const selectedItemCodeSeries = resolvedAgencyItem
     ? itemCodeSeriesForCode(resolvedAgencyItem.itemCode, stateConfig.itemCodeSeries ?? [])
     : "";
@@ -64,6 +67,8 @@ export function renderExplorer(
               ${renderSectionOptions(specSections, selectedDivisionPrefix, selectedSectionPrefix, sectionPickerMode === "independent-flat")}
             </select>
           </label>
+
+          ${renderTaxonomyContext(selectedSection, selectedDivision)}
 
           ${stateConfig.itemCodeSeries?.length ? `<label>
             <span class="label-row">Item Code Series</span>
@@ -136,6 +141,25 @@ export function bindItemPicker(
   const itemCodeSeriesSelect = form.querySelector<HTMLSelectElement>("[data-item-code-series-select]");
   const itemSearchInput = form.querySelector<HTMLInputElement>("[data-item-search]");
   const itemResults = form.querySelector<HTMLElement>("[data-item-results]");
+  const taxonomyContext = form.querySelector<HTMLElement>("[data-taxonomy-context]");
+  const taxonomyContextText = form.querySelector<HTMLElement>("[data-taxonomy-context-text]");
+  const taxonomyContextToggle = form.querySelector<HTMLButtonElement>("[data-taxonomy-context-toggle]");
+
+  function updateTaxonomyContext(): void {
+    if (!taxonomyContext || !taxonomyContextText) {
+      return;
+    }
+
+    const selectedSection = findSpecSection(specSections, sectionSelect?.value ?? "");
+    const selectedDivision = uniqueSpecDivisions(specSections).find(
+      (division) => division.divisionPrefix === divisionSelect?.value
+    ) ?? null;
+    const context = taxonomyContextFor(selectedSection, selectedDivision);
+    taxonomyContext.hidden = !context;
+    taxonomyContext.classList.remove("is-open");
+    taxonomyContextToggle?.setAttribute("aria-expanded", "false");
+    taxonomyContextText.innerHTML = context ?? "";
+  }
 
   function clearSelectedItem(options: { clearSearch: boolean } = { clearSearch: false }): void {
     if (itemCodeInput) {
@@ -173,6 +197,7 @@ export function bindItemPicker(
       )}
     `;
     sectionSelect.disabled = !divisionPrefix;
+    updateTaxonomyContext();
   }
 
   function renderCurrentResults(): void {
@@ -210,7 +235,14 @@ export function bindItemPicker(
 
   sectionSelect?.addEventListener("change", () => {
     clearSelectedItem();
+    updateTaxonomyContext();
     renderCurrentResults();
+  });
+
+  taxonomyContextToggle?.addEventListener("click", () => {
+    if (!taxonomyContext) return;
+    const isOpen = taxonomyContext.classList.toggle("is-open");
+    taxonomyContextToggle.setAttribute("aria-expanded", String(isOpen));
   });
 
   itemCodeSeriesSelect?.addEventListener("change", () => {
@@ -269,7 +301,8 @@ function renderDivisionOptions(
     .map((division) => {
       const selected = division.divisionPrefix === selectedDivisionPrefix ? "selected" : "";
       const label = divisionLabel(division);
-      return `<option value="${escapeHtml(division.divisionPrefix)}" ${selected}>${escapeHtml(label)}</option>`;
+      const title = taxonomyContextFor(null, division) ?? label;
+      return `<option value="${escapeHtml(division.divisionPrefix)}" title="${escapeHtml(stripHtml(title))}" ${selected}>${escapeHtml(label)}</option>`;
     })
     .join("");
 }
@@ -288,7 +321,8 @@ function renderSectionOptions(
     .map((specSection) => {
       const selected = specSection.sectionPrefix === selectedSectionPrefix ? "selected" : "";
       const label = `${includeDivisionPrefix ? `${specSection.divisionPrefix} - ` : ""}${sectionLabel(specSection)}`;
-      return `<option value="${escapeHtml(specSection.sectionPrefix)}" ${selected}>${escapeHtml(label)}</option>`;
+      const title = taxonomyContextFor(specSection, null) ?? label;
+      return `<option value="${escapeHtml(specSection.sectionPrefix)}" title="${escapeHtml(stripHtml(title))}" ${selected}>${escapeHtml(label)}</option>`;
     })
     .join("");
 
@@ -303,6 +337,41 @@ function divisionLabel(division: SpecSectionRecord): string {
 function sectionLabel(section: SpecSectionRecord): string {
   const title = section.sectionTitle.replace(/^Section\s+\d+\s*-\s*/i, "");
   return `${section.sectionPrefix} - ${title}`;
+}
+
+function renderTaxonomyContext(
+  section: SpecSectionRecord | null,
+  division: SpecSectionRecord | null
+): string {
+  const context = taxonomyContextFor(section, division);
+  return `
+    <div class="taxonomy-context" data-taxonomy-context ${context ? "" : "hidden"}>
+      <button type="button" class="taxonomy-context__toggle" data-taxonomy-context-toggle aria-expanded="false" aria-controls="taxonomy-context-detail" aria-label="Show selected item group information">i</button>
+      <span id="taxonomy-context-detail" class="taxonomy-context__detail" data-taxonomy-context-text role="tooltip">${context ?? ""}</span>
+    </div>
+  `;
+}
+
+function taxonomyContextFor(
+  section: SpecSectionRecord | null,
+  division: SpecSectionRecord | null
+): string | null {
+  const label = section?.sectionTitle ?? division?.divisionTitle ?? "";
+  const description = section?.taxonomyDescription ?? division?.divisionDescription ?? "";
+  const basis = section?.labelBasis ?? division?.divisionLabelBasis ?? "";
+  if (!description) return null;
+  const basisLabel = basis === "official_specification"
+    ? "Official CDOT specification"
+    : basis === "official_special_provision"
+      ? "Official CDOT special provision"
+      : basis === "catalog_derived"
+        ? "CDOT Item Code Book grouping"
+        : "";
+  return `<strong>${escapeHtml(label)}.</strong> ${escapeHtml(description)}${basisLabel ? ` <em>${escapeHtml(basisLabel)}.</em>` : ""}`;
+}
+
+function stripHtml(value: string): string {
+  return value.replace(/<[^>]*>/g, "");
 }
 
 function renderItemCodeSeriesOptions(series: ItemCodeSeriesOption[], selectedSeries: string): string {
