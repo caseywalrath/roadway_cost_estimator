@@ -5,11 +5,17 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
-from scripts.migrate_multistate_data import COST_BOOK_OBSERVATION_ID, build_cost_book_contract_items
+from scripts.migrate_multistate_data import (
+    COST_BOOK_OBSERVATION_ID,
+    build_cost_book_contract_items,
+    read_taxonomy_reference,
+    taxonomy_fields,
+)
 
 
 CO_DATA = Path("public/data/states/co")
 IMPORTS_DATA = Path("public/data/imports")
+TAXONOMY_REFERENCE = Path("data/staging/co/cdot_taxonomy_reference.csv")
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -18,6 +24,16 @@ def read_csv(path: Path) -> list[dict[str, str]]:
 
 
 class CostBookContractItemMigrationTests(unittest.TestCase):
+    def test_reviewed_taxonomy_reference_preserves_source_basis(self) -> None:
+        reference = read_taxonomy_reference(TAXONOMY_REFERENCE)
+        division = taxonomy_fields("division", "200", "fallback", "2026", "", reference)
+        section = taxonomy_fields("section", "211", "fallback", "2026", "", reference)
+
+        self.assertEqual("Earthwork", division["taxonomy_label"])
+        self.assertEqual("official_specification", division["label_basis"])
+        self.assertEqual("Tunneling & rock reinforcement", section["taxonomy_label"])
+        self.assertEqual("catalog_derived", section["label_basis"])
+
     def test_reconstruction_preserves_duplicate_source_rows_and_page_locators(self) -> None:
         imports_dir = Path("tmp/test_cost_book_contract_items")
         imports_dir.mkdir(parents=True, exist_ok=True)

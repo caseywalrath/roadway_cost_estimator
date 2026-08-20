@@ -102,9 +102,11 @@ Iowa's native PDF `SPEC` value is stored in `spec_reference_code`.
 
 State-native item hierarchy.
 
-`taxonomy_id`, `state`, `agency_id`, `taxonomy_level`, `taxonomy_code`, `parent_taxonomy_id`, `taxonomy_label`, `match_prefix`, `source_year`, `source_url`
+`taxonomy_id`, `state`, `agency_id`, `taxonomy_level`, `taxonomy_code`, `parent_taxonomy_id`, `taxonomy_label`, optional `taxonomy_description`, optional `label_basis`, `match_prefix`, `source_year`, `source_url`
 
 Current levels are `division` and `section`. Colorado and South Dakota use three-digit match prefixes; Iowa uses four digits.
+
+`label_basis` documents whether a displayed label is an `official_specification`, an `official_special_provision`, or a reviewed `catalog_derived` grouping. Empty values retain a state package's prior source treatment.
 
 ### `item_taxonomy_memberships.csv` (optional)
 
