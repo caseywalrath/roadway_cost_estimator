@@ -669,12 +669,16 @@ function mapTaxonomy(row: CsvRow): ItemTaxonomyRecord {
     taxonomyCode: row.taxonomy_code,
     parentTaxonomyId: row.parent_taxonomy_id,
     taxonomyLabel: row.taxonomy_label,
+    taxonomyDescription: row.taxonomy_description ?? "",
+    labelBasis: row.label_basis ?? "",
     matchPrefix: row.match_prefix,
     sourceYear: optionalNumber(row.source_year),
     sourceUrl: row.source_url,
     sectionPrefix: row.match_prefix,
     divisionPrefix: "",
     divisionTitle: "",
+    divisionDescription: "",
+    divisionLabelBasis: "",
     sectionTitle: row.taxonomy_label
   };
 }
@@ -704,6 +708,8 @@ function enrichTaxonomy(
     sectionPrefix: row.matchPrefix,
     divisionPrefix: division?.matchPrefix ?? "",
     divisionTitle: division?.taxonomyLabel ?? "",
+    divisionDescription: division?.taxonomyDescription ?? "",
+    divisionLabelBasis: division?.labelBasis ?? "",
     sectionTitle: row.taxonomyLabel
   };
 }

@@ -13,6 +13,7 @@ from pathlib import Path
 LEGACY_DIR = Path("public/data")
 OUTPUT_DIR = Path("public/data/states/co")
 COMMON_DIR = Path("public/data/common")
+TAXONOMY_REFERENCE_PATH = Path("data/staging/co/cdot_taxonomy_reference.csv")
 COST_BOOK_OBSERVATION_ID = re.compile(
     r"^(?P<base>.+?_(?P<row_number>\d+))_(?P<price_type>awarded_bid|average_bid|engineer_estimate)$"
 )
@@ -21,6 +22,44 @@ COST_BOOK_OBSERVATION_ID = re.compile(
 def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8-sig") as source:
         return [dict(row) for row in csv.DictReader(source)]
+
+
+def read_taxonomy_reference(path: Path) -> dict[tuple[str, str], dict[str, str]]:
+    rows = read_csv(path)
+    reference: dict[tuple[str, str], dict[str, str]] = {}
+    for row in rows:
+        key = (row["taxonomy_level"], row["taxonomy_code"])
+        if key in reference:
+            raise ValueError(f"Duplicate Colorado taxonomy reference row: {key}")
+        reference[key] = row
+    return reference
+
+
+def taxonomy_fields(
+    level: str,
+    code: str,
+    fallback_label: str,
+    fallback_year: str,
+    fallback_url: str,
+    reference: dict[tuple[str, str], dict[str, str]],
+) -> dict[str, str]:
+    override = reference.get((level, code))
+    if not override:
+        return {
+            "taxonomy_label": fallback_label,
+            "taxonomy_description": "",
+            "label_basis": "",
+            "source_year": fallback_year,
+            "source_url": fallback_url,
+        }
+
+    return {
+        "taxonomy_label": override["taxonomy_label"],
+        "taxonomy_description": override["taxonomy_description"],
+        "label_basis": override["label_basis"],
+        "source_year": override["source_year"],
+        "source_url": override["source_url"],
+    }
 
 
 def write_csv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> None:
@@ -176,11 +215,13 @@ def main() -> None:
     parser.add_argument("--legacy-dir", type=Path, default=LEGACY_DIR)
     parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument("--common-dir", type=Path, default=COMMON_DIR)
+    parser.add_argument("--taxonomy-reference", type=Path, default=TAXONOMY_REFERENCE_PATH)
     args = parser.parse_args()
 
     legacy = args.legacy_dir
     output = args.output_dir
     output.mkdir(parents=True, exist_ok=True)
+    taxonomy_reference = read_taxonomy_reference(args.taxonomy_reference)
     args.common_dir.mkdir(parents=True, exist_ok=True)
 
     legacy_sources = read_csv(legacy / "sources.csv")
@@ -466,10 +507,15 @@ def main() -> None:
                 "taxonomy_level": "division",
                 "taxonomy_code": division,
                 "parent_taxonomy_id": "",
-                "taxonomy_label": row["division_title"],
                 "match_prefix": division,
-                "source_year": row["source_year"],
-                "source_url": row["source_url"],
+                **taxonomy_fields(
+                    "division",
+                    division,
+                    row["division_title"],
+                    row["source_year"],
+                    row["source_url"],
+                    taxonomy_reference,
+                ),
             })
         taxonomy.append({
             "taxonomy_id": f"co_cdot_sec_{row['section_prefix']}",
@@ -478,10 +524,15 @@ def main() -> None:
             "taxonomy_level": "section",
             "taxonomy_code": row["section_prefix"],
             "parent_taxonomy_id": division_id,
-            "taxonomy_label": row["section_title"],
             "match_prefix": row["section_prefix"],
-            "source_year": row["source_year"],
-            "source_url": row["source_url"],
+            **taxonomy_fields(
+                "section",
+                row["section_prefix"],
+                row["section_title"],
+                row["source_year"],
+                row["source_url"],
+                taxonomy_reference,
+            ),
         })
 
     fields = {
@@ -494,7 +545,7 @@ def main() -> None:
         "bid_item_prices.csv": ["bid_item_price_id", "contract_item_id", "bid_id", "contract_id", "source_id", "unit_price", "extended_price", "source_page", "source_locator"],
         "agency_items.csv": ["agency_item_id", "state", "agency_id", "agency_name", "item_code", "current_version_id", "item_status", "canonical_item_id"],
         "agency_item_versions.csv": ["agency_item_version_id", "agency_item_id", "effective_from", "effective_to", "official_description", "official_abbreviated_description", "official_unit", "spec_reference_code", "source_id", "is_current"],
-        "item_taxonomy.csv": ["taxonomy_id", "state", "agency_id", "taxonomy_level", "taxonomy_code", "parent_taxonomy_id", "taxonomy_label", "match_prefix", "source_year", "source_url"],
+        "item_taxonomy.csv": ["taxonomy_id", "state", "agency_id", "taxonomy_level", "taxonomy_code", "parent_taxonomy_id", "taxonomy_label", "taxonomy_description", "label_basis", "match_prefix", "source_year", "source_url"],
         "item_mappings.csv": ["mapping_id", "state", "source_agency_id", "source_item_code", "target_agency_item_id", "match_status", "confidence", "reviewed_by", "reviewed_on", "notes"],
         "item_observations.csv": ["observation_id", "contract_id", "source_id", "agency_item_id", "agency_item_code", "description_raw", "description_normalized", "unit_raw", "unit_normalized", "quantity", "unit_price", "extended_price", "discipline", "price_type", "date_basis", "derivation_method", "derivation_input_count"],
     }
