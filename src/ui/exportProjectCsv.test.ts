@@ -18,6 +18,7 @@ describe("Project CSV export", () => {
     const rows = csv.split("\r\n");
     const headers = rows[0].split(",");
     const values = rows[1].split(",");
+    expect(values[headers.indexOf("Added Via")]).toBe("Manual");
     expect(headers).toContain("Group");
     expect(values[headers.indexOf("Group")]).toBe("Construction");
     expect(values[headers.indexOf("Agency ID")]).toBe("");
@@ -81,7 +82,10 @@ describe("Project CSV export", () => {
     const headers = rows[0].split(",");
     const evidenceCountColumn = headers.indexOf("Evidence Row Count");
     const observationIdsColumn = headers.indexOf("Included Observation IDs");
+    const addedViaColumn = headers.indexOf("Added Via");
 
+    expect(rows[1].split(",")[addedViaColumn]).toBe("Roadway Costing Tool");
+    expect(rows[2].split(",")[addedViaColumn]).toBe("Roadway Costing Tool");
     expect(rows[1].split(",")[evidenceCountColumn]).toBe("0");
     expect(rows[1].split(",")[observationIdsColumn]).toBe("");
     expect(rows[2].split(",")[evidenceCountColumn]).toBe("2");

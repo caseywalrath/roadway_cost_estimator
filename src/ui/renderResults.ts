@@ -14,6 +14,13 @@ import type {
 import type { InflationAdjustedPriceSet, InflationAdjustedSummary } from "../matching/inflationAdjustment";
 import type { AnnualInflationAdjustedPriceSet } from "../matching/inflationAdjustment";
 import type { ItemPriceHistoryResult } from "../matching/buildItemPriceHistoryResult";
+import {
+  COLORADO_NON_CDOT_PROJECT,
+  COLORADO_STATEWIDE_OR_UNASSIGNED_DISTRICT,
+  districtFilterLabel,
+  normalizeEvidenceDate
+} from "../matching/buildEvidenceResult";
+import { getEvidenceLocationDisplayValues } from "../matching/projectLocation";
 import { renderItemPriceHistory } from "./renderItemPriceHistory";
 
 export function renderResults(
@@ -126,6 +133,7 @@ function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: bo
 
 function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean, visibleExcludedCount: number, data: AppData): string {
   const unitOptions = uniqueValues([result.filters.unit, ...result.availableUnits].filter(Boolean));
+  const letDateBounds = getLetDateRangeBounds(data);
 
   return `
     <div class="evidence-filter-toolbar">
@@ -147,79 +155,86 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
         >
           ${filtersExpanded ? "Hide filters" : "Filters"}
         </button>
+        <button type="button" id="clear-evidence-filters" class="text-button filter-clear-button">Clear</button>
       </div>
     </div>
     <div id="evidence-filter-drawer" class="evidence-filter-drawer" ${filtersExpanded ? "" : "hidden"}>
-      <form id="evidence-filters-form" class="evidence-filter-form">
-        <label>
-          <span class="label-row">
-            Source
-          </span>
-          <select name="sourceType">
-            ${Object.entries(data.stateConfig.sourceTypeLabels)
-              .map(([value, label]) => renderSourceTypeOption(value, label, result.filters.sourceType))
-              .join("")}
-            ${renderSourceTypeOption("all", "All Sources", result.filters.sourceType)}
-          </select>
-        </label>
-
-        <label>
-          <span class="label-row">
-            Geography
-          </span>
-          <input name="geography" value="${escapeHtml(result.filters.geography)}" placeholder="District, county, or location" />
-        </label>
-
-        ${data.stateConfig.capabilities.districtFilter ? `<fieldset class="district-filter-field">
-          <legend>District</legend>
-          <details class="district-multiselect">
-            <summary>${escapeHtml(districtSummaryLabel(result.filters.districts))}</summary>
-            <div class="district-multiselect-menu">
-              ${renderDistrictCheckboxOptions(result.availableDistricts, result.filters.districts)}
-            </div>
-          </details>
-        </fieldset>` : ""}
-
-        <label>
-          <span class="label-row">
-            Unit
-          </span>
-          <select name="unit">
-            <option value="">All units</option>
-            ${unitOptions
-              .map((unit) => `<option value="${escapeHtml(unit)}" ${unit === result.filters.unit ? "selected" : ""}>${escapeHtml(unit)}</option>`)
-              .join("")}
-          </select>
-        </label>
-
-        <fieldset class="filter-range-group">
-          <legend>Year range</legend>
-          <label>
-            <span>From</span>
-            <input name="yearMin" type="number" min="1900" max="2100" value="${result.filters.yearMin ?? ""}" />
+      <form id="evidence-filters-form" class="evidence-filter-form ${data.stateConfig.capabilities.districtFilter ? "evidence-filter-form--district" : ""}">
+        <div class="filter-primary-row">
+          <label class="filter-primary-field">
+            <span class="label-row">Source</span>
+            <select name="sourceType">
+              ${Object.entries(data.stateConfig.sourceTypeLabels)
+                .map(([value, label]) => renderSourceTypeOption(value, label, result.filters.sourceType))
+                .join("")}
+              ${renderSourceTypeOption("all", "All Sources", result.filters.sourceType)}
+            </select>
           </label>
-          <label>
-            <span>To</span>
-            <input name="yearMax" type="number" min="1900" max="2100" value="${result.filters.yearMax ?? ""}" />
-          </label>
-        </fieldset>
 
-        <fieldset class="filter-range-group">
-          <legend>Quantity range</legend>
-          <label>
-            <span>Min</span>
-            ${renderQuantityInput("quantityMin", result.filters.quantityMin)}
+          <label class="filter-primary-field filter-primary-field--location">
+            <span class="label-row">Location</span>
+            <input name="geography" value="${escapeHtml(result.filters.geography)}" placeholder="Project, county, route, or location" />
           </label>
-          <label>
-            <span>Max</span>
-            ${renderQuantityInput("quantityMax", result.filters.quantityMax)}
-          </label>
-        </fieldset>
 
-        <div class="filter-form-actions">
-          <button type="submit" class="secondary-button">Apply</button>
-          <button type="button" id="clear-evidence-filters" class="secondary-button">Clear</button>
+          ${data.stateConfig.capabilities.districtFilter ? `<fieldset class="district-filter-field filter-primary-field">
+            <legend>District</legend>
+            <details class="district-multiselect">
+              <summary>${escapeHtml(districtSummaryLabel(result.filters.districts))}</summary>
+              <div class="district-multiselect-menu">
+                ${renderDistrictCheckboxOptions(result.availableDistricts, result.filters.districts)}
+              </div>
+            </details>
+          </fieldset>` : ""}
+
+          <label class="filter-primary-field filter-primary-field--unit">
+            <span class="label-row">Unit</span>
+            <select name="unit">
+              <option value="">All units</option>
+              ${unitOptions
+                .map((unit) => `<option value="${escapeHtml(unit)}" ${unit === result.filters.unit ? "selected" : ""}>${escapeHtml(unit)}</option>`)
+                .join("")}
+            </select>
+          </label>
         </div>
+
+        <div class="filter-range-row">
+          <fieldset class="filter-range-group">
+            <legend>Let date</legend>
+            <label>
+              <span>From</span>
+              <input name="letDateMin" type="date" min="${letDateBounds.min}" max="${letDateBounds.max}" value="${result.filters.letDateMin ?? ""}" />
+            </label>
+            <label>
+              <span>To</span>
+              <input name="letDateMax" type="date" min="${letDateBounds.min}" max="${letDateBounds.today}" value="${result.filters.letDateMax ?? ""}" />
+            </label>
+          </fieldset>
+
+          <fieldset class="filter-range-group">
+            <legend>Quantity range</legend>
+            <label>
+              <span>Min</span>
+              ${renderQuantityInput("quantityMin", result.filters.quantityMin)}
+            </label>
+            <label>
+              <span>Max</span>
+              ${renderQuantityInput("quantityMax", result.filters.quantityMax)}
+            </label>
+          </fieldset>
+
+          <fieldset class="filter-range-group">
+            <legend>Price range</legend>
+            <label>
+              <span>Min</span>
+              ${renderPriceInput("priceMin", result.filters.priceMin)}
+            </label>
+            <label>
+              <span>Max</span>
+              ${renderPriceInput("priceMax", result.filters.priceMax)}
+            </label>
+          </fieldset>
+        </div>
+        <p id="evidence-filter-validation" class="filter-validation-message" role="alert" hidden></p>
       </form>
     </div>
   `;
@@ -228,21 +243,22 @@ function renderEvidenceControls(result: EvidenceResult, filtersExpanded: boolean
 interface EvidenceColumn {
   key: EvidenceSortKey;
   label: string;
+  ariaLabel?: string;
 }
 
 const evidenceColumns: EvidenceColumn[] = [
   { key: "projectNumber", label: "Contract / project" },
   { key: "projectLocation", label: "Location" },
-  { key: "district", label: "District" },
+  { key: "district", label: "Dist.", ariaLabel: "District" },
   { key: "letDate", label: "Let date" },
   { key: "contractor", label: "Awarded vendor" },
-  { key: "bidCount", label: "Bid count" },
-  { key: "quantity", label: "Quantity" },
+  { key: "bidCount", label: "Bids", ariaLabel: "Bid count" },
+  { key: "quantity", label: "Qty.", ariaLabel: "Quantity" },
   { key: "unit", label: "Unit" },
   { key: "description", label: "Item description" },
-  { key: "awardedBidUnitPrice", label: "Awarded bid unit price" },
-  { key: "averageBidUnitPrice", label: "Average bid unit price" },
-  { key: "engineerEstimateUnitPrice", label: "Engineer estimate unit price" },
+  { key: "awardedBidUnitPrice", label: "Awarded Price" },
+  { key: "averageBidUnitPrice", label: "Average Price" },
+  { key: "engineerEstimateUnitPrice", label: "Engineer Estimate" },
   { key: "source", label: "Source" }
 ];
 
@@ -260,11 +276,11 @@ function renderTable(
   return `
     <div class="table-scroll-shell">
       <div class="table-scroll-affordance" aria-hidden="true"><span></span></div>
-      <div class="table-scroll" tabindex="0" aria-label="Matching project evidence table">
-        <table class="evidence-table">
+      <div class="table-scroll table-scroll--sticky-results" tabindex="0" aria-label="Matching project evidence table">
+        <table class="evidence-table matching-projects-table">
           <thead>
             <tr>
-              <th class="evidence-exclude-header">Exclude from Summary</th>
+              <th class="evidence-exclude-header">Exclude</th>
               ${columns.map((column) => renderSortableHeader(column, sort)).join("")}
             </tr>
           </thead>
@@ -281,7 +297,11 @@ function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): strin
   const isActive = sort.key === column.key;
   const ariaSort = isActive ? (sort.direction === "asc" ? "ascending" : "descending") : "none";
   const nextDirection = isActive && sort.direction === "asc" ? "descending" : "ascending";
-  const columnClass = column.key === "projectNumber" ? " evidence-project-header" : "";
+  const columnClass = [
+    column.key === "projectNumber" ? "evidence-project-header" : "",
+    ["district", "bidCount", "quantity"].includes(column.key) ? `evidence-column--${column.key}` : ""
+  ].filter(Boolean).map((className) => ` ${className}`).join("");
+  const ariaLabel = column.ariaLabel ?? column.label;
 
   return `
     <th aria-sort="${ariaSort}" class="${isActive ? "table-sorted-column" : ""}${columnClass}">
@@ -289,7 +309,7 @@ function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): strin
         type="button"
         class="table-sort-button"
         data-evidence-sort-key="${column.key}"
-        aria-label="Sort by ${escapeHtml(column.label)} ${nextDirection}"
+        aria-label="Sort by ${escapeHtml(ariaLabel)} ${nextDirection}"
       >
         <span>${escapeHtml(column.label)}</span>
         <span class="sort-indicator sort-indicator--${isActive ? sort.direction : "inactive"}" aria-hidden="true"></span>
@@ -321,41 +341,30 @@ function renderEvidenceRow(
         />
       </td>
       ${columns.map((column) => {
-        if (column.key === "projectNumber") return `<td class="evidence-project-cell">${renderProjectNumberCell(row)}</td>`;
-        if (column.key === "projectLocation") return `<td>${escapeHtml(row.project?.projectName ?? "Unknown project")}${renderProjectLocationSubtext(row)}</td>`;
-        if (column.key === "district") return `<td>${escapeHtml(row.project?.district || "Not listed")}</td>`;
-        if (column.key === "letDate") return `<td>${escapeHtml(row.project?.estimateLetDate || row.dateBasis)}</td>`;
-        if (column.key === "contractor") return `<td>${escapeHtml(row.project?.contractor || "Not listed")}</td>`;
-        if (column.key === "bidCount") return `<td>${row.project?.bidCount ?? "Not listed"}</td>`;
-        if (column.key === "quantity") return `<td>${formatNumber(row.quantity)}</td>`;
-        if (column.key === "unit") return `<td>${escapeHtml(row.unit)}</td>`;
-        if (column.key === "description") return `<td>${escapeHtml(row.descriptionRaw)}</td>`;
-        if (column.key === "awardedBidUnitPrice") return `<td>${renderUnitPrice(row.awardedBidUnitPrice, adjustedAwardedBidUnitPrice)}</td>`;
-        if (column.key === "averageBidUnitPrice") return `<td>${renderUnitPrice(row.averageBidUnitPrice, adjustedAverageBidUnitPrice)}</td>`;
-        if (column.key === "engineerEstimateUnitPrice") return `<td>${renderUnitPrice(row.engineerEstimateUnitPrice, adjustedEngineerEstimateUnitPrice)}</td>`;
-        return `<td>${escapeHtml(row.source?.sourceLabel ?? "Unknown source")}</td>`;
+        const cellClass = `evidence-cell evidence-cell--${column.key} evidence-column--${column.key}`;
+        if (column.key === "projectNumber") return `<td class="${cellClass} evidence-project-cell">${renderProjectNumberCell(row)}</td>`;
+        if (column.key === "projectLocation") return `<td class="${cellClass}">${escapeHtml(getEvidenceLocationDisplayValues(row)[0] ?? "Unknown project")}${renderProjectLocationSubtext(row)}</td>`;
+        if (column.key === "district") return `<td class="${cellClass}">${escapeHtml(row.project?.district || "Not listed")}</td>`;
+        if (column.key === "letDate") return `<td class="${cellClass}">${escapeHtml(row.project?.estimateLetDate || row.dateBasis)}</td>`;
+        if (column.key === "contractor") return `<td class="${cellClass}">${escapeHtml(row.project?.contractor || "Not listed")}</td>`;
+        if (column.key === "bidCount") return `<td class="${cellClass}">${row.project?.bidCount ?? "Not listed"}</td>`;
+        if (column.key === "quantity") return `<td class="${cellClass}">${formatNumber(row.quantity)}</td>`;
+        if (column.key === "unit") return `<td class="${cellClass}">${escapeHtml(row.unit)}</td>`;
+        if (column.key === "description") return `<td class="${cellClass}">${escapeHtml(row.descriptionRaw)}</td>`;
+        if (column.key === "awardedBidUnitPrice") return `<td class="${cellClass}">${renderUnitPrice(row.awardedBidUnitPrice, adjustedAwardedBidUnitPrice)}</td>`;
+        if (column.key === "averageBidUnitPrice") return `<td class="${cellClass}">${renderUnitPrice(row.averageBidUnitPrice, adjustedAverageBidUnitPrice)}</td>`;
+        if (column.key === "engineerEstimateUnitPrice") return `<td class="${cellClass}">${renderUnitPrice(row.engineerEstimateUnitPrice, adjustedEngineerEstimateUnitPrice)}</td>`;
+        return `<td class="${cellClass}">${escapeHtml(row.source?.sourceLabel ?? "Unknown source")}</td>`;
       }).join("")}
     </tr>
   `;
 }
 
 function renderProjectLocationSubtext(row: EvidenceRow): string {
-  const countyRegion = formatProjectLocationSubtext(row);
-  return countyRegion ? `<div class="row-subtext">${escapeHtml(countyRegion)}</div>` : "";
-}
-
-function formatProjectLocationSubtext(row: EvidenceRow): string {
-  const countyRegion = row.project?.countyRegion.trim() ?? "";
-
-  if (!countyRegion) {
-    return "";
-  }
-
-  if (row.source?.sourceType === "cost_book") {
-    return countyRegion.replace(/\s*\/\s*CDOT District \d+\s*$/i, "").trim();
-  }
-
-  return countyRegion;
+  const supportingValues = getEvidenceLocationDisplayValues(row).slice(1);
+  return supportingValues.length > 0
+    ? `<div class="row-subtext">${escapeHtml(supportingValues.join(" • "))}</div>`
+    : "";
 }
 
 function renderProjectNumberCell(row: EvidenceRow): string {
@@ -562,14 +571,17 @@ function renderFilterChips(result: EvidenceResult, data: AppData): string {
   const chips = [
     `Rows: ${formatNumber(result.filteredRows.length)}`,
     `Source: ${sourceTypeLabel(result.filters.sourceType, data)}`,
-    result.filters.geography ? `Geography: ${result.filters.geography}` : "",
+    result.filters.geography ? `Location: ${result.filters.geography}` : "",
     result.filters.districts.length > 0 ? `District: ${districtSummaryLabel(result.filters.districts)}` : "",
     result.filters.unit ? `Unit: ${result.filters.unit}` : "",
-    result.filters.yearMin !== null || result.filters.yearMax !== null
-      ? `Year: ${rangeLabel(result.filters.yearMin, result.filters.yearMax)}`
+    result.filters.letDateMin !== null || result.filters.letDateMax !== null
+      ? `Let date: ${dateRangeLabel(result.filters.letDateMin, result.filters.letDateMax)}`
       : "",
     result.filters.quantityMin !== null || result.filters.quantityMax !== null
       ? `Quantity: ${rangeLabel(result.filters.quantityMin, result.filters.quantityMax)}`
+      : "",
+    result.filters.priceMin !== null || result.filters.priceMax !== null
+      ? `Price: ${rangeLabel(result.filters.priceMin, result.filters.priceMax, true)}`
       : ""
   ].filter(Boolean);
 
@@ -590,20 +602,46 @@ function sourceTypeLabel(value: EvidenceSourceTypeFilter, data: AppData): string
   return value === "all" ? "All Sources" : data.stateConfig.sourceTypeLabels[value] ?? value;
 }
 
-function rangeLabel(minimum: number | null, maximum: number | null): string {
+function rangeLabel(minimum: number | null, maximum: number | null, currency = false): string {
   if (minimum !== null && maximum !== null) {
-    return `${formatNumber(minimum)}-${formatNumber(maximum)}`;
+    return `${currency ? formatCurrency(minimum) : formatNumber(minimum)}-${currency ? formatCurrency(maximum) : formatNumber(maximum)}`;
   }
 
   if (minimum !== null) {
-    return `${formatNumber(minimum)}+`;
+    return `${currency ? formatCurrency(minimum) : formatNumber(minimum)}+`;
   }
 
   if (maximum !== null) {
-    return `<= ${formatNumber(maximum)}`;
+    return `<= ${currency ? formatCurrency(maximum) : formatNumber(maximum)}`;
   }
 
   return "Any";
+}
+
+function dateRangeLabel(minimum: string | null, maximum: string | null): string {
+  if (minimum !== null && maximum !== null) {
+    return `${formatEvidenceDate(minimum)}-${formatEvidenceDate(maximum)}`;
+  }
+
+  if (minimum !== null) {
+    return `${formatEvidenceDate(minimum)}+`;
+  }
+
+  if (maximum !== null) {
+    return `<= ${formatEvidenceDate(maximum)}`;
+  }
+
+  return "Any";
+}
+
+function formatEvidenceDate(value: string): string {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC"
+  }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
 function renderDistrictCheckboxOptions(districts: string[], selectedDistricts: string[]): string {
@@ -614,14 +652,27 @@ function renderDistrictCheckboxOptions(districts: string[], selectedDistricts: s
     return `<p class="district-multiselect-empty">No districts available for current source.</p>`;
   }
 
-  return options
-    .map((district) => `
+  const regularDistricts = options.filter((district) => !isColoradoSpecialDistrictFilter(district));
+  const specialDistricts = options.filter(isColoradoSpecialDistrictFilter);
+  const regularOptions = regularDistricts.map((district) => renderDistrictCheckboxOption(district, selectedSet)).join("");
+  const specialOptions = specialDistricts.length === 0
+    ? ""
+    : `<p class="district-multiselect-group-label">Other project types</p>${specialDistricts.map((district) => renderDistrictCheckboxOption(district, selectedSet)).join("")}`;
+
+  return `${regularOptions}${specialOptions}`;
+}
+
+function renderDistrictCheckboxOption(district: string, selectedDistricts: ReadonlySet<string>): string {
+  return `
       <label class="district-checkbox-label">
-        <input name="districts" type="checkbox" value="${escapeHtml(district)}" ${selectedSet.has(district) ? "checked" : ""} />
-        <span>${escapeHtml(district)}</span>
+        <input name="districts" type="checkbox" value="${escapeHtml(district)}" ${selectedDistricts.has(district) ? "checked" : ""} />
+        <span>${escapeHtml(districtFilterLabel(district))}</span>
       </label>
-    `)
-    .join("");
+    `;
+}
+
+function isColoradoSpecialDistrictFilter(value: string): boolean {
+  return value === COLORADO_STATEWIDE_OR_UNASSIGNED_DISTRICT || value === COLORADO_NON_CDOT_PROJECT;
 }
 
 function districtSummaryLabel(selectedDistricts: string[]): string {
@@ -630,14 +681,45 @@ function districtSummaryLabel(selectedDistricts: string[]): string {
   }
 
   if (selectedDistricts.length === 1) {
-    return `District ${selectedDistricts[0]}`;
+    return districtFilterLabel(selectedDistricts[0]);
   }
 
-  return `${selectedDistricts.length} districts`;
+  return selectedDistricts.every((district) => !isColoradoSpecialDistrictFilter(district))
+    ? `${selectedDistricts.length} districts`
+    : selectedDistricts.map((district) => districtFilterLabel(district)).join(", ");
 }
 
 function renderQuantityInput(name: "quantityMin" | "quantityMax", value: number | null): string {
   return `<input name="${name}" type="text" value="${value ?? ""}" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" />`;
+}
+
+function renderPriceInput(name: "priceMin" | "priceMax", value: number | null): string {
+  return `<input name="${name}" type="text" value="${value ?? ""}" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" aria-label="${name === "priceMin" ? "Minimum awarded price" : "Maximum awarded price"}" />`;
+}
+
+function getLetDateRangeBounds(data: AppData): { min: string; max: string; today: string } {
+  const dates = [
+    ...(data.lettings ?? []).map((letting) => letting.lettingDate),
+    ...(data.contracts ?? []).map((contract) => contract.estimateLetDate),
+    ...(data.observations ?? []).map((observation) => observation.dateBasis)
+  ]
+    .map((value) => normalizeEvidenceDate(value))
+    .filter((value): value is string => value !== null)
+    .sort();
+  const today = formatLocalIsoDate(new Date());
+
+  return {
+    min: dates[0] ?? today,
+    max: dates[dates.length - 1] ?? today,
+    today
+  };
+}
+
+function formatLocalIsoDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function readEvidenceFiltersFromForm(
@@ -651,10 +733,14 @@ export function readEvidenceFiltersFromForm(
     sourceType: String(formData.get("sourceType") || "all") as EvidenceSourceTypeFilter,
     geography: String(formData.get("geography") || ""),
     districts: formData.getAll("districts").map((value) => String(value)).filter(Boolean),
-    yearMin: readOptionalNumber(formData.get("yearMin")),
-    yearMax: readOptionalNumber(formData.get("yearMax")),
+    letDateMin: readOptionalDate(formData.get("letDateMin")),
+    letDateMax: readOptionalDate(formData.get("letDateMax")),
+    yearMin: null,
+    yearMax: null,
     quantityMin: readOptionalNumber(formData.get("quantityMin")),
     quantityMax: readOptionalNumber(formData.get("quantityMax")),
+    priceMin: readOptionalNumber(formData.get("priceMin")),
+    priceMax: readOptionalNumber(formData.get("priceMax")),
     unit: String(formData.get("unit") || "")
   };
 }
@@ -772,6 +858,10 @@ function readOptionalNumber(value: FormDataEntryValue | null): number | null {
 
   const numberValue = Number(text);
   return Number.isFinite(numberValue) ? numberValue : null;
+}
+
+function readOptionalDate(value: FormDataEntryValue | null): string | null {
+  return normalizeEvidenceDate(String(value || "").trim());
 }
 
 function uniqueValues(values: string[]): string[] {

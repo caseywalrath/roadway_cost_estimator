@@ -19,6 +19,7 @@ const projectCsvColumns: ProjectCsvColumn[] = [
   { header: "Project Location", value: (project) => project.location },
   { header: "Project Notes", value: (project) => project.notes },
   { header: "Line Number", value: (_project, _lineItem, lineNumber) => lineNumber },
+  { header: "Added Via", value: (_project, lineItem) => lineItem.lineItemType === "custom" ? "Manual" : "Roadway Costing Tool" },
   { header: "Group", value: (_project, lineItem) => lineItem.group },
   { header: "Agency ID", value: (_project, lineItem) => lineItem.agencyId },
   { header: "Agency Item ID", value: (_project, lineItem) => lineItem.agencyItemId },

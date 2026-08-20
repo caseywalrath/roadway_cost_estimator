@@ -478,10 +478,15 @@ export interface EvidenceFilters {
   sourceType: EvidenceSourceTypeFilter;
   geography: string;
   districts: string[];
+  letDateMin: string | null;
+  letDateMax: string | null;
+  /** Legacy year-only bounds are retained for reading older saved evidence contexts. */
   yearMin: number | null;
   yearMax: number | null;
   quantityMin: number | null;
   quantityMax: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
   unit: string;
 }
 
