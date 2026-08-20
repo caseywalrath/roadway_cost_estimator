@@ -5,7 +5,8 @@ import {
   buildEvidenceSummaryStats,
   buildEvidenceStats,
   createDefaultEvidenceFilters,
-  createDefaultEvidenceSort
+  createDefaultEvidenceSort,
+  normalizeEvidenceDate
 } from "../matching/buildEvidenceResult";
 import {
   buildItemPriceHistoryResult,
@@ -31,6 +32,7 @@ import {
   createCatalogProjectLineItem,
   createCustomProjectLineItem,
   duplicateUserProject,
+  enableProjectLineDescriptionOverride,
   findExactProjectCatalogItem,
   findDuplicateCatalogLineItemIds,
   getActiveProject,
@@ -69,6 +71,11 @@ import type { PendingDuplicateProjectLine, ProjectManagerFilters, ProjectMetadat
 import { readEvidenceFiltersFromForm, renderResults } from "./renderResults";
 import { readItemPriceHistoryFiltersFromForm } from "./renderItemPriceHistory";
 import { renderSourceReview } from "./renderSourceReview";
+import {
+  captureResultsTableScroll,
+  restoreResultsTableScroll
+} from "./resultsScroll";
+import type { ResultsTableScrollPosition } from "./resultsScroll";
 
 type AppView = "explorer" | "project" | "sourceReview";
 type ProjectSubview = "workspace" | "manager";
@@ -79,6 +86,13 @@ type PendingFocus =
   | "sourceDetail"
   | { sourceProjectId: string }
   | { projectLineId: string; field: string };
+
+interface PendingEvidenceFilterFocus {
+  name: string;
+  selectionStart: number | null;
+  selectionEnd: number | null;
+  districtMenuOpen: boolean;
+}
 
 export function createFreshCatalogExplorerQuery(emptyQuery: SearchQuery, lineItem: ProjectLineItem): SearchQuery {
   return {
@@ -151,6 +165,9 @@ export async function renderApp(
   let snapshotTimer: number | null = null;
   let storagePersistenceRequested = false;
   let pendingFocus: PendingFocus | null = null;
+  let pendingEvidenceFilterFocus: PendingEvidenceFilterFocus | null = null;
+  let pendingResultsTableScroll: ResultsTableScrollPosition | null = null;
+  let evidenceFilterDebounceTimer: number | null = null;
   let pendingDuplicateLine: PendingDuplicateProjectLine | null = null;
   let projectLineNotice: string | null = null;
   let projectLineNoticeToken = 0;
@@ -263,6 +280,10 @@ export async function renderApp(
 
     applyPendingFocus(root, pendingFocus);
     pendingFocus = null;
+    restoreEvidenceFilterFocus(root, pendingEvidenceFilterFocus);
+    pendingEvidenceFilterFocus = null;
+    restoreResultsTableScroll(root, pendingResultsTableScroll);
+    pendingResultsTableScroll = null;
 
     root.querySelectorAll<HTMLButtonElement>("[data-app-view]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -323,27 +344,31 @@ export async function renderApp(
     });
 
     const evidenceFiltersForm = root.querySelector<HTMLFormElement>("#evidence-filters-form");
-    evidenceFiltersForm?.querySelectorAll<HTMLInputElement>('input[name="quantityMin"], input[name="quantityMax"]').forEach((input) => {
-      input.addEventListener("input", () => {
-        input.setCustomValidity("");
-      });
-    });
-
-    evidenceFiltersForm?.addEventListener("submit", (event) => {
-      event.preventDefault();
-
-      if (!validateQuantityRange(evidenceFiltersForm)) {
+    evidenceFiltersForm?.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input, select").forEach((control) => {
+      if (control.name === "districts") {
+        control.addEventListener("change", () => scheduleEvidenceFilterUpdate(evidenceFiltersForm, 250));
         return;
       }
 
-      evidenceFilters = readEvidenceFiltersFromForm(evidenceFiltersForm, evidenceFilters);
-      selectedBidderDetailKey = null;
-      selectedSourceProjectId = null;
-      evidenceFiltersExpanded = true;
-      render();
+      if (control instanceof HTMLInputElement) {
+        control.addEventListener("input", () => scheduleEvidenceFilterUpdate(evidenceFiltersForm, 300));
+        control.addEventListener("blur", () => applyEvidenceFiltersFromForm(evidenceFiltersForm, false));
+      } else {
+        control.addEventListener("change", () => applyEvidenceFiltersFromForm(evidenceFiltersForm));
+      }
+    });
+
+    evidenceFiltersForm?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      applyEvidenceFiltersFromForm(evidenceFiltersForm);
     });
 
     root.querySelector<HTMLButtonElement>("#clear-evidence-filters")?.addEventListener("click", () => {
+      if (evidenceFilterDebounceTimer !== null) {
+        window.clearTimeout(evidenceFilterDebounceTimer);
+        evidenceFilterDebounceTimer = null;
+      }
       evidenceFilters = createDefaultEvidenceFilters(result.query);
       selectedBidderDetailKey = null;
       selectedSourceProjectId = null;
@@ -401,6 +426,7 @@ export async function renderApp(
     });
 
     root.querySelector<HTMLInputElement>("#inflation-adjustment-toggle")?.addEventListener("change", (event) => {
+      pendingResultsTableScroll = captureResultsTableScroll(root);
       inflationAdjustmentEnabled = (event.currentTarget as HTMLInputElement).checked;
       render();
     });
@@ -739,6 +765,67 @@ export async function renderApp(
     });
   }
 
+  function scheduleEvidenceFilterUpdate(form: HTMLFormElement, delay: number): void {
+    if (evidenceFilterDebounceTimer !== null) {
+      window.clearTimeout(evidenceFilterDebounceTimer);
+    }
+    evidenceFilterDebounceTimer = window.setTimeout(() => {
+      evidenceFilterDebounceTimer = null;
+      applyEvidenceFiltersFromForm(form);
+    }, delay);
+  }
+
+  function applyEvidenceFiltersFromForm(form: HTMLFormElement, preserveFocus = true): void {
+    const validationMessage = validateEvidenceFilterRanges(form);
+    const validationElement = form.querySelector<HTMLElement>("#evidence-filter-validation");
+    if (validationMessage) {
+      if (validationElement) {
+        validationElement.textContent = validationMessage;
+        validationElement.hidden = false;
+      }
+      return;
+    }
+
+    if (preserveFocus) {
+      pendingEvidenceFilterFocus = captureEvidenceFilterFocus(form);
+    }
+    evidenceFilters = readEvidenceFiltersFromForm(form, evidenceFilters);
+    selectedBidderDetailKey = null;
+    selectedSourceProjectId = null;
+    evidenceFiltersExpanded = true;
+    render();
+  }
+
+  function captureEvidenceFilterFocus(form: HTMLFormElement): PendingEvidenceFilterFocus | null {
+    const activeElement = document.activeElement;
+    if (!(activeElement instanceof HTMLInputElement || activeElement instanceof HTMLSelectElement)
+      || !form.contains(activeElement)) {
+      return null;
+    }
+
+    return {
+      name: activeElement.name,
+      selectionStart: activeElement instanceof HTMLInputElement ? activeElement.selectionStart : null,
+      selectionEnd: activeElement instanceof HTMLInputElement ? activeElement.selectionEnd : null,
+      districtMenuOpen: Boolean(form.querySelector<HTMLDetailsElement>(".district-multiselect")?.open)
+    };
+  }
+
+  function restoreEvidenceFilterFocus(rootElement: HTMLElement, focus: PendingEvidenceFilterFocus | null): void {
+    if (!focus) return;
+    const control = [...rootElement.querySelectorAll<HTMLInputElement | HTMLSelectElement>("#evidence-filters-form input, #evidence-filters-form select")]
+      .find((candidate) => candidate.name === focus.name);
+    if (!control) return;
+    control.focus();
+    if (control instanceof HTMLInputElement && focus.selectionStart !== null && focus.selectionEnd !== null) {
+      control.setSelectionRange(focus.selectionStart, focus.selectionEnd);
+    }
+    if (focus.districtMenuOpen) {
+      const details = rootElement.querySelector<HTMLDetailsElement>("#evidence-filters-form .district-multiselect");
+      if (details) details.open = true;
+    }
+  }
+
   function showProjectLineNotice(message: string): void {
     const noticeToken = ++projectLineNoticeToken;
     projectLineNotice = message;
@@ -955,6 +1042,19 @@ export async function renderApp(
       });
     });
 
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-enable-project-line-description]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const activeProject = getActiveProject(projectState, data.stateConfig.code);
+        const lineItemId = button.dataset.enableProjectLineDescription ?? "";
+        const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId) ?? null;
+        if (!activeProject || !lineItem || lineItem.lineItemType !== "catalog" || projectReadOnly) return;
+        if (!window.confirm("Allow editing this item description?")) return;
+
+        pendingFocus = { projectLineId: lineItemId, field: "description" };
+        persistProjectState(enableProjectLineDescriptionOverride(projectState, activeProject.projectId, lineItemId), true);
+      });
+    });
+
     root.querySelectorAll<HTMLButtonElement>("[data-project-sort-key]").forEach((button) => {
       button.addEventListener("click", () => {
         const sortKey = button.dataset.projectSortKey as ProjectSortKey | undefined;
@@ -1010,7 +1110,7 @@ export async function renderApp(
         const itemCodeInput = lineItem.lineItemType === "custom"
           ? row.querySelector<HTMLInputElement>('[data-project-line-field="itemCode"]')
           : null;
-        const descriptionInput = lineItem.lineItemType === "custom"
+        const descriptionInput = lineItem.lineItemType === "custom" || lineItem.descriptionOverrideEnabled
           ? row.querySelector<HTMLInputElement>('[data-project-line-field="description"]')
           : null;
         const unitInput = lineItem.lineItemType === "custom"
@@ -1019,10 +1119,12 @@ export async function renderApp(
         const nextState = updateProjectLineItem(projectState, activeProject.projectId, lineItemId, {
           group: groupInput?.value ?? "",
           ...(lineItem.lineItemType === "custom" ? {
-            itemCode: itemCodeInput?.value ?? "",
-            description: descriptionInput?.value ?? "",
-            unit: unitInput?.value ?? ""
-          } : {}),
+              itemCode: itemCodeInput?.value ?? "",
+              description: descriptionInput?.value ?? "",
+              unit: unitInput?.value ?? ""
+            } : lineItem.descriptionOverrideEnabled ? {
+              description: descriptionInput?.value ?? ""
+            } : {}),
           quantity: quantityResult.value,
           preferredUnitCost: preferredUnitCostResult.value,
           notes: notesInput?.value ?? ""
@@ -1518,39 +1620,50 @@ function readRequiredPositiveNumber(input: HTMLInputElement | null, message: str
   return value;
 }
 
-function validateQuantityRange(form: HTMLFormElement): boolean {
-  const quantityMinInput = form.elements.namedItem("quantityMin") as HTMLInputElement | null;
-  const quantityMaxInput = form.elements.namedItem("quantityMax") as HTMLInputElement | null;
-
-  if (!quantityMinInput || !quantityMaxInput) {
-    return true;
+function validateEvidenceFilterRanges(form: HTMLFormElement): string | null {
+  const minimumDateInput = form.elements.namedItem("letDateMin") as HTMLInputElement | null;
+  const maximumDateInput = form.elements.namedItem("letDateMax") as HTMLInputElement | null;
+  if (minimumDateInput && maximumDateInput) {
+    const minimumDate = minimumDateInput.value.trim();
+    const maximumDate = maximumDateInput.value.trim();
+    if (minimumDate && !normalizeEvidenceDate(minimumDate)) {
+      return "Let date From must be a valid date.";
+    }
+    if (maximumDate && !normalizeEvidenceDate(maximumDate)) {
+      return "Let date To must be a valid date.";
+    }
+    if (minimumDate && maximumDate && minimumDate > maximumDate) {
+      return "Let date To must be on or after From.";
+    }
   }
 
-  quantityMinInput.setCustomValidity("");
-  quantityMaxInput.setCustomValidity("");
+  const ranges: Array<{ min: string; max: string; label: string }> = [
+    { min: "quantityMin", max: "quantityMax", label: "Quantity" },
+    { min: "priceMin", max: "priceMax", label: "Price" }
+  ];
 
-  const quantityMin = readOptionalFormNumber(quantityMinInput.value);
-  const quantityMax = readOptionalFormNumber(quantityMaxInput.value);
+  for (const range of ranges) {
+    const minimumInput = form.elements.namedItem(range.min) as HTMLInputElement | null;
+    const maximumInput = form.elements.namedItem(range.max) as HTMLInputElement | null;
+    if (!minimumInput || !maximumInput) continue;
 
-  if (quantityMinInput.value.trim() && quantityMin === null) {
-    quantityMinInput.setCustomValidity("Enter a numeric minimum quantity.");
-    quantityMinInput.reportValidity();
-    return false;
+    const minimumText = minimumInput.value.trim();
+    const maximumText = maximumInput.value.trim();
+    const minimum = readOptionalFormNumber(minimumText);
+    const maximum = readOptionalFormNumber(maximumText);
+
+    if (minimumText && minimum === null) {
+      return `${range.label} minimum must be a non-negative number.`;
+    }
+    if (maximumText && maximum === null) {
+      return `${range.label} maximum must be a non-negative number.`;
+    }
+    if (minimum !== null && maximum !== null && minimum > maximum) {
+      return `${range.label} maximum must be greater than or equal to minimum.`;
+    }
   }
 
-  if (quantityMaxInput.value.trim() && quantityMax === null) {
-    quantityMaxInput.setCustomValidity("Enter a numeric maximum quantity.");
-    quantityMaxInput.reportValidity();
-    return false;
-  }
-
-  if (quantityMin !== null && quantityMax !== null && quantityMin > quantityMax) {
-    quantityMaxInput.setCustomValidity("Maximum quantity must be greater than or equal to minimum quantity.");
-    quantityMaxInput.reportValidity();
-    return false;
-  }
-
-  return true;
+  return null;
 }
 
 function readOptionalFormNumber(value: string): number | null {

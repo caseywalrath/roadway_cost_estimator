@@ -56,6 +56,7 @@ export interface ProjectLineItem {
   group: string;
   itemCode: string;
   description: string;
+  descriptionOverrideEnabled: boolean;
   unit: string;
   quantity: number | null;
   preferredUnitCost: number | null;
@@ -205,6 +206,7 @@ export function createCatalogProjectLineItem(input: CreateProjectLineItemInput):
     lineItemType: "catalog",
     ...input,
     group: normalizeProjectGroup(input.group),
+    descriptionOverrideEnabled: false,
     createdAt: now,
     updatedAt: now
   };
@@ -221,6 +223,7 @@ export function createCustomProjectLineItem(state: string): ProjectLineItem {
     group: "",
     itemCode: "",
     description: "",
+    descriptionOverrideEnabled: true,
     unit: "",
     quantity: null,
     preferredUnitCost: null,
@@ -266,6 +269,7 @@ export function linkProjectLineItemToCatalog(
     agencyItemId: agencyItem.agencyItemId,
     itemCode: agencyItem.itemCode,
     description: agencyItem.officialDescription,
+    descriptionOverrideEnabled: false,
     unit: agencyItem.officialUnit,
     evidenceContext: null,
     updatedAt: currentTimestamp()
@@ -331,12 +335,30 @@ export function updateProjectLineItem(
         ? normalizeProjectLineItemFields(fields)
         : {
             ...(fields.group !== undefined ? { group: normalizeProjectGroup(fields.group) } : {}),
+            ...(lineItem.descriptionOverrideEnabled && fields.description !== undefined ? { description: String(fields.description) } : {}),
             ...(fields.quantity !== undefined ? { quantity: fields.quantity } : {}),
             ...(fields.preferredUnitCost !== undefined ? { preferredUnitCost: fields.preferredUnitCost } : {}),
             ...(fields.notes !== undefined ? { notes: fields.notes } : {})
           };
       return { ...lineItem, ...allowedFields, updatedAt: now };
     }),
+    updatedAt: now
+  });
+}
+
+export function enableProjectLineDescriptionOverride(
+  state: ProjectWorkspaceState,
+  projectId: string,
+  lineItemId: string
+): ProjectWorkspaceState {
+  const project = state.projects.find((candidate) => candidate.projectId === projectId);
+  if (!project) return state;
+  const now = currentTimestamp();
+  return updateProject(state, projectId, {
+    ...project,
+    lineItems: project.lineItems.map((lineItem) => lineItem.lineItemId === lineItemId && lineItem.lineItemType === "catalog"
+      ? { ...lineItem, descriptionOverrideEnabled: true, updatedAt: now }
+      : lineItem),
     updatedAt: now
   });
 }
@@ -681,6 +703,7 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
       group: normalizeProjectGroup(value.group),
       itemCode,
       description,
+      descriptionOverrideEnabled: value.descriptionOverrideEnabled === true,
       unit,
       quantity,
       preferredUnitCost,
@@ -699,6 +722,7 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
     group: normalizeProjectGroup(value.group),
     itemCode,
     description,
+    descriptionOverrideEnabled: true,
     unit,
     quantity,
     preferredUnitCost,

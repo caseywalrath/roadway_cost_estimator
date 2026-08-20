@@ -10,21 +10,32 @@ import type {
   SearchQuery
 } from "../data/schema";
 import { normalizeDescription, normalizeUnit } from "./normalizeDescription";
+import { evidenceLocationMatches } from "./projectLocation";
 
 const DEFAULT_EVIDENCE_SORT: EvidenceSort = {
   key: "letDate",
   direction: "desc"
 };
 
+export const COLORADO_STATEWIDE_OR_UNASSIGNED_DISTRICT = "__colorado_statewide_or_unassigned__";
+export const COLORADO_NON_CDOT_PROJECT = "__colorado_non_cdot_project__";
+
+const COLORADO_STATE_CODE = "CO";
+const COLORADO_SPECIAL_DISTRICT_VALUES = new Set(["", "0", "00"]);
+
 export function createDefaultEvidenceFilters(query: SearchQuery): EvidenceFilters {
   return {
     sourceType: "all",
     geography: "",
     districts: [],
+    letDateMin: null,
+    letDateMax: null,
     yearMin: null,
     yearMax: null,
     quantityMin: null,
     quantityMax: null,
+    priceMin: null,
+    priceMax: null,
     unit: normalizeUnit(query.unit)
   };
 }
@@ -66,9 +77,23 @@ export function buildEvidenceResult(
   const availableDistricts = uniqueSorted(
     sourceRows
       .map((row) => row.project?.district ?? "")
+      .map((district) => data.stateConfig.code === COLORADO_STATE_CODE && COLORADO_SPECIAL_DISTRICT_VALUES.has(district.trim()) ? "" : district)
       .filter(Boolean)
   );
-  const nonUnitFilteredRows = sourceRows.filter((row) => rowMatchesNonUnitFilters(row, filters));
+  if (data.stateConfig.code === COLORADO_STATE_CODE
+    && sourceRows.some((row) => isColoradoStatewideOrUnassignedRow(row))) {
+    availableDistricts.push(COLORADO_STATEWIDE_OR_UNASSIGNED_DISTRICT);
+  }
+  if (data.stateConfig.code === COLORADO_STATE_CODE
+    && sourceRows.some((row) => isColoradoNonCdotRow(row, data.stateConfig.defaultAgencyId))) {
+    availableDistricts.push(COLORADO_NON_CDOT_PROJECT);
+  }
+  const nonUnitFilteredRows = sourceRows.filter((row) => rowMatchesNonUnitFilters(
+    row,
+    filters,
+    data.stateConfig.code,
+    data.stateConfig.defaultAgencyId
+  ));
   const filteredRows = nonUnitFilteredRows
     .filter((row) => !filters.unit || row.unit === filters.unit)
     .sort((left, right) => compareEvidenceRows(left, right, sort));
@@ -144,15 +169,24 @@ function normalizeEvidenceQuery(data: AppData, query: SearchQuery): SearchQuery 
 }
 
 function normalizeEvidenceFilters(filters: EvidenceFilters, query: SearchQuery): EvidenceFilters {
+  const letDateMin = normalizeEvidenceDate(filters.letDateMin) ?? legacyYearBoundary(filters.yearMin, false);
+  const letDateMax = normalizeEvidenceDate(filters.letDateMax) ?? legacyYearBoundary(filters.yearMax, true);
+
   return {
     ...filters,
     geography: filters.geography.trim(),
-    districts: uniqueSorted(filters.districts.map((district) => district.trim()).filter(Boolean)),
+    districts: uniqueSorted(filters.districts
+      .map((district) => normalizeDistrictFilterValue(district, query.state))
+      .filter(Boolean)),
+    letDateMin,
+    letDateMax,
+    yearMin: null,
+    yearMax: null,
     unit: normalizeUnit(filters.unit || query.unit),
-    yearMin: positiveNumberOrNull(filters.yearMin),
-    yearMax: positiveNumberOrNull(filters.yearMax),
     quantityMin: positiveNumberOrNull(filters.quantityMin),
-    quantityMax: positiveNumberOrNull(filters.quantityMax)
+    quantityMax: positiveNumberOrNull(filters.quantityMax),
+    priceMin: positiveNumberOrNull(filters.priceMin),
+    priceMax: positiveNumberOrNull(filters.priceMax)
   };
 }
 
@@ -283,34 +317,36 @@ function isDemoSourceType(sourceType: string | undefined): boolean {
   return sourceType === "public_demo" || sourceType === "internal_demo";
 }
 
-function rowMatchesNonUnitFilters(row: EvidenceRow, filters: EvidenceFilters): boolean {
+function rowMatchesNonUnitFilters(
+  row: EvidenceRow,
+  filters: EvidenceFilters,
+  stateCode: string,
+  defaultAgencyId: string
+): boolean {
   if (!sourceMatches(row, filters)) {
     return false;
   }
 
-  if (filters.districts.length > 0 && !filters.districts.includes(row.project?.district ?? "")) {
+  if (filters.districts.length > 0 && !filters.districts.some((district) => districtFilterMatchesRow(
+    district,
+    row,
+    stateCode,
+    defaultAgencyId
+  ))) {
     return false;
   }
 
   if (filters.geography) {
-    const haystack = normalizeDescription(
-      [
-        row.project?.countyRegion ?? "",
-        row.project?.projectName ?? "",
-        row.project?.projectLocationRaw ?? ""
-      ].join(" ")
-    );
-
-    if (!haystack.includes(normalizeDescription(filters.geography))) {
+    if (!evidenceLocationMatches(row, filters.geography)) {
       return false;
     }
   }
 
-  const rowYear = getYear(row.project?.estimateLetDate || row.dateBasis);
-  if (filters.yearMin !== null && (rowYear === null || rowYear < filters.yearMin)) {
+  const rowDate = evidenceRowLetDate(row);
+  if (filters.letDateMin !== null && (rowDate === null || rowDate < filters.letDateMin)) {
     return false;
   }
-  if (filters.yearMax !== null && (rowYear === null || rowYear > filters.yearMax)) {
+  if (filters.letDateMax !== null && (rowDate === null || rowDate > filters.letDateMax)) {
     return false;
   }
 
@@ -321,7 +357,58 @@ function rowMatchesNonUnitFilters(row: EvidenceRow, filters: EvidenceFilters): b
     return false;
   }
 
+  if (filters.priceMin !== null || filters.priceMax !== null) {
+    const awardedPrice = row.awardedBidUnitPrice;
+    if (awardedPrice === null || !Number.isFinite(awardedPrice)) {
+      return false;
+    }
+    if (filters.priceMin !== null && awardedPrice < filters.priceMin) {
+      return false;
+    }
+    if (filters.priceMax !== null && awardedPrice > filters.priceMax) {
+      return false;
+    }
+  }
+
   return true;
+}
+
+function districtFilterMatchesRow(
+  filter: string,
+  row: EvidenceRow,
+  stateCode: string,
+  defaultAgencyId: string
+): boolean {
+  if (filter === COLORADO_STATEWIDE_OR_UNASSIGNED_DISTRICT) {
+    return stateCode === COLORADO_STATE_CODE && isColoradoStatewideOrUnassignedRow(row);
+  }
+
+  if (filter === COLORADO_NON_CDOT_PROJECT) {
+    return stateCode === COLORADO_STATE_CODE && isColoradoNonCdotRow(row, defaultAgencyId);
+  }
+
+  return filter === (row.project?.district ?? "");
+}
+
+function isColoradoStatewideOrUnassignedRow(row: EvidenceRow): boolean {
+  return COLORADO_SPECIAL_DISTRICT_VALUES.has((row.project?.district ?? "").trim());
+}
+
+function normalizeDistrictFilterValue(value: string, stateCode: string): string {
+  const normalized = value.trim();
+  return stateCode === COLORADO_STATE_CODE && COLORADO_SPECIAL_DISTRICT_VALUES.has(normalized)
+    ? COLORADO_STATEWIDE_OR_UNASSIGNED_DISTRICT
+    : normalized;
+}
+
+function isColoradoNonCdotRow(row: EvidenceRow, defaultAgencyId: string): boolean {
+  return Boolean(row.project && row.project.agencyId !== defaultAgencyId);
+}
+
+export function districtFilterLabel(value: string): string {
+  if (value === COLORADO_STATEWIDE_OR_UNASSIGNED_DISTRICT) return "Statewide / unassigned";
+  if (value === COLORADO_NON_CDOT_PROJECT) return "Non-CDOT project";
+  return `District ${value}`;
 }
 
 export function buildEvidenceStats(rows: EvidenceRow[]): EvidenceStats | null {
@@ -546,7 +633,29 @@ function positiveNumberOrNull(value: number | null): number | null {
   return value !== null && Number.isFinite(value) && value >= 0 ? value : null;
 }
 
-function getYear(value: string): number | null {
-  const match = value.match(/\d{4}/);
-  return match ? Number(match[0]) : null;
+export function normalizeEvidenceDate(value: unknown): string | null {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day
+    ? value
+    : null;
+}
+
+function legacyYearBoundary(value: number | null | undefined, endOfYear: boolean): string | null {
+  if (value === null || value === undefined || !Number.isInteger(value) || value < 0 || value > 9999) {
+    return null;
+  }
+
+  return `${String(value).padStart(4, "0")}-${endOfYear ? "12-31" : "01-01"}`;
+}
+
+function evidenceRowLetDate(row: EvidenceRow): string | null {
+  return normalizeEvidenceDate(row.project?.estimateLetDate)
+    ?? normalizeEvidenceDate(row.dateBasis);
 }

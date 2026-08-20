@@ -49,6 +49,11 @@ describe("renderItemPriceHistory", () => {
     expect(html).toContain("<tbody><tr><td>2025</td>");
   });
 
+  it("uses the sticky-results scroll region for long history tables", () => {
+    const html = renderItemPriceHistory(result, config, false, null, false);
+    expect(html).toContain('class="table-scroll table-scroll--sticky-results"');
+  });
+
   it("uses the Nebraska table measure label without the published qualifier", () => {
     const html = renderItemPriceHistory(result, { ...config, periodPriceMeasureLabel: "Average Unit Price" }, false, null, false);
     expect(html).toContain(">Average Unit Price</span>");

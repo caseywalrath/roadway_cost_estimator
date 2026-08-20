@@ -139,13 +139,15 @@ The user reviews active filter chips above the evidence table. The full filter c
 Current evidence filters:
 
 - Source
-- Geography
+- Location
 - District
 - Unit
-- Year from
-- Year to
+- Let date from
+- Let date to
 - Quantity min
 - Quantity max
+- Awarded Price min
+- Awarded Price max
 - Only rows with awarded bid price
 
 How to use it:
@@ -155,11 +157,14 @@ How to use it:
 - Filters remove rows from the table instead of changing a hidden relevance score.
 - Use Quantity min and Quantity max in the filter drawer to refine the evidence set by bid quantity.
 - Enter numeric quantity values directly. Decimals are allowed when needed, and the app warns if minimum quantity exceeds maximum quantity.
-- Select one or more districts from the District checkbox dropdown when district filtering is useful.
+- Use Let date From and Let date To to filter by the inclusive letting date. The native calendar controls support month/year navigation; both fields are blank by default. To accepts dates through the present day even when the latest indexed project is older.
+- Use Price min and Price max to filter by the row's unadjusted Awarded Price. Rows without an Awarded Price are excluded whenever either Price bound is active; Average Price and Engineer Estimate do not affect this filter.
+- Numeric and date filters apply automatically after a short pause while typing. Invalid or reversed ranges remain unapplied until corrected.
+- Select one or more districts from the District checkbox dropdown when district filtering is useful. In Colorado, the dropdown also includes `Statewide / unassigned` for blank, `0`, or `00` district values and `Non-CDOT project` for locally sourced projects.
 - Unit defaults to the official selected item unit.
 - Unit-mismatch rows are excluded by default and counted in data notes when present.
-- Click Apply filters to update the table. The drawer closes after filters are applied.
-- Click Clear Filters to restore default public CDOT, selected-unit, awarded-price filters while clearing geography, district, year, and quantity filters.
+- Source, Location, District, and Unit changes apply immediately.
+- Click Clear to restore default public CDOT, selected-unit, awarded-price filters while clearing location, district, letting-date, quantity, and Price filters.
 
 ## 6. Review the Unit Price Summary
 
@@ -375,7 +380,7 @@ Recommended meeting flow:
 3. Pick one familiar roadway item.
 4. Use the left-panel steps to find an item, select the official item, enter quantity, and review evidence.
 5. Review the project evidence table.
-6. Apply source, geography, district, year, unit, and quantity filters when relevant.
+6. Apply source, location, district, year, unit, and quantity filters when relevant.
 7. Review the Unit Price Summary after reviewing rows.
 8. Open Source Review when source-project or bidder-price inspection is needed.
 9. Review source coverage and data notes.

@@ -71,8 +71,11 @@ export function renderAddToProjectPanel(
   return `
     <section class="add-project-panel">
       <div class="panel-heading add-project-heading">
-        <div>
-          <h3>Add Item to Project</h3>
+        <div class="add-project-title">
+          <div class="step-heading add-project-step-heading" aria-label="Step 4 Add Item to Project">
+            <span class="step-number" aria-hidden="true">4</span>
+            <h3>Add Item to Project</h3>
+          </div>
           <p class="query-line">${escapeHtml(projectLabel(activeProject))} | ${escapeHtml(activeProject.location.trim() || "Location not specified")}</p>
         </div>
         <button type="button" class="secondary-button project-tab-shortcut" data-app-view="project">View Project</button>
@@ -345,11 +348,14 @@ function renderProjectSortableHeader(column: { key: ProjectSortKey; label: strin
 function renderProjectLineRow(lineItem: ProjectLineItem, readOnly: boolean, groupListId: string): string {
   const custom = lineItem.lineItemType === "custom";
   const catalog = lineItem.lineItemType === "catalog";
+  const descriptionEditable = custom || lineItem.descriptionOverrideEnabled;
   const disabled = readOnly ? "disabled" : "";
   return `<tr class="${custom ? "project-line-row--custom" : ""}">
     <td>${renderProjectLineInput(lineItem, "group", "Group", "project-line-group-input", disabled, "text", groupListId)}</td>
     <td>${custom ? renderProjectLineInput(lineItem, "itemCode", "Item Code", "project-line-text-input", disabled) : catalog ? renderCatalogExplorerLink(lineItem) : escapeHtml(lineItem.itemCode)}</td>
-    <td>${custom ? renderProjectLineInput(lineItem, "description", "Description", "project-line-text-input", disabled) : escapeHtml(lineItem.description)}</td>
+    <td class="project-line-description-cell">${descriptionEditable
+      ? renderProjectLineInput(lineItem, "description", "Description", "project-line-text-input", disabled)
+      : `${escapeHtml(lineItem.description)}${readOnly ? "" : renderDescriptionOverrideButton(lineItem)}`}</td>
     <td>${renderProjectLineInput(lineItem, "preferredUnitCost", "Unit Cost", "project-line-number-input", disabled, "decimal")}</td>
     <td>${custom ? renderProjectLineInput(lineItem, "unit", "Unit", "project-line-unit-input", disabled) : escapeHtml(lineItem.unit)}</td>
     <td>${renderProjectLineInput(lineItem, "quantity", "Quantity", "project-line-number-input", disabled, "decimal")}</td>
@@ -357,6 +363,11 @@ function renderProjectLineRow(lineItem: ProjectLineItem, readOnly: boolean, grou
     <td>${renderProjectLineInput(lineItem, "notes", "Notes", "project-line-notes-input", disabled)}</td>
     <td><button type="button" class="project-line-remove-button" data-remove-project-line-id="${escapeHtml(lineItem.lineItemId)}" aria-label="Remove ${escapeHtml(lineItem.itemCode || "custom item")} from project" title="Remove line" ${disabled}>${trashIcon()}</button></td>
   </tr>`;
+}
+
+function renderDescriptionOverrideButton(lineItem: ProjectLineItem): string {
+  const label = `Edit description for ${lineItem.itemCode || "catalog item"}`;
+  return `<button type="button" class="project-line-description-edit-button" data-enable-project-line-description="${escapeHtml(lineItem.lineItemId)}" aria-label="${escapeHtml(label)}" title="Edit description">${editIcon()}</button>`;
 }
 
 function renderCatalogExplorerLink(lineItem: ProjectLineItem): string {
@@ -386,6 +397,7 @@ function projectGroupListId(project: UserProject): string {
 }
 
 function trashIcon(): string { return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Z" /><path d="M6 9h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Zm4 0v8h2v-8h-2Z" /></svg>`; }
+function editIcon(): string { return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Zm12.2-12.2 1.3-1.3a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5l-1.3 1.3-3.5-3.5Z" /></svg>`; }
 function projectLabel(project: UserProject): string { return project.name.trim() || "Unnamed Project"; }
 function formatCurrency(value: number): string { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: value >= 100 ? 0 : 2 }).format(value); }
 function formatNumber(value: number): string { return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value); }

@@ -15,6 +15,7 @@ import {
   createCustomProjectLineItem,
   createUserProject,
   duplicateUserProject,
+  enableProjectLineDescriptionOverride,
   findDuplicateCatalogLineItemIds,
   findExactProjectCatalogItem,
   getActiveProject,
@@ -133,7 +134,7 @@ describe("Project workspace v9", () => {
     expect(html).not.toContain("No project items have been added");
   });
 
-  it("renders custom rows with editable fields and keeps catalog identity fields read-only", () => {
+  it("renders custom rows with editable fields and keeps catalog identity fields read-only by default", () => {
     const project = createUserProject("Mixed", "CO");
     const custom = createCustomProjectLineItem("CO");
     custom.itemCode = "SOFT";
@@ -173,6 +174,8 @@ describe("Project workspace v9", () => {
     expect(catalogHtml).not.toContain('data-project-line-field="itemCode"');
     expect(catalogHtml).not.toContain('data-project-line-field="description"');
     expect(catalogHtml).not.toContain('data-project-line-field="unit"');
+    expect(catalogHtml).toContain('data-enable-project-line-description=');
+    expect(catalogHtml).toContain('title="Edit description"');
     expect(catalogHtml).toContain('data-project-line-field="preferredUnitCost"');
     expect(catalogHtml).toContain('data-project-line-field="quantity"');
     expect(catalogHtml).toContain("data-open-catalog-explorer");
@@ -283,7 +286,7 @@ describe("Project workspace v9", () => {
     expect(projectTotal(updated)).toBe(50);
   });
 
-  it("links an exact state catalog code and locks official identity fields", () => {
+  it("links an exact state catalog code and locks official identity fields until its description override is enabled", () => {
     const agencyItem = {
       agencyItemId: "co_cdot_502-001000",
       state: "CO",
@@ -336,10 +339,26 @@ describe("Project workspace v9", () => {
       unit: "EACH",
       quantity: 3
     });
+    const descriptionOverrideState = enableProjectLineDescriptionOverride(state, project.projectId, linked.lineItemId);
+    const editedDescriptionState = updateProjectLineItem(
+      descriptionOverrideState,
+      project.projectId,
+      linked.lineItemId,
+      { description: "Project-specific pile-driving description" }
+    );
+    expect(editedDescriptionState.projects[0].lineItems[0]).toMatchObject({
+      itemCode: "502-001000",
+      description: "Project-specific pile-driving description",
+      descriptionOverrideEnabled: true,
+      unit: "EACH"
+    });
     const html = renderProjectWorkspace(project, [project], testStates(), "CO", false, null);
     expect(html).toContain("502-001000");
     expect(html).not.toContain('data-project-line-field="itemCode"');
     expect(html).not.toContain('data-project-line-field="description"');
+    const editableHtml = renderProjectWorkspace(editedDescriptionState.projects[0], editedDescriptionState.projects, testStates(), "CO", false, null);
+    expect(editableHtml).toContain('data-project-line-field="description"');
+    expect(editableHtml).not.toContain('data-enable-project-line-description=');
     expect(html).not.toContain('data-project-line-field="unit"');
   });
 
@@ -522,6 +541,8 @@ describe("Project workspace v9", () => {
     expect(explorerHtml.indexOf('name="group"')).toBeLessThan(explorerHtml.indexOf('name="preferredUnitCost"'));
     expect(explorerHtml.indexOf('name="preferredUnitCost"')).toBeLessThan(explorerHtml.indexOf('name="quantity"'));
     expect(explorerHtml).toContain('value="Construction"');
+    expect(explorerHtml).toContain('aria-label="Step 4 Add Item to Project"');
+    expect(explorerHtml).toContain('<span class="step-number" aria-hidden="true">4</span>');
   });
 
   it("normalizes legacy Project lines as catalog lines with evidence", () => {
@@ -605,6 +626,16 @@ describe("Project workspace v9", () => {
     expect(parsed?.lineItems[0].evidenceContext).toBeNull();
     expect(parsed?.lineItems[0].quantity).toBeNull();
     expect(parsed?.lineItems[0].preferredUnitCost).toBeNull();
+    expect(parsed?.lineItems[0].descriptionOverrideEnabled).toBe(false);
+
+    const parsedOverride = parseUserProjectV9({
+      ...project,
+      lineItems: [{ ...line, description: "Project-specific catalog description", descriptionOverrideEnabled: true }]
+    });
+    expect(parsedOverride?.lineItems[0]).toMatchObject({
+      description: "Project-specific catalog description",
+      descriptionOverrideEnabled: true
+    });
   });
 
   it("rejects a Project containing malformed non-null evidence", () => {
@@ -652,6 +683,7 @@ describe("Project workspace v9", () => {
       group: "Construction",
       itemCode: "001",
       description: "Test item",
+      descriptionOverrideEnabled: false,
       unit: "EACH",
       quantity: 1,
       preferredUnitCost: 2,
