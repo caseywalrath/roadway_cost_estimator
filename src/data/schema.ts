@@ -301,12 +301,16 @@ export interface ItemTaxonomyRecord {
   taxonomyCode: string;
   parentTaxonomyId: string;
   taxonomyLabel: string;
+  taxonomyDescription: string;
+  labelBasis: string;
   matchPrefix: string;
   sourceYear: number | null;
   sourceUrl: string;
   sectionPrefix: string;
   divisionPrefix: string;
   divisionTitle: string;
+  divisionDescription: string;
+  divisionLabelBasis: string;
   sectionTitle: string;
 }
 

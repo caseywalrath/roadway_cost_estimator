@@ -4,7 +4,7 @@ import { bindItemPicker, renderExplorer } from "./renderExplorer";
 import type { AgencyItemRecord, ItemTaxonomyMembershipRecord, SearchQuery, SpecSectionRecord, StateConfig } from "../data/schema";
 
 const item = { agencyItemId: "ne:200", state: "NE", agencyId: "ne_ndot", agencyName: "NDOT", itemCode: "200", currentVersionId: "v1", itemStatus: "current", canonicalItemId: "", officialDescription: "Explicit section item", officialAbbreviatedDescription: "", officialUnit: "EA", specReferenceCode: "", agency: "NDOT" } satisfies AgencyItemRecord;
-const section = { taxonomyId: "section:999", state: "NE", agencyId: "ne_ndot", taxonomyLevel: "section", taxonomyCode: "999", parentTaxonomyId: "division:9", taxonomyLabel: "Explicit section", matchPrefix: "", sourceYear: 2017, sourceUrl: "", sectionPrefix: "999", divisionPrefix: "9", divisionTitle: "Division 9", sectionTitle: "Explicit section" } satisfies SpecSectionRecord;
+const section = { taxonomyId: "section:999", state: "NE", agencyId: "ne_ndot", taxonomyLevel: "section", taxonomyCode: "999", parentTaxonomyId: "division:9", taxonomyLabel: "Explicit section", taxonomyDescription: "", labelBasis: "", matchPrefix: "", sourceYear: 2017, sourceUrl: "", sectionPrefix: "999", divisionPrefix: "9", divisionTitle: "Division 9", divisionDescription: "", divisionLabelBasis: "", sectionTitle: "Explicit section" } satisfies SpecSectionRecord;
 const query = { state: "NE", agencyId: "ne_ndot", agencyItemId: "", countyRegion: "", workType: "", estimateYear: 2026, sourceScope: "both", priceTypeScope: "awarded", itemCode: "", description: "", unit: "", quantity: null } satisfies SearchQuery;
 const config = { code: "NE", name: "Nebraska", defaultAgencyId: "ne_ndot", defaultAgencyName: "NDOT", divisionLabel: "Division", sectionLabel: "Section", sectionPrefixLength: 3, capabilities: { districtFilter: false, engineerEstimate: false, bidderDetail: false, periodPriceHistory: true }, sourceTypeLabels: {}, itemCodeSeries: [{ value: "2", label: "2000–2999", prefixes: ["2"] }, { value: "7", label: "7000–7999", prefixes: ["7"] }], files: { sources: "", lettings: "", contracts: "", contractProjects: "", contractItems: "", bids: "", agencyItems: "", agencyItemVersions: "", itemTaxonomy: "", itemTaxonomyMemberships: "memberships.csv", itemMappings: "", observations: "" } } satisfies StateConfig;
 
@@ -13,7 +13,7 @@ describe("renderExplorer", () => {
     const memberships = new Map<string, ItemTaxonomyMembershipRecord[]>([[item.agencyItemId, [{ membershipId: "m", state: "NE", agencyId: "ne_ndot", agencyItemId: item.agencyItemId, taxonomyId: section.taxonomyId, sourceId: "s", matchStatus: "catalog_exact", notes: "" }]]]);
     const html = renderExplorer({ ...query, agencyItemId: item.agencyItemId, itemCode: item.itemCode }, [item], [section], config, memberships);
     expect(html).toContain("Explicit section item");
-    expect(html).toContain('value="999" selected');
+    expect(html).toMatch(/<option value="999"[^>]*selected>/);
   });
 
   it("filters independently by configured item code series", () => {
@@ -36,6 +36,62 @@ describe("renderExplorer", () => {
     container.innerHTML = renderExplorer(query, [item], [section], config);
     expect(container.querySelector("[data-division-select]")).not.toBeNull();
     expect(container.querySelector<HTMLSelectElement>("[data-section-select]")?.disabled).toBe(true);
+  });
+
+  it("shows the reviewed taxonomy context without widening the picker options", () => {
+    const coloradoSection = {
+      ...section,
+      state: "CO",
+      taxonomyId: "co:211",
+      taxonomyCode: "211",
+      taxonomyLabel: "Tunneling & rock reinforcement",
+      taxonomyDescription: "Tunnel excavation, drilling, rock anchors, grouting, and instrumentation entries.",
+      labelBasis: "catalog_derived",
+      sectionPrefix: "211",
+      divisionPrefix: "200",
+      divisionTitle: "Earthwork",
+      divisionDescription: "Official CDOT Division 200.",
+      divisionLabelBasis: "official_specification",
+      sectionTitle: "Tunneling & rock reinforcement"
+    } satisfies SpecSectionRecord;
+    const container = document.createElement("div");
+    container.innerHTML = renderExplorer(
+      { ...query, state: "CO", itemCode: "211-00001" },
+      [{ ...item, state: "CO", itemCode: "211-00001" }],
+      [coloradoSection],
+      { ...config, code: "CO", files: { ...config.files, itemTaxonomyMemberships: undefined } }
+    );
+
+    expect(container.querySelector("[data-taxonomy-context]")?.hasAttribute("hidden")).toBe(false);
+    expect(container.querySelector("[data-taxonomy-context-text]")?.textContent).toContain("Tunnel excavation, drilling, rock anchors");
+    expect(container.querySelector("[data-section-select]")?.textContent).toContain("211 - Tunneling & rock reinforcement");
+  });
+
+  it("uses the selected Division context when a Section has no dedicated context", () => {
+    const coloradoSection = {
+      ...section,
+      state: "CO",
+      taxonomyId: "co:201",
+      taxonomyCode: "201",
+      taxonomyLabel: "Clearing and Grubbing",
+      sectionPrefix: "201",
+      divisionPrefix: "200",
+      divisionTitle: "Earthwork",
+      divisionDescription: "Official CDOT Division 200. Includes removals, resets, erosion control, roadside development, and environmental management.",
+      divisionLabelBasis: "official_specification",
+      sectionTitle: "Clearing and Grubbing"
+    } satisfies SpecSectionRecord;
+    const container = document.createElement("div");
+    container.innerHTML = renderExplorer(
+      { ...query, state: "CO", itemCode: "201-00001" },
+      [{ ...item, state: "CO", itemCode: "201-00001" }],
+      [coloradoSection],
+      { ...config, code: "CO", files: { ...config.files, itemTaxonomyMemberships: undefined } }
+    );
+
+    expect(container.querySelector("[data-taxonomy-context]")?.hasAttribute("hidden")).toBe(false);
+    expect(container.querySelector("[data-taxonomy-context-text]")?.textContent).toContain("Earthwork");
+    expect(container.querySelector("[data-taxonomy-context-text]")?.textContent).toContain("Includes removals, resets");
   });
 
   it("hides Nebraska annual-report catalog-provenance labels while retaining them by default elsewhere", () => {

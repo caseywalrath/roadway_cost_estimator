@@ -1,0 +1,40 @@
+taxonomy_level,taxonomy_code,parent_taxonomy_code,taxonomy_label,taxonomy_description,label_basis,source_year,source_url
+division,000,,Program & indirect costs,"Design, construction engineering, indirect-cost, and environmental entries in the CDOT Item Code Book.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+division,200,,Earthwork,"Official CDOT Division 200. Includes removals, resets, erosion control, roadside development, and environmental management.",official_specification,2023,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2023-construction-specifications/2023-specs-book/2023-cdot-specs-book.pdf
+division,300,,Bases,"Official CDOT Division 300.",official_specification,2023,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2023-construction-specifications/2023-specs-book/2023-cdot-specs-book.pdf
+division,400,,Pavements,"Official CDOT Division 400.",official_specification,2023,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2023-construction-specifications/2023-specs-book/2023-cdot-specs-book.pdf
+division,500,,Structures,"Official CDOT Division 500.",official_specification,2023,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2023-construction-specifications/2023-specs-book/2023-cdot-specs-book.pdf
+division,600,,Miscellaneous Construction,"Official CDOT Division 600.",official_specification,2023,https://www.codot.gov/business/designsupport/cdot-construction-specifications/2023-construction-specifications/2023-specs-book/2023-cdot-specs-book.pdf
+division,700,,Force account & adjustments,"Force-account, incentive, adjustment, and similar Item Code Book entries. This is not CDOT Standard Specifications Division 700.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+division,800,,Right-of-way & furnished materials,"Right-of-way and furnished-material entries in the CDOT Item Code Book.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+division,900,,Added items & cost categories,"Added-item, damages, and project-cost-category entries in the CDOT Item Code Book.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,000,000,"Design, engineering & indirect costs","Design, construction engineering, indirect-cost, and environmental entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,204,200,Haul,"The current catalog contains the Haul item.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,211,200,Tunneling & rock reinforcement,"Tunnel excavation, drilling, rock anchors, grouting, and instrumentation entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,218,200,Noxious weed management,"The current catalog contains the Noxious Weed Management item.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,240,200,Wildlife protection & management,"CDOT Section 240 special provisions cover migratory-bird protection and related wildlife-management items.",official_special_provision,2023,https://www.codot.gov/programs/environmental/wildlife/guidelines/bird-spec-of-cdot-contrators-1.pdf
+section,251,200,Paint testing & analysis,"The current catalog contains the Paint Testing and Analysis Management item.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,301,300,Mixed legacy catalog items,"Current catalog entries span plant-mix base, permeable treated base, and a concrete box-culvert item; no narrower reviewed group title is supported.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,308,300,Stabilized base & subgrade,"Cement-treated base, stabilized subgrade, soilcrete, and lean-concrete entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,310,300,Full-depth reclamation,"Full-depth reclamation and associated cement-treatment entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,410,400,Slurry seal coat,"Slurry Seal Coat entries, including airport work.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,511,500,Precast concrete arch units,"Structural Precast Concrete Arch Unit entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,513,500,Bridge drains,"Bridge Drain entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,519,500,"Epoxy repairs, overlays & monuments","Epoxy repair, thin-overlay, and corner-monument entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,520,500,Bridge hanger cable assembly,"The current catalog contains the Bridge Hanger Cable Assembly item.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,521,500,Slurry cut-off walls,"Slurry cut-off wall and associated washing and loss entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,522,500,Natina galvanized treatment,"The current catalog contains the Natina Treatment Galvanized item.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,621,600,Temporary works & detours,"Temporary rail, haul-road, detour, bridge, access, and pedestrian-work entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,628,600,Bridge girder and deck units,"Bridge Girder and Deck Unit entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,631,600,Design & construction,"Highway, alternative-girder, and bridge design-and-construction entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,632,600,Night work lighting,"The current catalog contains the Night Work Lighting item.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,637,600,Roadway sweeping,"The current catalog contains the Roadway Sweeping item.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,642,600,Exploders & control systems,"Exploder, control-shelter, and oxygen-farm-cabinet entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,660,600,Special systems,"The current catalog contains the Special Systems item.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,670,600,Electrical systems,"The current catalog contains the Electrical Systems item.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,680,600,Lighting systems,"The current catalog contains the Lighting Systems item.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,699,600,Fixed fee,"The current catalog contains the Fixed Fee item.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,700,700,Force account & adjustments,"Force-account, incentive, and adjustment entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,800,800,Right-of-way & furnished materials,"Right-of-way and furnished-material entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,900,900,Added items & damages,"Added-item, sales-tax, and liquidated-damages entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
+section,950,900,Project cost & scope categories,"Project management, cost-category, and work-scope entries.",catalog_derived,2026,https://www.codot.gov/business/eema/assets/itemcodebook.pdf
