@@ -363,18 +363,8 @@ function taxonomyContextFor(
   const description = hasSectionContext
     ? section?.taxonomyDescription ?? ""
     : division?.divisionDescription ?? "";
-  const basis = hasSectionContext
-    ? section?.labelBasis ?? ""
-    : division?.divisionLabelBasis ?? "";
   if (!description) return null;
-  const basisLabel = basis === "official_specification"
-    ? "Official CDOT specification"
-    : basis === "official_special_provision"
-      ? "Official CDOT special provision"
-      : basis === "catalog_derived"
-        ? "CDOT Item Code Book grouping"
-        : "";
-  return `<strong>${escapeHtml(label)}.</strong> ${escapeHtml(description)}${basisLabel ? ` <em>${escapeHtml(basisLabel)}.</em>` : ""}`;
+  return `<strong>${escapeHtml(label)}.</strong> ${escapeHtml(description)}`;
 }
 
 function stripHtml(value: string): string {
