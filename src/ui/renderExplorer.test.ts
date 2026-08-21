@@ -67,6 +67,33 @@ describe("renderExplorer", () => {
     expect(container.querySelector("[data-section-select]")?.textContent).toContain("211 - Tunneling & rock reinforcement");
   });
 
+  it("uses the selected Division context when a Section has no dedicated context", () => {
+    const coloradoSection = {
+      ...section,
+      state: "CO",
+      taxonomyId: "co:201",
+      taxonomyCode: "201",
+      taxonomyLabel: "Clearing and Grubbing",
+      sectionPrefix: "201",
+      divisionPrefix: "200",
+      divisionTitle: "Earthwork",
+      divisionDescription: "Official CDOT Division 200. Includes removals, resets, erosion control, roadside development, and environmental management.",
+      divisionLabelBasis: "official_specification",
+      sectionTitle: "Clearing and Grubbing"
+    } satisfies SpecSectionRecord;
+    const container = document.createElement("div");
+    container.innerHTML = renderExplorer(
+      { ...query, state: "CO", itemCode: "201-00001" },
+      [{ ...item, state: "CO", itemCode: "201-00001" }],
+      [coloradoSection],
+      { ...config, code: "CO", files: { ...config.files, itemTaxonomyMemberships: undefined } }
+    );
+
+    expect(container.querySelector("[data-taxonomy-context]")?.hasAttribute("hidden")).toBe(false);
+    expect(container.querySelector("[data-taxonomy-context-text]")?.textContent).toContain("Earthwork");
+    expect(container.querySelector("[data-taxonomy-context-text]")?.textContent).toContain("Includes removals, resets");
+  });
+
   it("hides Nebraska annual-report catalog-provenance labels while retaining them by default elsewhere", () => {
     const historicalItem = { ...item, itemStatus: "historical" } satisfies AgencyItemRecord;
     const defaultHtml = renderExplorer({ ...query, description: "Explicit" }, [historicalItem], [section], config);

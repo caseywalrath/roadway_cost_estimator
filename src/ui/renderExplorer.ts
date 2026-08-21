@@ -356,9 +356,16 @@ function taxonomyContextFor(
   section: SpecSectionRecord | null,
   division: SpecSectionRecord | null
 ): string | null {
-  const label = section?.sectionTitle ?? division?.divisionTitle ?? "";
-  const description = section?.taxonomyDescription ?? division?.divisionDescription ?? "";
-  const basis = section?.labelBasis ?? division?.divisionLabelBasis ?? "";
+  const hasSectionContext = Boolean(section?.taxonomyDescription);
+  const label = hasSectionContext
+    ? section?.sectionTitle ?? ""
+    : division?.divisionTitle ?? "";
+  const description = hasSectionContext
+    ? section?.taxonomyDescription ?? ""
+    : division?.divisionDescription ?? "";
+  const basis = hasSectionContext
+    ? section?.labelBasis ?? ""
+    : division?.divisionLabelBasis ?? "";
   if (!description) return null;
   const basisLabel = basis === "official_specification"
     ? "Official CDOT specification"
