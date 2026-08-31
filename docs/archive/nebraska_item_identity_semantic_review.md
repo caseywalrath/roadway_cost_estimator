@@ -1,5 +1,7 @@
 # Nebraska Item Identity Semantic Review
 
+Status: Historical pre-launch review. Nebraska is enabled; see `../../architecture_overview.md` for the current product state.
+
 ## Outcome
 
 The semantic review found no remaining case that requires a human to infer item meaning. The current audit contains the following documented identity resolutions; locator-specific text corrections are tracked separately because they repair parser output before identity comparison:

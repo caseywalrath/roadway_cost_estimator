@@ -1,6 +1,6 @@
 # Prototype Phase 2 Plan
 
-Status: Historical planning reference. The current consolidated roadmap is `project_roadmap.md`.
+Status: Historical planning reference. The current consolidated roadmap is `../../project_roadmap.md`.
 
 ## Purpose
 
@@ -8,7 +8,7 @@ This document consolidates the current roadmap, product notes, and roadway engin
 
 Phase 2 should improve the current one-item evidence workflow. It should not become a full estimator, spreadsheet importer, chatbot, or private-data system yet.
 
-The active Phase 2 product direction is now documented in `evidence_browser_pivot.md`. That document supersedes the older recommendation-centered increment sequence when planning new UI work.
+The current product direction is documented in `../../project_roadmap.md`. This historical plan preserves the earlier evidence-browser pivot and recommendation-centered increment sequence.
 
 Primary goal:
 
@@ -18,12 +18,12 @@ Make the item lookup and project evidence workflow clear, controlled, and defens
 
 ## Source Inputs Reviewed
 
-- `architecture_overview.md`
-- `codex.md`
-- `project_roadmap.md`
+- `../../architecture_overview.md`
+- `../../codex.md`
+- `../../project_roadmap.md`
 - `docs/data_schema.md`
 - `docs/implementation_notes.md`
-- `user_workflow.md`
+- `../../user_workflow.md`
 - `Engineer feedback round 1.docx`
 - `Product pathway.docx`
 

@@ -9,7 +9,10 @@ from pathlib import Path
 from typing import Iterable
 
 
-DEFAULT_SOURCE_PDF = Path("CDOTRM_EEMA_Cost_Data_Book_-_2026_-_1st_Qtr_-_4-29-2026.pdf")
+DEFAULT_SOURCE_PDF = Path(
+    "data/source_documents/cdot/cost_data_books/"
+    "CDOTRM_EEMA_Cost_Data_Book_-_2026_-_1st_Qtr_-_4-29-2026.pdf"
+)
 DEFAULT_STAGING_ITEMS = Path("public/data/imports/cdot_cost_data_book_2026_q1_item_unit_costs.csv")
 DEFAULT_PROJECT_LOOKUP = Path("public/data/imports/cdot_cost_data_book_2026_q1_projects.csv")
 DEFAULT_SOURCES = Path("public/data/sources.csv")

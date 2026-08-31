@@ -8,7 +8,10 @@ from pathlib import Path
 from typing import Iterable
 
 
-DEFAULT_SOURCE = Path("CDOTRM_EEMA_Cost_Data_Book_-_2026_-_1st_Qtr_-_4-29-2026.pdf")
+DEFAULT_SOURCE = Path(
+    "data/source_documents/cdot/cost_data_books/"
+    "CDOTRM_EEMA_Cost_Data_Book_-_2026_-_1st_Qtr_-_4-29-2026.pdf"
+)
 DEFAULT_OUTPUT = Path("public/data/imports/cdot_cost_data_book_2026_q1_item_unit_costs.csv")
 DEFAULT_SOURCE_PERIOD = "2026 Q1"
 DEFAULT_ITEM_SECTION_MARKER = "Item Unit Costs by Projects -- 2026 Cost Data"

@@ -4,7 +4,7 @@
 
 This roadmap is the current planning source for the Roadway Cost Estimator.
 
-It consolidates the older `evidence_browser_pivot.md` and `prototype_phase2.md` planning notes into the current product direction as of June 18, 2026. Those older files remain historical references, but this file should guide new roadmap and implementation decisions.
+It consolidates the older `docs/archive/evidence_browser_pivot.md` and `docs/archive/prototype_phase2.md` planning notes into the current product direction as of June 18, 2026. Those older files remain historical references, but this file should guide new roadmap and implementation decisions.
 
 The product is a structured evidence browser, not a price recommendation engine and not a full estimate system.
 
