@@ -1,6 +1,6 @@
 # Evidence Browser Pivot
 
-Status: Historical planning reference. The current consolidated roadmap is `project_roadmap.md`.
+Status: Historical planning reference. The current consolidated roadmap is `../../project_roadmap.md`.
 
 ## Purpose
 

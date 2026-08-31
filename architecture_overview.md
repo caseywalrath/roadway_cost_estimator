@@ -16,6 +16,7 @@ The app is an evidence browser and limited local project workspace. It is not an
 - Shared data: `public/data/common/`.
 - State-native staging: `data/staging/{state}/`.
 - Raw downloaded and attached files: `data/raw/`, which is git-ignored.
+- Curated, versioned source documents required to reproduce committed imports: `data/source_documents/{state}/`.
 - Browser project storage: IndexedDB database `roadway-cost-estimator`, with independent Project, settings, revision, and migration-backup stores.
 
 The schema-v2 loader reads the manifest, loads only the selected state's core tables, builds relationship maps, and defers `bid_item_prices.csv` until a bidder or source-detail view is opened.
@@ -166,7 +167,7 @@ The staged package currently contains 23,636 parsed annual rows, five committed 
 
 `scripts/validate_data_package.py` validates the manifest and every enabled partition. It fails for duplicate IDs, broken relationships, malformed numbers, bidder headers without ranks, ambiguous awarded vendors, bidder/price contract crossings, unreconciled Iowa bid totals not explained by preserved unselected options, observations without an agency-item identity, invalid optional source-document relationships, unresolved South Dakota awards, or missing archive acceptance features.
 
-Raw PDFs and downloaded HTML/TXT files stay in ignored `data/raw/`. Committed sources include publication URLs, filenames, hashes, parser names/versions, normalized data, native staging data, and importer code.
+Downloaded working files stay in ignored `data/raw/`. Curated, versioned source documents required to reproduce committed imports live in `data/source_documents/{state}/`; the CDOT Cost Data Books are under `data/source_documents/cdot/cost_data_books/`. Committed provenance also includes publication URLs, filenames, hashes, parser names/versions, normalized data, native staging data, and importer code.
 
 Municipal items remain source-native. Only explicit reviewed `item_mappings` can connect them to state-item evidence. Description similarity never promotes evidence automatically.
 
