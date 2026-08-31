@@ -110,6 +110,22 @@ class ScannerTests(unittest.TestCase):
         self.assertEqual(1, result["discoveredCount"])
         self.assertEqual([index, catalog_pdf], fetcher.calls)
 
+    def test_nebraska_specifications_recognizes_contractor_page_document_link(self) -> None:
+        index = "https://agency.example/contractor"
+        specifications_pdf = "https://agency.example/media/g4qp4y0d/2017-specbook.pdf"
+        item = source("linked_documents", index_url=index)
+        item["config"] = {
+            "includePatterns": ["specification", "spec book", "specbook", "2017-specbook"],
+            "identityMode": "url",
+            "hashEveryRecord": True,
+        }
+        listing = f'<p>Electronic edition: <a href="{specifications_pdf}">here</a></p>'.encode()
+        fetcher = FixtureFetcher({index: listing, specifications_pdf: b"official specifications pdf"})
+        result = scan_source(item, Path("."), {"sources": {}}, fetcher)
+        self.assertEqual("Baseline needed", result["status"])
+        self.assertEqual(1, result["discoveredCount"])
+        self.assertEqual([index, specifications_pdf], fetcher.calls)
+
     def test_south_dakota_catalog_reordering_is_unchanged(self) -> None:
         item = source("html_catalog", index_url="https://agency.example/sd")
         item["config"] = {"recordPattern": r"\b\d{3}E\d{4}\b"}

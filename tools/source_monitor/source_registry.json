@@ -154,7 +154,7 @@
       "agency": "NDOT",
       "label": "Standard Specifications",
       "sourceType": "linked_documents",
-      "indexUrl": "https://dot.nebraska.gov/business-center/hwy-bridge-lp/item-history/",
+      "indexUrl": "https://dot.nebraska.gov/business-center/contractor/",
       "allowedHosts": ["dot.nebraska.gov"],
       "importer": "scripts/import_nebraska_data.py",
       "enabled": true,
@@ -163,7 +163,7 @@
         "sourceIds": ["ne_ndot_2017_standard_specifications"]
       },
       "config": {
-        "includePatterns": ["specification", "spec book", "specbook"],
+        "includePatterns": ["specification", "spec book", "specbook", "2017-specbook"],
         "identityMode": "url",
         "hashEveryRecord": true
       }
