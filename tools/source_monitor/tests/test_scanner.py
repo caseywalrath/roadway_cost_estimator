@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from tools.source_monitor.scanner import (
@@ -100,6 +100,32 @@ class ScannerTests(unittest.TestCase):
 
         self.assertEqual("Unchanged", result["status"])
         self.assertEqual([index], fetcher.calls)
+
+    def test_cdot_cost_book_probe_detects_official_quarter_ahead_of_loaded_data(self) -> None:
+        index = "https://agency.example/cdot"
+        document = "https://oitco.hylandcloud.com/cdotrmpop/docpop/PdfPop.aspx?docid=67264216"
+        item = source("linked_documents", source_id="co_cdot_cost_data_book", index_url=index)
+        item["allowedHosts"] = ["agency.example", "oitco.hylandcloud.com"]
+        item["config"] = {
+            "includePatterns": ["cost data"],
+            "identityMode": "period",
+            "ignoreHash": True,
+            "hashEveryRecord": False,
+            "hashNewRecords": False,
+            "compareDiscoveredUrl": True,
+            "documentProbe": "hyland_pdfpop_title",
+        }
+        item["baseline"] = {"paths": ["public/data/states/co/sources.csv"], "sourceIdPrefix": "cdot_cost_data_book_"}
+        listing = f'<a href="{document}">2026 Cost Data Book</a>'.encode()
+        fetcher = FixtureFetcher({index: listing})
+        with patch("tools.source_monitor.scanner.browser_page_title", return_value="CDOTRM EEMA Cost Data Book - 2026 - 2nd Qtr - 8/17/2026"):
+            result = scan_source(item, Path("."), {"sources": {"co_cdot_cost_data_book": {"records": [{"recordId": "2026", "period": "2026 Q2", "fingerprint": "saved-current-viewer-title"}]}}}, fetcher)
+
+        self.assertEqual("Changed", result["status"])
+        self.assertEqual("2026 Q2", result["officialCoverage"])
+        self.assertEqual("2026 Q1", result["applicationCoverage"])
+        self.assertIn("through June 2026", result["message"])
+        self.assertTrue(result["importRequest"])
 
     def test_iowa_archive_detects_new_letting_without_hashing_existing_archive(self) -> None:
         index = "https://agency.example/iowa"

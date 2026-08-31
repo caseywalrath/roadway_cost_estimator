@@ -21,7 +21,10 @@
         "ignoreHash": true,
         "hashEveryRecord": false,
         "hashNewRecords": false,
-        "compareDiscoveredUrl": true
+        "compareDiscoveredUrl": true,
+        "documentProbe": "hyland_pdfpop_title",
+        "currentYearOnly": true,
+        "reportRemoved": false
       }
     },
     {

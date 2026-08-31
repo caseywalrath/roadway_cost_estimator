@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+import base64
 import csv
 import hashlib
 import json
 import re
+import shutil
+import socket
+import ssl
+import struct
+import subprocess
+import tempfile
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -13,7 +20,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Protocol
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urljoin, urlparse, urlunparse
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 
 
 USER_AGENT = "roadway-cost-estimator-source-monitor/1.0"
@@ -231,7 +238,11 @@ def baseline_record(row: Mapping[str, str], source: Mapping[str, Any]) -> dict[s
     url = row.get(str(config.get("urlField", "source_url")), "")
     source_type = source.get("sourceType")
     identity_mode = str((source.get("config") or {}).get("identityMode", ""))
-    if source_type == "api_records":
+    document_probe = str((source.get("config") or {}).get("documentProbe", ""))
+    coverage = cdot_cost_book_coverage(" ".join(row.get(field, "") for field in ("source_label", "label", "period_label", "source_date", "data_year"))) if document_probe == "hyland_pdfpop_title" else None
+    if coverage:
+        identity = coverage["year"]
+    elif source_type == "api_records":
         identity = row.get("period_label") or row.get("quarter") or row.get(identity_field) or ""
     elif source_type == "html_catalog":
         identity = row.get(identity_field) or row.get("item_code") or row.get("agency_item_code") or ""
@@ -251,7 +262,9 @@ def baseline_record(row: Mapping[str, str], source: Mapping[str, Any]) -> dict[s
         "discoveredUrl": url,
         "resolvedUrl": url,
         "filename": row.get("source_file_name") or row.get("file_name") or row.get("detail_file_name") or "",
-        "period": row.get("period_label") or row.get("source_date") or row.get("letting_date") or row.get("data_year") or "",
+        "period": coverage["period"] if coverage else (row.get("period_label") or row.get("source_date") or row.get("letting_date") or row.get("data_year") or ""),
+        "coverageThrough": coverage["through"] if coverage else "",
+        "coverageSortKey": coverage["sortKey"] if coverage else "",
         "sha256": "" if (source.get("config") or {}).get("ignoreHash") else (row.get("sha256") or row.get("abstract_sha256") or ""),
         "fingerprint": row.get("fingerprint", ""),
         "baselineEvidence": f"{config.get('paths', ['repository evidence'])[0] if config.get('paths') else 'repository evidence'}:{identity}",
@@ -389,6 +402,146 @@ def link_record(link: Mapping[str, str], source: Mapping[str, Any], *, fetch_con
             "lastModified": response.headers.get("last-modified", ""),
             "sha256": sha256_bytes(response.body),
         })
+    return record
+
+
+def edge_executable() -> str | None:
+    candidates = [
+        shutil.which("msedge.exe"),
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+    ]
+    return next((candidate for candidate in candidates if candidate and Path(candidate).is_file()), None)
+
+
+def websocket_evaluate(websocket_url: str, expression: str) -> str:
+    """Evaluate a small expression through a local Chromium DevTools socket."""
+    parsed = urlparse(websocket_url)
+    host, port = parsed.hostname, parsed.port or 80
+    if not host or host not in {"127.0.0.1", "localhost"}:
+        raise MonitorError("Browser probe did not expose a local debugging endpoint.")
+    client = socket.create_connection((host, port), timeout=8)
+    if parsed.scheme == "wss":
+        client = ssl.create_default_context().wrap_socket(client, server_hostname=host)
+    try:
+        key = base64.b64encode(hashlib.sha1(str(time.time_ns()).encode()).digest()).decode()
+        client.sendall((
+            f"GET {parsed.path} HTTP/1.1\r\nHost: {host}:{port}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
+            f"Sec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n"
+        ).encode())
+        if b" 101 " not in client.recv(4096):
+            raise MonitorError("Browser probe could not open its local debugging session.")
+        payload = json.dumps({"id": 1, "method": "Runtime.evaluate", "params": {"expression": expression, "returnByValue": True}}).encode()
+        mask = hashlib.sha256(payload).digest()[:4]
+        header = bytes([0x81])
+        length = len(payload)
+        if length < 126:
+            header += bytes([0x80 | length])
+        elif length < 65536:
+            header += bytes([0x80 | 126]) + struct.pack("!H", length)
+        else:
+            header += bytes([0x80 | 127]) + struct.pack("!Q", length)
+        client.sendall(header + mask + bytes(value ^ mask[index % 4] for index, value in enumerate(payload)))
+        while True:
+            first, second = client.recv(2)
+            length = second & 0x7F
+            if length == 126:
+                length = struct.unpack("!H", client.recv(2))[0]
+            elif length == 127:
+                length = struct.unpack("!Q", client.recv(8))[0]
+            body = client.recv(length)
+            message = json.loads(body.decode("utf-8"))
+            if message.get("id") == 1:
+                return str(message.get("result", {}).get("result", {}).get("value", ""))
+    finally:
+        client.close()
+
+
+def browser_page_title(url: str) -> str:
+    """Render a public page with local Edge and return its final document title."""
+    executable = edge_executable()
+    if not executable:
+        raise MonitorError("Microsoft Edge is required to inspect CDOT's public document metadata on this computer.")
+    with socket.socket() as reservation:
+        reservation.bind(("127.0.0.1", 0))
+        port = reservation.getsockname()[1]
+    with tempfile.TemporaryDirectory(prefix="roadway-source-monitor-", ignore_cleanup_errors=True) as profile:
+        process = subprocess.Popen([executable, "--headless", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--disable-sync", f"--user-data-dir={profile}", f"--remote-debugging-port={port}", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            endpoint = f"http://127.0.0.1:{port}/json"
+            deadline = time.monotonic() + 20
+            websocket_url = ""
+            while time.monotonic() < deadline:
+                try:
+                    with urlopen(endpoint, timeout=2) as response:
+                        pages = json.loads(response.read().decode("utf-8"))
+                    target_host = urlparse(url).hostname
+                    target_docid = re.search(r"(?:[?&])docid=(\d+)", url, flags=re.IGNORECASE)
+                    page = next((item for item in pages if item.get("type") == "page" and urlparse(str(item.get("url", ""))).hostname == target_host and (not target_docid or re.search(rf"(?:[?&])docid={target_docid.group(1)}(?:[&#]|$)", str(item.get("url", "")), flags=re.IGNORECASE))), next((item for item in pages if item.get("type") == "page" and str(item.get("url", "")).startswith(url)), next((item for item in pages if item.get("type") == "page"), {})))
+                    websocket_url = str(page.get("webSocketDebuggerUrl", ""))
+                    if websocket_url:
+                        break
+                except Exception:
+                    time.sleep(.2)
+            if not websocket_url:
+                raise MonitorError("Microsoft Edge did not start a local metadata probe.")
+            title = ""
+            title_deadline = time.monotonic() + 15
+            while time.monotonic() < title_deadline:
+                title = browser_page_title_result(websocket_url)
+                if title and not title.lower().startswith("onbase"):
+                    break
+                time.sleep(.5)
+            if not title:
+                raise MonitorError("CDOT's public document viewer did not provide a document title.")
+            return title
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+
+
+def browser_page_title_result(websocket_url: str) -> str:
+    return websocket_evaluate(websocket_url, "document.title")
+
+
+def cdot_cost_book_coverage(value: str) -> dict[str, str] | None:
+    """Extract a CDOT Cost Data Book year and quarter from source metadata."""
+    match = re.search(
+        r"\b(?P<year>20\d{2})(?:\s*-\s*|\s+)(?:(?P<ordinal>[1-4])(?:st|nd|rd|th)\s*(?:qtr|quarter)|Q(?P<short>[1-4]))\b",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        return None
+    quarter = int(match.group("ordinal") or match.group("short"))
+    year = int(match.group("year"))
+    return {
+        "year": str(year),
+        "period": f"{year} Q{quarter}",
+        "through": f"{('March', 'June', 'September', 'December')[quarter - 1]} {year}",
+        "sortKey": str(year * 4 + quarter),
+    }
+
+
+def hyland_pdfpop_title_record(link: Mapping[str, str], source: Mapping[str, Any], fetcher: Fetcher) -> dict[str, Any]:
+    """Read CDOT's rendered OnBase title instead of hashing its changing viewer shell."""
+    record = link_record(link, source, fetch_content=False, fetcher=fetcher)
+    title = browser_page_title(record["resolvedUrl"])
+    coverage = cdot_cost_book_coverage(title)
+    if not title or coverage is None:
+        raise MonitorError("Official CDOT document viewer did not expose a recognizable Cost Data Book quarter.")
+    record.update({
+        "recordId": coverage["year"],
+        "title": title,
+        "period": coverage["period"],
+        "coverageThrough": coverage["through"],
+        "coverageSortKey": coverage["sortKey"],
+        "fingerprint": sha256_bytes(title.lower().encode("utf-8")),
+        "metadataTitle": title,
+    })
     return record
 
 
@@ -542,6 +695,7 @@ def scan_source(source: Mapping[str, Any], root: Path, state: Mapping[str, Any],
         index_response = fetcher.fetch(index_url, allowed_hosts, max_bytes=int((source.get("config") or {}).get("indexMaxBytes", DEFAULT_MAX_BYTES)))
         source_type = source["sourceType"]
         config = source.get("config") or {}
+        application_records = repository_baseline(root, source)
         needs_content_hash = bool(config.get("hashEveryRecord", source_type == "linked_documents"))
         if source_type in {"linked_documents", "archive_entries"}:
             links = parse_links(index_response.body, index_response.url)
@@ -549,8 +703,14 @@ def scan_source(source: Mapping[str, Any], root: Path, state: Mapping[str, Any],
             links = [link for link in links if normalized_url(link["url"]) != normalized_url(index_response.url)]
             if not links:
                 raise MonitorError("Official index loaded but no configured publication or archive links were recognized.")
+            publication_years = [
+                int(value)
+                for link in links
+                for value in re.findall(r"\b20\d{2}\b", f"{link.get('text', '')} {link.get('url', '')}")
+            ]
+            newest_publication_year = max(publication_years, default=0)
             record_factory = link_record if source_type == "linked_documents" else archive_record
-            prior_records = local_entry.get("records") or repository_baseline(root, source)
+            prior_records = local_entry.get("records") or application_records
             prior_map = {str(row.get("recordId")): row for row in prior_records if row.get("recordId")}
             records = []
             for link in links:
@@ -560,11 +720,13 @@ def scan_source(source: Mapping[str, Any], root: Path, state: Mapping[str, Any],
                     years = [int(value) for value in re.findall(r"\b20\d{2}\b", f"{link.get('text', '')} {link.get('url', '')}")]
                     if years and max(years) < minimum_year:
                         continue
+                if config.get("currentYearOnly") and newest_publication_year and not re.search(rf"\b{newest_publication_year}\b", f"{link.get('text', '')} {link.get('url', '')}"):
+                    continue
                 is_new = preliminary["recordId"] not in prior_map
                 hash_patterns = config.get("hashPatterns") or []
                 targeted_hash = bool(hash_patterns) and any(regex_search(str(pattern), f"{link.get('text', '')} {link.get('url', '')}") for pattern in hash_patterns)
                 should_hash = needs_content_hash or targeted_hash or (is_new and bool(config.get("hashNewRecords", True)))
-                records.append(record_factory(link, source, fetch_content=should_hash, fetcher=fetcher))
+                records.append(hyland_pdfpop_title_record(link, source, fetcher) if config.get("documentProbe") == "hyland_pdfpop_title" else record_factory(link, source, fetch_content=should_hash, fetcher=fetcher))
         elif source_type == "html_catalog":
             catalog_response = index_response
             post_form = config.get("postForm")
@@ -580,10 +742,10 @@ def scan_source(source: Mapping[str, Any], root: Path, state: Mapping[str, Any],
             minimum = int(config.get("minRecords", 0) or 0)
             if minimum and len(records) < minimum:
                 raise MonitorError(f"Official catalog result contained {len(records):,} record(s); at least {minimum:,} were expected.")
-            prior_records = local_entry.get("records") or repository_baseline(root, source)
+            prior_records = local_entry.get("records") or application_records
         elif source_type == "api_records":
             records = api_records(index_response.body, source)
-            prior_records = local_entry.get("records") or repository_baseline(root, source)
+            prior_records = local_entry.get("records") or application_records
         else:
             raise MonitorError(f"Unsupported source type {source_type}.")
         records = dedupe_records(records)
@@ -611,7 +773,25 @@ def scan_source(source: Mapping[str, Any], root: Path, state: Mapping[str, Any],
             "importer": source.get("importer", ""),
             "message": status_message(comparison["status"], len(records), len(prior_records)),
         }
+        if config.get("documentProbe") == "hyland_pdfpop_title":
+            official = max(records, key=lambda record: int(record.get("coverageSortKey") or 0), default=None)
+            loaded = max(application_records, key=lambda record: int(record.get("coverageSortKey") or 0), default=None)
+            if official:
+                result["officialCoverage"] = official.get("period", "")
+                result["officialCoverageThrough"] = official.get("coverageThrough", "")
+            if loaded:
+                result["applicationCoverage"] = loaded.get("period", "")
+                result["applicationCoverageThrough"] = loaded.get("coverageThrough", "")
+            if official and loaded and int(official.get("coverageSortKey") or 0) > int(loaded.get("coverageSortKey") or 0):
+                result["status"] = "Changed"
+                result["changed"] = result["changed"] or [official]
+                result["message"] = (
+                    f"Official CDOT document metadata identifies {official['period']} (through {official['coverageThrough']}); "
+                    f"loaded application Cost Data Book data ends at {loaded['period']} (through {loaded['coverageThrough']})."
+                )
         result["importRequest"] = build_import_request(source, result) if comparison["status"] in {"New", "Changed", "Removed", "Review required"} else ""
+        if result["status"] == "Changed" and not result["importRequest"]:
+            result["importRequest"] = build_import_request(source, result)
         return result
     except MonitorError as error:
         error_text = str(error).lower()
