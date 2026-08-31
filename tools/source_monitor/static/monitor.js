@@ -2,7 +2,6 @@ const scanButton = document.querySelector("#scan-now");
 const groupsNode = document.querySelector("#source-groups");
 const announcement = document.querySelector("#announcement");
 const lastScan = document.querySelector("#last-scan");
-const healthNode = document.querySelector("#health");
 const runStatus = document.querySelector("#run-status");
 let sourcesPayload = { sources: [], activeScanId: null, lastSuccessfulScan: "" };
 let pollTimer = null;
@@ -21,6 +20,16 @@ async function request(path, options = {}) {
 
 function sourceStatus(source) {
   return source.activeStatus || source.latest?.status || (activeSourceIds.has(source.id) ? "Queued" : "Not scanned");
+}
+
+function resultSummary(latest, status) {
+  if (!latest || status === "Unchanged" || status === "Not scanned" || status === "Queued" || status === "Scanning") return "";
+  if (status === "Unavailable" || status === "Review required") return latest.message;
+  const parts = [];
+  if (latest.new?.length) parts.push(`${latest.new.length} new`);
+  if (latest.changed?.length) parts.push(`${latest.changed.length} changed`);
+  if (latest.removed?.length) parts.push(`${latest.removed.length} removed`);
+  return parts.join(" · ") || `${latest.discoveredCount} records`;
 }
 
 function button(label, className, onClick, disabled = false) {
@@ -50,10 +59,6 @@ function render() {
     section.className = "group";
     const heading = document.createElement("h2");
     heading.textContent = groupName;
-    const count = document.createElement("span");
-    count.className = "group-count";
-    count.textContent = `${groups.get(groupName).length} source${groups.get(groupName).length === 1 ? "" : "s"}`;
-    heading.append(count);
     section.append(heading);
     groups.get(groupName).forEach((source) => section.append(renderSource(source)));
     groupsNode.append(section);
@@ -68,50 +73,66 @@ function renderSource(source) {
   const head = document.createElement("div");
   head.className = "source-head";
   const title = document.createElement("div");
-  const titleText = document.createElement("div");
+  const titleText = document.createElement("a");
   titleText.className = "source-title";
   titleText.textContent = source.label;
+  titleText.href = latest?.indexUrl || source.indexUrl;
+  titleText.target = "_blank";
+  titleText.rel = "noopener noreferrer";
   const agencyText = document.createElement("div");
   agencyText.className = "source-agency";
-  agencyText.textContent = `${source.agency} · ${source.sourceType}`;
+  agencyText.textContent = `${source.agency}${source.localBaseline?.savedAt ? " · baseline saved" : ""}`;
+  if (source.localBaseline?.savedAt) {
+    agencyText.title = `Baseline saved ${formatTime(source.localBaseline.savedAt)} · ${source.localBaseline.recordCount} record${source.localBaseline.recordCount === 1 ? "" : "s"}`;
+  }
   title.append(titleText, agencyText);
   const message = document.createElement("div");
   message.className = "source-message";
-  message.textContent = latest?.message || (status === "Queued" || status === "Scanning" ? "Waiting for scan…" : "No scan result yet.");
+  message.textContent = resultSummary(latest, status);
   const badge = document.createElement("span");
   badge.className = `status ${statusClass(status)}`;
   badge.textContent = status;
   const actions = document.createElement("div");
   actions.className = "source-actions";
   const scanInProgress = activeSourceIds.has(source.id);
-  actions.append(button(scanInProgress ? "Scanning…" : "Scan this source", "secondary", () => scanSource(source), Boolean(sourcesPayload.activeScanId)));
-  actions.append(button("Open source page", "secondary", () => window.open(latest?.indexUrl || source.indexUrl, "_blank", "noopener,noreferrer")));
+  actions.append(button(scanInProgress ? "Scanning…" : "Scan", "secondary", () => scanSource(source), Boolean(sourcesPayload.activeScanId)));
   const requestText = latest?.importRequest || "";
-  actions.append(button("Copy import request", "secondary", async () => {
+  if (requestText) actions.append(button("Copy import request", "secondary", async () => {
     try { await navigator.clipboard.writeText(requestText); announcement.textContent = `Copied import request for ${source.label}.`; }
     catch { announcement.textContent = "Clipboard access failed. Expand technical details and copy the request manually."; }
-  }, !requestText));
-  const canSave = latest && !["Unavailable", "Review required", "Scanning", "Queued"].includes(latest.status);
-  actions.append(button("Save local baseline", "secondary", async () => {
+  }));
+  const canSave = latest && ["Baseline needed", "New", "Changed", "Removed"].includes(latest.status);
+  if (canSave) actions.append(button("Save baseline", "secondary", async () => {
     try { const saved = await request(`/api/sources/${encodeURIComponent(source.id)}/baseline`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scanId: sourcesPayload.activeScanId || undefined }) }); announcement.textContent = `Saved the local baseline for ${source.label}.`; source.localBaseline = { savedAt: saved.savedAt, recordCount: saved.recordCount }; render(); }
     catch (error) { announcement.textContent = error.message; }
-  }, !canSave));
+  }));
   head.append(title, badge, actions);
-  card.append(head, message);
-  if (source.localBaseline?.savedAt) {
-    const saved = document.createElement("p");
-    saved.className = "baseline-saved";
-    saved.textContent = `✓ Local baseline saved ${formatTime(source.localBaseline.savedAt)} (${source.localBaseline.recordCount} record${source.localBaseline.recordCount === 1 ? "" : "s"}).`;
-    card.append(saved);
-  }
-  if (latest) {
+  card.append(head);
+  if (message.textContent) card.append(message);
+  if (latest && ["New", "Changed", "Removed", "Unavailable", "Review required"].includes(latest.status)) {
     const details = document.createElement("details");
     details.className = "details";
     const summary = document.createElement("summary");
-    summary.textContent = "Technical details";
-    const pre = document.createElement("pre");
-    pre.textContent = JSON.stringify({ indexUrl: latest.indexUrl, discoveredCount: latest.discoveredCount, baselineCount: latest.baselineCount, new: latest.new, changed: latest.changed, removed: latest.removed, importer: latest.importer, importRequest: latest.importRequest }, null, 2);
-    details.append(summary, pre);
+    summary.textContent = "Details";
+    const list = document.createElement("ul");
+    list.className = "detail-list";
+    const records = [...(latest.new || []), ...(latest.changed || []), ...(latest.removed || [])];
+    records.forEach((record) => {
+      const item = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = record.resolvedUrl || record.discoveredUrl || latest.indexUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = record.title || record.period || record.recordId;
+      item.append(link);
+      list.append(item);
+    });
+    if (!records.length) {
+      const item = document.createElement("li");
+      item.textContent = latest.message;
+      list.append(item);
+    }
+    details.append(summary, list);
     card.append(details);
   }
   return card;
@@ -125,18 +146,11 @@ async function loadSources() {
   } catch (error) { announcement.textContent = error.message; }
 }
 
-async function loadHealth() {
-  try {
-    const health = await request("/api/health");
-    healthNode.textContent = health.ok ? `Ready on ${health.host}:${health.port}` : "Unavailable";
-  } catch { healthNode.textContent = "Unavailable"; }
-}
-
 async function pollScan(scanId) {
   try {
     const run = await request(`/api/scans/${encodeURIComponent(scanId)}`);
     sourcesPayload.activeScanId = run.status === "running" ? scanId : null;
-    runStatus.textContent = run.status === "running" ? `${run.completed}/${run.total} sources scanned` : run.status;
+    runStatus.textContent = run.status === "running" ? `${run.completed}/${run.total} scanned` : "";
     sourcesPayload.sources = (sourcesPayload.sources || []).map((source) => {
       const progress = run.progress?.[source.id];
       if (!progress) return source;
@@ -181,4 +195,4 @@ scanButton.addEventListener("click", async () => {
   catch (error) { scanButton.disabled = false; announcement.textContent = error.message; }
 });
 
-await Promise.all([loadSources(), loadHealth()]);
+await loadSources();

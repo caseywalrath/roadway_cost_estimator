@@ -10,22 +10,15 @@
     <main class="shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">Roadway Cost Estimator · Local developer tool</p>
           <h1>Data Source Monitor</h1>
-          <p class="intro">Scan configured official transportation sources for new or changed data. This tool only reports findings; it does not import, commit, or publish application data.</p>
         </div>
         <button id="scan-now" class="primary" type="button">Scan Now</button>
       </header>
 
-      <section class="summary" aria-label="Scan summary">
-        <div><span class="summary-label">Last successful scan</span><strong id="last-scan">Never</strong></div>
-        <div><span class="summary-label">Monitor status</span><strong id="health" role="status">Checking…</strong></div>
-        <div><span class="summary-label">Current run</span><strong id="run-status">Idle</strong></div>
-      </section>
+      <p class="scan-meta"><span>Last scan</span> <strong id="last-scan">Never</strong><strong id="run-status" role="status"></strong></p>
 
       <p id="announcement" class="announcement" role="status" aria-live="polite"></p>
       <section id="source-groups" aria-label="Configured sources"></section>
-      <p class="footer-note">Sources are limited to registry-declared agency hosts. A successful scan does not change the repository baseline until you explicitly save it.</p>
     </main>
     <script type="module" src="/monitor.js"></script>
   </body>
