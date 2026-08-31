@@ -16,6 +16,7 @@ The app is an evidence browser and limited local project workspace. It is not an
 - Shared data: `public/data/common/`.
 - State-native staging: `data/staging/{state}/`.
 - Raw downloaded and attached files: `data/raw/`, which is git-ignored.
+- Local source monitoring: `tools/source_monitor/`, a repository-tracked Python web tool that binds only to `127.0.0.1:4180`; its scan state and cache remain under ignored `data/raw/source_monitor/`.
 - Browser project storage: IndexedDB database `roadway-cost-estimator`, with independent Project, settings, revision, and migration-backup stores.
 
 The schema-v2 loader reads the manifest, loads only the selected state's core tables, builds relationship maps, and defers `bid_item_prices.csv` until a bidder or source-detail view is opened.
@@ -31,6 +32,14 @@ Optional state partitions may also declare `item_price_summaries.csv` for non-co
 5. `src/matching/buildEvidenceResult.ts` groups generalized observations by contract item and filters exact `agencyItemId` evidence.
 6. `src/ui` renders manifest-provided labels, capabilities, columns, source filters, details, and exports. Source Review is a state-specific auxiliary view with list and full-width project-detail states.
 7. `src/projects/projectRepository.ts` opens IndexedDB, preserves and migrates legacy v1-v3 storage, and exposes asynchronous Project operations. `src/projects/projectWorkspace.ts` defines the current Project workspace schema and pure workspace mutations.
+
+## Local Data Source Monitor
+
+The production application remains static and has no outbound source-scanning service. Developers can start the repository-tracked monitor by double-clicking `Start Data Source Monitor.cmd` or by running `python -m tools.source_monitor.server`. The monitor serves a plain HTML/CSS/JavaScript UI from a Python standard-library server on `127.0.0.1:4180`.
+
+The declarative `tools/source_monitor/source_registry.json` lists verified official index pages, permitted redirected content hosts, source types, comparison rules, and the existing importer to use for a follow-up session. A Scan Now request fetches those pages or APIs in Python, normalizes links/catalog records/period values, and compares them with committed repository evidence or an explicitly saved local baseline. It reports source-level New, Changed, Unchanged, Removed, Unavailable, Review required, or Baseline needed results. It never imports, promotes, commits, publishes, or changes app-loaded/staging data.
+
+Actionable results include official URLs, periods, hashes or normalized fingerprints, and a copied agent import request. `data/raw/source_monitor/scan_state.json` stores only local baselines, URL overrides, and scan metadata; failed or partial scans cannot replace a saved baseline. Fixture tests exercise the scanner and HTTP routes without network access.
 
 ## Data Model
 

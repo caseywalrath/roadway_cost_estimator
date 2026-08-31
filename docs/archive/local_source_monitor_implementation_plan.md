@@ -2,7 +2,7 @@
 
 ## Status
 
-Active implementation plan. This plan is intended for a new coding-agent session. Implement the complete first version for all currently supported states in one branch and one pull request.
+Completed implementation plan. The first repository-tracked local monitor is implemented and documented on `codex/implement-local-source-monitor`. Retain this file as the design and acceptance record; use `docs/implementation_notes.md` for operating instructions.
 
 ## Objective
 

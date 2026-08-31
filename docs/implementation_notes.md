@@ -2,7 +2,7 @@
 
 ## Current Scope
 
-The first implementation is the Colorado Roadway Cost Estimator.
+The production application is a static multi-state Roadway Cost Estimator. A separate local-only source monitor supports developer-led data refresh discovery for Colorado, Iowa, Nebraska, South Dakota, and the shared FHWA index.
 
 Included:
 
@@ -30,6 +30,28 @@ Not included:
 - Chat layer.
 - General-purpose PDF or spreadsheet parsing.
 - Automatic fuzzy matching from source specifications to CDOT item codes.
+
+## Local Data Source Monitor
+
+The monitor is intentionally separate from the production Vite application. Double-click `Start Data Source Monitor.cmd` at the repository root to start the localhost UI and open `http://127.0.0.1:4180/`. The launcher prefers `.venv\\Scripts\\python.exe` or `venv\\Scripts\\python.exe`, falls back to `python` on `PATH`, reuses an existing monitor on port 4180, and does not stop unrelated processes. Keep the monitor window open while scanning; close it or press Ctrl+C to stop it.
+
+Coding agents can start the same server directly with:
+
+```text
+python -m tools.source_monitor.server
+```
+
+Click **Scan Now** to check the official sources in `tools/source_monitor/source_registry.json`. Requests are made by Python so browser CORS rules do not prevent source checks. The registry allows explicit official redirected hosts (for example, CDOT's Hyland document host) and supports a source URL override through the local-only API when an agency index moves. The monitor does not accept arbitrary URLs, shell commands, importer execution, or filesystem paths from the browser.
+
+Results compare semantic letting dates, report periods, normalized catalog records, API period/value pairs, and content hashes when configured. A first scan reports **Baseline needed** until **Save local baseline** is clicked. A failed or review-required source never overwrites a previously saved baseline. **Copy import request** creates a handoff containing official URLs, discovered periods, hashes where available, and the reviewed importer path; it does not authorize an automatic import or commit.
+
+Run the monitor fixture tests with:
+
+```text
+python -m unittest tools.source_monitor.tests.test_scanner tools.source_monitor.tests.test_server
+```
+
+If a source reports **Review required**, inspect the official index and the technical details. This status is used for malformed pages, unverified current listings, blocked redirects, and dynamic agency forms that need source-specific human review. **Unavailable** indicates a timeout, HTTP error, or response-size limit; it is not treated as a removed publication.
 
 ## Local Commands
 

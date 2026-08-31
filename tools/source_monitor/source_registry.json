@@ -1,0 +1,277 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "co_cdot_cost_data_book",
+      "state": "CO",
+      "agency": "CDOT",
+      "label": "Cost Data Book",
+      "sourceType": "linked_documents",
+      "indexUrl": "https://www.codot.gov/business/eema/costdatabook",
+      "allowedHosts": ["www.codot.gov", "oitco.hylandcloud.com"],
+      "importer": "scripts/parse_cdot_cost_data_book.py",
+      "enabled": true,
+      "baseline": {
+        "paths": ["public/data/states/co/sources.csv"],
+        "sourceIdPrefix": "cdot_cost_data_book_"
+      },
+      "config": {
+        "includePatterns": ["cost\\s*data", "cost[-_ ]?data[-_ ]?book", "costdatabook"],
+        "identityMode": "period",
+        "ignoreHash": true,
+        "hashEveryRecord": true,
+        "hashNewRecords": true
+      }
+    },
+    {
+      "id": "co_cdot_item_code_book",
+      "state": "CO",
+      "agency": "CDOT",
+      "label": "Item Code Book",
+      "sourceType": "linked_documents",
+      "indexUrl": "https://www.codot.gov/business/eema/itemcodebook",
+      "allowedHosts": ["www.codot.gov", "oitco.hylandcloud.com"],
+      "importer": "scripts/import_cdot_item_code_book.py",
+      "enabled": true,
+      "baseline": {
+        "paths": [],
+        "sourceIds": []
+      },
+      "config": {
+        "includePatterns": ["item\\s*code", "item[-_ ]?code[-_ ]?book", "\\.xlsx?(?:$|[?#])"],
+        "excludePatterns": ["cost data"],
+        "identityMode": "url",
+        "hashEveryRecord": true
+      }
+    },
+    {
+      "id": "ia_idot_bid_tabs",
+      "state": "IA",
+      "agency": "Iowa DOT",
+      "label": "Historical Bid Tabulations",
+      "sourceType": "archive_entries",
+      "indexUrl": "https://iowadot.gov/consultants-contractors/contracts/historical-completed-lettings/bid-tabulations",
+      "allowedHosts": ["iowadot.gov"],
+      "importer": "scripts/import_iowa_data.py",
+      "enabled": true,
+      "baseline": {
+        "paths": ["data/staging/ia/bid_tab_archive.csv"],
+        "sourceIdPrefix": "ia_idot_bid_tabs_",
+        "identityField": "source_id"
+      },
+      "config": {
+        "includePatterns": ["bid\\s*tab", "bid\\s*tabl", "bid_tab"],
+        "identityPattern": "\\b\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4}\\b|\\b20\\d{2}[-/]\\d{1,2}[-/]\\d{1,2}\\b",
+        "reportRemoved": false,
+        "hashNewRecords": false,
+        "ignoredQueryParams": ["inline"]
+      }
+    },
+    {
+      "id": "ia_idot_item_information",
+      "state": "IA",
+      "agency": "Iowa DOT",
+      "label": "Bid Item Information",
+      "sourceType": "linked_documents",
+      "indexUrl": "https://iowadot.gov/consultants-contractors/contracts/general-letting-information/bid-item-information",
+      "allowedHosts": ["iowadot.gov"],
+      "importer": "scripts/import_iowa_data.py",
+      "enabled": true,
+      "baseline": {
+        "paths": []
+      },
+      "config": {
+        "includePatterns": ["item master", "bid item descriptions"],
+        "hashEveryRecord": false,
+        "hashNewRecords": false,
+        "hashPatterns": ["item master", "bid item descriptions"]
+      }
+    },
+    {
+      "id": "ia_idot_erl",
+      "state": "IA",
+      "agency": "Iowa DOT",
+      "label": "Electronic Reference Library",
+      "sourceType": "html_catalog",
+      "indexUrl": "https://ia.iowadot.gov/erl/current/GS/Navigation/nav.htm",
+      "allowedHosts": ["ia.iowadot.gov"],
+      "importer": "scripts/import_iowa_data.py",
+      "enabled": true,
+      "baseline": {
+        "paths": ["public/data/states/ia/sources.csv"],
+        "sourceIdPrefix": "ia_idot_erl_"
+      },
+      "config": {
+        "fingerprintMode": "links"
+      }
+    },
+    {
+      "id": "ne_ndot_annual_price_reports",
+      "state": "NE",
+      "agency": "NDOT",
+      "label": "Annual Average Unit Price Reports",
+      "sourceType": "linked_documents",
+      "indexUrl": "https://dot.nebraska.gov/business-center/hwy-bridge-lp/item-history/",
+      "allowedHosts": ["dot.nebraska.gov"],
+      "importer": "scripts/import_nebraska_data.py",
+      "enabled": true,
+      "baseline": {
+        "paths": ["data/staging/ne/annual_price_report_inventory.csv"],
+        "sourceIdPrefix": "ne_ndot_aup_",
+        "identityField": "source_id"
+      },
+      "config": {
+        "includePatterns": ["\\bAUP\\b", "average unit price", "English AUP Summary", "January", "July"],
+        "excludePatterns": ["standard item", "specification"],
+        "identityMode": "url",
+        "periodPattern": "(?P<period>(?:January|July)[^<]{0,50}(?:December|June)\\s+20\\d{2})",
+        "hashEveryRecord": true
+      }
+    },
+    {
+      "id": "ne_ndot_item_catalog",
+      "state": "NE",
+      "agency": "NDOT",
+      "label": "Standard Item List",
+      "sourceType": "linked_documents",
+      "indexUrl": "https://dot.nebraska.gov/business-center/hwy-bridge-lp/item-history/",
+      "allowedHosts": ["dot.nebraska.gov", "ndorpubreports.nebraska.gov"],
+      "importer": "scripts/import_nebraska_data.py",
+      "enabled": true,
+      "baseline": {
+        "paths": ["public/data/states/ne/sources.csv"],
+        "sourceIds": ["ne_ndot_english_standard_item_list_2010"]
+      },
+      "config": {
+        "includePatterns": ["standard item", "item list", "catalog"],
+        "identityMode": "url",
+        "hashEveryRecord": true
+      }
+    },
+    {
+      "id": "ne_ndot_specifications",
+      "state": "NE",
+      "agency": "NDOT",
+      "label": "Standard Specifications",
+      "sourceType": "linked_documents",
+      "indexUrl": "https://dot.nebraska.gov/business-center/hwy-bridge-lp/item-history/",
+      "allowedHosts": ["dot.nebraska.gov"],
+      "importer": "scripts/import_nebraska_data.py",
+      "enabled": true,
+      "baseline": {
+        "paths": ["public/data/states/ne/sources.csv"],
+        "sourceIds": ["ne_ndot_2017_standard_specifications"]
+      },
+      "config": {
+        "includePatterns": ["specification", "spec book", "specbook"],
+        "identityMode": "url",
+        "hashEveryRecord": true
+      }
+    },
+    {
+      "id": "sd_sddot_completed_lettings",
+      "state": "SD",
+      "agency": "SDDOT",
+      "label": "Completed Letting Archive",
+      "sourceType": "archive_entries",
+      "indexUrl": "https://apps.sd.gov/hc65bidletting/bidlettingscomplete.aspx",
+      "allowedHosts": ["apps.sd.gov"],
+      "importer": "scripts/import_south_dakota_data.py",
+      "enabled": true,
+      "baseline": {
+        "paths": ["data/staging/sd/letting_inventory.csv"],
+        "sourceIdPrefix": "sd_sddot_bid_tabs_",
+        "identityField": "source_id"
+      },
+      "config": {
+        "includePatterns": ["completed", "letting", "detail", "bid"],
+        "identityPattern": "\\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s+\\d{1,2},?\\s+20\\d{2}\\b|\\b20\\d{2}[-/]\\d{2}[-/]\\d{2}\\b",
+        "minYear": 2019,
+        "hashNewRecords": false
+      }
+    },
+    {
+      "id": "sd_sddot_standard_bid_items",
+      "state": "SD",
+      "agency": "SDDOT",
+      "label": "Standard Bid Item Catalog",
+      "sourceType": "html_catalog",
+      "indexUrl": "https://apps.sd.gov/hc70sbi/main.aspx",
+      "allowedHosts": ["apps.sd.gov"],
+      "importer": "scripts/import_south_dakota_data.py",
+      "enabled": true,
+      "baseline": {
+        "paths": ["data/staging/sd/item_catalog_native.csv"],
+        "identityField": "item_code"
+      },
+      "config": {
+        "recordPattern": "\\b\\d{3}E\\d{4}\\b",
+        "minRecords": 5000,
+        "postForm": {
+          "fields": {
+            "__VIEWSTATE": "__FORM_INPUT__:__VIEWSTATE",
+            "__VIEWSTATEGENERATOR": "__FORM_INPUT__:__VIEWSTATEGENERATOR",
+            "__EVENTVALIDATION": "__FORM_INPUT__:__EVENTVALIDATION",
+            "ctl00$cpSubContent$UseSBIGroups": "rdoAllSBI",
+            "ctl00$cpSubContent$ddlBitItemGroup": "004",
+            "ctl00$cpSubContent$btnFind": "Find"
+          }
+        }
+      }
+    },
+    {
+      "id": "sd_sddot_annual_price_report",
+      "state": "SD",
+      "agency": "SDDOT",
+      "label": "Annual Bid Item Price Report",
+      "sourceType": "linked_documents",
+      "indexUrl": "https://dot.sd.gov/doing-business/contractors/forms-documents/",
+      "allowedHosts": ["dot.sd.gov"],
+      "importer": "scripts/import_south_dakota_data.py",
+      "enabled": true,
+      "baseline": {"paths": []},
+      "config": {
+        "includePatterns": ["bid item price report", "biditempricereport", "20\\d{2}.*price report"],
+        "excludePatterns": ["fuel price"],
+        "identityMode": "url",
+        "hashEveryRecord": true
+      }
+    },
+    {
+      "id": "sd_sddot_specifications",
+      "state": "SD",
+      "agency": "SDDOT",
+      "label": "Standard Specifications",
+      "sourceType": "linked_documents",
+      "indexUrl": "https://dot.sd.gov/doing-business/contractors/standard-specifications/",
+      "allowedHosts": ["dot.sd.gov"],
+      "importer": "scripts/import_south_dakota_data.py",
+      "enabled": true,
+      "baseline": {"paths": []},
+      "config": {
+        "includePatterns": ["specification", "spec book", "specbook"],
+        "hashEveryRecord": true
+      }
+    },
+    {
+      "id": "shared_fhwa_nhcci",
+      "state": "Shared",
+      "agency": "FHWA",
+      "label": "NHCCI Inflation Index",
+      "sourceType": "api_records",
+      "indexUrl": "https://data.transportation.gov/resource/r94d-n4f9.json",
+      "allowedHosts": ["data.transportation.gov"],
+      "importer": "scripts/refresh_nhcci_index.py",
+      "enabled": true,
+      "baseline": {
+        "paths": ["public/data/common/inflation_index.csv"],
+        "identityField": "index_id"
+      },
+      "config": {
+        "periodField": "quarter",
+        "valueField": "nhcci",
+        "api": true
+      }
+    }
+  ]
+}
