@@ -90,7 +90,7 @@ class MonitorApp:
                 "registryError": self.registry_error,
             }
 
-    def start_scan(self) -> tuple[dict[str, Any], bool]:
+    def start_scan(self, source_id: str | None = None) -> tuple[dict[str, Any], bool]:
         with self.lock:
             if self.registry_error:
                 return {"error": self.registry_error}, False
@@ -98,12 +98,17 @@ class MonitorApp:
                 return self.runs[self.active_run_id], False
             run_id = uuid.uuid4().hex
             sources = [source for source in self.registry if source.get("enabled", True)]
+            if source_id:
+                sources = [source for source in sources if source["id"] == source_id]
+                if not sources:
+                    return {"error": "Unknown or disabled source."}, False
             run = {
                 "scanId": run_id,
                 "status": "running",
                 "startedAt": now(),
                 "completedAt": "",
                 "total": len(sources),
+                "sourceIds": [source["id"] for source in sources],
                 "completed": 0,
                 "progress": {source["id"]: {"status": "Queued", "label": source["label"]} for source in sources},
                 "results": [],
@@ -230,6 +235,11 @@ class MonitorHandler(BaseHTTPRequestHandler):
         try:
             if parsed.path == "/api/scans":
                 run, _created = self.app.start_scan()
+                self.send_json(run, HTTPStatus.ACCEPTED if run.get("scanId") else HTTPStatus.BAD_REQUEST)
+                return
+            if parsed.path.startswith("/api/sources/") and parsed.path.endswith("/scans"):
+                source_id = unquote(parsed.path[len("/api/sources/"):-len("/scans")].strip("/"))
+                run, _created = self.app.start_scan(source_id)
                 self.send_json(run, HTTPStatus.ACCEPTED if run.get("scanId") else HTTPStatus.BAD_REQUEST)
                 return
             if parsed.path.startswith("/api/sources/") and parsed.path.endswith("/baseline"):

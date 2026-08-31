@@ -6,6 +6,7 @@ const healthNode = document.querySelector("#health");
 const runStatus = document.querySelector("#run-status");
 let sourcesPayload = { sources: [], activeScanId: null, lastSuccessfulScan: "" };
 let pollTimer = null;
+const activeSourceIds = new Set();
 
 const esc = (value) => String(value ?? "");
 const formatTime = (value) => value ? new Date(value).toLocaleString() : "Never";
@@ -19,7 +20,7 @@ async function request(path, options = {}) {
 }
 
 function sourceStatus(source) {
-  return source.latest?.status || (sourcesPayload.activeScanId ? "Queued" : "Not scanned");
+  return source.activeStatus || source.latest?.status || (activeSourceIds.has(source.id) ? "Queued" : "Not scanned");
 }
 
 function button(label, className, onClick, disabled = false) {
@@ -82,6 +83,8 @@ function renderSource(source) {
   badge.textContent = status;
   const actions = document.createElement("div");
   actions.className = "source-actions";
+  const scanInProgress = activeSourceIds.has(source.id);
+  actions.append(button(scanInProgress ? "Scanning…" : "Scan this source", "secondary", () => scanSource(source), Boolean(sourcesPayload.activeScanId)));
   actions.append(button("Open source page", "secondary", () => window.open(latest?.indexUrl || source.indexUrl, "_blank", "noopener,noreferrer")));
   const requestText = latest?.importRequest || "";
   actions.append(button("Copy import request", "secondary", async () => {
@@ -136,12 +139,39 @@ async function pollScan(scanId) {
     runStatus.textContent = run.status === "running" ? `${run.completed}/${run.total} sources scanned` : run.status;
     sourcesPayload.sources = (sourcesPayload.sources || []).map((source) => {
       const progress = run.progress?.[source.id];
-      return progress?.result ? { ...source, latest: progress.result } : source;
+      if (!progress) return source;
+      return progress.result ? { ...source, latest: progress.result, activeStatus: "" } : { ...source, activeStatus: progress.status };
     });
     render();
     if (run.status === "running") pollTimer = setTimeout(() => pollScan(scanId), 700);
-    else { scanButton.disabled = false; announcement.textContent = `Scan finished with status: ${run.status}.`; await loadSources(); }
-  } catch (error) { scanButton.disabled = false; announcement.textContent = error.message; }
+    else {
+      scanButton.disabled = false;
+      for (const sourceId of run.sourceIds || []) activeSourceIds.delete(sourceId);
+      announcement.textContent = `Scan finished with status: ${run.status}.`;
+      await loadSources();
+    }
+  } catch (error) {
+    scanButton.disabled = false;
+    activeSourceIds.clear();
+    announcement.textContent = error.message;
+  }
+}
+
+async function scanSource(source) {
+  activeSourceIds.add(source.id);
+  source.activeStatus = "Queued";
+  announcement.textContent = `Starting scan for ${source.label}…`;
+  render();
+  try {
+    const run = await request(`/api/sources/${encodeURIComponent(source.id)}/scans`, { method: "POST" });
+    sourcesPayload.activeScanId = run.scanId;
+    runStatus.textContent = "Starting";
+    await pollScan(run.scanId);
+  } catch (error) {
+    activeSourceIds.delete(source.id);
+    announcement.textContent = error.message;
+    render();
+  }
 }
 
 scanButton.addEventListener("click", async () => {

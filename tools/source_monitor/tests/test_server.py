@@ -51,6 +51,17 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual("completed", current["status"])
                 self.assertEqual("Baseline needed", current["results"][0]["status"])
 
+                single_run = json.loads(urlopen(Request(f"{base}/api/sources/fixture_api/scans", method="POST")).read())
+                self.assertEqual(["fixture_api"], single_run["sourceIds"])
+                self.assertEqual(1, single_run["total"])
+                for _ in range(50):
+                    single_current = json.loads(urlopen(f"{base}/api/scans/{single_run['scanId']}").read())
+                    if single_current["status"] != "running":
+                        break
+                    time.sleep(.02)
+                self.assertEqual("completed", single_current["status"])
+                self.assertEqual(1, len(single_current["results"]))
+
                 request = Request(f"{base}/api/sources/fixture_api/baseline", data=json.dumps({"scanId": run["scanId"]}).encode(), headers={"Content-Type": "application/json"}, method="POST")
                 saved = json.loads(urlopen(request).read())
                 self.assertEqual("fixture_api", saved["sourceId"])
