@@ -97,6 +97,19 @@ class ScannerTests(unittest.TestCase):
         self.assertEqual("Baseline needed", result["status"])
         self.assertEqual(2, result["discoveredCount"])
 
+    def test_nebraska_catalog_ignores_authenticated_report_viewer(self) -> None:
+        index = "https://agency.example/ne-catalog"
+        report_viewer = "https://files.example/ReportServer/Pages/ReportViewer.aspx?/Construction/Item_Master_Information"
+        catalog_pdf = "https://agency.example/media/stditeme06252010.pdf"
+        item = source("linked_documents", index_url=index)
+        item["config"] = {"includePatterns": [r"english\s+standard\s+item\s+list"], "identityMode": "url", "hashEveryRecord": True}
+        listing = f'<a href="{report_viewer}">Search for Items by Standard Item Code</a><a href="{catalog_pdf}">English Standard Item List</a>'.encode()
+        fetcher = FixtureFetcher({index: listing, catalog_pdf: b"catalog pdf"})
+        result = scan_source(item, Path("."), {"sources": {}}, fetcher)
+        self.assertEqual("Baseline needed", result["status"])
+        self.assertEqual(1, result["discoveredCount"])
+        self.assertEqual([index, catalog_pdf], fetcher.calls)
+
     def test_south_dakota_catalog_reordering_is_unchanged(self) -> None:
         item = source("html_catalog", index_url="https://agency.example/sd")
         item["config"] = {"recordPattern": r"\b\d{3}E\d{4}\b"}

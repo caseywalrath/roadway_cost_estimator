@@ -135,7 +135,7 @@
       "label": "Standard Item List",
       "sourceType": "linked_documents",
       "indexUrl": "https://dot.nebraska.gov/business-center/hwy-bridge-lp/item-history/",
-      "allowedHosts": ["dot.nebraska.gov", "ndorpubreports.nebraska.gov"],
+      "allowedHosts": ["dot.nebraska.gov"],
       "importer": "scripts/import_nebraska_data.py",
       "enabled": true,
       "baseline": {
@@ -143,7 +143,7 @@
         "sourceIds": ["ne_ndot_english_standard_item_list_2010"]
       },
       "config": {
-        "includePatterns": ["standard item", "item list", "catalog"],
+        "includePatterns": ["english\\s+standard\\s+item\\s+list"],
         "identityMode": "url",
         "hashEveryRecord": true
       }
