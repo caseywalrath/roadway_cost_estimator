@@ -267,14 +267,16 @@ class MonitorHandler(BaseHTTPRequestHandler):
     def serve_static(self, path: str) -> None:
         relative = "index.html" if path in {"", "/"} else unquote(path.lstrip("/"))
         static_root = PACKAGE_DIR / "static"
-        target = (static_root / relative).resolve()
-        if static_root not in target.parents and target != static_root:
+        asset_root = self.app.root / "public" / "brand"
+        root, asset_relative = (asset_root, relative.removeprefix("brand/")) if relative.startswith("brand/") else (static_root, relative)
+        target = (root / asset_relative).resolve()
+        if root not in target.parents and target != root:
             self.send_json({"error": "Not found."}, HTTPStatus.NOT_FOUND)
             return
         if not target.is_file():
             self.send_json({"error": "Not found."}, HTTPStatus.NOT_FOUND)
             return
-        content_types = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8"}
+        content_types = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".png": "image/png"}
         body = target.read_bytes()
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", content_types.get(target.suffix, "application/octet-stream"))
