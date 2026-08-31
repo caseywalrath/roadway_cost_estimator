@@ -42,7 +42,8 @@ function render() {
     groups.get(group).push(source);
   }
   const order = ["CO", "IA", "NE", "SD", "Shared / FHWA"];
-  for (const groupName of [...order, ...groups.keys()]) {
+  const groupOrder = [...order, ...[...groups.keys()].filter((groupName) => !order.includes(groupName))];
+  for (const groupName of groupOrder) {
     if (!groups.has(groupName)) continue;
     const section = document.createElement("section");
     section.className = "group";
