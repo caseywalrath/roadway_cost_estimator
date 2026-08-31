@@ -375,6 +375,11 @@ def link_record(link: Mapping[str, str], source: Mapping[str, Any], *, fetch_con
         "mediaType": "application/pdf" if ".pdf" in url.lower() else ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" if re.search(r"\.xlsx?(?:$|[?#])", url, re.I) else ""),
         "discoveryEvidence": f"{source.get('indexUrl')} -> {link.get('text', '') or link['url']}",
     }
+    if config.get("compareDiscoveredUrl"):
+        # Some agency document portals redirect a stable public link through a
+        # session-specific viewer. For those sources, the published link—not
+        # the transient viewer URL—is the meaningful comparison value.
+        record["comparisonUrl"] = url
     if fetch_content:
         response = fetcher.fetch(url, {str(item) for item in source["allowedHosts"]})
         record.update({
@@ -513,8 +518,12 @@ def records_equal(current: Mapping[str, Any], baseline: Mapping[str, Any]) -> bo
     for field in ("period", "value"):
         if current.get(field) and baseline.get(field) and current.get(field) != baseline.get(field):
             return False
-    current_url = current.get("resolvedUrl") or current.get("discoveredUrl")
-    baseline_url = baseline.get("resolvedUrl") or baseline.get("discoveredUrl")
+    if current.get("comparisonUrl") or baseline.get("comparisonUrl"):
+        current_url = current.get("comparisonUrl") or current.get("discoveredUrl") or current.get("resolvedUrl")
+        baseline_url = baseline.get("comparisonUrl") or baseline.get("discoveredUrl") or baseline.get("resolvedUrl")
+    else:
+        current_url = current.get("resolvedUrl") or current.get("discoveredUrl")
+        baseline_url = baseline.get("resolvedUrl") or baseline.get("discoveredUrl")
     if current_url and baseline_url and normalized_url(str(current_url)) != normalized_url(str(baseline_url)):
         return False
     return True

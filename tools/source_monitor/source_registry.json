@@ -19,8 +19,9 @@
         "includePatterns": ["cost\\s*data", "cost[-_ ]?data[-_ ]?book", "costdatabook"],
         "identityMode": "period",
         "ignoreHash": true,
-        "hashEveryRecord": true,
-        "hashNewRecords": true
+        "hashEveryRecord": false,
+        "hashNewRecords": false,
+        "compareDiscoveredUrl": true
       }
     },
     {

@@ -73,6 +73,34 @@ class ScannerTests(unittest.TestCase):
         self.assertEqual(1, len(result["changed"]))
         self.assertIn("hyland", result["changed"][0]["resolvedUrl"].lower())
 
+    def test_cdot_cost_books_ignore_dynamic_hyland_viewer_content(self) -> None:
+        index = "https://agency.example/cdot"
+        document = "https://oitco.hylandcloud.com/cdotrmpop/docpop/docpop.aspx?docid=67264216"
+        item = source("linked_documents", index_url=index)
+        item["allowedHosts"] = ["agency.example", "oitco.hylandcloud.com"]
+        item["config"] = {
+            "includePatterns": ["cost data"],
+            "identityMode": "period",
+            "ignoreHash": True,
+            "hashEveryRecord": False,
+            "hashNewRecords": False,
+            "compareDiscoveredUrl": True,
+        }
+        listing = f'<a href="{document}">2026 Cost Data Book</a>'.encode()
+        saved_record = {
+            "recordId": "2026",
+            "period": "2026",
+            "discoveredUrl": document,
+            "resolvedUrl": "https://oitco.hylandcloud.com/cdotrmpop/docpop/PdfPop.aspx?docid=67264216",
+            "sha256": "hash-of-a-previous-dynamic-viewer-response",
+        }
+        fetcher = FixtureFetcher({index: listing})
+
+        result = scan_source(item, Path("."), {"sources": {"test_source": {"records": [saved_record]}}}, fetcher)
+
+        self.assertEqual("Unchanged", result["status"])
+        self.assertEqual([index], fetcher.calls)
+
     def test_iowa_archive_detects_new_letting_without_hashing_existing_archive(self) -> None:
         index = "https://agency.example/iowa"
         item = source("archive_entries", index_url=index)
