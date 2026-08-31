@@ -1,5 +1,7 @@
 # Future Work: Source-Code Matching Framework for Ralston Bid Tab
 
+Status: Historical handoff. The Ralston source-code matching and import workflow is implemented; see `../implementation_notes.md` for current operational details.
+
 ## Context
 
 We want to add another FHU-curated public bid tab workbook:

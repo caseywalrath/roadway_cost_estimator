@@ -1,6 +1,8 @@
-## Implementation plan for Luna
+# Project Line Type Consolidation Plan
 
-### Objective
+Status: Historical implementation plan. The schema-v9 Project line model is implemented; see `../../architecture_overview.md` for the current behavior.
+
+## Objective
 
 Consolidate `explorer` and `catalog` Project lines into one `catalog` type. Preserve Explorer evidence as optional metadata.
 

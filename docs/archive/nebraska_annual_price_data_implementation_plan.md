@@ -1,5 +1,7 @@
 # Nebraska NDOT Annual Price Data Implementation Plan
 
+Status: Historical implementation plan. Nebraska annual-price support is implemented; see `../../architecture_overview.md` for the current behavior.
+
 ## Handoff Purpose
 
 This document is the implementation specification for adding Nebraska Department of Transportation (NDOT) average unit price reports to Roadway Cost Estimator.
