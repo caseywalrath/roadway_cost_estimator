@@ -17,7 +17,7 @@ The user opens the static web app in a browser.
 Expected current local URL:
 
 ```text
-http://127.0.0.1:5173/
+http://127.0.0.1:4174/
 ```
 
 Expected future hosted URL:
