@@ -46,6 +46,7 @@ button { font: inherit; cursor: pointer; }
 .status-Unavailable, .status-Review-required { color: var(--unavailable); background: #fde8e9; }
 .status-Baseline-needed { color: var(--teal-dark); background: var(--teal-pale); }
 .source-message { color: var(--muted); font-size: .88rem; line-height: 1.4; }
+.baseline-saved { margin: 0; padding: 0 18px 16px; color: var(--new); font-size: .84rem; font-weight: 700; }
 .source-actions { display: flex; justify-content: end; gap: 8px; flex-wrap: wrap; }
 .secondary { padding: 8px 10px; color: var(--teal-dark); background: var(--white); border: 1px solid #95c8c7; border-radius: 5px; font-size: .83rem; font-weight: 700; }
 .secondary:hover { background: var(--teal-pale); }

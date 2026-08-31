@@ -55,6 +55,9 @@ class ServerTests(unittest.TestCase):
                 saved = json.loads(urlopen(request).read())
                 self.assertEqual("fixture_api", saved["sourceId"])
                 self.assertTrue(state_path.exists())
+                sources = json.loads(urlopen(f"{base}/api/sources").read())
+                self.assertEqual(saved["savedAt"], sources["sources"][0]["localBaseline"]["savedAt"])
+                self.assertEqual(1, sources["sources"][0]["localBaseline"]["recordCount"])
         finally:
             server.shutdown()
             server.server_close()

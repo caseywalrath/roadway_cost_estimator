@@ -72,9 +72,17 @@ class MonitorApp:
             for run in self.runs.values():
                 for result in run.get("results", []):
                     latest_by_source[result["sourceId"]] = result
+            saved_sources = self.state.get("sources", {})
             return {
                 "sources": [
-                    {**source, "latest": latest_by_source.get(source["id"])}
+                    {
+                        **source,
+                        "latest": latest_by_source.get(source["id"]),
+                        "localBaseline": ({
+                            "savedAt": saved_sources[source["id"]].get("savedAt", ""),
+                            "recordCount": len(saved_sources[source["id"]].get("records", [])),
+                        } if source["id"] in saved_sources else None),
+                    }
                     for source in self.registry
                 ],
                 "lastSuccessfulScan": self.state.get("lastSuccessfulScan", ""),

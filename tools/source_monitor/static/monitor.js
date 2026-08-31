@@ -90,11 +90,17 @@ function renderSource(source) {
   }, !requestText));
   const canSave = latest && !["Unavailable", "Review required", "Scanning", "Queued"].includes(latest.status);
   actions.append(button("Save local baseline", "secondary", async () => {
-    try { await request(`/api/sources/${encodeURIComponent(source.id)}/baseline`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scanId: sourcesPayload.activeScanId || undefined }) }); announcement.textContent = `Saved the local baseline for ${source.label}.`; await loadSources(); }
+    try { const saved = await request(`/api/sources/${encodeURIComponent(source.id)}/baseline`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scanId: sourcesPayload.activeScanId || undefined }) }); announcement.textContent = `Saved the local baseline for ${source.label}.`; source.localBaseline = { savedAt: saved.savedAt, recordCount: saved.recordCount }; render(); }
     catch (error) { announcement.textContent = error.message; }
   }, !canSave));
   head.append(title, badge, actions);
   card.append(head, message);
+  if (source.localBaseline?.savedAt) {
+    const saved = document.createElement("p");
+    saved.className = "baseline-saved";
+    saved.textContent = `✓ Local baseline saved ${formatTime(source.localBaseline.savedAt)} (${source.localBaseline.recordCount} record${source.localBaseline.recordCount === 1 ? "" : "s"}).`;
+    card.append(saved);
+  }
   if (latest) {
     const details = document.createElement("details");
     details.className = "details";
