@@ -2491,6 +2491,22 @@ tbody tr:last-child td {
   color: var(--line-strong);
 }
 
+.app-footer__monitor-link {
+  color: var(--accent-dark);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.app-footer__monitor-link:hover {
+  text-decoration: underline;
+}
+
+.app-footer__monitor-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 @media (max-width: 560px) {
   .app-logo {
     height: 40px;
