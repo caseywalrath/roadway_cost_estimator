@@ -238,7 +238,7 @@ https://[username].github.io/[repo-name]/
 
 ## Project Documentation Policy
 
-`codex.md` holds workflow, user context, and Codex operating rules. The repository also contains `architecture_overview.md` plus `docs/data_schema.md`, `docs/implementation_notes.md`, `project_roadmap.md`, and `user_workflow.md`.
+`AGENTS.md` holds the repository-level operating instructions that Codex should apply automatically, including the subagent delegation rules. `docs/agent_delegation_policy.md` contains the detailed delegation procedure and assignment template. `codex.md` holds the remaining workflow, user context, and local-environment rules. The repository also contains `architecture_overview.md` plus `docs/data_schema.md`, `docs/implementation_notes.md`, `project_roadmap.md`, and `user_workflow.md`.
 
 Codex must review `architecture_overview.md` before new session plans or code changes. Update `architecture_overview.md` (and the related docs above) when architecture, file structure, deployment behavior, data flow, or major app behavior changes. Minor copy edits, small visual tweaks, and narrow bug fixes do not require documentation updates unless they change how the app works.
 

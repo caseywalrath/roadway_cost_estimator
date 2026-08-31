@@ -6,6 +6,10 @@ This document describes the intended end-user workflow for the Roadway Cost Esti
 
 The prototype is a project evidence browser with a browser-local Project workspace. It is not an automatic estimator, a chatbot, or a replacement for roadway engineering judgment.
 
+## Developer source refresh discovery
+
+When checking for new official cost books, bid tabs, catalogs, or indexes, double-click `Start Data Source Monitor.cmd` at the repository root. The local page at `http://127.0.0.1:4180/` groups the configured Colorado, Iowa, Nebraska, South Dakota, and FHWA sources. Click **Scan Now**, review any New, Changed, Removed, Unavailable, or Review required results, and use **Copy import request** to begin a separate agent-assisted live download/import session. The monitor never runs importers or changes tracked data. See `docs/implementation_notes.md` for direct-start and troubleshooting instructions.
+
 The near-term user is expected to be a project manager, planner, estimator, or roadway reviewer who needs to gather and review historical project evidence for one roadway bid item.
 
 ## Current Prototype Workflow

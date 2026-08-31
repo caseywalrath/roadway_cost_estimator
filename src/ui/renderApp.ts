@@ -273,6 +273,7 @@ export async function renderApp(
           <span>${escapeHtml(data.manifest.productTitle)}</span>
           <span class="app-footer__dot" aria-hidden="true">•</span>
           <span>&copy; ${new Date().getFullYear()}</span>
+          <a class="app-footer__monitor-link" href="http://127.0.0.1:4180/" target="_blank" rel="noopener" title="Open the locally running Data Source Monitor">Data Source Monitor</a>
           <span class="app-footer__save-status" data-project-save-status role="status" aria-live="polite">${escapeHtml(saveStatusText(saveStatus, lastSavedAt))}</span>
         </footer>
       </main>

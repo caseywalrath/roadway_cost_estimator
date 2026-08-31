@@ -1,0 +1,228 @@
+from __future__ import annotations
+
+import json
+import unittest
+from unittest.mock import patch
+from pathlib import Path
+
+from tools.source_monitor.scanner import (
+    FetchResponse,
+    MonitorError,
+    compare_records,
+    load_registry,
+    normalized_catalog_records,
+    scan_source,
+    validate_url,
+)
+
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+class FixtureFetcher:
+    def __init__(self, responses: dict[str, bytes | Exception]) -> None:
+        self.responses = responses
+        self.calls: list[str] = []
+
+    def fetch(self, url: str, allowed_hosts: set[str], *, max_bytes: int = 25 * 1024 * 1024) -> FetchResponse:
+        self.calls.append(url)
+        value = self.responses.get(url)
+        if isinstance(value, Exception):
+            raise value
+        if value is None:
+            raise MonitorError(f"Could not fetch fixture {url}")
+        return FetchResponse(url, 200, {"content-type": "text/html"}, value)
+
+
+def source(source_type: str, *, source_id: str = "test_source", index_url: str = "https://agency.example/index") -> dict[str, object]:
+    return {
+        "id": source_id,
+        "state": "TEST",
+        "agency": "Agency",
+        "label": "Test source",
+        "sourceType": source_type,
+        "indexUrl": index_url,
+        "allowedHosts": ["agency.example", "files.example"],
+        "importer": "scripts/test_import.py",
+        "enabled": True,
+        "config": {},
+        "baseline": {"paths": []},
+    }
+
+
+class ScannerTests(unittest.TestCase):
+    def test_registry_has_all_supported_sources_and_valid_hosts(self) -> None:
+        entries = load_registry(Path("tools/source_monitor/source_registry.json"))
+        self.assertEqual(13, len(entries))
+        self.assertEqual({"CO", "IA", "NE", "SD", "Shared"}, {entry["state"] for entry in entries})
+        self.assertTrue(all(entry["allowedHosts"] for entry in entries))
+
+    def test_cdot_hyland_link_and_stable_document_hash_change(self) -> None:
+        index = "https://agency.example/cdot"
+        document = "https://files.example/document.pdf?docid=1"
+        item = source("linked_documents", index_url=index)
+        item["allowedHosts"] = ["agency.example", "files.example"]
+        item["config"] = {"includePatterns": ["cost data"], "identityMode": "url", "hashEveryRecord": True}
+        fetcher = FixtureFetcher({index: (FIXTURES / "cdot_index.html").read_bytes(), "https://oitco.hylandcloud.com/2273/Process/DownloadDocument?docid=67264216": b"new pdf bytes"})
+        item["indexUrl"] = "https://agency.example/cdot"
+        # The fixture uses the production Hyland host; explicitly allow it for this source test.
+        item["allowedHosts"] = ["agency.example", "oitco.hylandcloud.com"]
+        baseline_url = "https://oitco.hylandcloud.com/2273/Process/DownloadDocument?docid=67264216"
+        result = scan_source(item, Path("."), {"sources": {"test_source": {"records": [{"recordId": baseline_url, "sha256": "old"}]}}}, fetcher)
+        self.assertEqual("Changed", result["status"])
+        self.assertEqual(1, len(result["changed"]))
+        self.assertIn("hyland", result["changed"][0]["resolvedUrl"].lower())
+
+    def test_cdot_cost_books_ignore_dynamic_hyland_viewer_content(self) -> None:
+        index = "https://agency.example/cdot"
+        document = "https://oitco.hylandcloud.com/cdotrmpop/docpop/docpop.aspx?docid=67264216"
+        item = source("linked_documents", index_url=index)
+        item["allowedHosts"] = ["agency.example", "oitco.hylandcloud.com"]
+        item["config"] = {
+            "includePatterns": ["cost data"],
+            "identityMode": "period",
+            "ignoreHash": True,
+            "hashEveryRecord": False,
+            "hashNewRecords": False,
+            "compareDiscoveredUrl": True,
+        }
+        listing = f'<a href="{document}">2026 Cost Data Book</a>'.encode()
+        saved_record = {
+            "recordId": "2026",
+            "period": "2026",
+            "discoveredUrl": document,
+            "resolvedUrl": "https://oitco.hylandcloud.com/cdotrmpop/docpop/PdfPop.aspx?docid=67264216",
+            "sha256": "hash-of-a-previous-dynamic-viewer-response",
+        }
+        fetcher = FixtureFetcher({index: listing})
+
+        result = scan_source(item, Path("."), {"sources": {"test_source": {"records": [saved_record]}}}, fetcher)
+
+        self.assertEqual("Unchanged", result["status"])
+        self.assertEqual([index], fetcher.calls)
+
+    def test_cdot_cost_book_probe_detects_official_quarter_ahead_of_loaded_data(self) -> None:
+        index = "https://agency.example/cdot"
+        document = "https://oitco.hylandcloud.com/cdotrmpop/docpop/PdfPop.aspx?docid=67264216"
+        item = source("linked_documents", source_id="co_cdot_cost_data_book", index_url=index)
+        item["allowedHosts"] = ["agency.example", "oitco.hylandcloud.com"]
+        item["config"] = {
+            "includePatterns": ["cost data"],
+            "identityMode": "period",
+            "ignoreHash": True,
+            "hashEveryRecord": False,
+            "hashNewRecords": False,
+            "compareDiscoveredUrl": True,
+            "documentProbe": "hyland_pdfpop_title",
+        }
+        item["baseline"] = {"paths": ["public/data/states/co/sources.csv"], "sourceIdPrefix": "cdot_cost_data_book_"}
+        listing = f'<a href="{document}">2026 Cost Data Book</a>'.encode()
+        fetcher = FixtureFetcher({index: listing})
+        with patch("tools.source_monitor.scanner.browser_page_title", return_value="CDOTRM EEMA Cost Data Book - 2026 - 2nd Qtr - 8/17/2026"):
+            result = scan_source(item, Path("."), {"sources": {"co_cdot_cost_data_book": {"records": [{"recordId": "2026", "period": "2026 Q2", "fingerprint": "saved-current-viewer-title"}]}}}, fetcher)
+
+        self.assertEqual("Changed", result["status"])
+        self.assertEqual("2026 Q2", result["officialCoverage"])
+        self.assertEqual("2026 Q1", result["applicationCoverage"])
+        self.assertIn("through June 2026", result["message"])
+        self.assertTrue(result["importRequest"])
+
+    def test_iowa_archive_detects_new_letting_without_hashing_existing_archive(self) -> None:
+        index = "https://agency.example/iowa"
+        item = source("archive_entries", index_url=index)
+        item["config"] = {"includePatterns": ["bid tab"], "identityPattern": r"\b\d{1,2}/\d{1,2}/\d{2}\b", "hashNewRecords": False, "ignoredQueryParams": ["inline"]}
+        fetcher = FixtureFetcher({index: (FIXTURES / "ia_archive.html").read_bytes()})
+        state = {"sources": {"test_source": {"records": [{"recordId": "2026-01-21", "resolvedUrl": "https://agency.example/media/100/download"}]}}}
+        result = scan_source(item, Path("."), state, fetcher)
+        self.assertEqual("New", result["status"])
+        self.assertEqual(["2026-02-10"], [row["recordId"] for row in result["new"]])
+        self.assertEqual([index], fetcher.calls)
+
+    def test_nebraska_listing_contains_both_report_series(self) -> None:
+        index = "https://agency.example/ne"
+        item = source("linked_documents", index_url=index)
+        item["config"] = {"includePatterns": ["average", "price"], "identityMode": "url", "hashEveryRecord": False}
+        fetcher = FixtureFetcher({
+            index: (FIXTURES / "ne_listing.html").read_bytes(),
+            "https://agency.example/media/a/aup-january-2025-december-2025.pdf": b"calendar report",
+            "https://agency.example/media/b/aup-july-2025-june-2026.pdf": b"july-june report",
+        })
+        result = scan_source(item, Path("."), {"sources": {}}, fetcher)
+        self.assertEqual("Baseline needed", result["status"])
+        self.assertEqual(2, result["discoveredCount"])
+
+    def test_nebraska_catalog_ignores_authenticated_report_viewer(self) -> None:
+        index = "https://agency.example/ne-catalog"
+        report_viewer = "https://files.example/ReportServer/Pages/ReportViewer.aspx?/Construction/Item_Master_Information"
+        catalog_pdf = "https://agency.example/media/stditeme06252010.pdf"
+        item = source("linked_documents", index_url=index)
+        item["config"] = {"includePatterns": [r"english\s+standard\s+item\s+list"], "identityMode": "url", "hashEveryRecord": True}
+        listing = f'<a href="{report_viewer}">Search for Items by Standard Item Code</a><a href="{catalog_pdf}">English Standard Item List</a>'.encode()
+        fetcher = FixtureFetcher({index: listing, catalog_pdf: b"catalog pdf"})
+        result = scan_source(item, Path("."), {"sources": {}}, fetcher)
+        self.assertEqual("Baseline needed", result["status"])
+        self.assertEqual(1, result["discoveredCount"])
+        self.assertEqual([index, catalog_pdf], fetcher.calls)
+
+    def test_nebraska_specifications_recognizes_contractor_page_document_link(self) -> None:
+        index = "https://agency.example/contractor"
+        specifications_pdf = "https://agency.example/media/g4qp4y0d/2017-specbook.pdf"
+        item = source("linked_documents", index_url=index)
+        item["config"] = {
+            "includePatterns": ["specification", "spec book", "specbook", "2017-specbook"],
+            "identityMode": "url",
+            "hashEveryRecord": True,
+        }
+        listing = f'<p>Electronic edition: <a href="{specifications_pdf}">here</a></p>'.encode()
+        fetcher = FixtureFetcher({index: listing, specifications_pdf: b"official specifications pdf"})
+        result = scan_source(item, Path("."), {"sources": {}}, fetcher)
+        self.assertEqual("Baseline needed", result["status"])
+        self.assertEqual(1, result["discoveredCount"])
+        self.assertEqual([index, specifications_pdf], fetcher.calls)
+
+    def test_south_dakota_catalog_reordering_is_unchanged(self) -> None:
+        item = source("html_catalog", index_url="https://agency.example/sd")
+        item["config"] = {"recordPattern": r"\b\d{3}E\d{4}\b"}
+        first = normalized_catalog_records((FIXTURES / "sd_catalog_a.html").read_bytes(), item)
+        second = normalized_catalog_records((FIXTURES / "sd_catalog_b.html").read_bytes(), item)
+        self.assertEqual("Unchanged", compare_records(second, first)["status"])
+
+    def test_nhcci_new_quarter(self) -> None:
+        index = "https://agency.example/nhcci"
+        item = source("api_records", index_url=index)
+        item["config"] = {"periodField": "quarter", "valueField": "nhcci"}
+        fetcher = FixtureFetcher({index: (FIXTURES / "nhcci.json").read_bytes()})
+        state = {"sources": {"test_source": {"records": [{"recordId": "2026 Q1", "period": "2026 Q1", "value": "2.123"}]}}}
+        result = scan_source(item, Path("."), state, fetcher)
+        self.assertEqual("New", result["status"])
+        self.assertEqual("2026 Q2", result["new"][0]["recordId"])
+
+    def test_redirect_to_unapproved_host_is_blocked(self) -> None:
+        with self.assertRaises(MonitorError):
+            validate_url("https://unapproved.example/file.pdf", {"agency.example"})
+
+    def test_unavailable_and_malformed_sources_are_not_unchanged(self) -> None:
+        unavailable = source("linked_documents", index_url="https://agency.example/down")
+        unavailable["config"] = {"includePatterns": ["pdf"]}
+        failed = FixtureFetcher({"https://agency.example/down": MonitorError("Could not fetch source: timeout")})
+        self.assertEqual("Unavailable", scan_source(unavailable, Path("."), {"sources": {}}, failed)["status"])
+
+        malformed = source("archive_entries", index_url="https://agency.example/malformed")
+        malformed["config"] = {"includePatterns": ["bid"]}
+        malformed_fetcher = FixtureFetcher({"https://agency.example/malformed": (FIXTURES / "malformed.html").read_bytes()})
+        self.assertEqual("Review required", scan_source(malformed, Path("."), {"sources": {}}, malformed_fetcher)["status"])
+
+    def test_first_scan_requires_explicit_baseline(self) -> None:
+        item = source("api_records", index_url="https://agency.example/nhcci")
+        item["config"] = {"periodField": "quarter", "valueField": "nhcci"}
+        fetcher = FixtureFetcher({"https://agency.example/nhcci": (FIXTURES / "nhcci.json").read_bytes()})
+        result = scan_source(item, Path("."), {"sources": {}}, fetcher)
+        self.assertEqual("Baseline needed", result["status"])
+        self.assertEqual(2, len(result["new"]))
+
+    def test_source_registry_json_is_valid_json(self) -> None:
+        json.loads(Path("tools/source_monitor/source_registry.json").read_text(encoding="utf-8"))
+
+
+if __name__ == "__main__":
+    unittest.main()
