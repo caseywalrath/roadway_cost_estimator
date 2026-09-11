@@ -15,6 +15,8 @@ Included:
 - Awarded Bid Summary based on currently filtered awarded bid unit prices.
 - Unit Price Summaries for loaded average bid and engineer estimate prices.
 - Source-only public bid-tab project review for imported rows that do not have reviewed CDOT matches.
+- Browser-local Project workspace with multiple Projects, revisions, backups, cost categories, and CSV reporting.
+- Bounded `.xlsx` Project line import with worksheet/range selection, header mapping, row review, catalog/custom decisions, and atomic persistence.
 - Data-package validation script.
 
 Not included:
@@ -23,13 +25,13 @@ Not included:
 - Confidence score.
 - Demo project evidence.
 - Real estimating data.
-- Estimate upload.
-- Estimate workspace.
+- General-purpose estimate upload outside the bounded `.xlsx` Project line import.
+- General-purpose PDF, `.xls`, `.xlsm`, or arbitrary spreadsheet parsing.
 - User accounts.
 - Server or hosted database.
 - Chat layer.
-- General-purpose PDF or spreadsheet parsing.
 - Automatic fuzzy matching from source specifications to CDOT item codes.
+- Formula evaluation or recovery of formula results that are absent from the workbook cache.
 
 ## Local Data Source Monitor
 
@@ -232,8 +234,26 @@ The likely production flow is:
 The repository includes `.github/workflows/pages.yml` for GitHub Pages deployment from `main`.
 The workflow uses `npm ci` so GitHub builds from the committed lockfile.
 
+## Project Excel import
+
+Open **Project Actions > Import From Excel** from the Project tab. The import is browser-local and keeps its working data detached from the saved Project until the user selects the final **Import [count] items** action.
+
+The wizard has five user-facing steps: Choose file, Choose data, Match columns, Review items, and Confirm import. It reads `.xlsx` ZIP workbooks in a worker, automatically selects the highest-confidence visible worksheet and item table, and shows a bounded preview. The normal column screen presents Item Code, Description, Unit, Quantity, Unit Cost, and Notes with sample values. Header aliases recognize common labels such as `Item No.`, `Item Code`, `Description`, `Units`, `Qty`, `Unit Price`, `Extended Cost`, `Total`, and `Notes`. Advanced import settings contain extended cost, Project-group behavior, cost-category behavior, and header overrides; the disclosure state persists through mapping changes. Change data range is the supported way to exclude helper cells and export/check columns to the right of the main estimate table. Ordinary detected sections require no user interaction; the source-section choice appears only for alternatives.
+
+Each selected physical row receives a source worksheet and row locator plus an outcome. Review opens on Needs attention when a row requires a choice; Ready to import, Needs attention, and Skipped cards filter the rows. The Needs attention list can be further filtered by issue type. Engineers can select individual unresolved rows, the visible page, or all filtered rows, then apply a resolution only when it is valid for every selected row. A bulk decision becomes individual row decisions, and individual controls remain available afterward. Blank, repeated-header, section, subtotal, and ambiguous rows stay visible and are excluded unless the user resolves an allowed action. An official-item match uses exact destination state and agency identity. Description and unit differences show a direct choice between the official value and the spreadsheet value as a custom line. Custom lines retain their source values and selected cost category; custom construction lines contribute to Construction Costs. Quantity and unit cost are preserved, and total item cost is recalculated from those values. Source-total differences, missing numeric values, formula-cache failures, duplicates, and invalid rows remain visible in the review result and downloadable issue report.
+
+The reader does not evaluate formulas. It uses cached formula results when present and requires review when a formula has no cached result. It preserves merge anchors and physical coordinates, but does not attempt to reconstruct arbitrary visual layouts. Merged headings, repeated headers, grouped sections, hidden rows/columns, print areas, and helper-cell regions are handled through detection and explicit selection. Worksheets are never combined automatically; alternative sections require an explicit inclusion choice.
+
+The confirmation names the destination Project, accepted item count, skipped-row reasons, imported cost totals, and spreadsheet-total comparison. The final action uses the accepted item count. Success states exactly how many items were added; a failed save states that no items were added and offers retry. The bounded reader accepts `.xlsx` only, with default limits of 20 MiB per file, 100 worksheets, 250,000 populated cells, 20,000 selected rows, 100 selected columns, and 30 seconds of parsing. The import never changes public evidence data. Persistent Project writes require IndexedDB; when durable storage is unavailable, the preview and issue report remain available but saving is blocked.
+
+Acceptance checks using the supplied private workbooks and the production parser:
+
+- `OPCC Template.xlsx`, `Estimate!B11:H143`: 133 physical rows, all classified as item rows; helper/export columns were left outside the selected range.
+- `132nd and Giles - Cost Estimate.xlsx`, `Concept 1A!B13:F95`: 83 physical rows, 26 item rows, 5 repeated-header rows, 33 ambiguous rows, and 19 blank rows; the six visible Concept sheets and five hidden/support sheets were not combined.
+- `Ida Street _30Cost_Estimate.xlsx`, `Ida Street Imp!B12:F131`: 120 physical rows, 47 item rows, 6 repeated-header rows, 31 ambiguous rows, and 36 blank rows; the two alternative surfacing sections require explicit selection.
+
 ## Next Product Steps
 
 Current sequencing lives in `project_roadmap.md`.
 
-Near-term development should keep hardening the exact-code evidence browser before estimate workspace, non-exact matching, private data, or import workflows are added.
+Near-term development should harden the exact-code evidence browser and review the browser-local Project and `.xlsx` import workflows with roadway engineers before adding private hosted data or non-exact matching.

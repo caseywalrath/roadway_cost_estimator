@@ -8,6 +8,7 @@ import {
   projectGroupSuggestions,
   projectTotal,
   sortProjectLineItems,
+  type ProjectCostCategory,
   type ProjectLineItem,
   type ProjectSort,
   type ProjectSortKey,
@@ -39,6 +40,7 @@ export type ProjectWorkspaceSubview = "workspace" | "manager";
 
 const PROJECT_SORTABLE_COLUMNS: Array<{ key: ProjectSortKey; label: string }> = [
   { key: "group", label: "Group" },
+  { key: "costCategory", label: "Cost Category" },
   { key: "itemCode", label: "Item Code" },
   { key: "description", label: "Description" },
   { key: "preferredUnitCost", label: "Unit Cost" },
@@ -211,6 +213,7 @@ function renderProjectActions(
           <button type="button" id="download-project-csv" ${!activeProject || activeProject.lineItems.length === 0 ? "disabled" : ""}>Export CSV</button>
           <button type="button" data-backup-project="${activeProject ? escapeHtml(activeProject.projectId) : ""}" ${!activeProject ? "disabled" : ""}>Export Project Backup</button>
           <button type="button" data-import-project>Import Project Backup</button>
+          <button type="button" data-start-excel-import>Import From Excel</button>
           <input type="file" accept=".json,.rce-project.json,application/json" data-project-import-input hidden />
         </div>
       </div>
@@ -303,7 +306,7 @@ function renderProjectCostSummary(project: UserProject, readOnly: boolean): stri
     <div class="project-cost-summary" aria-label="Project cost summary">
       <div class="project-cost-breakdown">
         <div class="project-cost-metric">
-          <span>Construction bid items</span>
+          <span>Construction Costs</span>
           <strong data-project-construction-cost>${formatCurrency(projectConstructionCost(project))}</strong>
         </div>
         <div class="project-cost-metric">
@@ -352,6 +355,7 @@ function renderProjectLineRow(lineItem: ProjectLineItem, readOnly: boolean, grou
   const disabled = readOnly ? "disabled" : "";
   return `<tr class="${custom ? "project-line-row--custom" : ""}">
     <td>${renderProjectLineInput(lineItem, "group", "Group", "project-line-group-input", disabled, "text", groupListId)}</td>
+    <td>${renderProjectCostCategorySelect(lineItem, disabled)}</td>
     <td>${custom ? renderProjectLineInput(lineItem, "itemCode", "Item Code", "project-line-text-input", disabled) : catalog ? renderCatalogExplorerLink(lineItem) : escapeHtml(lineItem.itemCode)}</td>
     <td class="project-line-description-cell">${descriptionEditable
       ? renderProjectLineInput(lineItem, "description", "Description", "project-line-text-input", disabled)
@@ -386,6 +390,14 @@ function renderProjectLineInput(
 ): string {
   const value = lineItem[field] ?? "";
   return `<input name="${field}" aria-label="${label}" class="${className}" data-project-line-id="${escapeHtml(lineItem.lineItemId)}" data-project-line-field="${field}" value="${escapeHtml(String(value))}" inputmode="${inputMode}" ${listId ? `list="${escapeHtml(listId)}"` : ""} ${disabled} />`;
+}
+
+function renderProjectCostCategorySelect(lineItem: ProjectLineItem, disabled: string): string {
+  const options: Array<{ value: ProjectCostCategory; label: string }> = [
+    { value: "construction", label: "Construction" },
+    { value: "other", label: "Other" }
+  ];
+  return `<select name="costCategory" aria-label="Cost Category" class="project-line-category-select" data-project-line-id="${escapeHtml(lineItem.lineItemId)}" data-project-line-field="costCategory" ${disabled}>${options.map((option) => `<option value="${option.value}" ${lineItem.costCategory === option.value ? "selected" : ""}>${option.label}</option>`).join("")}</select>`;
 }
 
 function renderProjectGroupDatalist(project: UserProject): string {

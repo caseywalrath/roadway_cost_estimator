@@ -24,6 +24,7 @@ import {
   parseUserProjectV7,
   parseUserProjectV8,
   parseUserProjectV9,
+  parseUserProjectV10,
   parseUserProjectV6,
   parseUserProjectV5,
   projectConstructionCost,
@@ -55,7 +56,7 @@ afterEach(async () => {
   await deleteDatabase();
 });
 
-describe("Project workspace v9", () => {
+describe("Project workspace v10", () => {
   it("renders one Project Actions menu without a duplicate workspace state selector", () => {
     const project = createUserProject("Header test", "CO");
     const html = renderProjectWorkspace(project, [project], testStates(), "CO", false, null);
@@ -137,6 +138,7 @@ describe("Project workspace v9", () => {
   it("renders custom rows with editable fields and keeps catalog identity fields read-only by default", () => {
     const project = createUserProject("Mixed", "CO");
     const custom = createCustomProjectLineItem("CO");
+    expect(custom.costCategory).toBe("other");
     custom.itemCode = "SOFT";
     custom.group = "Construction";
     custom.description = "Soft costs";
@@ -151,6 +153,8 @@ describe("Project workspace v9", () => {
     expect(html).toContain('value="Construction"');
     expect(html).toContain('data-project-line-field="description"');
     expect(html).toContain('data-project-line-field="unit"');
+    expect(html).toContain('data-project-line-field="costCategory"');
+    expect(html).toContain('<option value="other" selected>Other</option>');
     expect(html).not.toContain("data-open-catalog-explorer");
     expect(html).toContain("$50.00");
     expect(html.indexOf("SOFT")).toBeGreaterThan(html.indexOf("+Add Item"));
@@ -178,6 +182,7 @@ describe("Project workspace v9", () => {
     expect(catalogHtml).toContain('title="Edit description"');
     expect(catalogHtml).toContain('data-project-line-field="preferredUnitCost"');
     expect(catalogHtml).toContain('data-project-line-field="quantity"');
+    expect(catalogHtml).toContain('data-project-line-field="costCategory"');
     expect(catalogHtml).toContain("data-open-catalog-explorer");
     expect(catalogHtml).toContain('aria-label="Open Explorer results for 001 — Catalog item"');
   });
@@ -237,7 +242,7 @@ describe("Project workspace v9", () => {
     const container = document.createElement("div");
     container.innerHTML = renderProjectWorkspace(project, [project], testStates(), "CO", false, null);
 
-    expect(container.querySelectorAll("[data-project-sort-key]")).toHaveLength(8);
+    expect(container.querySelectorAll("[data-project-sort-key]")).toHaveLength(9);
     expect(container.querySelector("th:last-child [data-project-sort-key]")).toBeNull();
     expect(container.querySelector('th[aria-sort="ascending"]')?.classList.contains("table-sorted-column")).toBe(true);
     expect(container.querySelector('[data-project-sort-key="group"]')?.textContent).toContain("Group");
@@ -273,6 +278,7 @@ describe("Project workspace v9", () => {
     state = addProjectLineItem(state, project.projectId, custom);
     state = updateProjectLineItem(state, project.projectId, custom.lineItemId, {
       group: "  Construction  ",
+      costCategory: "construction",
       itemCode: "SOFT",
       description: "Soft costs",
       unit: "LS",
@@ -283,6 +289,9 @@ describe("Project workspace v9", () => {
     const updated = state.projects[0];
     expect(updated.lineItems[0].description).toBe("Soft costs");
     expect(updated.lineItems[0].group).toBe("Construction");
+    expect(updated.lineItems[0].costCategory).toBe("construction");
+    expect(projectConstructionCost(updated)).toBe(50);
+    expect(projectOtherCost(updated)).toBe(0);
     expect(projectTotal(updated)).toBe(50);
   });
 
@@ -303,6 +312,7 @@ describe("Project workspace v9", () => {
       agency: "CDOT"
     } satisfies AgencyItemRecord;
     const custom = createCustomProjectLineItem("CO");
+    custom.costCategory = "construction";
     custom.itemCode = " 502-001000 ";
     custom.quantity = 2;
     custom.preferredUnitCost = 50;
@@ -313,6 +323,7 @@ describe("Project workspace v9", () => {
     const linked = linkProjectLineItemToCatalog(custom, agencyItem);
     expect(linked).toMatchObject({
       lineItemType: "catalog",
+      costCategory: "construction",
       agencyId: "co_cdot",
       agencyItemId: "co_cdot_502-001000",
       itemCode: "502-001000",
@@ -473,7 +484,7 @@ describe("Project workspace v9", () => {
     expect(projectTotal(updated)).toBe(300);
 
     const html = renderProjectWorkspace(updated, [updated], testStates(), "CO", false, null);
-    expect(html).toContain("Construction bid items");
+    expect(html).toContain("Construction Costs");
     expect(html).toContain("Other costs");
     expect(html).toContain('data-project-contingency-percent');
     expect(html).toContain('value="20"');
@@ -638,6 +649,42 @@ describe("Project workspace v9", () => {
     });
   });
 
+  it("defaults missing pre-v10 categories from catalog/custom identity", () => {
+    const project = createUserProject("Category migration", "CO");
+    const custom = createCustomProjectLineItem("CO");
+    const catalog = createCatalogProjectLineItem({
+      state: "CO",
+      agencyId: "co_cdot",
+      agencyItemId: "co_cdot_001",
+      group: "",
+      itemCode: "001",
+      description: "Catalog item",
+      unit: "EACH",
+      quantity: 1,
+      preferredUnitCost: 2,
+      notes: "",
+      evidenceContext: null
+    });
+    const { costCategory: _customCategory, ...legacyCustom } = custom;
+    const { costCategory: _catalogCategory, ...legacyCatalog } = catalog;
+
+    const parsed = parseUserProjectV9({ ...project, lineItems: [legacyCustom, legacyCatalog] });
+    const currentParser = parseUserProjectV10({ ...project, lineItems: [legacyCustom, legacyCatalog] });
+
+    expect(parsed?.lineItems.map((lineItem) => lineItem.costCategory)).toEqual(["other", "construction"]);
+    expect(currentParser?.lineItems.map((lineItem) => lineItem.costCategory)).toEqual(["other", "construction"]);
+  });
+
+  it("rejects an invalid explicit category in a v10 Project", () => {
+    const project = createUserProject("Invalid category", "CO");
+    const custom = createCustomProjectLineItem("CO");
+
+    expect(parseUserProjectV10({
+      ...project,
+      lineItems: [{ ...custom, costCategory: "miscellaneous" }]
+    })).toBeNull();
+  });
+
   it("rejects a Project containing malformed non-null evidence", () => {
     const project = createUserProject("Malformed evidence", "CO");
     const line = createCatalogProjectLineItem({
@@ -677,6 +724,7 @@ describe("Project workspace v9", () => {
     project.lineItems = [{
       lineItemId: "line_original",
       lineItemType: "catalog",
+      costCategory: "construction",
       state: "CO",
       agencyId: "co_cdot",
       agencyItemId: "co_cdot_001",
@@ -770,17 +818,35 @@ describe("Project workspace v9", () => {
 });
 
 describe("Project backup format", () => {
-  it("round trips a v9 Project with custom lines and creates collision-safe copies", () => {
+  it("round trips a v10 Project with custom lines and creates collision-safe copies", () => {
     const project = { ...createUserProject("Backup test", "IA"), contingencyPercent: 12.5, revision: 7 };
     const custom = createCustomProjectLineItem("IA");
     custom.itemCode = "SOFT";
     custom.description = "Soft costs";
     custom.quantity = 2;
     custom.preferredUnitCost = 25;
+    custom.importSource = {
+      importId: "import_test",
+      fileName: "estimate.xlsx",
+      sheetName: "Estimate",
+      rowNumber: 11,
+      sourceRange: "B11:H11",
+      importedAt: "2026-09-09T00:00:00.000Z",
+      original: {
+        itemCode: "SOFT",
+        description: "Soft costs",
+        unit: "LS",
+        quantity: 2,
+        unitCost: 25,
+        total: 50
+      },
+      decisions: ["custom_no_catalog_match"]
+    };
     project.lineItems = [custom];
     const parsed = parseProjectBackup(JSON.parse(JSON.stringify(buildProjectBackup(project))) as unknown);
     expect(parsed?.project).toEqual(project);
-    expect(parsed?.projectSchemaVersion).toBe(9);
+    expect(parsed?.projectSchemaVersion).toBe(10);
+    expect(parsed?.project.lineItems[0].importSource?.sourceRange).toBe("B11:H11");
     expect(parsed?.summary).toEqual({
       constructionCost: 0,
       otherCost: 50,
@@ -795,12 +861,12 @@ describe("Project backup format", () => {
     expect(copy.revision).toBe(0);
   });
 
-  it("accepts v4 Project backups and normalizes them to v9", () => {
+  it("accepts v4 Project backups and normalizes them to v10", () => {
     const project = createUserProject("Legacy backup", "CO");
     const backup = buildProjectBackup(project);
     const legacyBackup = { ...backup, projectSchemaVersion: 4 };
     const parsed = parseProjectBackup(legacyBackup);
-    expect(parsed?.projectSchemaVersion).toBe(9);
+    expect(parsed?.projectSchemaVersion).toBe(10);
     expect(parsed?.project).toEqual(project);
     expect(parsed?.summary.totalProjectCost).toBe(0);
   });
@@ -817,7 +883,7 @@ describe("Project backup format", () => {
     };
     const parsed = parseProjectBackup({ ...backup, projectSchemaVersion: 5, project: legacyProject });
 
-    expect(parsed?.projectSchemaVersion).toBe(9);
+    expect(parsed?.projectSchemaVersion).toBe(10);
     expect(parsed?.project.lineItems[0].group).toBe("");
   });
 
@@ -832,17 +898,17 @@ describe("Project backup format", () => {
       project: legacyProject
     });
 
-    expect(parsed?.projectSchemaVersion).toBe(9);
+    expect(parsed?.projectSchemaVersion).toBe(10);
     expect(parsed?.project.contingencyPercent).toBe(0);
     expect(parsed?.summary.totalProjectCost).toBe(0);
   });
 
-  it.each([4, 5, 6, 7, 8] as const)("accepts v%s Project backups and exports schema v9", (schemaVersion) => {
+  it.each([4, 5, 6, 7, 8, 9] as const)("accepts v%s Project backups and exports schema v10", (schemaVersion) => {
     const project = createUserProject(`Legacy v${schemaVersion}`, "CO");
     const backup = buildProjectBackup(project);
     const parsed = parseProjectBackup({ ...backup, projectSchemaVersion: schemaVersion });
 
-    expect(parsed?.projectSchemaVersion).toBe(9);
+    expect(parsed?.projectSchemaVersion).toBe(10);
     expect(parsed?.project.projectId).toBe(project.projectId);
   });
 
@@ -916,6 +982,46 @@ describe.sequential("IndexedDB Project repository", () => {
     expect(loaded.activeProjectIdByState.CO).toBe(second.projectId);
   });
 
+  it("appends imported lines with a pre-import snapshot in one revision-checked write", async () => {
+    const initialized = await openProjectRepository();
+    repository = initialized.repository;
+    const project = await repository.createProject(createUserProject("Import target", "CO"));
+    const imported = createCustomProjectLineItem("CO", "construction");
+    imported.itemCode = "CUSTOM";
+    imported.description = "Temporary traffic control";
+    imported.unit = "LS";
+    imported.quantity = 1;
+    imported.preferredUnitCost = 75;
+
+    const saved = await repository.appendProjectLines(project, [imported], project.revision, "Before Excel import");
+    expect(saved.revision).toBe(project.revision + 1);
+    expect(saved.lineItems).toHaveLength(1);
+    const snapshot = await repository.listRevisions(project.projectId);
+    expect(snapshot[0].revision).toBe(project.revision);
+    expect(snapshot[0].project.lineItems).toHaveLength(0);
+
+    await expect(repository.appendProjectLines(project, [imported], project.revision)).rejects.toBeInstanceOf(ProjectConflictError);
+    const unchanged = await repository.getProject(project.projectId);
+    expect(unchanged?.lineItems).toHaveLength(1);
+
+    let rolling = saved;
+    for (let index = 0; index < 25; index += 1) {
+      rolling = await repository.appendProjectLines(rolling, [], rolling.revision, `Import ${index}`);
+    }
+    expect(await repository.listRevisions(project.projectId)).toHaveLength(20);
+  });
+
+  it("does not leave a snapshot or partial lines when an imported line cannot be cloned", async () => {
+    const initialized = await openProjectRepository();
+    repository = initialized.repository;
+    const project = await repository.createProject(createUserProject("Atomic failure", "CO"));
+    const invalidLine = { ...createCustomProjectLineItem("CO"), notes: Symbol("not cloneable") as unknown as string };
+
+    await expect(repository.appendProjectLines(project, [invalidLine], project.revision)).rejects.toThrow();
+    expect((await repository.getProject(project.projectId))?.lineItems).toHaveLength(0);
+    expect(await repository.listRevisions(project.projectId)).toEqual([]);
+  });
+
   it("persists incomplete custom lines through IndexedDB reloads", async () => {
     const initialized = await openProjectRepository();
     repository = initialized.repository;
@@ -934,6 +1040,26 @@ describe.sequential("IndexedDB Project repository", () => {
     expect(loaded?.lineItems[0].quantity).toBeNull();
     expect(loaded?.lineItems[0].evidenceContext).toBeNull();
     expect(loaded?.contingencyPercent).toBe(12.5);
+  });
+
+  it("persists a custom construction line through IndexedDB reloads", async () => {
+    const initialized = await openProjectRepository();
+    repository = initialized.repository;
+    const project = createUserProject("Custom construction persistence", "CO");
+    const custom = createCustomProjectLineItem("CO", "construction");
+    custom.itemCode = "MOB";
+    custom.description = "Mobilization allowance";
+    custom.unit = "LS";
+    custom.quantity = 1;
+    custom.preferredUnitCost = 125;
+    project.lineItems = [custom];
+
+    const saved = await repository.createProject(project);
+    const loaded = await repository.getProject(saved.projectId);
+
+    expect(loaded?.lineItems[0].costCategory).toBe("construction");
+    expect(loaded ? projectConstructionCost(loaded) : 0).toBe(125);
+    expect(loaded ? projectOtherCost(loaded) : 0).toBe(0);
   });
 
   it("persists incomplete catalog lines with nullable quantity and cost", async () => {

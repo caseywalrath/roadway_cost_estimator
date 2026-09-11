@@ -33,6 +33,10 @@ export class ProjectEditCoordinator {
     this.ownershipAvailableHandler = handler;
   }
 
+  owns(projectId: string): boolean {
+    return this.ownedProjectId === projectId;
+  }
+
   async claim(projectId: string): Promise<boolean> {
     this.release();
     if (!this.channel) {
