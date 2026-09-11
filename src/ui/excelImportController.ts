@@ -210,7 +210,7 @@ export class ExcelImportController {
       select.addEventListener("change", () => this.setRowAction(select.dataset.excelImportRowAction ?? "", select.value as ImportResolutionAction | ""));
     });
     wizard.querySelectorAll<HTMLInputElement>("[data-excel-import-review-row]").forEach((input) => {
-      input.addEventListener("change", () => this.toggleReviewRowSelection(input.dataset.excelImportReviewRow ?? "", input.checked));
+      input.addEventListener("click", () => this.toggleReviewRowSelection(input.dataset.excelImportReviewRow ?? "", input.checked));
     });
     wizard.querySelector<HTMLButtonElement>("[data-excel-import-select-visible]")?.addEventListener("click", () => this.selectReviewRows("visible"));
     wizard.querySelector<HTMLButtonElement>("[data-excel-import-select-filtered]")?.addEventListener("click", () => this.selectReviewRows("filtered"));

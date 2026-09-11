@@ -476,7 +476,7 @@ describe("Excel import wizard", () => {
     expect(controller.viewModel.commitStatus).toBe("committed");
     expect(root.textContent).toContain("2 items were added to Demo Project.");
     expect(root.querySelectorAll("[data-excel-import-cancel]")).toHaveLength(1);
-    expect(root.querySelector("[data-excel-import-download-report]")).toBeNull();
+    expect(root.querySelector<HTMLButtonElement>("[data-excel-import-download-report]")?.textContent).toContain("Download skipped-row report");
 
   });
 
