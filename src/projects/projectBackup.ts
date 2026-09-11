@@ -3,6 +3,7 @@ import {
   createId,
   projectCostSummary,
   parseUserProjectV9,
+  parseUserProjectV10,
   type ProjectCostSummary,
   type UserProject
 } from "./projectWorkspace";
@@ -41,12 +42,15 @@ export function parseProjectBackup(value: unknown): ProjectBackupFile | null {
       && value.projectSchemaVersion !== 6
       && value.projectSchemaVersion !== 7
       && value.projectSchemaVersion !== 8
+      && value.projectSchemaVersion !== 9
       && value.projectSchemaVersion !== PROJECT_WORKSPACE_SCHEMA_VERSION)
     || typeof value.exportedAt !== "string"
     || typeof value.revision !== "number") {
     return null;
   }
-  const project = parseUserProjectV9(value.project);
+  const project = value.projectSchemaVersion === PROJECT_WORKSPACE_SCHEMA_VERSION
+    ? parseUserProjectV10(value.project)
+    : parseUserProjectV9(value.project);
   return project && value.revision === project.revision
     ? {
         ...value,

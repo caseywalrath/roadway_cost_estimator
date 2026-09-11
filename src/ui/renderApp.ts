@@ -17,6 +17,7 @@ import type { ItemPriceHistorySortKey } from "../matching/buildItemPriceHistoryR
 import { buildAnnualInflationAdjustedPriceSet, buildInflationAdjustedPriceSet, buildInflationAdjustedSummary } from "../matching/inflationAdjustment";
 import type { InflationAdjustedSummary } from "../matching/inflationAdjustment";
 import type {
+  ProjectCostCategory,
   ProjectEvidenceContext,
   ProjectLineItem,
   ProjectSort,
@@ -54,6 +55,8 @@ import {
 import { createImportedCopy, downloadProjectBackup, readProjectBackupFile } from "../projects/projectBackup";
 import { openProjectRepository, ProjectConflictError, type ProjectRepository } from "../projects/projectRepository";
 import { ProjectEditCoordinator } from "../projects/projectEditCoordinator";
+import { ExcelImportController, ExcelImportNeedsReviewError, type ExcelImportReadyDraft } from "./excelImportController";
+import { downloadExcelImportReport } from "./excelImportReport";
 import { downloadEvidenceCsv } from "./exportEvidenceCsv";
 import { downloadItemPriceHistoryCsv } from "./exportItemPriceHistoryCsv";
 import { downloadProjectCsv } from "./exportProjectCsv";
@@ -76,6 +79,7 @@ import {
   restoreResultsTableScroll
 } from "./resultsScroll";
 import type { ResultsTableScrollPosition } from "./resultsScroll";
+import { renderExcelImportWizard } from "./renderExcelImport";
 
 type AppView = "explorer" | "project" | "sourceReview";
 type ProjectSubview = "workspace" | "manager";
@@ -173,6 +177,8 @@ export async function renderApp(
   let projectLineNoticeToken = 0;
   const dismissedCatalogMatchByLineId = new Map<string, string>();
   let projectMetadataDraft: ProjectMetadataDraft | null = null;
+  let excelImportController: ExcelImportController | null = null;
+  let excelImportReadyDraft: ExcelImportReadyDraft | null = null;
   const editCoordinator = new ProjectEditCoordinator();
   editCoordinator.setLostOwnershipHandler(() => {
     projectReadOnly = true;
@@ -262,9 +268,11 @@ export async function renderApp(
               )}
             </section>
           ` : activeView === "project"
-            ? projectSubview === "manager"
-              ? renderProjectManager(projectState.projects, data.manifest.states, data.stateConfig.code, projectManagerFilters, activeProject, projectReadOnly, projectMetadataDraft)
-              : renderProjectWorkspace(activeProject, projectState.projects, data.manifest.states, data.stateConfig.code, projectReadOnly, projectMetadataDraft, projectSort)
+            ? excelImportController
+              ? renderExcelImportWizard(excelImportController.viewModel, data.manifest.states, activeProject ? (activeProject.name.trim() || "Untitled Project") : null)
+              : projectSubview === "manager"
+                ? renderProjectManager(projectState.projects, data.manifest.states, data.stateConfig.code, projectManagerFilters, activeProject, projectReadOnly, projectMetadataDraft)
+                : renderProjectWorkspace(activeProject, projectState.projects, data.manifest.states, data.stateConfig.code, projectReadOnly, projectMetadataDraft, projectSort)
             : renderSourceReview(data, selectedSourceProjectId)}
 
         <footer class="app-footer">
@@ -293,7 +301,13 @@ export async function renderApp(
         if (nextView !== "explorer" && nextView !== "project") {
           return;
         }
+        if (excelImportController?.viewModel.commitStatus === "committing") return;
         if (!confirmDiscardProjectMetadataDraft()) return;
+
+        if (excelImportController && nextView !== "project") {
+          excelImportController.cancel();
+          return;
+        }
 
         activeView = nextView;
         if (nextView === "project") projectSubview = "workspace";
@@ -306,6 +320,10 @@ export async function renderApp(
     root.querySelector<HTMLSelectElement>("#state-selector")?.addEventListener("change", (event) => {
       const nextStateCode = (event.currentTarget as HTMLSelectElement).value;
       void (async () => {
+        if (excelImportController?.viewModel.commitStatus === "committing") {
+          render();
+          return;
+        }
         if (!confirmDiscardProjectMetadataDraft()) {
           render();
           return;
@@ -544,6 +562,7 @@ export async function renderApp(
     bindProjectWorkspace(root);
     bindProjectManager(root);
     bindImportControls(root);
+    excelImportController?.bind(root);
   }
 
   function persistProjectState(nextState: ProjectWorkspaceState, renderAfterSave: boolean): void {
@@ -1077,7 +1096,7 @@ export async function renderApp(
       });
     });
 
-    rootElement.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-project-line-field]").forEach((input) => {
+    rootElement.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("[data-project-line-field]").forEach((input) => {
       const updateLine = (validate: boolean) => {
         const lineItemId = input.dataset.projectLineId ?? "";
         const activeProject = getActiveProject(projectState, data.stateConfig.code);
@@ -1092,6 +1111,7 @@ export async function renderApp(
         const preferredUnitCostInput = row.querySelector<HTMLInputElement>('[data-project-line-field="preferredUnitCost"]');
         const groupInput = row.querySelector<HTMLInputElement>('[data-project-line-field="group"]');
         const notesInput = row.querySelector<HTMLInputElement>('[data-project-line-field="notes"]');
+        const costCategoryInput = row.querySelector<HTMLSelectElement>('[data-project-line-field="costCategory"]');
 
         const quantityResult = readNullableProjectNumber(quantityInput);
         const preferredUnitCostResult = readNullableProjectNumber(preferredUnitCostInput);
@@ -1118,6 +1138,7 @@ export async function renderApp(
           ? row.querySelector<HTMLInputElement>('[data-project-line-field="unit"]')
           : null;
         const nextState = updateProjectLineItem(projectState, activeProject.projectId, lineItemId, {
+          costCategory: costCategoryInput?.value as ProjectCostCategory | undefined,
           group: groupInput?.value ?? "",
           ...(lineItem.lineItemType === "custom" ? {
               itemCode: itemCodeInput?.value ?? "",
@@ -1145,6 +1166,11 @@ export async function renderApp(
         if (input.dataset.projectLineField === "itemCode") {
           confirmExactProjectCatalogMatch(input.dataset.projectLineId ?? "");
         }
+        void queueProjectSave();
+      });
+      input.addEventListener("change", () => {
+        if (input.dataset.projectLineField !== "costCategory") return;
+        updateLine(true);
         void queueProjectSave();
       });
     });
@@ -1427,7 +1453,118 @@ export async function renderApp(
     render();
   }
 
+  async function openExcelImportWizard(): Promise<void> {
+    if (!confirmDiscardProjectMetadataDraft()) return;
+    if (!(await flushPendingProjectSave())) return;
+    excelImportReadyDraft = null;
+    excelImportController?.dispose();
+    const activeProject = getActiveProject(projectState, data.stateConfig.code);
+    let controller: ExcelImportController;
+    controller = new ExcelImportController({
+      currentStateCode: data.stateConfig.code,
+      currentAgencyId: data.stateConfig.defaultAgencyId,
+      agencyItems: data.agencyItems,
+      activeProject,
+      projectState,
+      states: data.manifest.states,
+      onRender: render,
+      onClose: () => {
+        if (excelImportController === controller) excelImportController = null;
+        excelImportReadyDraft = null;
+        render();
+      },
+      onReady: (draft) => {
+        excelImportReadyDraft = draft;
+      },
+      onCommit: (draft) => commitExcelImport(controller, draft),
+      onDownloadReport: (draft) => downloadExcelImportReport(draft)
+    });
+    excelImportController = controller;
+    activeView = "project";
+    projectSubview = "workspace";
+    controller.open();
+  }
+
+  async function commitExcelImport(controller: ExcelImportController, draft: ExcelImportReadyDraft): Promise<string> {
+    if (!projectRepository.isPersistent) {
+      throw new Error("Browser storage is unavailable, so this import cannot be committed durably. Keep the report and try again after storage is restored.");
+    }
+    const acceptedLines = draft.resolvedRows
+      .filter((row) => row.lineItem && (row.outcome === "imported" || row.outcome === "imported-incomplete"))
+      .map((row) => row.lineItem!)
+      .map((lineItem) => structuredClone(lineItem));
+    if (!acceptedLines.length) throw new Error("No rows are ready to import. Resolve or exclude every failed row first.");
+
+    if (draft.destinationProjectMode === "active") {
+      if (!draft.baseProjectId || draft.baseProjectRevision === null) {
+        throw new ExcelImportNeedsReviewError("The active Project baseline is missing. Return to review and prepare the import again.");
+      }
+      if (projectReadOnly || !editCoordinator.owns(draft.baseProjectId)) {
+        throw new Error("This Project is read-only in this browser tab. Take over editing before committing the import.");
+      }
+      if (!(await flushPendingProjectSave())) {
+        throw new Error("Pending Project edits could not be saved. The import draft was retained.");
+      }
+      const current = getActiveProject(projectState, data.stateConfig.code);
+      if (!current || current.projectId !== draft.baseProjectId || current.state !== draft.state || current.status !== "active" || current.revision !== draft.baseProjectRevision) {
+        if (current?.projectId === draft.baseProjectId) controller.refreshDestinationProject(current);
+        throw new ExcelImportNeedsReviewError("The active Project changed while this import was open. Review the rows again before committing.");
+      }
+      if (!editCoordinator.owns(current.projectId) || projectReadOnly) {
+        throw new Error("Editing ownership was lost before the import could be committed. The draft was retained.");
+      }
+      let saved: UserProject;
+      try {
+        saved = await projectRepository.appendProjectLines(
+          current,
+          acceptedLines,
+          current.revision,
+          `Before Excel import ${draft.fileName}`
+        );
+      } catch (error) {
+        if (error instanceof ProjectConflictError) {
+          const latest = await projectRepository.getProject(current.projectId);
+          if (latest) projectState = replaceProject(projectState, latest);
+          controller.refreshDestinationProject(latest);
+          throw new ExcelImportNeedsReviewError("The active Project changed during the import save. Review the rows again before committing.");
+        }
+        throw error;
+      }
+      projectState = replaceProject(projectState, saved);
+      persistedChangeVersion = localChangeVersion;
+      lastSnapshotRevision = saved.revision;
+      lastSavedAt = saved.updatedAt;
+      saveStatus = "saved";
+      projectStorageWarning = null;
+      return `${acceptedLines.length} imported; ${draft.resolvedRows.length - acceptedLines.length} not imported. The report remains available for download.`;
+    }
+
+    const name = draft.newProjectName.trim();
+    if (!name) throw new Error("Enter a name for the new Project before committing the import.");
+    const newProject = createUserProject(name, draft.state);
+    newProject.lineItems = acceptedLines;
+    const saved = await projectRepository.createProject(newProject);
+    projectState = addProject(projectState, saved);
+    ensurePersistentStorageRequested();
+    try {
+      await projectRepository.setActiveProjectId(saved.state, saved.projectId);
+      projectState = setActiveProject(projectState, saved.projectId, saved.state);
+    } catch {
+      projectStorageWarning = "The imported Project was saved, but it could not be activated automatically. Open it from Project Manager.";
+    }
+    if (saved.state === data.stateConfig.code) {
+      projectReadOnly = !(await editCoordinator.claim(saved.projectId));
+      lastSavedAt = saved.updatedAt;
+      saveStatus = "saved";
+    }
+    excelImportReadyDraft = draft;
+    return `${acceptedLines.length} imported into ${saved.name}; ${draft.resolvedRows.length - acceptedLines.length} not imported. The report remains available for download.`;
+  }
+
   function bindImportControls(rootElement: HTMLElement): void {
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-start-excel-import]").forEach((button) => {
+      button.addEventListener("click", () => openExcelImportWizard());
+    });
     rootElement.querySelectorAll<HTMLButtonElement>("[data-import-project]").forEach((button) => {
       button.addEventListener("click", () => {
         if (!confirmDiscardProjectMetadataDraft()) return;
@@ -1491,6 +1628,9 @@ export async function renderApp(
   function cleanupProjectSession(): void {
     if (saveTimer !== null) window.clearTimeout(saveTimer);
     saveTimer = null;
+    excelImportController?.dispose();
+    excelImportController = null;
+    excelImportReadyDraft = null;
     editCoordinator.close();
     projectRepository.close();
     if (snapshotTimer !== null) window.clearInterval(snapshotTimer);

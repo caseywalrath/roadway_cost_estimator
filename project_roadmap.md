@@ -175,6 +175,8 @@ Initial slice implemented:
 - Editable Project item table.
 - Project CSV export.
 - IndexedDB persistence, Project manager, JSON backup/import, local revisions, and concurrent-tab protection.
+- Excel `.xlsx` import from Project Actions with worksheet and physical-range selection, column mapping, grouped and alternative-section review, row-level catalog/custom resolution, category control, and CSV diagnostics.
+- Atomic append for existing Projects and initial-write creation for new Projects, with optimistic revision checks, draft retention on failure, and import provenance.
 
 Recommended features:
 
@@ -185,7 +187,6 @@ Recommended features:
 
 Deferred until later:
 
-- Spreadsheet import.
 - Advanced versioning.
 - Collaboration.
 - User accounts.
@@ -201,8 +202,7 @@ Goal: Reduce manual work without weakening governance.
 Recommended sequence:
 
 - Expand evidence export formats only after reviewer-set behavior is stable.
-- Add CSV import for estimate rows only after the estimate-row schema is stable.
-- Add XLSX import later if CSV import proves useful.
+- Review the browser-local Excel import with roadway engineers and add narrowly scoped layout rules only when repeated private-workbook patterns justify them.
 - Decide private-data hosting before using reviewed FHU records.
 
 Governance rules:

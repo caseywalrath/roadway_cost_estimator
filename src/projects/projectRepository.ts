@@ -4,7 +4,7 @@ import {
   createEmptyProjectWorkspaceState,
   isLegacyPlaceholderProject,
   migrateLegacyWorkspace,
-  parseUserProjectV9,
+  parseUserProjectV10,
   removeProjectFromState,
   type LegacyMigrationResult,
   type ProjectWorkspaceState,
@@ -54,6 +54,16 @@ export interface ProjectRepository {
   loadWorkspaceState(): Promise<ProjectWorkspaceState>;
   createProject(project: UserProject): Promise<UserProject>;
   saveProject(project: UserProject, expectedRevision: number): Promise<UserProject>;
+  /**
+   * Append imported lines and preserve the exact pre-import Project snapshot
+   * in one optimistic IndexedDB transaction.
+   */
+  appendProjectLines(
+    project: UserProject,
+    lines: UserProject["lineItems"],
+    expectedRevision: number,
+    reason?: string
+  ): Promise<UserProject>;
   deleteProject(projectId: string): Promise<void>;
   recordBackup(projectId: string, revision: number): Promise<UserProject>;
   setActiveProjectId(stateCode: string, projectId: string | null): Promise<void>;
@@ -166,7 +176,7 @@ class IndexedDbProjectRepository implements ProjectRepository {
     return {
       schemaVersion: PROJECT_WORKSPACE_SCHEMA_VERSION,
       activeProjectIdByState: sanitizeActiveProjectIds(settings?.activeProjectIdByState ?? {}, projects),
-      projects: projects.map((project) => parseUserProjectV9(project)).filter((project): project is UserProject => project !== null)
+      projects: projects.map((project) => parseUserProjectV10(project)).filter((project): project is UserProject => project !== null)
     };
   }
 
@@ -192,6 +202,56 @@ class IndexedDbProjectRepository implements ProjectRepository {
       updatedAt: new Date().toISOString()
     };
     store.put(saved);
+    await transactionDone(transaction);
+    return saved;
+  }
+
+  async appendProjectLines(
+    project: UserProject,
+    lines: UserProject["lineItems"],
+    expectedRevision: number,
+    reason = "Before Excel import"
+  ): Promise<UserProject> {
+    const transaction = this.database.transaction(["projects", "revisions"], "readwrite");
+    const projectStore = transaction.objectStore("projects");
+    const revisionStore = transaction.objectStore("revisions");
+    const current = await requestResult<UserProject | undefined>(projectStore.get(project.projectId));
+    if (!current || current.revision !== expectedRevision) {
+      transaction.abort();
+      throw new ProjectConflictError();
+    }
+    if (current.status !== "active") {
+      transaction.abort();
+      throw new Error("Only an active Project can receive imported items.");
+    }
+    const now = new Date().toISOString();
+    const saved: UserProject = {
+      ...structuredClone(current),
+      lineItems: [...current.lineItems.map((line) => structuredClone(line)), ...lines.map((line) => structuredClone(line))],
+      revision: expectedRevision + 1,
+      updatedAt: now
+    };
+    revisionStore.put({
+      projectId: current.projectId,
+      revision: current.revision,
+      createdAt: now,
+      reason,
+      project: structuredClone(current)
+    } satisfies ProjectRevision);
+    projectStore.put(saved);
+    const existingRevisions = await requestResult<ProjectRevision[]>(revisionStore.index("projectId").getAll(current.projectId));
+    const revisionsByKey = new Map(existingRevisions.map((revision) => [`${revision.projectId}:${revision.revision}`, revision]));
+    revisionsByKey.set(`${current.projectId}:${current.revision}`, {
+      projectId: current.projectId,
+      revision: current.revision,
+      createdAt: now,
+      reason,
+      project: structuredClone(current)
+    });
+    const revisionsToRemove = [...revisionsByKey.values()]
+      .sort((left, right) => right.revision - left.revision)
+      .slice(MAX_REVISIONS_PER_PROJECT);
+    for (const revision of revisionsToRemove) revisionStore.delete([revision.projectId, revision.revision]);
     await transactionDone(transaction);
     return saved;
   }
@@ -264,14 +324,20 @@ class IndexedDbProjectRepository implements ProjectRepository {
     const index = transaction.objectStore("revisions").index("projectId");
     const revisions = await requestResult<ProjectRevision[]>(index.getAll(projectId));
     await transactionDone(transaction);
-    return revisions.sort((left, right) => right.revision - left.revision);
+    return revisions
+      .map((revision) => {
+        const project = parseUserProjectV10(revision.project);
+        return project ? { ...revision, project } : null;
+      })
+      .filter((revision): revision is ProjectRevision => revision !== null)
+      .sort((left, right) => right.revision - left.revision);
   }
 
   async getProject(projectId: string): Promise<UserProject | null> {
     const transaction = this.database.transaction("projects", "readonly");
     const project = await requestResult<UserProject | undefined>(transaction.objectStore("projects").get(projectId));
     await transactionDone(transaction);
-    return project ? parseUserProjectV9(project) : null;
+    return project ? parseUserProjectV10(project) : null;
   }
 
   private async getSettings(): Promise<WorkspaceSettingsRecord | undefined> {
@@ -351,7 +417,26 @@ class MemoryProjectRepository implements ProjectRepository {
     return saved;
   }
   async saveProject(project: UserProject, expectedRevision: number): Promise<UserProject> {
+    const current = this.state.projects.find((candidate) => candidate.projectId === project.projectId);
+    if (!current || current.revision !== expectedRevision) throw new ProjectConflictError();
     const saved = { ...structuredClone(project), revision: expectedRevision + 1, updatedAt: new Date().toISOString() };
+    this.state.projects = this.state.projects.map((candidate) => candidate.projectId === saved.projectId ? saved : candidate);
+    return saved;
+  }
+  async appendProjectLines(
+    project: UserProject,
+    lines: UserProject["lineItems"],
+    expectedRevision: number
+  ): Promise<UserProject> {
+    const current = this.state.projects.find((candidate) => candidate.projectId === project.projectId);
+    if (!current || current.revision !== expectedRevision) throw new ProjectConflictError();
+    if (current.status !== "active") throw new Error("Only an active Project can receive imported items.");
+    const saved = {
+      ...structuredClone(current),
+      lineItems: [...structuredClone(current.lineItems), ...structuredClone(lines)],
+      revision: expectedRevision + 1,
+      updatedAt: new Date().toISOString()
+    };
     this.state.projects = this.state.projects.map((candidate) => candidate.projectId === saved.projectId ? saved : candidate);
     return saved;
   }

@@ -275,12 +275,13 @@ Project line table columns:
 - Unit
 - Quantity
 - Total item cost
+- Cost category
 - Notes
 - Remove
 
 How to use it:
 
-- Use the Project Actions menu to switch recent Projects, create a Project, open the manager, export a Project CSV, or import/export a Project backup.
+- Use the Project Actions menu to switch recent Projects, create a Project, open the manager, import Excel items, export a Project CSV, or import/export a Project backup.
 - A Project's state is assigned when the Project is created. Use the top state selector to navigate between state workspaces.
 - Use New Project to open the explicit creation form. A name is required before the Project is stored or activated.
 - Use Edit Active Project to open the name, location, and notes fields, then choose Save Changes or Cancel. Draft metadata does not autosave.
@@ -293,6 +294,18 @@ How to use it:
 - Review the footer for `Saving…`, the last successful Project save time, or a save-failure message.
 - Export a `.rce-project.json` backup for round-trip recovery. Clearing browser site data can still remove IndexedDB Projects and local revisions.
 - If local storage is unavailable or malformed, the app shows a recoverable warning and keeps the evidence browser usable.
+
+### Import an existing Excel estimate
+
+Use **Project Actions > Import From Excel** to start an import. First choose an `.xlsx` workbook and say whether its items belong in the current Project or a named new Project. The app then selects the worksheet and item table that most closely match an estimate. Select only the estimate table when the workbook has helper, check, or export cells to the right. The reader does not evaluate formulas.
+
+The normal column screen shows Item Code, Description, Unit, Quantity, Unit Cost, and Notes with sample values. Open **Advanced import settings** only to map extended cost, Project groups, cost categories, or change the detected header row; it remains open while those settings are changed. On the data screen, open **Change data range** to exclude helper cells or include hidden rows. A source-section choice appears only when the workbook contains alternatives; select the one section to include.
+
+Review opens on **Needs attention** when a row needs a choice. Each affected row identifies its spreadsheet row, source values, and the relevant choice. To resolve repeated issues, filter by issue type, select individual rows, the visible page, or all filtered rows, then choose one resolution for the selection. The available bulk choices are limited to choices that apply to every selected row, and each row can still be changed individually. When a description or unit differs from an official item, choose the official value or keep the spreadsheet value as a custom item. Rows without an official item can be kept as custom items when they have a meaningful description. Missing quantity or unit cost, formula-cache failures, duplicate identities, invalid numeric values, and source-total differences require review or acknowledgement.
+
+The confirmation screen names the destination Project, item count, skipped rows and reasons, imported cost totals, and any spreadsheet-total comparison. Choose **Import [count] items** to save the accepted rows. The importer preserves source quantity and unit cost and recalculates Total Item Cost from those values. Cost category is independent of official/custom item identity, so a custom construction line contributes to Construction Costs. Saving is atomic and creates a recovery revision for an existing Project; a new Project receives its accepted lines in its initial write. If saving fails, no items are added and the import can be corrected or retried. After a successful import, use the single Close action in the header. A skipped-row report is available only when rows were skipped.
+
+The default reader limits are 20 MiB, 100 worksheets, 250,000 populated cells, 20,000 selected rows, 100 selected columns, and 30 seconds of parsing. Worksheets are not combined automatically. Merged headings and grouped layouts can be reviewed through physical range and section controls, but arbitrary visual reconstruction is not guaranteed.
 
 ## 9. Review source projects
 
@@ -407,14 +420,14 @@ Key questions for roadway engineers:
 - Which source data is useful but lower trust?
 - What should the tool say when data is weak?
 
-## Intended Later Workflow
+## Current multi-item workflow
 
-The current prototype supports one-item lookup and multiple browser-local Projects assembled one item at a time, with one active Project per state.
+The current prototype supports one-item lookup and multiple browser-local Projects assembled one item at a time or from a reviewed `.xlsx` workbook, with one active Project per state.
 
-The intended later workflow is:
+The multi-item workflow is:
 
 1. User creates or opens an estimate workspace.
-2. User enters or imports multiple estimate line items.
+2. User enters lines manually or imports them through Project Actions.
 3. App gathers exact-code evidence for each line.
 4. App flags missing evidence, unit-mismatch rows, or sparse awarded-bid rows.
 5. User reviews one item at a time.
@@ -422,7 +435,7 @@ The intended later workflow is:
 7. User records override notes.
 8. User exports an estimate support table or basis-of-estimate notes.
 
-Later outputs may include:
+Current outputs include:
 
 - CSV export
 - Excel-compatible table

@@ -6,7 +6,7 @@ import type {
   SearchQuery
 } from "../data/schema";
 
-export const PROJECT_WORKSPACE_SCHEMA_VERSION = 9;
+export const PROJECT_WORKSPACE_SCHEMA_VERSION = 10;
 export const LEGACY_PROJECT_WORKSPACE_KEYS = [
   "roadway-cost-estimator:projects:v3",
   "roadway-cost-estimator:projects:v2",
@@ -16,7 +16,7 @@ export const LEGACY_PROJECT_WORKSPACE_KEYS = [
 export type ProjectStatus = "active" | "archived";
 
 export interface ProjectWorkspaceState {
-  schemaVersion: 9;
+  schemaVersion: 10;
   activeProjectIdByState: Record<string, string | null>;
   projects: UserProject[];
 }
@@ -50,6 +50,8 @@ export interface ProjectLineItem {
   lineItemId: string;
   /** Legacy Explorer is accepted only while older stored Projects are normalized. */
   lineItemType: ProjectLineItemType | "explorer";
+  costCategory: ProjectCostCategory;
+  importSource?: ProjectLineImportSource;
   state: string;
   agencyId: string;
   agencyItemId: string;
@@ -67,9 +69,29 @@ export interface ProjectLineItem {
 }
 
 export type ProjectLineItemType = "catalog" | "custom";
+export type ProjectCostCategory = "construction" | "other";
+
+export interface ProjectLineImportSource {
+  importId: string;
+  fileName: string;
+  sheetName: string;
+  rowNumber: number;
+  sourceRange: string;
+  importedAt: string;
+  original: {
+    itemCode: string;
+    description: string;
+    unit: string;
+    quantity: number | null;
+    unitCost: number | null;
+    total: number | null;
+  };
+  decisions: string[];
+}
 
 export type ProjectSortKey =
   | "group"
+  | "costCategory"
   | "itemCode"
   | "description"
   | "preferredUnitCost"
@@ -121,9 +143,12 @@ export interface CreateProjectLineItemInput {
   preferredUnitCost: number | null;
   notes: string;
   evidenceContext: ProjectEvidenceContext | null;
+  costCategory?: ProjectCostCategory;
+  importSource?: ProjectLineImportSource;
 }
 
 export interface ProjectLineItemEditableFields {
+  costCategory?: ProjectCostCategory;
   group?: string;
   itemCode?: string;
   description?: string;
@@ -205,6 +230,7 @@ export function createCatalogProjectLineItem(input: CreateProjectLineItemInput):
     lineItemId: createId("line"),
     lineItemType: "catalog",
     ...input,
+    costCategory: normalizeProjectCostCategory(input.costCategory, "construction"),
     group: normalizeProjectGroup(input.group),
     descriptionOverrideEnabled: false,
     createdAt: now,
@@ -212,11 +238,16 @@ export function createCatalogProjectLineItem(input: CreateProjectLineItemInput):
   };
 }
 
-export function createCustomProjectLineItem(state: string): ProjectLineItem {
+export function createCustomProjectLineItem(
+  state: string,
+  costCategory: ProjectCostCategory = "other",
+  importSource?: ProjectLineImportSource
+): ProjectLineItem {
   const now = currentTimestamp();
   return {
     lineItemId: createId("line"),
     lineItemType: "custom",
+    costCategory: normalizeProjectCostCategory(costCategory, "other"),
     state,
     agencyId: "",
     agencyItemId: "",
@@ -229,6 +260,7 @@ export function createCustomProjectLineItem(state: string): ProjectLineItem {
     preferredUnitCost: null,
     notes: "",
     evidenceContext: null,
+    ...(importSource ? { importSource } : {}),
     createdAt: now,
     updatedAt: now
   };
@@ -334,6 +366,7 @@ export function updateProjectLineItem(
       const allowedFields = lineItem.lineItemType === "custom"
         ? normalizeProjectLineItemFields(fields)
         : {
+            ...(fields.costCategory !== undefined ? { costCategory: normalizeProjectCostCategory(fields.costCategory, lineItem.costCategory) } : {}),
             ...(fields.group !== undefined ? { group: normalizeProjectGroup(fields.group) } : {}),
             ...(lineItem.descriptionOverrideEnabled && fields.description !== undefined ? { description: String(fields.description) } : {}),
             ...(fields.quantity !== undefined ? { quantity: fields.quantity } : {}),
@@ -383,13 +416,13 @@ export function projectLineTotal(lineItem: ProjectLineItem): number {
 
 export function projectConstructionCost(project: UserProject): number {
   return project.lineItems
-    .filter((lineItem) => lineItem.lineItemType === "catalog")
+    .filter((lineItem) => projectLineCostCategory(lineItem) === "construction")
     .reduce((sum, lineItem) => sum + projectLineTotal(lineItem), 0);
 }
 
 export function projectOtherCost(project: UserProject): number {
   return project.lineItems
-    .filter((lineItem) => lineItem.lineItemType === "custom")
+    .filter((lineItem) => projectLineCostCategory(lineItem) === "other")
     .reduce((sum, lineItem) => sum + projectLineTotal(lineItem), 0);
 }
 
@@ -441,7 +474,7 @@ export function sortProjectLineItems(lineItems: ProjectLineItem[], sort: Project
 }
 
 function compareProjectLineItems(left: ProjectLineItem, right: ProjectLineItem, key: ProjectSortKey): number {
-  if (key === "group" || key === "itemCode" || key === "description" || key === "unit" || key === "notes") {
+  if (key === "group" || key === "costCategory" || key === "itemCode" || key === "description" || key === "unit" || key === "notes") {
     return compareProjectText(left[key], right[key]);
   }
 
@@ -467,7 +500,7 @@ function compareProjectNumbers(left: number | null, right: number | null): numbe
 }
 
 function projectSortValueIsBlank(lineItem: ProjectLineItem, key: ProjectSortKey): boolean {
-  if (key === "group" || key === "itemCode" || key === "description" || key === "unit" || key === "notes") {
+  if (key === "group" || key === "costCategory" || key === "itemCode" || key === "description" || key === "unit" || key === "notes") {
     return !lineItem[key].trim();
   }
 
@@ -563,6 +596,10 @@ export function parseUserProjectV9(value: unknown): UserProject | null {
   return parseUserProject(value, 9);
 }
 
+export function parseUserProjectV10(value: unknown): UserProject | null {
+  return parseUserProject(value, 10);
+}
+
 export function migrateLegacyWorkspace(value: unknown, schemaVersion: 1 | 2 | 3): LegacyMigrationResult {
   const empty = createEmptyProjectWorkspaceState();
   if (!isRecord(value) || value.schemaVersion !== schemaVersion || !Array.isArray(value.projects)) {
@@ -628,7 +665,7 @@ function updateProject(state: ProjectWorkspaceState, projectId: string, nextProj
   };
 }
 
-function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9): UserProject | null {
+function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10): UserProject | null {
   if (!isRecord(value) || typeof value.projectId !== "string" || !value.projectId.trim()) return null;
   if (schemaVersion >= 4) {
     if (value.status !== "active" && value.status !== "archived") return null;
@@ -664,7 +701,7 @@ function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 |
   };
 }
 
-function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9): ProjectLineItem | null {
+function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10): ProjectLineItem | null {
   if (!isRecord(value) || typeof value.lineItemId !== "string" || !value.lineItemId.trim()) return null;
   const legacyExplorer = value.lineItemType === undefined || value.lineItemType === "explorer";
   const lineItemType = value.lineItemType === "custom"
@@ -683,6 +720,18 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
   const itemCode = stringValue(value.itemCode);
   const description = stringValue(value.description);
   const unit = stringValue(value.unit);
+  if (schemaVersion >= 10
+    && value.costCategory !== undefined
+    && value.costCategory !== "construction"
+    && value.costCategory !== "other") return null;
+  const costCategory = normalizeProjectCostCategory(
+    value.costCategory,
+    lineItemType === "catalog" ? "construction" : "other"
+  );
+  const importSource = value.importSource === undefined || value.importSource === null
+    ? undefined
+    : parseProjectLineImportSource(value.importSource);
+  if (value.importSource !== undefined && value.importSource !== null && !importSource) return null;
   if (!state) return null;
   const quantity = nullableNumberValue(value.quantity);
   const preferredUnitCost = nullableNumberValue(value.preferredUnitCost);
@@ -697,6 +746,8 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
     return {
       lineItemId: value.lineItemId,
       lineItemType,
+      costCategory,
+      ...(importSource ? { importSource } : {}),
       state,
       agencyId,
       agencyItemId,
@@ -716,6 +767,8 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
   return {
     lineItemId: value.lineItemId,
     lineItemType,
+    costCategory,
+    ...(importSource ? { importSource } : {}),
     state,
     agencyId: "",
     agencyItemId: "",
@@ -731,6 +784,58 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
     createdAt: stringValue(value.createdAt) || currentTimestamp(),
     updatedAt: stringValue(value.updatedAt) || currentTimestamp()
   };
+}
+
+function parseProjectLineImportSource(value: unknown): ProjectLineImportSource | null {
+  if (!isRecord(value)
+    || !isNonEmptyString(value.importId)
+    || !isNonEmptyBasename(value.fileName)
+    || !isNonEmptyString(value.sheetName)
+    || !isNonEmptyString(value.sourceRange)
+    || !isNonEmptyString(value.importedAt)
+    || !isNonNegativeInteger(value.rowNumber)
+    || value.rowNumber < 1
+    || !isRecord(value.original)
+    || !isNonEmptyString(value.original.itemCode, true)
+    || !isNonEmptyString(value.original.description, true)
+    || !isNonEmptyString(value.original.unit, true)
+    || !isNullableStoredNumber(value.original.quantity)
+    || !isNullableStoredNumber(value.original.unitCost)
+    || !isNullableStoredNumber(value.original.total)
+    || !Array.isArray(value.decisions)
+    || value.decisions.some((decision) => typeof decision !== "string")) {
+    return null;
+  }
+
+  return {
+    importId: value.importId,
+    fileName: value.fileName,
+    sheetName: value.sheetName,
+    rowNumber: value.rowNumber,
+    sourceRange: value.sourceRange,
+    importedAt: value.importedAt,
+    original: {
+      itemCode: value.original.itemCode,
+      description: value.original.description,
+      unit: value.original.unit,
+      quantity: value.original.quantity,
+      unitCost: value.original.unitCost,
+      total: value.original.total
+    },
+    decisions: [...value.decisions]
+  };
+}
+
+function isNonEmptyString(value: unknown, allowBlank = false): value is string {
+  return typeof value === "string" && (allowBlank || value.trim().length > 0);
+}
+
+function isNonEmptyBasename(value: unknown): value is string {
+  return isNonEmptyString(value) && !/[\\/]/.test(value);
+}
+
+function isNullableStoredNumber(value: unknown): value is number | null {
+  return value === null || (typeof value === "number" && Number.isFinite(value));
 }
 
 function parseProjectEvidenceContext(value: unknown): ProjectEvidenceContext | null {
@@ -814,7 +919,19 @@ function positiveNumberValue(value: unknown): number | null {
 }
 
 function normalizeProjectLineItemFields(fields: ProjectLineItemEditableFields): ProjectLineItemEditableFields {
-  return fields.group === undefined ? fields : { ...fields, group: normalizeProjectGroup(fields.group) };
+  return {
+    ...fields,
+    ...(fields.group === undefined ? {} : { group: normalizeProjectGroup(fields.group) }),
+    ...(fields.costCategory === undefined ? {} : { costCategory: normalizeProjectCostCategory(fields.costCategory, "other") })
+  };
+}
+
+function normalizeProjectCostCategory(value: unknown, fallback: ProjectCostCategory): ProjectCostCategory {
+  return value === "construction" || value === "other" ? value : fallback;
+}
+
+function projectLineCostCategory(lineItem: ProjectLineItem): ProjectCostCategory {
+  return lineItem.costCategory ?? (lineItem.lineItemType === "custom" ? "other" : "construction");
 }
 
 function nullableNumberValue(value: unknown): number | null | undefined {

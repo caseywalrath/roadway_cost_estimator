@@ -19,7 +19,7 @@ const projectCsvColumns: ProjectCsvColumn[] = [
   { header: "Project Location", value: (project) => project.location },
   { header: "Project Notes", value: (project) => project.notes },
   { header: "Line Number", value: (_project, _lineItem, lineNumber) => lineNumber },
-  { header: "Added Via", value: (_project, lineItem) => lineItem.lineItemType === "custom" ? "Manual" : "Roadway Costing Tool" },
+  { header: "Added Via", value: (_project, lineItem) => lineItem.importSource ? "Excel Import" : lineItem.lineItemType === "custom" ? "Manual" : "Roadway Costing Tool" },
   { header: "Group", value: (_project, lineItem) => lineItem.group },
   { header: "Agency ID", value: (_project, lineItem) => lineItem.agencyId },
   { header: "Agency Item ID", value: (_project, lineItem) => lineItem.agencyItemId },
@@ -36,7 +36,12 @@ const projectCsvColumns: ProjectCsvColumn[] = [
     value: (_project, lineItem) => lineItem.evidenceContext?.includedObservationIds.join(";") ?? ""
   },
   { header: "Created At", value: (_project, lineItem) => lineItem.createdAt },
-  { header: "Updated At", value: (_project, lineItem) => lineItem.updatedAt }
+  { header: "Updated At", value: (_project, lineItem) => lineItem.updatedAt },
+  { header: "Item Type", value: (_project, lineItem) => lineItem.lineItemType === "custom" ? "Custom" : "Catalog" },
+  { header: "Cost Category", value: (_project, lineItem) => (lineItem.costCategory ?? (lineItem.lineItemType === "custom" ? "other" : "construction")) === "construction" ? "Construction" : "Other" },
+  { header: "Import File", value: (_project, lineItem) => lineItem.importSource?.fileName ?? "" },
+  { header: "Import Sheet", value: (_project, lineItem) => lineItem.importSource?.sheetName ?? "" },
+  { header: "Import Row", value: (_project, lineItem) => lineItem.importSource?.rowNumber ?? null }
 ];
 
 export function buildProjectCsv(project: UserProject, sort: ProjectSort = DEFAULT_PROJECT_SORT): string {
@@ -51,7 +56,7 @@ export function buildProjectCsv(project: UserProject, sort: ProjectSort = DEFAUL
     ),
     "",
     ["Project Cost Summary", "Value"].map(escapeCsvValue).join(","),
-    ["Construction bid items", summary.constructionCost].map(escapeCsvValue).join(","),
+    ["Construction Costs", summary.constructionCost].map(escapeCsvValue).join(","),
     ["Other costs", summary.otherCost].map(escapeCsvValue).join(","),
     ["Contingency percentage", summary.contingencyPercent].map(escapeCsvValue).join(","),
     ["Contingencies", summary.contingencyCost].map(escapeCsvValue).join(","),
