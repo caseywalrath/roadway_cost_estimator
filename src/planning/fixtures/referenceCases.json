@@ -1,0 +1,47 @@
+{
+  "description": "Independent arithmetic reference answers for the provisional pilot. These are synthetic quantities and costs, not observed project prices.",
+  "roadway": {
+    "lengthMiles": 0.5,
+    "widthFeet": 24,
+    "areaSquareFeet": 63360,
+    "areaSquareYards": 7040,
+    "asphaltThicknessInches": 2,
+    "asphaltDensityPoundsPerCubicFoot": 145,
+    "asphaltMaterialFactor": 1.05,
+    "asphaltTons": 803.88,
+    "baseDepthInches": 6,
+    "baseCubicYards": 1173.3333333333333,
+    "sectionDepthInches": 15,
+    "excavationCubicYards": 2933.3333333333335,
+    "curbBothSidesFeet": 5280
+  },
+  "path": {
+    "lengthMiles": 0.5,
+    "widthFeet": 10,
+    "areaSquareFeet": 26400,
+    "areaSquareYards": 2933.3333333333335,
+    "baseDepthInches": 6,
+    "baseCubicYards": 488.8888888888889,
+    "neSectionDepthInches": 11,
+    "neExcavationCubicYards": 896.2962962962963,
+    "coSectionDepthInches": 12,
+    "coExcavationCubicYards": 977.7777777777778
+  },
+  "sidewalk": {
+    "lengthMiles": 0.5,
+    "widthFeet": 5,
+    "sides": 2,
+    "areaSquareFeet": 26400,
+    "areaSquareYards": 2933.3333333333335
+  },
+  "allowances": {
+    "directConstruction": 100000,
+    "mobilization": 8000,
+    "trafficControl": 5000,
+    "constructionSubtotal": 113000,
+    "contingency": 28250,
+    "designEngineering": 14125,
+    "constructionEngineering": 14125,
+    "totalProjectCost": 169500
+  }
+}

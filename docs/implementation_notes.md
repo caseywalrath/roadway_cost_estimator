@@ -33,6 +33,14 @@ Not included:
 - Automatic fuzzy matching from source specifications to CDOT item codes.
 - Formula evaluation or recovery of formula results that are absent from the workbook cache.
 
+## Planning calculation core
+
+Phase 0/1 adds the deterministic core under `src/planning`; its interfaces and numerical rules are frozen in `src/planning/contract.md`. The provisional Nebraska and Colorado libraries each contain resurfacing, reconstruction, path and optional sidewalk definitions. State-specific items and section assumptions remain separate. Geometry, manual quantity/rate overrides, explicit exclusions, percentage dependencies and physical-scope substitutions produce priced/unpriced/excluded components and nullable complete totals.
+
+Workspace/scenario functions take caller-supplied IDs and timestamps, deep-copy frozen definitions and snapshots, remap references during duplication, and track review changes through a deterministic fingerprint. JSON recovery, persistent storage, real evidence adapters, UI and Project transfer are later phases. The existing app does not yet present a Planning tab.
+
+Run the TypeScript check and focused `vitest run src/planning` suite through the portable Node executable documented in `codex.md`. Independent arithmetic answers are in `src/planning/fixtures/referenceCases.json`; they are synthetic test cases, not source prices. No production data or manifest changes are required for this phase.
+
 ## Local Data Source Monitor
 
 The monitor is intentionally separate from the production Vite application. Double-click `Start Data Source Monitor.cmd` at the repository root to start the localhost UI and open `http://127.0.0.1:4180/`. The launcher prefers `.venv\\Scripts\\python.exe` or `venv\\Scripts\\python.exe`, falls back to `python` on `PATH`, reuses an existing monitor on port 4180, and does not stop unrelated processes. Keep the monitor window open while scanning; close it or press Ctrl+C to stop it.

@@ -1,6 +1,6 @@
 # Planning Module Implementation Plan
 
-Status: proposed; implementation has not started.
+Status: Phases 0 and 1 complete; later phases remain pending.
 Prepared: 2026-10-06.
 Repository baseline inspected: `5ef3d9c` on current `origin/main`.
 Execution model: primarily Luna; Sol owns architecture, UI, persistence correctness, Project compatibility, ambiguous engineering mappings, and final integration/review.
@@ -9,7 +9,7 @@ Execution model: primarily Luna; Sol owns architecture, UI, persistence correctn
 
 Build a working Planning module first, with plausible provisional packages that engineers can use, inspect, and revise. Do not require a completed calibration study or engineer approval of every default before building the pilot.
 
-The user approved the proposed Planning UI and planner workflow and requested this phased plan. This document defines implementation defaults for that request. It authorizes neither implementation during the planning session nor automatic deployment. During an implementation session, execute the specified scope without repeatedly asking the user to approve routine reversible choices.
+The user approved the proposed Planning UI and planner workflow and requested this phased plan. On 2026-10-06 the user authorized Phase 0 as needed and Phase 1 implementation for both pilot states. This document defines implementation defaults for that request; later phases and deployment remain separate work. During an implementation session, execute the specified scope without repeatedly asking the user to approve routine reversible choices.
 
 The first usable pilot must let a planner select a project type, enter basic geometry, add common elements, obtain a traceable estimate for the priced scope, duplicate a scenario, edit assumptions, save locally, and export a reviewable backup. Engineers must be able to identify and change the assumptions responsible for a result.
 
@@ -426,7 +426,7 @@ Follow `codex.md` and use the portable Node executable directly, normally `C:\Us
 
 At Phase 3 and later include relevant `src/ui` tests; at Phase 5 include `src/projects` and export/backup tests. Final verification includes affected evidence/inflation/data-loading tests. Run `python scripts/validate_data_package.py` only if evidence or manifest data changed. Serve built `dist-check` at `http://127.0.0.1:4174/` for actual visual/workflow checks; provide that URL during implementation. Do not test browser download events; verify generated CSV/JSON content directly. If the browser cannot initialize, record the limitation and use source/DOM/serializer checks without claiming a visual pass. Leave ignored `dist-check` and `__pycache__` folders in place.
 
-For this planning-document-only session, proofread and inspect the diff; no app tests or build are required.
+For documentation-only revisions, proofread and inspect the diff. Phase 0/1 code changes require TypeScript checks and focused core tests; UI builds and browser checks start when the UI is implemented.
 
 ## 10. Engineer trial and feedback loop
 
@@ -440,17 +440,26 @@ Engineer revisions produce a new package version. Existing scenarios can compare
 
 ## 11. Completion log
 
-All phases are pending. Update this table during implementation; keep failures and remaining limitations explicit.
+Update this table during implementation; keep failures and remaining limitations explicit.
 
 | Phase | Status | Owner/model | Files/checks | Remaining issues |
 | --- | --- | --- | --- | --- |
-| 0: Contract | Pending | Sol + Luna inventory | — | Provisional scope bindings and exact interfaces |
-| 1: Core | Pending | Luna; Sol review | — | — |
+| 0: Contract | Complete | Sol; primary binding verification | `src/planning/types.ts`, `contract.md`, independent reference fixtures; TypeScript passed | Provisional engineering assumptions; removal/tack manual or unpriced |
+| 1: Core | Complete | Luna implementation; Sol review; primary integration | Units/quantities, both recipe libraries, validation, cost engine, workspace/comparison; TypeScript and 63 tests passed | Provisional assumptions; real rate adapters, storage and UI remain later phases |
 | 2: Rates/recovery | Pending | Luna; Sol review | — | — |
 | 3: Working pilot | Pending | Sol UI/storage; Luna tests | — | Engineer trial begins after this phase |
 | 4: Revision/controls | Pending | Luna logic; Sol UI/mappings | — | Feedback and calibration remain iterative |
 | 5: Project handoff | Pending | Sol; Luna fixtures | — | Compatibility and frozen-contingency semantics |
 | 6: Release candidate | Pending | Sol review; Luna verification/docs | — | Separate merge/deployment authority |
+
+### Phase 0/1 verification record — 2026-10-06
+
+- Sol froze `src/planning/types.ts` and `contract.md`; Luna implemented three bounded workstreams with exclusive ownership. Quantity/cost ownership proceeded sequentially once the quantity APIs were stable. The primary integrated and reviewed all files.
+- Each state has resurfacing, reconstruction and path recipes plus optional sidewalk. Exact item identities, provisional assumptions, thickness constraints, explicit missing scope and state-specific base units are embedded in frozen definitions.
+- Independent fixtures and integration tests verify quantities and the $169,500 allowance reference. Regression coverage includes manual zero, invalid drafts, exclusions, active scope substitutions, named/implicit allowance cycles, service/external cost reconciliation, overflow, immutable duplication/reference remapping, allowance original bases, review staleness and incomplete comparisons.
+- Sol's final review identified contingency category double-counting and overwritten substitution reasons. Both were corrected and tested. Original allowance-basis references also remap on duplication and normalize for comparisons.
+- Portable Node TypeScript checking passed. `vitest run src/planning` passed 63 tests across 8 files. No evidence, manifest, Project schema, app-shell or UI changes occurred; no build/browser/data validation was required for the isolated core.
+- This is a tested calculation foundation, not the engineer-usable M1 interface. Source rate selection/recovery starts in Phase 2; persistence and Planning UI start in Phase 3. No merge or deployment performed.
 
 ## 12. Start prompt for an implementation session
 
