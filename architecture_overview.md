@@ -197,7 +197,7 @@ Future state imports follow these rules:
 
 ## Deferred Scope
 
-The proposed additive Planning module is specified in [docs/planning-module-implementation-plan.md](docs/planning-module-implementation-plan.md). The user requested a build-first Nebraska pilot with provisional packages, engineer feedback, scenario comparison, and later Project snapshot handoff. This is planned work; the current application does not implement it. The plan retains the current Explorer evidence boundaries and reserves architecture, UI, persistence, and Project compatibility work for Sol while assigning bounded implementation to Luna.
+The proposed additive Planning module is specified in [docs/planning-module-implementation-plan.md](docs/planning-module-implementation-plan.md). The user requested build-first Nebraska and Colorado pilots with three provisional package types per state, engineer feedback, scenario comparison, and later Project snapshot handoff. Nebraska uses annual summaries; Colorado uses a separate contract-median pricing adapter and exact CDOT bindings, including state-specific section and base-volume assumptions. This is planned work; the current application does not implement it. The plan retains the current Explorer evidence boundaries and reserves architecture, UI, persistence, and Project compatibility work for Sol while assigning bounded implementation to Luna.
 
 - South Dakota regional letting archives.
 - Cross-state item comparison.

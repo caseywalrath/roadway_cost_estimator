@@ -22,7 +22,7 @@ The user request explicitly reopens scenario modeling and automatic package esti
 ### Included
 
 - A Planning tab beside Explorer and Project, using existing FHU styling.
-- A Nebraska pilot with three base packages and a small set of optional elements.
+- Nebraska and Colorado pilots, each with resurfacing, concrete reconstruction and concrete path packages, plus a small set of optional elements.
 - Explicit package assumptions, quantities, item mappings, rate sources, allowances, and exclusions.
 - Nullable/unpriced results; a priced-scope subtotal separate from a complete project total.
 - Browser-local named Planning workspaces with independent scenarios.
@@ -35,14 +35,14 @@ The user request explicitly reopens scenario modeling and automatic package esti
 
 - Bridges, retaining walls, major grading, signals, roundabouts, railroad work, detailed utility relocation, and right-of-way appraisal packages.
 - Automatic interpretation of plans, GIS geometry, workbooks, or free-text project descriptions.
-- Automatic cross-state equivalence, municipal-to-DOT fuzzy matching, and statewide package rollout.
+- Automatic cross-state equivalence, municipal-to-DOT fuzzy matching, and rollout beyond the two pilot states.
 - New public bid-source imports, a server database, accounts, live shared editing, or private cloud storage.
 - Bidder-average/awarded/engineer price pooling, statistical accuracy claims, and probabilistic contingency modeling.
 - Live synchronization between Planning scenarios and Project lines; updating existing Projects during transfer.
 
 | Milestone | Completion point | Result |
 | --- | --- | --- |
-| M1: Engineer-usable pilot | End of Phase 3 | Three packages, real Nebraska rates where available, editable assumptions, saved scenarios, comparison and recovery export |
+| M1: Engineer-usable pilot | End of Phase 3 | Three package types in each pilot state, real state-specific rates where available, editable assumptions, saved scenarios, comparison and recovery export |
 | M2: Revised planning workflow | End of Phase 4 | Engineer feedback incorporated, optional elements, cost review export and review status |
 | M3: Engineer handoff | End of Phase 5 | Complete priced scenario becomes a traceable Project snapshot |
 | M4: Release candidate | End of Phase 6 | Compatibility checks, documentation and reviewed pilot limitations |
@@ -85,7 +85,7 @@ Escalation: report contract ambiguity or unsafe behavior to primary/Sol
 | --- | --- | --- |
 | `src/main.ts`, `activateState` | Loads one state; initial view is Explorer or Project | Sol adds Planning to initial-view/lifecycle handling |
 | `src/ui/renderApp.ts`, `AppView`, `renderApp`, `cleanupProjectSession`, `flushPendingProjectSave` | Owns navigation and Project session/autosave lifecycle | Keep integration narrow; attach a separate Planning controller and flush/dispose both sessions correctly |
-| `src/data/loadData.ts`, `loadStateData` | Loads state catalogs and separate optional annual summaries | Reuse loaded `AppData`; no backend or importer change |
+| `src/data/loadData.ts`, `loadStateData` | Loads state catalogs, contract observations and separate optional annual summaries | Reuse loaded `AppData` through separate state adapters; no backend or importer change |
 | `src/data/schema.ts`, `ItemPriceSummaryRecord` | Preserves report series, period, item, unit, published rate and source locator | Consume through a dedicated Planning rate adapter |
 | `src/matching/buildItemPriceHistoryResult.ts` | Annual history stays separate from contract evidence | Reuse exact identity/index concepts; never manufacture contract observations |
 | `src/matching/inflationAdjustment.ts`, `buildAnnualInflationAdjustedPriceSet` | Adjusts annual averages only with a complete four-quarter index window | Preserve availability rules and the actual target period label |
@@ -102,9 +102,10 @@ These filenames are implementation targets. Sol may rename a boundary during Pha
 | Area | Proposed files | Owner |
 | --- | --- | --- |
 | Shared contract | `src/planning/types.ts`, `src/planning/contract.md` | Sol |
-| Recipe definitions and validation | `src/planning/recipes/nebraskaPilot.ts`, `src/planning/validateRecipes.ts` | Luna after contract |
+| Recipe definitions and validation | `src/planning/recipes/nebraskaPilot.ts`, `src/planning/recipes/coloradoPilot.ts`, `src/planning/validateRecipes.ts` | Luna after contract |
 | Quantity and cost functions | `src/planning/units.ts`, `src/planning/quantityEngine.ts`, `src/planning/costEngine.ts` | Luna after contract |
 | Nebraska evidence adapter | `src/planning/nebraskaRates.ts` | Luna after contract; Sol reviews policy/mappings |
+| Colorado evidence adapter | `src/planning/coloradoRates.ts` | Luna after contract; Sol freezes sampling/provenance policy |
 | Workspace mutations and comparison | `src/planning/planningWorkspace.ts`, `src/planning/compareScenarios.ts` | Luna after contract |
 | Persistence/concurrency | `src/planning/planningRepository.ts`, `src/planning/planningEditCoordinator.ts` | Sol |
 | Backup/review exports | `src/planning/planningBackup.ts`, `src/ui/exportPlanningCsv.ts` | Luna after contract |
@@ -116,7 +117,7 @@ Keep recipe logic, pricing, calculations and persistence out of `renderApp.ts`. 
 
 ## 5. Provisional pilot package library
 
-Start with Nebraska because the examples concern Nebraska projects and the app already contains NDOT annual rates. Other states can show Planning with an explicit Nebraska-only pilot message; do not load another state's prices under the selected state's identity.
+Include Nebraska and Colorado at M1. Nebraska uses NDOT annual summaries; Colorado uses existing contract observations. Equivalent package types share workflow and geometry rules, but have separate versioned recipes, item identities and rate policies. Do not claim equivalent specifications or calibrated costs. Iowa and South Dakota show an explicit pilot-unavailable message. Never load another state's prices under the selected state's identity or convert a saved scenario merely by switching states.
 
 All proposed dimensions, density, waste and allowance percentages below are editable starting assumptions. They are not engineering design standards or calibrated municipal cost rules. Record each default's origin as `pilot_assumption` or a specific workbook reference; matching a workbook pattern does not make it an approved standard.
 
@@ -181,7 +182,42 @@ Pavement removal and tack deliberately have no exact binding in this plan. Phase
 7. Repricing is explicit. Data/library changes mark a saved scenario as having an update available; they do not alter its totals automatically. Selected rates/manual overrides remain frozen until the user accepts a reviewed change preview.
 8. Future construction-year escalation is an optional Phase 4 assumption, separate from historical adjustment. Default is no future escalation; a future year alone must not silently create a forecast rate.
 
-Contract-observation pricing for other states is deferred. Do not run Nebraska aggregates through `buildEvidenceSummaryStats`, invent contract/bid counts, infer co-occurring packages from annual reports, or modify Explorer quick-fill behavior.
+Contract-observation pricing is included for Colorado only. Do not run Nebraska aggregates through contract summary statistics, invent contract/bid counts, infer co-occurring packages from annual reports, or modify Explorer quick-fill behavior.
+
+### Colorado packages and exact binding candidates
+
+The following catalog identities and awarded-observation coverage were checked against the loaded Colorado CSVs on 2026-10-06. These are provisional scope candidates, not approved engineering equivalences. Counts below cover all loaded positive awarded observations, before pilot date/source filters; they are not the eventual selected sample size.
+
+| Component | Exact agencyItemId | Unit and catalog scope | Loaded positive awarded rows / contracts |
+| --- | --- | --- | --- |
+| Milling | `co_cdot_202-00240` | SY; Removal of Asphalt Mat (Planing) | 223 / 218 |
+| Asphalt | `co_cdot_403-34741` | TON; Hot Mix Asphalt (Grading SX) (75) (PG 64-22) | 15 / 15 |
+| Roadway concrete | `co_cdot_412-00900` | SY; Concrete Pavement (9 Inch) | 8 / 8 |
+| Path proxy | `co_cdot_608-00026` | SY; Concrete Bikeway (6 Inch) | 4 / 4 |
+| Base | `co_cdot_304-06007` | CY; Aggregate Base Course (Class 6) | 151 / 151 |
+| Excavation | `co_cdot_203-00000` | CY; Unclassified Excavation | 48 / 48 |
+| Sidewalk | `co_cdot_608-00006` | SY; Concrete Sidewalk (6 Inch) | 48 / 47 |
+| Curb/gutter | `co_cdot_609-21010` | LF; Curb and Gutter Type 2 (Section I-B) | 71 / 70 |
+
+- CO resurfacing: same example length, width, asphalt thickness/density/material factor as NE, with the explicit CDOT mix and milling candidates above. Tack remains manual/unpriced until bound. Mix/planing applicability requires Sol review; no automatic mix substitution.
+- CO reconstruction: 24 ft width, 9 in concrete, 6 in Class 6 base and 15 in structural excavation as provisional geometry. Base quantity = area SF × depth in / 12 / 27 CY, rather than NE's fixed 6 in SY item. Curb/gutter uses the selected section identity. Removal remains separately manual/unpriced until bound. The catalog concrete title does not establish NE dowel/material equivalence; record reinforcement/joint assumptions and unresolved scope explicitly.
+- CO path: 10 ft width, 6 in bikeway pavement, 6 in Class 6 base and 12 in structural excavation. The explicit bikeway proxy has limited evidence and remains provisional for shared-use-path scope. This deliberately differs from NE's 5 in section. Changing to 5 in requires a suitable binding/manual rate; `co_cdot_412-00500` exists but has no positive awarded observations in the loaded package. Never silently retain the 6 in rate at 5 in thickness.
+- CO optional sidewalk: retain width/side inputs, with a separate 6 in item and thickness assumption. Phase 4 lighting, markings and pipe examples require separate CO bindings; NE item IDs never serve as CO fallbacks.
+- Start CO allowances at the same editable pilot percentages only as `pilot_assumption`, with no claim that Nebraska workbook values are Colorado calibration. Engineer trials evaluate each state's defaults separately.
+
+### Colorado rate-selection contract
+
+Sol freezes this policy in Phase 0; Luna implements it in Phase 2. No new import or backend is required for the pilot.
+
+1. Match exact Colorado agencyItemId and compatible physical unit. Default source type is `cost_book`, price type `awarded_bid`, statewide. Exclude FHU estimate-only sources and other price types. Do not combine awarded, average and engineer values from the same source line as independent samples.
+2. Default window: the three-year inclusive interval ending on the latest valid awarded date in the loaded Colorado cost-book dataset. Persist concrete From/To dates, dataset anchor, source IDs and selected observation IDs. Users can explicitly change the window or district; no silent widening if a filter leaves no evidence. Show the actual sample date range separately from the requested window.
+3. Use positive finite prices and positive finite quantities with valid dates and compatible units. Select one observation per source contract-item identity. Multiple price types are not duplicates to average; overlapping imports for the same contract-item must resolve to one authoritative record or be flagged. Preserve legitimate separate lines, then compute the median eligible line price within each contract and the median of those contract medians. This gives each contract one contribution. Do not equate similar descriptions across codes or deduplicate legitimate lines merely by contract/code.
+4. Label the result `Median awarded unit price across contracts`, with line count, independent contract count, source coverage, filter dates and actual evidence dates. Fewer than five contracts displays `Limited evidence`; this is a provisional warning threshold, not a statistical accuracy test. No compatible evidence remains unpriced; older dates or manual pricing require an explicit choice.
+5. Default to unadjusted source prices with the evidence period visible. Optional NHCCI adjustment uses each observation's dated quarter and one common available target quarter before the two-stage median. Require index coverage for every selected observation; otherwise the adjusted mode is unavailable for that selection and the user can explicitly retain the unadjusted basis. Never silently mix adjusted and raw prices or drop rows with missing index coverage.
+6. Freeze the full selected evidence/rate snapshot in the scenario and JSON backup, including contract contributions, exclusions and adjustment basis. Reprice only through an explicit change preview. Package updates and rate-policy changes carry separate version identifiers.
+7. District and window controls belong in advanced price assumptions; use the existing Colorado district semantics. The primary form stays geometry-first. Changing state loads that state's library and workspace; it does not relabel or reprice existing scenarios. Project handoff keeps exact Colorado identities and the scenario state.
+
+Sol must inspect the existing evidence relationships/source locators before implementing overlap reconciliation. Unresolved collisions remain visible rather than being counted twice. Municipality, project scale, terrain and treatment differences remain engineer-review limitations; a statewide median does not correct them.
 
 ### Starting allowance order
 
@@ -243,7 +279,7 @@ Tasks:
 
 - Recheck current architecture, navigation and existing Project behavior.
 - Freeze types, module boundaries, unit aliases, quantity-rule registry, rate selection, total/completeness rules and review invalidation triggers in `src/planning/contract.md`.
-- Bind the three recipes to exact Nebraska items and flag provisional proxies. Resolve or explicitly leave removal/tack unpriced. Record default values and their source/assumption classifications.
+- Bind three recipes per state to exact Nebraska/Colorado items and flag provisional proxies. Freeze separate annual-summary and contract-median pricing contracts, overlap reconciliation and state availability. Resolve or explicitly leave removal/tack unpriced. Record default values and their source/assumption classifications.
 - Specify sample inputs and independently calculated expected outputs before implementation. Specify UI states for complete, unpriced, excluded, overridden, save-failed, read-only and stale review scenarios.
 
 Exit: Luna has no unresolved architecture or engineering-equivalence decision in its task specification. Provisional engineering values are allowed; silent equivalence and unknown numerical semantics are not.
@@ -255,26 +291,27 @@ Exit: Luna has no unresolved architecture or engineering-equivalence decision in
 Tasks:
 
 - Implement typed recipe validation, units, quantity rules, component generation, allowance graph, completeness and explicit exclusions.
-- Implement the three base recipes plus sidewalk/custom components, with direct tests against Phase 0 reference calculations.
+- Implement three base recipes per state plus sidewalk/custom components, with direct tests against Phase 0 reference calculations. Share geometry functions but keep state definitions separate, including CO CY base and 6 in path/sidewalk sections.
 - Implement pure workspace/scenario mutations, duplication and comparison; no persistence or app shell editing.
 
 Parallel work after contracts: one Luna owns units/quantity generation; a second owns workspace/comparison. The primary assigns cost-engine ownership sequentially after quantity interfaces stabilize. Test files also have one owner each.
 
 Exit: changing length/width updates quantities; fixed/manual LS scope behaves independently; zero/blank are distinct; invalid values/cycles fail visibly; overlap/substitution cases are correct; duplicate scenarios have independent IDs and state.
 
-### Phase 2 — Real Nebraska rates and recovery data
+### Phase 2 — Real Nebraska/Colorado rates and recovery data
 
 **Lead: Luna. Sol reviews adapter policy and evidence identity.**
 
 Tasks:
 
 - Implement exact annual-rate selection, explicit report-series choice, complete-window inflation treatment, manual overrides and frozen provenance.
+- Implement Colorado contract-median selection under the frozen policy, date/district/source filters, sparse evidence labels, overlap handling and recoverable evidence snapshots. Separate adapter ownership permits NE and CO Luna work in parallel after Sol freezes shared types.
 - Implement pure Planning backup/import validation and deterministic CSV cost-review construction. Keep browser event/rendering work with Sol.
 - Create small test fixtures for complete rates, missing items, nonpositive values, unit conflicts, report overlaps and unavailable NHCCI windows. Fixtures are test data, never production evidence.
 
 Parallel work: the rate adapter and pure serializer/export builders can proceed independently under the same frozen types. Export field order is fixed before UI integration.
 
-Exit: each automatic rate can be traced to an exact source row; partial adjustment is visible; no aggregate/contract pooling occurs; recovery reproduces frozen inputs/rates/totals; missing evidence remains unpriced.
+Exit: each Nebraska automatic rate traces to an exact summary row, and each Colorado computed rate traces to every contributing contract/observation and its policy. Adjustment availability is visible; no aggregate/contract pooling occurs; recovery reproduces frozen inputs/rates/totals; missing evidence remains unpriced.
 
 ### Phase 3 — Working pilot, storage and UI
 
@@ -290,7 +327,7 @@ Tasks:
 - Provide save/recovery import/export and a basic engineer review checklist. Range remains uncalibrated at this milestone.
 - Preserve input focus/caret and pending edits during recalculation; avoid rebuilding the whole app on every keystroke. Reject or hold invalid input without silently restoring an older valid value.
 
-Exit/M1: an engineer can complete the three-package workflow with real/manual rates, review all assumptions, change an allowance, duplicate a scenario, reload its saved data, and recover it from JSON. Navigation/state switching/storage failures do not lose or cross-contaminate edits. Typecheck, focused tests, production build and relevant visual checks pass.
+Exit/M1: an engineer can complete the three-package workflow in both Nebraska and Colorado with real/manual rates, review all assumptions, change an allowance, duplicate a scenario, reload its saved data, and recover it from JSON. Advanced pricing exposes the correct state-specific evidence policy. Navigation/state switching/storage failures do not lose or cross-contaminate edits. Typecheck, focused tests, production build and relevant visual checks pass.
 
 **Run the first engineer trial here.** Record package/assumption changes, missing elements, confusing labels and numerical defects in `docs/planning-pilot-feedback.md`. Do not wait for Project transfer or every optional element. If no engineer feedback is immediately available, deliver M1 and continue independent planned work with the defaults still labeled provisional.
 
@@ -350,6 +387,10 @@ Use meaningful reference cases rather than tests that reproduce the implementati
 | Geometry reference | 0.5 mile × 24 ft = 63,360 SF = 7,040 SY; 2 in asphalt × 145 lb/CF × 1.05 gives 803.88 tons |
 | Section excavation | That roadway at 15 in assumed depth = 2,933.333333... CY; assumptions exclude unrelated bulk grading |
 | Path reference | 0.5 mile × 10 ft = 26,400 SF = 2,933.333333... SY; 11 in structural excavation = 896.296296... CY |
+| Colorado sections | Same path area, 6 in base = 488.888888... CY; 12 in structural excavation = 977.777777... CY. Roadway 63,360 SF at 6 in base = 1,173.333333... CY |
+| Colorado contract median | One contract has line prices 10, 20, 30; another has 100. Contract medians 20 and 100 give 60, not the pooled-line median 25. Average/engineer observations never add samples |
+| Colorado evidence policy | Exact unit/source/window/district filters; collision handling; limited-evidence notice; no automatic older/mix fallback; incomplete index coverage blocks adjusted mode; snapshots retain contributing evidence |
+| Pilot state isolation | CO uses CDOT IDs and CY base; NE uses NDOT IDs and SY base. State switching restores separate workspaces; imports/handoff reject mismatched state identities |
 | Sidewalk reference | 0.5 mile × 5 ft × two sides = 26,400 SF = 2,933.333333... SY |
 | Percentage bases | With D = $100,000 and no drainage/utilities: mobilization $8,000; traffic $5,000; S $113,000; K $28,250; two service amounts $14,125 each; total $169,500 before external costs |
 | Missing item | Unpriced removal/tack remains visible; dependent complete totals are unavailable, not zero |
@@ -391,7 +432,7 @@ For this planning-document-only session, proofread and inspect the diff; no app 
 
 Use the supplied Ida Street and visible 132nd/Giles worksheets as reference patterns for quantities, alternatives and allowance bases. They are not an accuracy benchmark without explicit project geometry and matched scope. The hidden Giles worksheets concern older different-project examples and are not part of the visible-concept trial.
 
-Ask engineers to work through one corridor resurfacing scenario, one concrete reconstruction with sidewalk, and one path scenario. Record original inputs/output, package version, the requested correction, reason, and whether it changes a quantity rule, item binding, price policy, allowance, omission or UI. Keep private trial files local or outside the public repository; committed feedback can use synthetic/anonymized reproducible cases.
+Ask engineers to work through one corridor resurfacing scenario, one concrete reconstruction with sidewalk, and one path scenario in each pilot state. Colorado review specifically addresses mix selection, curb section, base-volume assumptions, bikeway scope, sparse evidence and the contract-median policy. Record original inputs/output, package version, the requested correction, reason, and whether it changes a quantity rule, item binding, price policy, allowance, omission or UI. Keep private trial files local or outside the public repository; committed feedback can use synthetic/anonymized reproducible cases.
 
 Evaluate whether the estimate is easy to construct and review, which assumptions are repeatedly changed, which missing scope affects totals, and whether review takes less preparation than building the estimate from scratch. Do not claim a measured time saving or accuracy range until it has been measured.
 
@@ -414,7 +455,7 @@ All phases are pending. Update this table during implementation; keep failures a
 ## 12. Start prompt for an implementation session
 
 ```text
-Implement the Planning pilot using docs/planning-module-implementation-plan.md.
+Implement the Nebraska and Colorado Planning pilots using docs/planning-module-implementation-plan.md.
 Read AGENTS.md, codex.md and architecture_overview.md, fetch current main, and
 preserve this plan on the feature branch. Use Luna for bounded implementation
 and tests; use Sol for Phase 0 contracts, UI, persistence, delicate mappings,
