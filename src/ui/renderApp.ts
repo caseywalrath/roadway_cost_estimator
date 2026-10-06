@@ -1,4 +1,5 @@
 import type { AppData, EvidenceRow, EvidenceStats, EvidenceSummaryStats, SearchQuery } from "../data/schema";
+import { loadStateAgencyItems } from "../data/loadData";
 import type { EvidenceSortKey } from "../data/schema";
 import {
   buildEvidenceResult,
@@ -179,6 +180,7 @@ export async function renderApp(
   let projectMetadataDraft: ProjectMetadataDraft | null = null;
   let excelImportController: ExcelImportController | null = null;
   let excelImportReadyDraft: ExcelImportReadyDraft | null = null;
+  let excelImportProjectToOpenAfterCommit: { projectId: string; state: string } | null = null;
   const editCoordinator = new ProjectEditCoordinator();
   editCoordinator.setLostOwnershipHandler(() => {
     projectReadOnly = true;
@@ -1457,6 +1459,7 @@ export async function renderApp(
     if (!confirmDiscardProjectMetadataDraft()) return;
     if (!(await flushPendingProjectSave())) return;
     excelImportReadyDraft = null;
+    excelImportProjectToOpenAfterCommit = null;
     excelImportController?.dispose();
     const activeProject = getActiveProject(projectState, data.stateConfig.code);
     let controller: ExcelImportController;
@@ -1467,6 +1470,7 @@ export async function renderApp(
       activeProject,
       projectState,
       states: data.manifest.states,
+      loadAgencyItemsForState: (stateCode) => loadStateAgencyItems(data.manifest, stateCode),
       onRender: render,
       onClose: () => {
         if (excelImportController === controller) excelImportController = null;
@@ -1477,6 +1481,16 @@ export async function renderApp(
         excelImportReadyDraft = draft;
       },
       onCommit: (draft) => commitExcelImport(controller, draft),
+      onCommitted: (draft) => {
+        const project = excelImportProjectToOpenAfterCommit;
+        excelImportProjectToOpenAfterCommit = null;
+        if (!project
+          || draft.destinationProjectMode !== "new"
+          || project.state !== draft.state
+          || projectState.activeProjectIdByState[project.state] !== project.projectId) return;
+        cleanupProjectSession();
+        onStateChange(project.state, "project");
+      },
       onDownloadReport: (draft) => downloadExcelImportReport(draft)
     });
     excelImportController = controller;
@@ -1486,6 +1500,7 @@ export async function renderApp(
   }
 
   async function commitExcelImport(controller: ExcelImportController, draft: ExcelImportReadyDraft): Promise<string> {
+    excelImportProjectToOpenAfterCommit = null;
     if (!projectRepository.isPersistent) {
       throw new Error("Browser storage is unavailable, so this import cannot be committed durably. Keep the report and try again after storage is restored.");
     }
@@ -1546,11 +1561,16 @@ export async function renderApp(
     const saved = await projectRepository.createProject(newProject);
     projectState = addProject(projectState, saved);
     ensurePersistentStorageRequested();
+    let activated = false;
     try {
       await projectRepository.setActiveProjectId(saved.state, saved.projectId);
       projectState = setActiveProject(projectState, saved.projectId, saved.state);
+      activated = true;
     } catch {
       projectStorageWarning = "The imported Project was saved, but it could not be activated automatically. Open it from Project Manager.";
+    }
+    if (activated && saved.state !== data.stateConfig.code) {
+      excelImportProjectToOpenAfterCommit = { projectId: saved.projectId, state: saved.state };
     }
     if (saved.state === data.stateConfig.code) {
       projectReadOnly = !(await editCoordinator.claim(saved.projectId));

@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { mapItemPriceSummary, mapItemTaxonomyMembership } from "./loadData";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { AppManifest, StateConfig } from "./schema";
+import { loadStateAgencyItems, mapItemPriceSummary, mapItemTaxonomyMembership } from "./loadData";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("optional period-data CSV mappings", () => {
   it("maps signed annual prices and normalizes the state and unit fields", () => {
@@ -52,6 +57,67 @@ describe("optional period-data CSV mappings", () => {
       sourceId: "ne-specifications-2017",
       matchStatus: "catalog_exact",
       notes: "Catalog specification reference 205.00"
+    });
+  });
+});
+
+describe("state agency item loading", () => {
+  it("loads and enriches only the selected state's catalog", async () => {
+    const iowaState = {
+      code: "IA",
+      name: "Iowa",
+      defaultAgencyId: "ia_iowa",
+      defaultAgencyName: "Iowa DOT",
+      divisionLabel: "Division",
+      sectionLabel: "Section",
+      sectionPrefixLength: 2,
+      capabilities: { districtFilter: false, engineerEstimate: true, bidderDetail: true, periodPriceHistory: false },
+      sourceTypeLabels: {},
+      files: {
+        sources: "states/ia/sources.csv",
+        lettings: "states/ia/lettings.csv",
+        contracts: "states/ia/contracts.csv",
+        contractProjects: "states/ia/contract_projects.csv",
+        contractItems: "states/ia/contract_items.csv",
+        bids: "states/ia/bids.csv",
+        agencyItems: "states/ia/agency_items.csv",
+        agencyItemVersions: "states/ia/agency_item_versions.csv",
+        itemTaxonomy: "states/ia/item_taxonomy.csv",
+        itemMappings: "states/ia/item_mappings.csv",
+        observations: "states/ia/item_observations.csv"
+      }
+    } satisfies StateConfig;
+    const manifest = {
+      schemaVersion: 2,
+      productTitle: "Roadway Cost Estimator",
+      common: { inflationIndexes: "common/inflation.csv" },
+      states: [iowaState]
+    } satisfies AppManifest;
+    const itemCsv = [
+      "agency_item_id,state,agency_id,agency_name,item_code,current_version_id,item_status,canonical_item_id",
+      "ia:0012,ia,ia_iowa,Iowa DOT,0012,v1,current,"
+    ].join("\n");
+    const versionCsv = [
+      "agency_item_version_id,agency_item_id,effective_from,effective_to,official_description,official_abbreviated_description,official_unit,spec_reference_code,source_id,is_current",
+      "v1,ia:0012,,,Mobilization and setup,,EA,,ia-source,true"
+    ].join("\n");
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      const body = url.endsWith("agency_items.csv") ? itemCsv : url.endsWith("agency_item_versions.csv") ? versionCsv : "";
+      return new Response(body, { status: body ? 200 : 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const items = await loadStateAgencyItems(manifest, "ia");
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      state: "IA",
+      agencyId: "ia_iowa",
+      itemCode: "0012",
+      officialDescription: "Mobilization and setup",
+      officialUnit: "EACH"
     });
   });
 });

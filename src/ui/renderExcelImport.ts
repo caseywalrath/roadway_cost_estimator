@@ -52,6 +52,8 @@ export interface ExcelImportViewModel {
   errorMessage: string | null;
   destinationState: string;
   destinationAgencyId: string;
+  destinationCatalogStatus: "ready" | "loading" | "error";
+  destinationCatalogError: string | null;
   destinationProjectMode: "active" | "new";
   newProjectName: string;
   confirmation: ExcelImportConfirmationSummary | null;
@@ -122,6 +124,7 @@ function renderStepIndicator(stage: ExcelImportStage): string {
 }
 
 function renderFileStage(view: ExcelImportViewModel, states: StateConfig[], activeProjectLabel: string | null): string {
+  const stateName = stateNameFor(view.destinationState, states);
   return `<div class="excel-import-stage" data-excel-import-stage="file">
     <section class="excel-import-file-choice" aria-labelledby="excel-import-file-choice-title">
       <h3 id="excel-import-file-choice-title">Excel file</h3>
@@ -132,14 +135,19 @@ function renderFileStage(view: ExcelImportViewModel, states: StateConfig[], acti
       <div>
         <h3 id="excel-import-destination-title">Where should the items go?</h3>
         <p class="muted">${renderMatchingContext(view.destinationState, states)}</p>
+        ${view.destinationCatalogStatus === "loading" ? `<p class="excel-import-catalog-status" role="status">Loading ${escapeHtml(stateName)} item catalog…</p>` : ""}
+        ${view.destinationCatalogStatus === "error" ? `<p class="excel-import-catalog-error" role="alert">${escapeHtml(view.destinationCatalogError ?? "The selected state's item catalog could not be loaded.")} <button type="button" class="text-button" data-excel-import-retry-destination-state>Retry</button></p>` : ""}
       </div>
       <div class="excel-import-destination-options">
         ${activeProjectLabel ? `<label><input type="radio" name="excelImportProjectMode" value="active" data-excel-import-project-mode ${view.destinationProjectMode === "active" ? "checked" : ""} /><span><strong>Add items to ${escapeHtml(activeProjectLabel)}</strong><small>Keep the items already in this Project.</small></span></label>` : ""}
         <label><input type="radio" name="excelImportProjectMode" value="new" data-excel-import-project-mode ${view.destinationProjectMode === "new" ? "checked" : ""} /><span><strong>Create a new Project</strong><small>Start a separate Project for these imported items.</small></span></label>
       </div>
-      ${view.destinationProjectMode === "new" ? `<label class="excel-import-new-project-name"><span>New Project name</span><input type="text" name="excelImportNewProjectName" value="${escapeHtml(view.newProjectName)}" data-excel-import-new-project-name /></label>` : ""}
+      ${view.destinationProjectMode === "new" ? `<div class="excel-import-new-project-fields">
+        <label class="excel-import-new-project-name"><span>New Project name</span><input type="text" name="excelImportNewProjectName" value="${escapeHtml(view.newProjectName)}" data-excel-import-new-project-name /></label>
+        <label class="excel-import-new-project-state"><span>State</span><select name="excelImportDestinationState" data-excel-import-destination-state>${states.map((state) => `<option value="${escapeHtml(state.code)}" ${state.code === view.destinationState ? "selected" : ""}>${escapeHtml(state.name)}</option>`).join("")}</select></label>
+      </div>` : ""}
     </section>
-    <div class="excel-import-actions excel-import-actions--split"><span></span><button type="button" class="primary-button" data-excel-import-next="sheet" ${view.readStatus !== "ready" ? "disabled" : ""}>Next: Choose data</button></div>
+    <div class="excel-import-actions excel-import-actions--split"><span></span><button type="button" class="primary-button" data-excel-import-next="sheet" ${view.readStatus !== "ready" || view.destinationCatalogStatus !== "ready" ? "disabled" : ""}>Next: Choose data</button></div>
   </div>`;
 }
 
@@ -150,8 +158,12 @@ function renderFileStatus(view: ExcelImportViewModel): string {
 }
 
 function renderMatchingContext(destinationState: string, states: StateConfig[]): string {
-  const stateName = states.find((state) => state.code === destinationState)?.name ?? destinationState;
+  const stateName = stateNameFor(destinationState, states);
   return `Item codes will be checked against ${escapeHtml(stateName)} items.`;
+}
+
+function stateNameFor(destinationState: string, states: StateConfig[]): string {
+  return states.find((state) => state.code === destinationState)?.name ?? destinationState;
 }
 
 function formatFileSize(bytes: number): string {

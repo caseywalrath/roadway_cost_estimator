@@ -46,6 +46,22 @@ export async function loadData(stateCode = "CO"): Promise<AppData> {
   return loadStateData(manifest, stateCode);
 }
 
+export async function loadStateAgencyItems(manifest: AppManifest, requestedState: string): Promise<AgencyItemRecord[]> {
+  const stateCode = requestedState.trim().toUpperCase();
+  const stateConfig = manifest.states.find((state) => state.code === stateCode);
+
+  if (!stateConfig) {
+    throw new Error(`State ${stateCode || "(blank)"} is not enabled in the data manifest.`);
+  }
+
+  const [rawAgencyItems, agencyItemVersions] = await Promise.all([
+    loadCsvPath(stateConfig.files.agencyItems, mapAgencyItem),
+    loadCsvPath(stateConfig.files.agencyItemVersions, mapAgencyItemVersion)
+  ]);
+
+  return enrichAgencyItems(rawAgencyItems, agencyItemVersions);
+}
+
 export async function loadStateData(manifest: AppManifest, requestedState: string): Promise<AppData> {
   const stateCode = requestedState.trim().toUpperCase();
   const stateConfig = manifest.states.find((state) => state.code === stateCode);
@@ -97,19 +113,7 @@ export async function loadStateData(manifest: AppManifest, requestedState: strin
   const sourceDocumentsBySourceId = groupBy(sourceDocuments, (document) => document.sourceId);
   const lettingById = new Map(lettings.map((letting) => [letting.lettingId, letting]));
   const contractProjectsByContractId = groupBy(contractProjects, (project) => project.contractId);
-  const agencyItemVersionById = new Map(
-    agencyItemVersions.map((version) => [version.agencyItemVersionId, version])
-  );
-  const agencyItems = rawAgencyItems.map((item) => {
-    const version = agencyItemVersionById.get(item.currentVersionId);
-    return {
-      ...item,
-      officialDescription: version?.officialDescription ?? "",
-      officialAbbreviatedDescription: version?.officialAbbreviatedDescription ?? "",
-      officialUnit: normalizeUnit(version?.officialUnit ?? ""),
-      specReferenceCode: version?.specReferenceCode ?? ""
-    };
-  });
+  const agencyItems = enrichAgencyItems(rawAgencyItems, agencyItemVersions);
   const agencyItemById = new Map(agencyItems.map((item) => [item.agencyItemId, item]));
   const agencyByCode = groupBy(agencyItems, (item) => item.itemCode.toUpperCase());
 
@@ -658,6 +662,23 @@ function mapAgencyItemVersion(row: CsvRow): AgencyItemVersionRecord {
     sourceId: row.source_id,
     isCurrent: booleanValue(row.is_current)
   };
+}
+
+function enrichAgencyItems(
+  rawAgencyItems: AgencyItemRecord[],
+  agencyItemVersions: AgencyItemVersionRecord[]
+): AgencyItemRecord[] {
+  const versionById = new Map(agencyItemVersions.map((version) => [version.agencyItemVersionId, version]));
+  return rawAgencyItems.map((item) => {
+    const version = versionById.get(item.currentVersionId);
+    return {
+      ...item,
+      officialDescription: version?.officialDescription ?? "",
+      officialAbbreviatedDescription: version?.officialAbbreviatedDescription ?? "",
+      officialUnit: normalizeUnit(version?.officialUnit ?? ""),
+      specReferenceCode: version?.specReferenceCode ?? ""
+    };
+  });
 }
 
 function mapTaxonomy(row: CsvRow): ItemTaxonomyRecord {

@@ -56,10 +56,12 @@ export interface ExcelImportControllerOptions {
   activeProject: UserProject | null;
   projectState?: ProjectWorkspaceState;
   states: StateConfig[];
+  loadAgencyItemsForState?: (stateCode: string) => Promise<AgencyItemRecord[]>;
   onRender: () => void;
   onClose: () => void;
   onReady?: (draft: ExcelImportReadyDraft) => void;
   onCommit?: (draft: ExcelImportReadyDraft) => Promise<string | void> | string | void;
+  onCommitted?: (draft: ExcelImportReadyDraft) => void;
   onDownloadReport?: (draft: ExcelImportReadyDraft) => void;
   workerFactory?: () => WorkerLike;
 }
@@ -76,8 +78,10 @@ export class ExcelImportNeedsReviewError extends Error {
 export class ExcelImportController {
   private readonly options: ExcelImportControllerOptions;
   private readonly workerFactory: () => WorkerLike;
+  private readonly agencyItemsByState = new Map<string, AgencyItemRecord[]>();
   private worker: WorkerLike | null = null;
   private operationToken = 0;
+  private destinationLoadToken = 0;
   private requestId = "";
   private view: ExcelImportViewModel;
   private selectedFile: File | null = null;
@@ -86,6 +90,7 @@ export class ExcelImportController {
   constructor(options: ExcelImportControllerOptions) {
     this.options = options;
     this.workerFactory = options.workerFactory ?? defaultWorkerFactory;
+    this.agencyItemsByState.set(options.currentStateCode.trim().toUpperCase(), options.agencyItems);
     this.view = this.createInitialView();
   }
 
@@ -107,6 +112,7 @@ export class ExcelImportController {
 
   dispose(): void {
     this.operationToken += 1;
+    this.destinationLoadToken += 1;
     this.terminateWorker();
     this.selectedFile = null;
     this.readyDraft = null;
@@ -127,12 +133,17 @@ export class ExcelImportController {
     });
     wizard.querySelectorAll<HTMLInputElement>("[data-excel-import-project-mode]").forEach((input) => {
       input.addEventListener("change", () => {
-        this.view = { ...this.view, destinationProjectMode: input.value === "new" ? "new" : "active" };
-        this.options.onRender();
+        this.setDestinationProjectMode(input.value === "new" ? "new" : "active");
       });
     });
     wizard.querySelector<HTMLInputElement>("[data-excel-import-new-project-name]")?.addEventListener("input", (event) => {
       this.view = { ...this.view, newProjectName: (event.currentTarget as HTMLInputElement).value };
+    });
+    wizard.querySelector<HTMLSelectElement>("[data-excel-import-destination-state]")?.addEventListener("change", (event) => {
+      void this.setDestinationState((event.currentTarget as HTMLSelectElement).value);
+    });
+    wizard.querySelector<HTMLButtonElement>("[data-excel-import-retry-destination-state]")?.addEventListener("click", () => {
+      void this.setDestinationState(this.view.destinationState, true);
     });
     wizard.querySelectorAll<HTMLButtonElement>("[data-excel-import-next]").forEach((button) => {
       button.addEventListener("click", () => this.next(button.dataset.excelImportNext as ExcelImportStage));
@@ -250,6 +261,8 @@ export class ExcelImportController {
       errorMessage: null,
       destinationState: this.options.currentStateCode,
       destinationAgencyId: this.options.currentAgencyId,
+      destinationCatalogStatus: "ready",
+      destinationCatalogError: null,
       destinationProjectMode: this.options.activeProject ? "active" : "new",
       newProjectName: "",
       confirmation: null,
@@ -259,6 +272,72 @@ export class ExcelImportController {
     };
   }
 
+  private setDestinationProjectMode(mode: "active" | "new"): void {
+    if (mode === this.view.destinationProjectMode) return;
+    this.view = { ...this.view, destinationProjectMode: mode };
+    const stateCode = mode === "active"
+      ? this.options.activeProject?.state ?? this.options.currentStateCode
+      : this.view.destinationState;
+    void this.setDestinationState(stateCode, true);
+  }
+
+  private async setDestinationState(requestedState: string, forceReset = false): Promise<void> {
+    const stateCode = requestedState.trim().toUpperCase();
+    const stateConfig = this.options.states.find((state) => state.code === stateCode);
+    if (!stateConfig) return;
+    if (!forceReset && stateCode === this.view.destinationState && this.view.destinationCatalogStatus === "ready") return;
+
+    const token = ++this.destinationLoadToken;
+    const cachedAgencyItems = this.agencyItemsByState.get(stateCode);
+    this.readyDraft = null;
+    this.view = {
+      ...this.view,
+      stage: "file",
+      destinationState: stateCode,
+      destinationAgencyId: stateConfig.defaultAgencyId,
+      destinationCatalogStatus: cachedAgencyItems ? "ready" : "loading",
+      destinationCatalogError: null,
+      rows: [],
+      decisions: {},
+      reviewFilter: "all",
+      reviewIssueFilter: "all",
+      reviewPage: 0,
+      selectedReviewRowIds: [],
+      confirmation: null,
+      resultMessage: null,
+      commitStatus: "idle",
+      commitMessage: null,
+      errorMessage: null
+    };
+    this.options.onRender();
+
+    if (cachedAgencyItems) return;
+    if (!this.options.loadAgencyItemsForState) {
+      this.view = {
+        ...this.view,
+        destinationCatalogStatus: "error",
+        destinationCatalogError: `The ${stateConfig.name} item catalog could not be loaded in this session.`
+      };
+      this.options.onRender();
+      return;
+    }
+
+    try {
+      const agencyItems = await this.options.loadAgencyItemsForState(stateCode);
+      if (token !== this.destinationLoadToken) return;
+      this.agencyItemsByState.set(stateCode, agencyItems);
+      this.view = { ...this.view, destinationCatalogStatus: "ready", destinationCatalogError: null };
+    } catch {
+      if (token !== this.destinationLoadToken) return;
+      this.view = {
+        ...this.view,
+        destinationCatalogStatus: "error",
+        destinationCatalogError: `Could not load ${stateConfig.name} items. Check your connection and retry.`
+      };
+    }
+    this.options.onRender();
+  }
+
   private async readFile(file: File): Promise<void> {
     this.operationToken += 1;
     const token = this.operationToken;
@@ -266,12 +345,24 @@ export class ExcelImportController {
     this.readyDraft = null;
     this.selectedFile = file;
     this.requestId = `excel-import-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const destinationState = this.view.destinationState;
+    const destinationAgencyId = this.view.destinationAgencyId;
+    const destinationCatalogStatus = this.view.destinationCatalogStatus;
+    const destinationCatalogError = this.view.destinationCatalogError;
+    const destinationProjectMode = this.view.destinationProjectMode;
+    const newProjectName = this.view.newProjectName;
     this.view = {
       ...this.createInitialView(),
       fileName: file.name,
       fileSize: file.size,
       readStatus: "reading",
-      progressText: "Reading workbook…"
+      progressText: "Reading workbook…",
+      destinationState,
+      destinationAgencyId,
+      destinationCatalogStatus,
+      destinationCatalogError,
+      destinationProjectMode,
+      newProjectName
     };
     this.options.onRender();
     try {
@@ -468,6 +559,7 @@ export class ExcelImportController {
   private next(stage: ExcelImportStage): void {
     if (stage === "sheet") {
       if (this.view.readStatus !== "ready" || !this.view.workbook) return;
+      if (this.view.destinationCatalogStatus !== "ready") return;
       this.view = { ...this.view, stage: "sheet", errorMessage: null };
       this.options.onRender();
       return;
@@ -522,12 +614,18 @@ export class ExcelImportController {
       this.options.onRender();
       return false;
     }
+    const agencyItems = this.agencyItemsByState.get(this.view.destinationState);
+    if (!agencyItems || this.view.destinationCatalogStatus !== "ready") {
+      this.view = { ...this.view, errorMessage: "Wait for the destination-state item catalog to load before reviewing rows." };
+      this.options.onRender();
+      return false;
+    }
     const sections = this.view.detections.find((candidate) => candidate.sheetName === selection.sheetName)?.regions.find((candidate) => candidate.regionId === this.view.selectedRegionId)?.sections ?? [];
     const parsed = parseRows(sheet, { selection, mapping, sections });
     const matched = matchRows(parsed, {
       state: this.view.destinationState,
       agencyId: this.view.destinationAgencyId,
-      agencyItems: this.options.agencyItems,
+      agencyItems,
       existingProject: this.options.activeProject
     });
     const needsAttention = matched.some((row) => requiresReviewDecision(row));
@@ -726,9 +824,11 @@ export class ExcelImportController {
     }
     this.view = { ...this.view, commitStatus: "committing", commitMessage: null };
     this.options.onRender();
+    let committedDraft: ExcelImportReadyDraft | null = null;
     try {
       await this.options.onCommit(this.readyDraft);
       this.view = { ...this.view, commitStatus: "committed", commitMessage: null };
+      committedDraft = this.readyDraft;
     } catch (error) {
       if (error instanceof ExcelImportNeedsReviewError) {
         this.view = { ...this.view, stage: "review", commitStatus: "failed", commitMessage: error.message, errorMessage: error.message, resultMessage: null };
@@ -737,6 +837,7 @@ export class ExcelImportController {
       }
     }
     this.options.onRender();
+    if (committedDraft) this.options.onCommitted?.(committedDraft);
   }
 
   private selectedDetection() {
