@@ -1,4 +1,5 @@
 import type { StateConfig } from "../data/schema";
+import type { ExistingItemAction, ExistingItemPlan } from "../projects/excelImport/existingItems";
 import type {
   ExcelImportMapping,
   ExcelImportSelection,
@@ -12,14 +13,26 @@ import type {
 } from "../projects/excelImport/types";
 
 export type ExcelImportStage = "file" | "sheet" | "mapping" | "review" | "result";
-export type ExcelImportReviewFilter = "all" | "needs-review" | "ready" | "excluded";
-export type ExcelImportReviewIssueFilter = "all" | "description" | "unit" | "missing" | "allowance";
+export type ExcelImportReviewFilter = "all" | "needs-review" | "ready" | "excluded" | "reviewed";
+export type ExcelImportReviewIssueFilter = "all" | "description" | "unit" | "missing" | "allowance" | "other";
 
 export interface ExcelImportConfirmationSummary {
+  existingItemPlan?: ExistingItemPlan;
+  existingItemsDetailsOpen?: boolean;
+  existingItemAction?: ExistingItemAction;
+  addedCount?: number;
+  updatedCount?: number;
+  constructionDelta?: number;
+  otherDelta?: number;
+  projectedConstructionCost?: number;
+  projectedOtherCost?: number;
   destinationLabel: string;
   keepsExistingItems: boolean;
   importedCount: number;
   skippedCount: number;
+  unresolvedSkippedCount: number;
+  automaticallySkippedItemCount?: number;
+  failedItemCount?: number;
   skippedReasons: Array<{ label: string; count: number }>;
   constructionCost: number;
   otherCost: number;
@@ -46,6 +59,7 @@ export interface ExcelImportViewModel {
   reviewIssueFilter: ExcelImportReviewIssueFilter;
   reviewPage: number;
   selectedReviewRowIds: string[];
+  reviewUndo?: { decisions: Record<string, ImportRowDecision>; rows: MatchedImportRow[]; filter: ExcelImportReviewFilter; issueFilter: ExcelImportReviewIssueFilter; page: number };
   readStatus: "idle" | "reading" | "ready" | "error";
   progressText: string;
   fileSize: number | null;
@@ -87,7 +101,7 @@ export function renderExcelImportWizard(
       <div>
         <p class="eyebrow">Project Actions</p>
         <h2 id="excel-import-title" tabindex="-1">Import From Excel</h2>
-        <p class="muted">Choose a workbook, confirm its data, and review any items that need a decision before importing them into the Project.</p>
+        ${view.stage === "result" ? "" : `<p class="muted">Choose a workbook, confirm its data, and review any items that need a decision before importing them into the Project.</p>`}
       </div>
       <button type="button" class="secondary-button" data-excel-import-cancel>${view.stage === "result" && view.commitStatus === "committed" ? "Close" : "Cancel import"}</button>
     </div>
@@ -179,7 +193,7 @@ function renderSheetStage(view: ExcelImportViewModel): string {
   const sheet = view.workbook?.sheets.find((candidate) => candidate.name === view.selectedSheetName) ?? null;
   const selection = view.selection;
   return `<div class="excel-import-stage" data-excel-import-stage="sheet">
-    <div class="excel-import-data-heading"><div><h3>Choose the item data</h3><p class="muted">A worksheet and data range were selected based on recognized column labels and populated cells.</p></div><label><span>Worksheet</span><select data-excel-import-sheet>${view.workbook?.sheets.map((candidate) => `<option value="${escapeHtml(candidate.name)}" ${candidate.name === view.selectedSheetName ? "selected" : ""}>${escapeHtml(candidate.name)}${candidate.visibility !== "visible" ? ` (${escapeHtml(candidate.visibility)})` : ""}</option>`).join("") ?? ""}</select></label></div>
+    <div class="excel-import-data-heading"><div><h3>Choose the item data</h3></div><label><span>Worksheet</span><select data-excel-import-sheet>${view.workbook?.sheets.map((candidate) => `<option value="${escapeHtml(candidate.name)}" ${candidate.name === view.selectedSheetName ? "selected" : ""}>${escapeHtml(candidate.name)}${candidate.visibility !== "visible" ? ` (${escapeHtml(candidate.visibility)})` : ""}</option>`).join("") ?? ""}</select></label></div>
     ${selectedDetection?.warnings.length ? `<ul class="excel-import-warning-list">${selectedDetection.warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("")}</ul>` : ""}
     ${regions.length > 1 ? `<section class="excel-import-region-choices" aria-labelledby="excel-import-region-choices-title"><h4 id="excel-import-region-choices-title">Detected item tables</h4><div>${regions.map((candidate) => renderRegionOption(candidate, view.selectedRegionId)).join("")}</div></section>` : ""}
     ${region && sheet && selection ? renderDataPreview(sheet, region, selection) : `<p class="muted">No populated item table was detected on this worksheet. Select another worksheet or set a data range below.</p>`}
@@ -256,8 +270,7 @@ function renderMappingStage(view: ExcelImportViewModel): string {
   const endColumn = view.selection?.endColumn ?? region.endColumn;
   const columns = Array.from({ length: endColumn - startColumn + 1 }, (_, index) => startColumn + index);
   return `<div class="excel-import-stage" data-excel-import-stage="mapping">
-    <div class="excel-import-mapping-heading"><div><h3>Match spreadsheet columns</h3><p class="muted">Confirm the columns used to create Project items. We selected the likely matches.</p></div><p class="excel-import-selection-summary">${escapeHtml(region.sheetName)} · rows ${view.selection?.startRow ?? region.startRow}–${view.selection?.endRow ?? region.endRow}</p></div>
-    <p class="excel-import-mapping-guidance">Map either <strong>Item Code</strong> or <strong>Description</strong> to continue. Description, Unit, Quantity, and Unit Cost are recommended.</p>
+    <div class="excel-import-mapping-heading"><div><h3>Match spreadsheet columns</h3></div><p class="excel-import-selection-summary">${escapeHtml(region.sheetName)} · rows ${view.selection?.startRow ?? region.startRow}–${view.selection?.endRow ?? region.endRow}</p></div>
     <div class="table-scroll excel-import-mapping-table-shell" tabindex="0" aria-label="Column matching table"><table class="excel-import-mapping-table"><thead><tr><th>Project field</th><th>Spreadsheet column</th><th>Example values</th><th>Status</th></tr></thead><tbody>${PRIMARY_MAPPING_FIELDS.map((field) => renderPrimaryFieldMapping(field, mapping, columns, labels, sheet, view.selection)).join("")}</tbody></table></div>
     ${renderAdvancedMappingSettings(view, region, mapping, columns, labels, sheet, view.selection)}
     <div class="excel-import-actions excel-import-actions--split"><button type="button" class="secondary-button" data-excel-import-back="sheet">Back: Choose data</button><button type="button" class="primary-button" data-excel-import-next="review">Next: Review items</button></div>
@@ -329,55 +342,47 @@ function renderReviewStage(view: ExcelImportViewModel, states: StateConfig[]): s
   const pageCount = Math.max(1, Math.ceil(rows.length / REVIEW_PAGE_SIZE));
   const page = Math.min(view.reviewPage, pageCount - 1);
   const pageRows = rows.slice(page * REVIEW_PAGE_SIZE, (page + 1) * REVIEW_PAGE_SIZE);
-  const selectableRows = rows.filter((row) => isSelectableReviewRow(row, view.decisions));
-  const visibleSelectableRows = pageRows.filter((row) => isSelectableReviewRow(row, view.decisions));
+  const selectableRows = view.reviewFilter === "needs-review" ? rows.filter((row) => isSelectableReviewRow(row, view.decisions)) : [];
+  const visibleSelectableRows = pageRows.filter((row) => selectableRows.includes(row));
   const selectedRowIds = new Set(view.selectedReviewRowIds);
   const selectedRows = selectableRows.filter((row) => selectedRowIds.has(row.rowId));
-  const allVisibleSelected = visibleSelectableRows.length > 0 && visibleSelectableRows.every((row) => selectedRowIds.has(row.rowId));
-  const bulkOptions = sharedBulkReviewOptions(selectedRows);
-  const readyCount = view.rows.filter((row) => (reviewRowKind(row) === "ready" || reviewRowKind(row) === "custom") && view.decisions[row.rowId]?.action !== "exclude").length;
-  const needsReview = unresolvedReviewRows(view).length;
+  const unresolved = unresolvedReviewRows(view);
+  const readyCount = view.rows.filter((row) => (reviewRowKind(row) === "ready" || reviewRowKind(row) === "custom") && !view.decisions[row.rowId]).length;
+  const reviewedCount = view.rows.filter((row) => !!view.decisions[row.rowId]?.action && !view.decisions[row.rowId]?.automaticallySkipped).length;
   const skipped = view.rows.filter((row) => reviewRowKind(row) === "skipped" || view.decisions[row.rowId]?.action === "exclude").length;
   const stateName = states.find((state) => state.code === view.destinationState)?.name ?? view.destinationState;
-  const reviewMessage = needsReview
-    ? `Resolve ${needsReview} item${needsReview === 1 ? "" : "s"} to continue.`
-    : "No decisions are required. Review the items, then continue.";
+  const filters: Array<[ExcelImportReviewFilter, string, number]> = [["needs-review", "Needs attention", unresolved.length], ["reviewed", "Reviewed", reviewedCount], ["all", "All items", view.rows.length]];
+  const groups: Array<[ExcelImportReviewIssueFilter, string]> = [["all", "All issues"], ["description", "Description differs"], ["unit", "Unit differs"], ["missing", "Missing information"], ["allowance", "Allowances"], ["other", "Other issues"]];
+  const options = sharedBulkReviewOptions(selectedRows);
   return `<div class="excel-import-stage" data-excel-import-stage="review">
-    <div class="excel-import-review-summary" aria-label="Import review summary"><button type="button" class="excel-import-review-card ${view.reviewFilter === "ready" ? "is-active" : ""}" data-excel-import-review-filter="ready"><strong>${readyCount}</strong><span>Ready to import</span></button><button type="button" class="excel-import-review-card ${view.reviewFilter === "needs-review" ? "is-active" : ""}" data-excel-import-review-filter="needs-review"><strong>${needsReview}</strong><span>Needs attention</span></button><button type="button" class="excel-import-review-card ${view.reviewFilter === "excluded" ? "is-active" : ""}" data-excel-import-review-filter="excluded"><strong>${skipped}</strong><span>Skipped</span></button><button type="button" class="excel-import-review-show-all ${view.reviewFilter === "all" ? "is-active" : ""}" data-excel-import-review-filter="all">Show all ${view.rows.length} rows</button></div>
-    <p class="excel-import-review-guidance ${needsReview ? "is-attention" : ""}" role="status">${reviewMessage}</p>
-    ${renderReviewBulkControls(view, selectedRows, selectableRows.length, visibleSelectableRows.length, allVisibleSelected, bulkOptions)}
-    <div class="table-scroll excel-import-table-shell" tabindex="0" aria-label="Excel import item review"><table class="excel-import-table"><thead><tr><th><label class="excel-import-select-all"><input type="checkbox" data-excel-import-toggle-visible ${allVisibleSelected ? "checked" : ""} ${visibleSelectableRows.length ? "" : "disabled"} /><span class="sr-only">Select visible items needing attention</span></label></th><th>Spreadsheet row</th><th>Code</th><th>Description</th><th>Unit</th><th>Quantity</th><th>Unit cost</th><th>Match</th><th>Choice</th></tr></thead><tbody>${pageRows.length ? pageRows.map((row) => renderReviewRow(row, view.decisions, stateName, selectedRowIds.has(row.rowId))).join("") : `<tr><td colspan="9" class="muted">No rows match this view.</td></tr>`}</tbody></table></div>
+    <div class="excel-import-review-task" role="status"><h3>${unresolved.length ? `${unresolved.length} item${unresolved.length === 1 ? " needs" : "s need"} attention. Continue to skip ${unresolved.length === 1 ? "it" : "them"}, or choose an action.` : "All items reviewed. Continue to confirm import."}</h3></div>
+    <div class="excel-import-review-tabs" aria-label="Review views">${filters.map(([value, label, count]) => { const active = view.reviewFilter === value || (value === "all" && (view.reviewFilter === "ready" || view.reviewFilter === "excluded")); return `<button type="button" class="secondary-button ${active ? "is-active" : ""}" data-excel-import-review-filter="${value}" aria-pressed="${active}">${label} <span>${count}</span></button>`; }).join("")}</div>
+    ${view.reviewFilter === "needs-review" ? `<div class="excel-import-selection-tools"><label class="excel-import-compact-filter"><span>Issue type</span><select data-excel-import-review-issue-filter>${groups.map(([value, label]) => { const count = unresolved.filter((row) => reviewIssueFilterMatches(row, value)).length; return `<option value="${value}" ${view.reviewIssueFilter === value ? "selected" : ""}>${label} (${count})</option>`; }).join("")}</select></label>
+    <div class="excel-import-review-selection-controls"><button type="button" class="secondary-button" data-excel-import-select-visible aria-label="${visibleSelectableRows.length > 0 && visibleSelectableRows.every((row) => selectedRowIds.has(row.rowId)) ? "Clear visible rows" : "Select all visible rows"}" aria-pressed="${visibleSelectableRows.length > 0 && visibleSelectableRows.every((row) => selectedRowIds.has(row.rowId))}" ${visibleSelectableRows.length ? "" : "disabled"}>Select All / Clear</button>${selectedRows.length ? `<label class="excel-import-review-action"><select aria-label="Choose action for selected rows" data-excel-import-bulk-action><option value="">Choose action…</option>${options.map(([action, label]) => `<option value="${action}">${escapeHtml(bulkActionLabel(action, label, selectedRows))}</option>`).join("")}</select></label>` : ""}${!selectedRows.length && view.reviewUndo && view.reviewUndo.rows === view.rows ? `<div class="excel-import-review-feedback" role="status"><button type="button" class="secondary-button" data-excel-import-undo>Undo</button></div>` : ""}</div></div>` : view.reviewFilter === "reviewed" ? "" : `<div class="excel-import-selection-tools"><label class="excel-import-compact-filter"><span>Show</span><select data-excel-import-all-status><option value="all" ${view.reviewFilter === "all" ? "selected" : ""}>All items (${view.rows.length})</option><option value="ready" ${view.reviewFilter === "ready" ? "selected" : ""}>Ready to import (${readyCount})</option><option value="excluded" ${view.reviewFilter === "excluded" ? "selected" : ""}>Skipped (${skipped})</option></select></label></div>`}
+    <div class="table-scroll excel-import-table-shell" tabindex="0" aria-label="Excel import item review"><table class="excel-import-table excel-import-review-table"><thead><tr><th></th><th>Row</th><th>Item</th><th>Why it needs attention / review result</th><th>Your choice</th></tr></thead><tbody>${pageRows.length ? pageRows.map((row) => renderReviewRow(row, view.decisions, stateName, selectedRowIds.has(row.rowId), view.reviewFilter === "needs-review")).join("") : `<tr><td colspan="5" class="muted">${view.reviewFilter === "needs-review" ? "No items need a decision in this group. Choose another group or review your recorded choices." : "No items match this view."}</td></tr>`}</tbody></table></div>
     <div class="excel-import-pagination" aria-label="Table pages"><button type="button" class="secondary-button" data-excel-import-page="prev" ${page <= 0 ? "disabled" : ""}>Previous 50</button><span>Page ${page + 1} of ${pageCount}</span><button type="button" class="secondary-button" data-excel-import-page="next" ${page >= pageCount - 1 ? "disabled" : ""}>Next 50</button></div>
-    <div class="excel-import-actions excel-import-actions--split"><button type="button" class="secondary-button" data-excel-import-back="mapping">Back: Match columns</button><button type="button" class="primary-button" data-excel-import-finish ${needsReview ? "disabled" : ""}>Next: Confirm import</button></div>
+    <div class="excel-import-actions excel-import-actions--split"><button type="button" class="secondary-button" data-excel-import-back="mapping">Back: Match columns</button><button type="button" class="primary-button" data-excel-import-finish>Next: Confirm import</button></div>
   </div>`;
 }
 
-function renderReviewBulkControls(
-  view: ExcelImportViewModel,
-  selectedRows: MatchedImportRow[],
-  filteredSelectableCount: number,
-  visibleSelectableCount: number,
-  allVisibleSelected: boolean,
-  bulkOptions: Array<[ImportResolutionAction, string]>
-): string {
-  const issueOptions: Array<[ExcelImportReviewIssueFilter, string]> = [["all", "All issue types"], ["description", "Description differs"], ["unit", "Unit differs"], ["missing", "Missing information"], ["allowance", "Allowance rows"]];
-  const selectedCount = selectedRows.length;
-  return `<section class="excel-import-bulk-review" aria-labelledby="excel-import-bulk-review-title">
-    <div><h3 id="excel-import-bulk-review-title">Resolve selected items</h3><p class="muted">Filter the list, select only rows with the same issue, then apply one choice. Individual row choices remain available.</p></div>
-    <div class="excel-import-bulk-review-controls">
-      <label><span>Issue type</span><select data-excel-import-review-issue-filter>${issueOptions.map(([value, label]) => `<option value="${value}" ${view.reviewIssueFilter === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>
-      <div class="excel-import-bulk-review-selection"><button type="button" class="secondary-button" data-excel-import-select-visible ${visibleSelectableCount ? "" : "disabled"}>${allVisibleSelected ? "Clear visible" : `Select visible (${visibleSelectableCount})`}</button><button type="button" class="secondary-button" data-excel-import-select-filtered ${filteredSelectableCount ? "" : "disabled"}>Select all filtered (${filteredSelectableCount})</button><button type="button" class="secondary-button" data-excel-import-clear-selection ${selectedCount ? "" : "disabled"}>Clear selection</button></div>
-      <div class="excel-import-bulk-review-apply"><label><span>Apply to ${selectedCount} selected</span><select data-excel-import-bulk-action ${bulkOptions.length ? "" : "disabled"}><option value="">Choose a resolution…</option>${bulkOptions.map(([value, label]) => `<option value="${value}">${escapeHtml(label)}</option>`).join("")}</select></label><button type="button" class="primary-button" data-excel-import-apply-bulk-action ${selectedCount && bulkOptions.length ? "" : "disabled"}>Apply</button></div>
-    </div>
-  </section>`;
+function bulkActionLabel(action: ImportResolutionAction, fallback: string, rows: MatchedImportRow[]): string {
+  const descriptions = rows.some((row) => row.descriptionComparison === "different");
+  const units = rows.some((row) => row.unitComparison === "different");
+  const fields = descriptions ? (units ? "descriptions and units" : "descriptions") : "units";
+  if (action === "use-catalog-description" || action === "accept-catalog") return `Use official ${fields}`;
+  if (action === "keep-custom") return `Keep spreadsheet ${fields} as custom items`;
+  if (action === "exclude") return "Skip selected";
+  return fallback;
 }
 
-function renderReviewRow(row: MatchedImportRow, decisions: Record<string, ImportRowDecision>, stateName: string, selected: boolean): string {
+function renderReviewRow(row: MatchedImportRow, decisions: Record<string, ImportRowDecision>, stateName: string, selected: boolean, attentionView: boolean): string {
   const kind = reviewRowKind(row);
   const decision = decisions[row.rowId];
   const issueText = reviewIssueText(row, kind);
-  const selectable = isSelectableReviewRow(row, decisions);
-  return `<tr class="excel-import-row--${kind}"><td>${selectable ? `<label class="excel-import-row-select"><input type="checkbox" data-excel-import-review-row="${escapeHtml(row.rowId)}" ${selected ? "checked" : ""} /><span class="sr-only">Select spreadsheet row ${row.locator.rowNumber}</span></label>` : "—"}</td><td><strong>${row.locator.rowNumber}</strong><small>${escapeHtml(row.locator.sourceRange)}</small>${issueText ? `<span class="excel-import-row-issue">${escapeHtml(issueText)}</span>` : ""}</td><td>${escapeHtml(row.values.itemCode || "—")}</td><td>${escapeHtml(row.values.description || "—")}</td><td>${escapeHtml(row.values.unit || "—")}</td><td>${row.values.quantity === null ? "—" : escapeHtml(String(row.values.quantity))}</td><td>${row.values.unitCost === null ? "—" : escapeHtml(String(row.values.unitCost))}</td><td>${renderMatch(row, kind, stateName)}</td><td>${renderReviewChoice(row, kind, decision)}</td></tr>`;
+  const selectable = attentionView && isSelectableReviewRow(row, decisions);
+  return `<tr class="excel-import-row--${kind}"><td>${selectable ? `<label class="excel-import-row-select"><input type="checkbox" aria-label="Select row ${row.locator.rowNumber}" data-excel-import-review-row="${escapeHtml(row.rowId)}" ${selected ? "checked" : ""} /></label>` : ""}</td><td>${row.locator.rowNumber}</td>
+    <td><strong>${escapeHtml(row.values.itemCode || "No item code")}</strong><div>${escapeHtml(row.values.description || "No description")}</div><small>${escapeHtml(row.locator.sourceRange)}</small><details class="excel-import-item-details"><summary>View item details</summary><dl><dt>Unit</dt><dd>${escapeHtml(row.values.unit || "—")}</dd><dt>Quantity</dt><dd>${row.values.quantity ?? "—"}</dd><dt>Unit cost</dt><dd>${row.values.unitCost === null ? "—" : formatMoney(row.values.unitCost)}</dd><dt>Group</dt><dd>${escapeHtml(row.values.group || "—")}</dd><dt>Cost category</dt><dd>${row.values.costCategory === "construction" ? "Construction Costs" : "Other Costs"}</dd><dt>Spreadsheet total</dt><dd>${row.values.sourceTotal === null ? "—" : formatMoney(row.values.sourceTotal)}</dd><dt>Notes</dt><dd>${escapeHtml(row.values.notes || "—")}</dd></dl></details></td>
+    <td>${decision?.automaticallySkipped ? `<strong>Automatically skipped</strong><p>No supported import choice is available. Check for a missing estimate item.</p>` : decision?.action ? `<strong>Choice recorded</strong><p>${escapeHtml(reviewChoiceOptions(row, kind).find(([action]) => action === decision.action)?.[1] || "Reviewed")}</p>` : renderMatch(row, kind, stateName)}${issueText ? `<span class="excel-import-row-issue">${escapeHtml(issueText)}</span>` : ""}</td><td>${renderReviewChoice(row, kind, decision)}</td></tr>`;
 }
 
 function renderMatch(row: MatchedImportRow, kind: ReviewRowKind, stateName: string): string {
@@ -399,11 +404,12 @@ function renderMatch(row: MatchedImportRow, kind: ReviewRowKind, stateName: stri
 }
 
 function renderReviewChoice(row: MatchedImportRow, kind: ReviewRowKind, decision: ImportRowDecision | undefined): string {
-  const action = decision?.action ?? (kind === "custom" ? "keep-custom" : "");
+  if (decision?.automaticallySkipped || isSkipOnlyReviewRow(row)) return '<span class="muted">Automatically skipped</span>';
   if (kind === "ready") return `<span class="excel-import-choice-ready">Ready</span>`;
   if (kind === "skipped") return `<span class="muted">Skipped</span>`;
   const options = reviewChoiceOptions(row, kind);
-  return `<label class="excel-import-choice"><span class="sr-only">Choose how to import source row ${row.locator.rowNumber}</span><select data-excel-import-row-action="${escapeHtml(row.rowId)}"><option value="" ${!action ? "selected" : ""}>Choose…</option>${options.map(([value, label]) => `<option value="${value}" ${action === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>`;
+  const buttons = options.map(([value, label]) => `<button type="button" class="secondary-button" data-excel-import-row-choice="${escapeHtml(row.rowId)}" data-excel-import-action="${value}">${escapeHtml(label)}</button>`).join("");
+  return `<div class="excel-import-row-actions">${decision?.action ? `<details><summary>Change choice</summary>${buttons}</details>` : buttons}</div>`;
 }
 
 function reviewChoiceOptions(row: MatchedImportRow, kind: ReviewRowKind): Array<[string, string]> {
@@ -418,7 +424,15 @@ function reviewChoiceOptions(row: MatchedImportRow, kind: ReviewRowKind): Array<
   return [["exclude", "Skip row"]];
 }
 
+export function isSkipOnlyReviewRow(row: MatchedImportRow): boolean {
+  const kind = reviewRowKind(row);
+  if (kind === "skipped" || kind === "ready" || kind === "custom") return false;
+  const options = reviewChoiceOptions(row, kind);
+  return options.length === 1 && options[0][0] === "exclude";
+}
+
 function isSelectableReviewRow(row: MatchedImportRow, decisions: Record<string, ImportRowDecision>): boolean {
+  if (isSkipOnlyReviewRow(row)) return false;
   const kind = reviewRowKind(row);
   return kind !== "ready" && kind !== "custom" && kind !== "skipped" && !decisions[row.rowId]?.action;
 }
@@ -455,45 +469,99 @@ function renderResultStage(view: ExcelImportViewModel): string {
   const summary = view.confirmation;
   if (!summary) return `<div class="excel-import-stage" data-excel-import-stage="result"><p class="excel-import-error" role="alert">The import summary is unavailable. Return to review and prepare the import again.</p><div class="excel-import-actions"><button type="button" class="secondary-button" data-excel-import-back="review">Back to review</button></div></div>`;
   const disabled = view.commitStatus === "committing" ? "disabled" : "";
+  const commitDisabled = view.commitStatus === "committing" || summary.importedCount === 0 || summary.existingItemPlan?.errors.length ? "disabled" : "";
   if (view.commitStatus === "committed") {
-    return `<div class="excel-import-stage" data-excel-import-stage="result"><div class="excel-import-result excel-import-result--success" role="status" aria-live="polite"><h3>${summary.importedCount} item${summary.importedCount === 1 ? "" : "s"} were added to ${escapeHtml(summary.destinationLabel)}.</h3><p>${summary.skippedCount ? `${summary.skippedCount} spreadsheet row${summary.skippedCount === 1 ? " was" : "s were"} skipped.` : "The import is complete."}</p></div>${summary.skippedCount ? `<div class="excel-import-actions"><button type="button" class="secondary-button" data-excel-import-download-report>Download skipped-row report</button></div>` : ""}</div>`;
+    return `<div class="excel-import-stage" data-excel-import-stage="result"><div class="excel-import-result excel-import-result--success" role="status" aria-live="polite"><h3>${importOperationText(summary, true)} ${summary.updatedCount ? "in" : "to"} ${escapeHtml(summary.destinationLabel)}.</h3><p>${summary.skippedCount ? `${summary.skippedCount} spreadsheet row${summary.skippedCount === 1 ? " was" : "s were"} skipped.` : "The import is complete."}</p></div>${summary.skippedCount ? `<div class="excel-import-actions"><button type="button" class="secondary-button" data-excel-import-download-report>Download skipped-row report</button></div>` : ""}</div>`;
   }
   const failure = view.commitStatus === "failed";
   return `<div class="excel-import-stage" data-excel-import-stage="result">
     <div class="excel-import-result${failure ? " excel-import-result--failure" : ""}" role="status" aria-live="polite">
-      <h3>${failure ? "Import could not be completed" : "Ready to import"}</h3>
-      ${failure ? `<p>No items were added. ${escapeHtml(view.commitMessage ?? "Review the import and try again.")}</p>` : renderConfirmationSummary(summary)}
+      <h3>${failure ? "Import could not be completed" : summary.importedCount ? "Ready to import" : "No items ready to import"}</h3>
+      ${failure ? `<p>No Project changes were saved. ${escapeHtml(view.commitMessage ?? "Review the import and try again.")}</p>` : renderConfirmationSummary(summary)}
     </div>
+    ${failure ? "" : renderConfirmationWarnings(summary)}
+    ${renderExistingItems(summary, Boolean(disabled))}
     ${failure ? "" : renderCostSummary(summary)}
     ${failure ? "" : renderSkippedRows(summary)}
     <div class="excel-import-actions">
       <button type="button" class="secondary-button" data-excel-import-back="review" ${disabled}>Back to review</button>
-      ${summary.skippedCount ? `<button type="button" class="secondary-button" data-excel-import-download-report ${disabled}>Download skipped-row report</button>` : ""}
-      <button type="button" class="primary-button" data-excel-import-commit ${disabled}>${view.commitStatus === "committing" ? "Importing items…" : failure ? "Try import again" : `Import ${summary.importedCount} item${summary.importedCount === 1 ? "" : "s"}`}</button>
+      <button type="button" class="primary-button" data-excel-import-commit ${commitDisabled}>${view.commitStatus === "committing" ? "Importing items…" : failure ? "Try import again" : summary.updatedCount ? importOperationText(summary) : summary.importedCount ? `Import ${summary.importedCount} item${summary.importedCount === 1 ? "" : "s"}` : "No items to import"}</button>
     </div>
   </div>`;
 }
 
 function renderConfirmationSummary(summary: ExcelImportConfirmationSummary): string {
-  const destinationNote = summary.keepsExistingItems
-    ? "Existing Project items will remain in place."
-    : "A new Project will be created with these items.";
-  return `<p><strong>${summary.importedCount} item${summary.importedCount === 1 ? " will" : "s will"} be added to ${escapeHtml(summary.destinationLabel)}.</strong> ${summary.skippedCount} spreadsheet row${summary.skippedCount === 1 ? " will" : "s will"} be skipped. ${destinationNote}</p>`;
+  return `<p class="excel-import-confirmation-destination">${summary.keepsExistingItems ? "Project" : "New Project"}: <strong>${escapeHtml(summary.destinationLabel)}</strong></p>
+    <dl class="excel-import-outcome-counts" aria-label="Import outcome"><div><dt>Add</dt><dd>${summary.addedCount ?? summary.importedCount}</dd></div><div><dt>Update</dt><dd>${summary.updatedCount ?? 0}</dd></div><div><dt>Skip rows</dt><dd>${summary.skippedCount}</dd></div></dl>`;
+}
+
+function renderConfirmationWarnings(summary: ExcelImportConfirmationSummary): string {
+  const warnings: string[] = [];
+  if (summary.unresolvedSkippedCount) warnings.push(`${summary.unresolvedSkippedCount} unresolved item${summary.unresolvedSkippedCount === 1 ? "" : "s"} will be skipped.`);
+  const missing = (summary.automaticallySkippedItemCount ?? 0) + (summary.failedItemCount ?? 0);
+  if (missing) warnings.push(`${missing} item${missing === 1 ? " could" : "s could"} not be imported. Check skipped rows for missing estimate items.`);
+  const comparison = summary.sourceTotalComparison;
+  if (comparison && Math.abs(comparison.recalculatedMinusSource) >= 0.005) warnings.push(`Calculated costs are ${formatMoney(Math.abs(comparison.recalculatedMinusSource))} ${comparison.recalculatedMinusSource > 0 ? "above" : "below"} spreadsheet costs for ${comparison.comparedItemCount} compared item${comparison.comparedItemCount === 1 ? "" : "s"}.`);
+  return warnings.length ? `<div class="excel-import-confirmation-warnings" role="note" aria-label="Import warnings">${warnings.map((warning) => `<p>${escapeHtml(warning)}</p>`).join("")}</div>` : "";
+}
+
+function importOperationText(summary: ExcelImportConfirmationSummary, completed = false): string {
+  const added = summary.addedCount ?? summary.importedCount;
+  const updated = summary.updatedCount ?? 0;
+  const parts: string[] = [];
+  if (added) parts.push(completed ? `${added} item${added === 1 ? " was" : "s were"} added` : `Add ${added} item${added === 1 ? "" : "s"}`);
+  if (updated) parts.push(completed ? `${updated} item${updated === 1 ? " was" : "s were"} updated` : `${added ? "update" : "Update"} ${updated} existing item${updated === 1 ? "" : "s"}`);
+  return parts.join(" and ");
+}
+
+function renderExistingItems(summary: ExcelImportConfirmationSummary, busy: boolean): string {
+  const plan = summary.existingItemPlan;
+  if (!plan?.matches.length) return "";
+  const disabled = busy ? "disabled" : "";
+  const options = (action: ExistingItemAction, plural: boolean) => ([
+    ["add", plural ? "Add as separate items" : "Add as separate item"],
+    ["update", plural ? "Update existing items" : "Update existing item"],
+    ["skip", plural ? "Skip matching items" : "Skip this item"]
+  ] as const).map(([value, label]) => `<option value="${value}" ${action === value ? "selected" : ""}>${label}</option>`).join("");
+  const numeric = (value: number | null) => value === null ? "Blank" : value.toLocaleString();
+  const separateCount = plan.matches.filter((match) => match.action === "add").length;
+  const ambiguousAddCount = plan.matches.filter((match) => match.needsTarget && match.action === "add").length;
+  return `<section class="excel-import-existing-items" aria-labelledby="excel-import-existing-title"><div class="excel-import-existing-heading"><h4 id="excel-import-existing-title">Items already in this Project</h4><span>${plan.matches.length} matches</span></div>
+    <label class="excel-import-existing-default"><span>Matching items</span><select data-excel-import-existing-default ${disabled}>${options(summary.existingItemAction ?? "add", true)}</select></label>
+    ${separateCount ? `<p class="excel-import-match-notice">${separateCount} matching item${separateCount === 1 ? " will" : "s will"} be added again.</p>` : ""}
+    ${(summary.updatedCount ?? 0) > 0 ? `<p class="excel-import-match-notice">Updates replace quantity, unit cost, and nonblank notes.</p>` : ""}
+    ${ambiguousAddCount && summary.existingItemAction === "update" ? `<p class="excel-import-unresolved-notice">${ambiguousAddCount} ambiguous match${ambiguousAddCount === 1 ? " needs" : "es need"} a target to update; currently added separately.</p>` : ""}
+    ${plan.errors.length ? `<p class="excel-import-error" role="alert">${escapeHtml([...new Set(plan.errors)].join(" "))}</p>` : ""}
+    <details data-excel-import-existing-details ${summary.existingItemsDetailsOpen || plan.errors.length ? "open" : ""}><summary>Compare matches / individual choices</summary><p class="muted">Matches include Group and cost category. Blank values keep existing values when updating. Changing the matching-items rule resets individual choices.</p><div class="table-scroll"><table><thead><tr><th>Row</th><th>Item / Group</th><th>Existing<small>Quantity / Unit cost</small></th><th>Spreadsheet<small>Quantity / Unit cost</small></th><th>Choice</th></tr></thead><tbody>${plan.matches.map((match) => {
+      const target = match.candidates.find((line) => line.lineItemId === match.targetLineItemId) ?? (match.candidates.length === 1 ? match.candidates[0] : null);
+      return `<tr><td>${match.incoming.importSource?.rowNumber ?? "—"}</td><td><strong>${escapeHtml(match.incoming.itemCode)}</strong> ${escapeHtml(match.incoming.description)}<small>${escapeHtml(match.incoming.group || "No Group")}</small></td><td>${target ? `${numeric(target.quantity)} / ${target.preferredUnitCost === null ? "Blank" : formatMoney(target.preferredUnitCost)}` : `${match.candidates.length} possible Project rows`}</td><td>${numeric(match.incoming.quantity)} / ${match.incoming.preferredUnitCost === null ? "Blank" : formatMoney(match.incoming.preferredUnitCost)}</td><td><select aria-label="Action for spreadsheet row ${match.incoming.importSource?.rowNumber ?? ""}" data-excel-import-existing-action="${escapeHtml(match.rowId)}" ${disabled}>${options(match.action, false)}</select>${match.needsTarget && match.action !== "skip" ? `<select aria-label="Existing Project row to update" data-excel-import-existing-target="${escapeHtml(match.rowId)}" ${disabled}><option value="">Choose a Project row to update…</option>${match.candidates.map((line, index) => `<option value="${escapeHtml(line.lineItemId)}" ${match.targetLineItemId === line.lineItemId ? "selected" : ""}>Match ${index + 1}: quantity ${numeric(line.quantity)}, unit cost ${line.preferredUnitCost === null ? "Blank" : formatMoney(line.preferredUnitCost)}${line.notes ? `; ${escapeHtml(line.notes)}` : ""}</option>`).join("")}</select>` : ""}</td></tr>`;
+    }).join("")}</tbody></table></div></details></section>`;
 }
 
 function renderCostSummary(summary: ExcelImportConfirmationSummary): string {
-  const sourceTotal = summary.sourceTotalComparison;
-  const sourceText = !sourceTotal
-    ? "No spreadsheet extended-cost column was matched, so there is no total comparison."
-    : Math.abs(sourceTotal.recalculatedMinusSource) < 0.005
-      ? `Recalculated totals match the spreadsheet extended costs for ${sourceTotal.comparedItemCount} item${sourceTotal.comparedItemCount === 1 ? "" : "s"}.`
-      : `Recalculated totals are ${formatMoney(Math.abs(sourceTotal.recalculatedMinusSource))} ${sourceTotal.recalculatedMinusSource > 0 ? "above" : "below"} the spreadsheet extended costs for ${sourceTotal.comparedItemCount} item${sourceTotal.comparedItemCount === 1 ? "" : "s"}.`;
-  return `<section class="excel-import-confirmation-costs" aria-labelledby="excel-import-confirmation-costs-title"><h4 id="excel-import-confirmation-costs-title">Imported cost summary</h4><dl><div><dt>Construction Costs</dt><dd>${formatMoney(summary.constructionCost)}</dd></div>${summary.hasOtherCosts ? `<div><dt>Other Costs</dt><dd>${formatMoney(summary.otherCost)}</dd></div>` : ""}</dl><p class="muted">${sourceText}</p></section>`;
+  const construction = summary.keepsExistingItems ? summary.projectedConstructionCost ?? summary.constructionCost : summary.constructionCost;
+  const other = summary.keepsExistingItems ? summary.projectedOtherCost ?? summary.otherCost : summary.otherCost;
+  const comparison = summary.sourceTotalComparison;
+  const comparisonText = comparison
+    ? `Spreadsheet total comparison: ${formatMoney(comparison.recalculatedMinusSource)} difference across ${comparison.comparedItemCount} compared items.`
+    : "No spreadsheet cost comparison available.";
+  return `<section class="excel-import-confirmation-costs" aria-labelledby="excel-import-confirmation-costs-title"><div class="excel-import-cost-heading"><h4 id="excel-import-confirmation-costs-title">Project costs after import</h4><strong>${formatMoney(construction + other)}</strong><small>Before contingency</small></div>
+    <details><summary>Cost breakdown</summary><dl><div><dt>Construction Costs</dt><dd>${formatMoney(construction)}</dd></div>${other !== 0 ? `<div><dt>Other Costs</dt><dd>${formatMoney(other)}</dd></div>` : ""}${summary.keepsExistingItems ? `<div><dt>Change from import</dt><dd>${formatMoney((summary.constructionDelta ?? summary.constructionCost) + (summary.otherDelta ?? summary.otherCost))}</dd></div>` : ""}</dl><p class="muted">${escapeHtml(comparisonText)}</p></details></section>`;
 }
 
 function renderSkippedRows(summary: ExcelImportConfirmationSummary): string {
   if (!summary.skippedCount) return "";
-  return `<section class="excel-import-skipped-summary" aria-labelledby="excel-import-skipped-summary-title"><h4 id="excel-import-skipped-summary-title">Skipped spreadsheet rows</h4><ul>${summary.skippedReasons.map((reason) => `<li><strong>${reason.count}</strong> ${escapeHtml(reason.label)}</li>`).join("")}</ul><p class="muted">Download the issue report for the affected row numbers and source text.</p></section>`;
+  const compactReason = (label: string) => {
+    if (label.includes("left unresolved")) return "Unresolved items";
+    if (label.includes("automatically skipped")) return "Items without a supported import choice";
+    if (label.includes("blank rows")) return "Blank rows, headings, or totals";
+    if (label.includes("existing Project")) return "Matching items skipped";
+    if (label.includes("outside")) return "Outside selected data";
+    if (label.includes("during review")) return "Skipped in review";
+    if (label.includes("prepared")) return "Items that could not be imported";
+    return "Other excluded rows";
+  };
+  return `<details class="excel-import-skipped-summary"><summary>Skipped rows (${summary.skippedCount})</summary><ul>${summary.skippedReasons.map((reason) => `<li><strong>${reason.count}</strong> ${escapeHtml(compactReason(reason.label))}</li>`).join("")}</ul><button type="button" class="secondary-button" data-excel-import-download-report>Download skipped-row report</button></details>`;
 }
 
 function formatMoney(value: number): string {
@@ -507,6 +575,7 @@ function selectedRegion(view: ExcelImportViewModel): ExcelRegionSuggestion | nul
 
 function unresolvedReviewRows(view: ExcelImportViewModel): MatchedImportRow[] {
   return view.rows.filter((row) => {
+    if (isSkipOnlyReviewRow(row)) return false;
     const kind = reviewRowKind(row);
     if (kind === "ready" || kind === "custom" || kind === "skipped") return false;
     return !view.decisions[row.rowId]?.action;
@@ -514,8 +583,9 @@ function unresolvedReviewRows(view: ExcelImportViewModel): MatchedImportRow[] {
 }
 
 function filteredReviewRows(view: ExcelImportViewModel): MatchedImportRow[] {
+  if (view.reviewFilter === "reviewed") return view.rows.filter((row) => !!view.decisions[row.rowId]?.action && !view.decisions[row.rowId]?.automaticallySkipped);
   if (view.reviewFilter === "needs-review") return unresolvedReviewRows(view).filter((row) => reviewIssueFilterMatches(row, view.reviewIssueFilter));
-  if (view.reviewFilter === "ready") return view.rows.filter((row) => (reviewRowKind(row) === "ready" || reviewRowKind(row) === "custom") && view.decisions[row.rowId]?.action !== "exclude");
+  if (view.reviewFilter === "ready") return view.rows.filter((row) => (reviewRowKind(row) === "ready" || reviewRowKind(row) === "custom") && !view.decisions[row.rowId]?.action);
   if (view.reviewFilter === "excluded") return view.rows.filter((row) => reviewRowKind(row) === "skipped" || view.decisions[row.rowId]?.action === "exclude");
   return view.rows;
 }
@@ -526,7 +596,8 @@ function reviewIssueFilterMatches(row: MatchedImportRow, filter: ExcelImportRevi
   if (filter === "description") return kind === "descriptionConflict";
   if (filter === "unit") return kind === "unitConflict";
   if (filter === "allowance") return kind === "allowance";
-  return kind === "incomplete" || kind === "unresolved";
+  const missing = kind === "incomplete" || (kind === "unresolved" && !row.values.description.trim());
+  return filter === "missing" ? missing : kind === "unresolved" && !missing;
 }
 
 function columnLabel(column: number): string {

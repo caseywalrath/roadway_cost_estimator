@@ -1130,6 +1130,60 @@ describe.sequential("IndexedDB Project repository", () => {
   });
 });
 
+describe.each(["IndexedDB", "memory"])("Atomic Project import (%s)", (storage) => {
+  async function setup() {
+    if (storage === "memory") vi.stubGlobal("indexedDB", undefined);
+    repository = (await openProjectRepository()).repository;
+    const project = createUserProject("Existing estimate", "CO");
+    const first = { ...createCustomProjectLineItem("CO"), description: "First", quantity: 2, preferredUnitCost: 10 };
+    const second = { ...createCustomProjectLineItem("CO"), description: "Second", notes: "Retained" };
+    project.lineItems = [first, second];
+    return repository.createProject(project);
+  }
+
+  it("updates in place and adds items together while preserving the exact stored snapshot", async () => {
+    const project = await setup();
+    const addition = { ...createCustomProjectLineItem("CO"), description: "Added" };
+    const replacement = { ...project.lineItems[0], quantity: 4, preferredUnitCost: 20 };
+    const saved = await repository!.applyProjectImport({ ...project, notes: "Unsaved caller change" }, [addition], [replacement], project.revision);
+    expect(saved.lineItems.map((line) => line.lineItemId)).toEqual([...project.lineItems.map((line) => line.lineItemId), addition.lineItemId]);
+    expect(saved.lineItems[0]).toEqual(replacement);
+    expect(saved.lineItems[1]).toEqual(project.lineItems[1]);
+    expect(saved.notes).toBe(project.notes);
+    expect(saved.revision).toBe(project.revision + 1);
+    expect((await repository!.getProject(project.projectId))?.lineItems).toEqual(saved.lineItems);
+    expect((await repository!.listRevisions(project.projectId))[0].project).toEqual(project);
+    await expect(repository!.applyProjectImport(project, [addition], [replacement], project.revision)).rejects.toBeInstanceOf(ProjectConflictError);
+    expect(await repository!.listRevisions(project.projectId)).toHaveLength(1);
+  });
+
+  it("rejects unknown, repeated, invalid, and conflicting IDs without writing items or a snapshot", async () => {
+    const project = await setup();
+    const addition = createCustomProjectLineItem("CO");
+    const first = project.lineItems[0];
+    const invalid = { ...first, quantity: Number.NaN };
+    for (const [additions, updates] of [
+      [[addition], [{ ...first, lineItemId: "missing" }]],
+      [[addition], [first, first]],
+      [[addition], [invalid]],
+      [[first], []],
+      [[{ ...addition, state: "IA" }], []]
+    ]) {
+      await expect(repository!.applyProjectImport(project, additions, updates, project.revision)).rejects.toThrow();
+      expect(await repository!.getProject(project.projectId)).toEqual(project);
+      expect(await repository!.listRevisions(project.projectId)).toEqual([]);
+    }
+  });
+
+  it("rejects imports to archived Projects", async () => {
+    const project = await setup();
+    const archived = await repository!.saveProject({ ...project, status: "archived", archivedAt: new Date().toISOString() }, project.revision);
+    await expect(repository!.applyProjectImport(archived, [], [archived.lineItems[0]], archived.revision)).rejects.toThrow("Only an active Project");
+    expect(await repository!.getProject(project.projectId)).toEqual(archived);
+    expect(await repository!.listRevisions(project.projectId)).toEqual([]);
+  });
+});
+
 describe("Project edit coordination", () => {
   it("opens a second tab read-only and permits an explicit takeover", async () => {
     const first = new ProjectEditCoordinator();

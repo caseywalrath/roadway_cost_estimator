@@ -1504,11 +1504,13 @@ export async function renderApp(
     if (!projectRepository.isPersistent) {
       throw new Error("Browser storage is unavailable, so this import cannot be committed durably. Keep the report and try again after storage is restored.");
     }
-    const acceptedLines = draft.resolvedRows
+    if (draft.existingItemPlan?.errors.length) throw new Error("Resolve the existing-item update choices before importing.");
+    const acceptedLines = draft.existingItemPlan?.additions.map((line) => structuredClone(line)) ?? draft.resolvedRows
       .filter((row) => row.lineItem && (row.outcome === "imported" || row.outcome === "imported-incomplete"))
       .map((row) => row.lineItem!)
       .map((lineItem) => structuredClone(lineItem));
-    if (!acceptedLines.length) throw new Error("No rows are ready to import. Resolve or exclude every failed row first.");
+    const updatedLines = draft.existingItemPlan?.updates.map((line) => structuredClone(line)) ?? [];
+    if (!acceptedLines.length && !updatedLines.length) throw new Error("No rows are ready to import. Resolve or exclude every failed row first.");
 
     if (draft.destinationProjectMode === "active") {
       if (!draft.baseProjectId || draft.baseProjectRevision === null) {
@@ -1530,9 +1532,10 @@ export async function renderApp(
       }
       let saved: UserProject;
       try {
-        saved = await projectRepository.appendProjectLines(
+        saved = await projectRepository.applyProjectImport(
           current,
           acceptedLines,
+          updatedLines,
           current.revision,
           `Before Excel import ${draft.fileName}`
         );
@@ -1551,7 +1554,7 @@ export async function renderApp(
       lastSavedAt = saved.updatedAt;
       saveStatus = "saved";
       projectStorageWarning = null;
-      return `${acceptedLines.length} imported; ${draft.resolvedRows.length - acceptedLines.length} not imported. The report remains available for download.`;
+      return `${acceptedLines.length} added; ${updatedLines.length} updated. The report remains available for download.`;
     }
 
     const name = draft.newProjectName.trim();

@@ -77,7 +77,7 @@ describe("sparse SheetJS workbook reader", () => {
     expect(() => readWorkbook(fixtureBytes(), {
       fileName: "estimate.xlsx",
       limits: { maxFileBytes: 1 }
-    })).toThrow(/MiB/);
+    })).toThrow(/MB import limit/);
     expect(() => readWorkbook(fixtureBytes(), {
       fileName: "estimate.xlsx",
       limits: { maxWorksheets: 1 }

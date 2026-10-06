@@ -64,6 +64,14 @@ export interface ProjectRepository {
     expectedRevision: number,
     reason?: string
   ): Promise<UserProject>;
+  /** Apply additions and replacements while preserving the exact pre-import snapshot. */
+  applyProjectImport(
+    project: UserProject,
+    additions: UserProject["lineItems"],
+    updates: UserProject["lineItems"],
+    expectedRevision: number,
+    reason?: string
+  ): Promise<UserProject>;
   deleteProject(projectId: string): Promise<void>;
   recordBackup(projectId: string, revision: number): Promise<UserProject>;
   setActiveProjectId(stateCode: string, projectId: string | null): Promise<void>;
@@ -212,6 +220,16 @@ class IndexedDbProjectRepository implements ProjectRepository {
     expectedRevision: number,
     reason = "Before Excel import"
   ): Promise<UserProject> {
+    return this.applyProjectImport(project, lines, [], expectedRevision, reason);
+  }
+
+  async applyProjectImport(
+    project: UserProject,
+    additions: UserProject["lineItems"],
+    updates: UserProject["lineItems"],
+    expectedRevision: number,
+    reason = "Before Excel import"
+  ): Promise<UserProject> {
     const transaction = this.database.transaction(["projects", "revisions"], "readwrite");
     const projectStore = transaction.objectStore("projects");
     const revisionStore = transaction.objectStore("revisions");
@@ -225,12 +243,13 @@ class IndexedDbProjectRepository implements ProjectRepository {
       throw new Error("Only an active Project can receive imported items.");
     }
     const now = new Date().toISOString();
-    const saved: UserProject = {
-      ...structuredClone(current),
-      lineItems: [...current.lineItems.map((line) => structuredClone(line)), ...lines.map((line) => structuredClone(line))],
-      revision: expectedRevision + 1,
-      updatedAt: now
-    };
+    let saved: UserProject;
+    try {
+      saved = buildImportedProject(current, additions, updates, now);
+    } catch (error) {
+      transaction.abort();
+      throw error;
+    }
     revisionStore.put({
       projectId: current.projectId,
       revision: current.revision,
@@ -406,6 +425,7 @@ class IndexedDbProjectRepository implements ProjectRepository {
 
 class MemoryProjectRepository implements ProjectRepository {
   readonly isPersistent = false;
+  private revisions: ProjectRevision[] = [];
   constructor(private state: ProjectWorkspaceState) {}
 
   close(): void {}
@@ -426,24 +446,36 @@ class MemoryProjectRepository implements ProjectRepository {
   async appendProjectLines(
     project: UserProject,
     lines: UserProject["lineItems"],
-    expectedRevision: number
+    expectedRevision: number,
+    reason = "Before Excel import"
+  ): Promise<UserProject> {
+    return this.applyProjectImport(project, lines, [], expectedRevision, reason);
+  }
+  async applyProjectImport(
+    project: UserProject,
+    additions: UserProject["lineItems"],
+    updates: UserProject["lineItems"],
+    expectedRevision: number,
+    reason = "Before Excel import"
   ): Promise<UserProject> {
     const current = this.state.projects.find((candidate) => candidate.projectId === project.projectId);
     if (!current || current.revision !== expectedRevision) throw new ProjectConflictError();
     if (current.status !== "active") throw new Error("Only an active Project can receive imported items.");
-    const saved = {
-      ...structuredClone(current),
-      lineItems: [...structuredClone(current.lineItems), ...structuredClone(lines)],
-      revision: expectedRevision + 1,
-      updatedAt: new Date().toISOString()
-    };
+    const now = new Date().toISOString();
+    const saved = buildImportedProject(current, additions, updates, now);
+    const snapshot = { projectId: current.projectId, revision: current.revision, createdAt: now, reason, project: structuredClone(current) };
+    const retained = this.revisions.filter((revision) => revision.projectId === current.projectId && revision.revision !== current.revision);
+    retained.push(snapshot);
+    retained.sort((left, right) => right.revision - left.revision);
+    this.revisions = [...this.revisions.filter((revision) => revision.projectId !== current.projectId), ...retained.slice(0, MAX_REVISIONS_PER_PROJECT)];
     this.state.projects = this.state.projects.map((candidate) => candidate.projectId === saved.projectId ? saved : candidate);
-    return saved;
+    return structuredClone(saved);
   }
   async deleteProject(projectId: string): Promise<void> {
     const project = this.state.projects.find((candidate) => candidate.projectId === projectId);
     if (!project || project.status !== "archived") throw new Error("Only archived Projects can be permanently deleted.");
     this.state = removeProjectFromState(this.state, projectId);
+    this.revisions = this.revisions.filter((revision) => revision.projectId !== projectId);
   }
   async recordBackup(projectId: string, revision: number): Promise<UserProject> {
     const project = this.state.projects.find((candidate) => candidate.projectId === projectId);
@@ -456,10 +488,37 @@ class MemoryProjectRepository implements ProjectRepository {
     this.state.activeProjectIdByState[stateCode] = projectId;
   }
   async createRevision(): Promise<void> {}
-  async listRevisions(): Promise<ProjectRevision[]> { return []; }
+  async listRevisions(projectId: string): Promise<ProjectRevision[]> {
+    return structuredClone(this.revisions.filter((revision) => revision.projectId === projectId).sort((left, right) => right.revision - left.revision));
+  }
   async getProject(projectId: string): Promise<UserProject | null> {
     return structuredClone(this.state.projects.find((project) => project.projectId === projectId) ?? null);
   }
+}
+
+function buildImportedProject(
+  current: UserProject,
+  additions: UserProject["lineItems"],
+  updates: UserProject["lineItems"],
+  now: string
+): UserProject {
+  const existingIds = new Set(current.lineItems.map((line) => line.lineItemId));
+  const replacements = new Map<string, UserProject["lineItems"][number]>();
+  for (const line of updates) {
+    if (!existingIds.has(line.lineItemId)) throw new Error("An imported update refers to an item that no longer exists.");
+    if (replacements.has(line.lineItemId)) throw new Error("More than one imported update targets the same Project item.");
+    replacements.set(line.lineItemId, line);
+  }
+  const saved: UserProject = {
+    ...structuredClone(current),
+    lineItems: structuredClone([...current.lineItems.map((line) => replacements.get(line.lineItemId) ?? line), ...additions]),
+    revision: current.revision + 1,
+    updatedAt: now
+  };
+  const ids = new Set(saved.lineItems.map((line) => line.lineItemId));
+  if (ids.size !== saved.lineItems.length || saved.lineItems.some((line) => line.state !== current.state)
+    || !parseUserProjectV10(saved)) throw new Error("Imported items do not form a valid Project.");
+  return saved;
 }
 
 function openDatabase(): Promise<IDBDatabase> {
