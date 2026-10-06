@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import type { AgencyItemRecord, StateConfig } from "../data/schema";
+import { createUserProject } from "../projects/projectWorkspace";
 import type { ExcelImportWorkerResponse, ExcelWorkbookSnapshot } from "../projects/excelImport/types";
 import { ExcelImportController, type ExcelImportReadyDraft } from "./excelImportController";
 import { buildExcelImportReportCsv } from "./excelImportReport";
@@ -36,6 +37,14 @@ const state = {
   files: { sources: "", lettings: "", contracts: "", contractProjects: "", contractItems: "", bids: "", agencyItems: "", agencyItemVersions: "", itemTaxonomy: "", itemMappings: "", observations: "" }
 } satisfies StateConfig;
 
+const iowaState = {
+  ...state,
+  code: "IA",
+  name: "Iowa",
+  defaultAgencyId: "ia_iowa",
+  defaultAgencyName: "Iowa DOT"
+} satisfies StateConfig;
+
 const agencyItem = {
   agencyItemId: "ne:0012",
   state: "NE",
@@ -50,6 +59,16 @@ const agencyItem = {
   officialUnit: "EA",
   specReferenceCode: "",
   agency: "NDOT"
+} satisfies AgencyItemRecord;
+
+const iowaAgencyItem = {
+  ...agencyItem,
+  agencyItemId: "ia:0012",
+  state: "IA",
+  agencyId: "ia_iowa",
+  agencyName: "Iowa DOT",
+  officialDescription: "Mobilization and setup",
+  agency: "Iowa DOT"
 } satisfies AgencyItemRecord;
 
 function workbook(): ExcelWorkbookSnapshot {
@@ -129,8 +148,86 @@ describe("Excel import wizard", () => {
     expect(markup).toContain("Next: Choose data");
     expect(markup).toContain("Add items to Demo Project");
     expect(markup).toContain("Item codes will be checked against Nebraska items.");
+    expect(markup).toContain('name="excelImportDestinationState"');
+    expect(markup).toContain('<option value="NE" selected>Nebraska</option>');
     expect(markup).not.toContain("Catalog destination");
     expect(markup).not.toContain("Choose worksheet");
+
+    const activeController = new ExcelImportController({
+      currentStateCode: "NE",
+      currentAgencyId: "ne_ndot",
+      agencyItems: [agencyItem],
+      activeProject: createUserProject("Demo Project", "NE"),
+      states: [state],
+      onRender: () => undefined,
+      onClose: () => undefined,
+      workerFactory: () => new FakeWorker(workbook())
+    });
+    const activeMarkup = renderExcelImportWizard(activeController.viewModel, [state], "Demo Project");
+    expect(activeMarkup).not.toContain('name="excelImportDestinationState"');
+  });
+
+  it("loads the selected state's catalog, preserves it while reading the file, and clears stale review decisions", async () => {
+    const root = document.createElement("div");
+    const states = [state, iowaState];
+    let controller!: ExcelImportController;
+    const render = () => {
+      root.innerHTML = renderExcelImportWizard(controller.viewModel, states, null);
+      controller.bind(root);
+    };
+    controller = new ExcelImportController({
+      currentStateCode: "NE",
+      currentAgencyId: "ne_ndot",
+      agencyItems: [agencyItem],
+      activeProject: null,
+      states,
+      loadAgencyItemsForState: async (stateCode) => stateCode === "IA" ? [iowaAgencyItem] : [agencyItem],
+      onRender: render,
+      onClose: () => undefined,
+      workerFactory: () => new FakeWorker(workbookWithValue(2, 2, "Mobilization and setup"))
+    });
+
+    controller.open();
+    const initialState = root.querySelector<HTMLSelectElement>("[data-excel-import-destination-state]")!;
+    initialState.value = "IA";
+    initialState.dispatchEvent(new Event("change"));
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+    expect(controller.viewModel.destinationState).toBe("IA");
+    expect(controller.viewModel.destinationAgencyId).toBe("ia_iowa");
+    expect(controller.viewModel.destinationCatalogStatus).toBe("ready");
+
+    await controller.selectFile(file());
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+    expect(controller.viewModel.destinationState).toBe("IA");
+
+    const neState = root.querySelector<HTMLSelectElement>("[data-excel-import-destination-state]")!;
+    neState.value = "NE";
+    neState.dispatchEvent(new Event("change"));
+    root.querySelector<HTMLButtonElement>('[data-excel-import-next="sheet"]')?.click();
+    root.querySelector<HTMLButtonElement>('[data-excel-import-next="mapping"]')?.click();
+    root.querySelector<HTMLButtonElement>('[data-excel-import-next="review"]')?.click();
+    const neRow = controller.viewModel.rows.find((row) => row.values.itemCode === "0012")!;
+    expect(neRow.matchStatus).toBe("needs-review");
+    const neChoice = [...root.querySelectorAll<HTMLSelectElement>("[data-excel-import-row-action]")]
+      .find((select) => select.dataset.excelImportRowAction === neRow.rowId)!;
+    neChoice.value = "keep-custom";
+    neChoice.dispatchEvent(new Event("change"));
+    expect(controller.viewModel.decisions[neRow.rowId]?.action).toBe("keep-custom");
+
+    root.querySelector<HTMLButtonElement>('[data-excel-import-step="file"]')?.click();
+    const iaState = root.querySelector<HTMLSelectElement>("[data-excel-import-destination-state]")!;
+    iaState.value = "IA";
+    iaState.dispatchEvent(new Event("change"));
+    expect(controller.viewModel.stage).toBe("file");
+    expect(controller.viewModel.rows).toEqual([]);
+    expect(controller.viewModel.decisions).toEqual({});
+
+    root.querySelector<HTMLButtonElement>('[data-excel-import-next="sheet"]')?.click();
+    root.querySelector<HTMLButtonElement>('[data-excel-import-next="mapping"]')?.click();
+    root.querySelector<HTMLButtonElement>('[data-excel-import-next="review"]')?.click();
+    const iaRow = controller.viewModel.rows.find((row) => row.values.itemCode === "0012")!;
+    expect(iaRow.selectedAgencyItemId).toBe("ia:0012");
+    expect(iaRow.matchStatus).toBe("catalog-ready");
   });
 
   it("enables completed steps without enabling future steps", async () => {
@@ -422,6 +519,7 @@ describe("Excel import wizard", () => {
     const root = document.createElement("div");
     let ready = 0;
     let commits = 0;
+    let committed = 0;
     let draft: ExcelImportReadyDraft | null = null;
     let controller!: ExcelImportController;
     const render = () => {
@@ -438,6 +536,10 @@ describe("Excel import wizard", () => {
       onClose: () => undefined,
       onReady: (value) => { ready += 1; draft = value; },
       onCommit: async () => { commits += 1; },
+      onCommitted: () => {
+        committed += 1;
+        expect(controller.viewModel.commitStatus).toBe("committed");
+      },
       workerFactory: () => new FakeWorker(workbook())
     });
     controller.open();
@@ -473,6 +575,7 @@ describe("Excel import wizard", () => {
     root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")?.click();
     await new Promise((resolve) => window.setTimeout(resolve, 0));
     expect(commits).toBe(1);
+    expect(committed).toBe(1);
     expect(controller.viewModel.commitStatus).toBe("committed");
     expect(root.textContent).toContain("2 items were added to Demo Project.");
     expect(root.querySelectorAll("[data-excel-import-cancel]")).toHaveLength(1);

@@ -103,6 +103,9 @@ describe("Project workspace v10", () => {
     expect(workspaceHtml).not.toContain("Create a Colorado Project");
     expect(workspaceHtml).not.toContain('class="eyebrow"');
     expect(workspaceHtml).toContain('name="notes"');
+    expect(workspaceHtml).toContain('<select name="state">');
+    expect(workspaceHtml).toContain('value="IA"');
+    expect(workspaceHtml).toContain("Iowa</option>");
     expect(managerHtml).toContain("<h2>Project Manager</h2>");
     expect(managerHtml).not.toContain('class="eyebrow"');
     expect(managerHtml).toContain("Project Actions");

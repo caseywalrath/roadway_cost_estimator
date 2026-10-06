@@ -242,14 +242,14 @@ function renderMetadataEditor(
   currentStateCode: string,
   formId: string
 ): string {
-  const isManagerCreate = editor.context === "manager" && editor.mode === "create";
+  const isCreate = editor.mode === "create";
   const stateCode = editor.state || currentStateCode;
   const actionLabel = editor.mode === "create" ? "Create Project" : "Save Changes";
   return `
     <form id="${formId}" class="project-metadata-editor-form" data-project-editor-context="${editor.context}" data-project-editor-mode="${editor.mode}">
       <div class="project-editor-heading"><h2>${editor.mode === "create" ? "New Project" : escapeHtml(editor.name.trim() || "Unnamed Project")}</h2></div>
       <label><span>Project name</span><input name="name" value="${escapeHtml(editor.name)}" required autocomplete="off" /></label>
-      <label><span>State</span>${isManagerCreate
+      <label><span>State</span>${isCreate
         ? `<select name="state">${states.map((state) => `<option value="${escapeHtml(state.code)}" ${state.code === stateCode ? "selected" : ""}>${escapeHtml(state.name)}</option>`).join("")}</select>`
         : `<input value="${escapeHtml(stateName(states, stateCode))}" disabled /><input type="hidden" name="state" value="${escapeHtml(stateCode)}" />`}</label>
       <label><span>Location</span><input name="location" value="${escapeHtml(editor.location)}" autocomplete="off" /></label>
