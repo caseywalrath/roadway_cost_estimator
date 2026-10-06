@@ -1,5 +1,6 @@
 import type { ExcelImportReadyDraft } from "./excelImportController";
 import type { MatchedImportRow, ResolvedImportRow } from "../projects/excelImport/types";
+import { projectLineTotal } from "../projects/projectWorkspace";
 
 const REPORT_HEADERS = [
   "file",
@@ -38,7 +39,14 @@ export function buildExcelImportReportCsv(draft: ExcelImportReadyDraft): string 
   for (const result of draft.resolvedRows) {
     const row = rowsById.get(result.rowId);
     if (!row) continue;
-    output.push(reportRow(draft.fileName, row, result).map(csvCell).join(","));
+    const match = draft.existingItemPlan?.matches.find((candidate) => candidate.rowId === result.rowId);
+    const update = match?.action === "update" ? draft.existingItemPlan?.updates.find((line) => line.lineItemId === match.targetLineItemId) : null;
+    const finalResult: ResolvedImportRow = match?.action === "skip"
+      ? { ...result, outcome: "excluded", lineItem: null, recalculatedTotal: null, sourceTotalDifference: null, issues: [...result.issues, { code: "existing-item-skipped", severity: "info", message: "Matched an existing Project item and was skipped." }] }
+      : update ? { ...result, lineItem: update, recalculatedTotal: projectLineTotal(update), sourceTotalDifference: row.values.sourceTotal === null ? null : projectLineTotal(update) - row.values.sourceTotal } : result;
+    const fields = reportRow(draft.fileName, row, finalResult);
+    if (update) fields[5] = "updated-existing";
+    output.push(fields.map(csvCell).join(","));
   }
   return `${output.join("\r\n")}\r\n`;
 }

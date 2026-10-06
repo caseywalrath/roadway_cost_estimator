@@ -29,7 +29,11 @@ export function resolveDraftRow(row: MatchedImportRow, options: ResolveDraftOpti
   if (row.classification === "blank" || row.classification === "repeated-header" || row.classification === "section-heading" || (row.classification === "summary" && decision?.action !== "fixed-allowance")) {
     return empty("excluded", baseIssues);
   }
-  if (decision?.action === "exclude") return empty("excluded", [...baseIssues, { code: "excluded-by-user", severity: "info", message: "Excluded by user." }]);
+  if (decision?.action === "exclude") return empty("excluded", [...baseIssues, decision.leftUnresolved
+    ? { code: "left-unresolved", severity: "info", message: "Left unresolved during review and skipped from the import." }
+    : decision.automaticallySkipped
+      ? { code: "automatically-skipped", severity: "warning", message: "Automatically skipped: no supported import choice is available for this row. Check for missing estimate items." }
+      : { code: "excluded-by-user", severity: "info", message: "Excluded by user." }]);
   const action = decision?.action;
   const candidate = chooseCandidate(row, decision);
   if (row.matchStatus === "invalid" && action !== "keep-custom" && action !== "correct-fields" && action !== "fixed-allowance") {

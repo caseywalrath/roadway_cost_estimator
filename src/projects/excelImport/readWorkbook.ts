@@ -56,7 +56,7 @@ export function readWorkbook(
   if (bytes.byteLength > limits.maxFileBytes) {
     throw failure(
       "file-too-large",
-      `The workbook is ${(bytes.byteLength / (1024 * 1024)).toFixed(1)} MiB. The import limit is ${formatMiB(limits.maxFileBytes)} MiB.`
+      `This workbook exceeds the ${formatMegabytes(limits.maxFileBytes)} MB import limit. Choose a smaller .xlsx file.`
     );
   }
   if (!isZipContainer(bytes)) {
@@ -431,6 +431,6 @@ function failure(
   return new WorkbookReadException({ code, message, causeMessage });
 }
 
-function formatMiB(bytes: number): string {
-  return `${(bytes / (1024 * 1024)).toFixed(0)} MiB`;
+function formatMegabytes(bytes: number): string {
+  return (bytes / (1024 * 1024)).toFixed(0);
 }

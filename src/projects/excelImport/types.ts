@@ -89,7 +89,7 @@ export interface WorkbookReadLimits {
 }
 
 export const DEFAULT_WORKBOOK_READ_LIMITS: WorkbookReadLimits = Object.freeze({
-  maxFileBytes: 20 * 1024 * 1024,
+  maxFileBytes: 25 * 1024 * 1024,
   maxWorksheets: 100,
   maxPopulatedCells: 250_000,
   maxSelectedRows: 20_000,
@@ -342,6 +342,8 @@ export type ImportResolutionAction =
 
 export interface ImportRowDecision {
   action: ImportResolutionAction;
+  automaticallySkipped?: boolean;
+  leftUnresolved?: boolean;
   agencyItemId?: string;
   itemCode?: string;
   description?: string;
