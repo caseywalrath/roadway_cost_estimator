@@ -197,6 +197,8 @@ Future state imports follow these rules:
 
 ## Deferred Scope
 
+The proposed additive Planning module is specified in [docs/planning-module-implementation-plan.md](docs/planning-module-implementation-plan.md). The user requested a build-first Nebraska pilot with provisional packages, engineer feedback, scenario comparison, and later Project snapshot handoff. This is planned work; the current application does not implement it. The plan retains the current Explorer evidence boundaries and reserves architecture, UI, persistence, and Project compatibility work for Sol while assigning bounded implementation to Luna.
+
 - South Dakota regional letting archives.
 - Cross-state item comparison.
 - Automatic canonical equivalence.
