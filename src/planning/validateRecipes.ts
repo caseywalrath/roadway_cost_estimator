@@ -18,6 +18,7 @@ function ruleRefs(rule: QuantityRule): string[] {
     case "area": return [rule.length, rule.width, ...(rule.sides ? [rule.sides] : [])];
     case "volume": return [rule.length, rule.width, rule.depth, ...(rule.sides ? [rule.sides] : [])];
     case "asphalt_tons": return [rule.length, rule.width, rule.thickness, rule.density, rule.materialFactor];
+    case "surface_application": return [rule.length, rule.width, rule.applicationRate];
     case "linear": return [rule.length, ...(rule.sides ? [rule.sides] : [])];
     case "count": return [rule.count];
     case "manual": return [rule.parameter];
@@ -30,6 +31,7 @@ function expectedUnit(rule: QuantityRule): string {
     case "area": return rule.unit;
     case "volume": return rule.unit;
     case "asphalt_tons": return "TON";
+    case "surface_application": return "GAL";
     case "linear": return "LF";
     case "count": return "EACH";
     case "fixed": return rule.unit;
@@ -80,13 +82,13 @@ function packageIssues(definition: PackageDefinition): PlanningIssue[] {
       issues.push(issue("invalid_recipe", `${path}.quantityRule`, "Quantity rule and unit must be valid."));
       continue;
     }
-    if ((rule.kind === "area" && !["SF", "SY"].includes(rule.unit)) || (rule.kind === "volume" && rule.unit !== "CY") || (rule.kind === "asphalt_tons" && rule.unit !== "TON") || (rule.kind === "linear" && rule.unit !== "LF") || (rule.kind === "count" && rule.unit !== "EACH")) issues.push(issue("unit_mismatch", `${path}.quantityRule.unit`, `The ${rule.kind} rule has incompatible output unit ${rule.unit}.`));
+    if ((rule.kind === "area" && !["SF", "SY"].includes(rule.unit)) || (rule.kind === "volume" && rule.unit !== "CY") || (rule.kind === "asphalt_tons" && rule.unit !== "TON") || (rule.kind === "surface_application" && rule.unit !== "GAL") || (rule.kind === "linear" && rule.unit !== "LF") || (rule.kind === "count" && rule.unit !== "EACH")) issues.push(issue("unit_mismatch", `${path}.quantityRule.unit`, `The ${rule.kind} rule has incompatible output unit ${rule.unit}.`));
     if (rule.kind === "fixed" && (!finite(rule.value) || rule.value < 0)) issues.push(issue("invalid_number", `${path}.quantityRule.value`, "Fixed quantity must be finite and nonnegative."));
     const refs = ruleRefs(rule);
     for (const ref of refs) if (!parameters.has(ref)) issues.push(issue("missing_reference", `${path}.quantityRule`, `Quantity rule references unknown parameter ${ref}.`));
     const requiredParameterUnits: Record<string, string> = {};
     const integerParameters = new Set<string>();
-    if (rule.kind === "area" || rule.kind === "volume" || rule.kind === "asphalt_tons" || rule.kind === "linear") {
+    if (rule.kind === "area" || rule.kind === "volume" || rule.kind === "asphalt_tons" || rule.kind === "surface_application" || rule.kind === "linear") {
       requiredParameterUnits[rule.length] = "miles";
       if ("width" in rule) requiredParameterUnits[rule.width] = "ft";
       if ("sides" in rule && rule.sides) { requiredParameterUnits[rule.sides] = "count"; integerParameters.add(rule.sides); }
@@ -96,6 +98,7 @@ function packageIssues(definition: PackageDefinition): PlanningIssue[] {
         requiredParameterUnits[rule.density] = "lb/ft³";
         requiredParameterUnits[rule.materialFactor] = "factor";
       }
+      if (rule.kind === "surface_application") requiredParameterUnits[rule.applicationRate] = "GAL/SY";
     } else if (rule.kind === "count") { requiredParameterUnits[rule.count] = "count"; integerParameters.add(rule.count); }
     else if (rule.kind === "manual") requiredParameterUnits[rule.parameter] = rule.unit;
     for (const [key, expected] of Object.entries(requiredParameterUnits)) {

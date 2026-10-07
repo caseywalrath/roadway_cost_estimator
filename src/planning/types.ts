@@ -1,6 +1,6 @@
 /** Planning contract v1. Pure core only; runtime imports from other app modules are prohibited. */
 export type PlanningState = "NE" | "CO";
-export type PlanningUnit = "LF" | "SF" | "SY" | "CY" | "TON" | "EACH" | "LS";
+export type PlanningUnit = "LF" | "SF" | "SY" | "CY" | "TON" | "GAL" | "EACH" | "LS";
 export type PackageKind = "resurfacing" | "reconstruction" | "path" | "sidewalk";
 export type CostCategory = "construction" | "service" | "external";
 export type ComponentStatus = "priced" | "unpriced" | "excluded";
@@ -42,6 +42,7 @@ export type QuantityRule =
   | { kind: "area"; length: string; width: string; sides?: string; unit: "SF" | "SY" }
   | { kind: "volume"; length: string; width: string; depth: string; sides?: string; unit: "CY" }
   | { kind: "asphalt_tons"; length: string; width: string; thickness: string; density: string; materialFactor: string; unit: "TON" }
+  | { kind: "surface_application"; length: string; width: string; applicationRate: string; unit: "GAL" }
   | { kind: "linear"; length: string; sides?: string; unit: "LF" }
   | { kind: "count"; count: string; unit: "EACH" }
   | { kind: "fixed"; value: number; unit: PlanningUnit }

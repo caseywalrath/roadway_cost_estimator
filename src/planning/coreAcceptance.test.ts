@@ -28,14 +28,14 @@ function quantity(scenario: PlanningScenario, role: string): number | null | und
 }
 
 describe("Planning core integrated reference cases", () => {
-  it.each([[NEBRASKA_PILOT_PACKAGES], [COLORADO_PILOT_PACKAGES]])("keeps resurfacing quantities independent of the source state", (definitions) => {
+  it.each([[NEBRASKA_PILOT_PACKAGES, 704], [COLORADO_PILOT_PACKAGES, 7040]] as const)("scales each state's resurfacing tack quantity with the roadway area", (definitions, tackAtHalfMile) => {
     const scenario = withPackage(recipe(definitions, "resurfacing"));
     expect(quantity(scenario, "milling")).toBeCloseTo(reference.roadway.areaSquareYards, 8);
     expect(quantity(scenario, "asphalt")).toBeCloseTo(reference.roadway.asphaltTons, 8);
-    expect(quantity(scenario, "tack")).toBe(1);
+    expect(quantity(scenario, "tack")).toBeCloseTo(tackAtHalfMile, 8);
     const doubled = value(editPlanningScenario(scenario, { kind: "parameter", instanceId: "package", key: "lengthMiles", override: { value: 1, reason: "Longer corridor" } }, now));
     expect(quantity(doubled, "asphalt")).toBeCloseTo(1607.76, 8);
-    expect(quantity(doubled, "tack")).toBe(1);
+    expect(quantity(doubled, "tack")).toBeCloseTo(tackAtHalfMile * 2, 8);
   });
 
   it("uses separate state base units and path sections", () => {

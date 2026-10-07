@@ -4,7 +4,7 @@ import { convertPlanningQuantity, normalizePlanningUnit } from "./units";
 describe("Planning unit normalization and conversion", () => {
   it.each([
     [" lin. ft. ", "LF"], ["FT", "LF"], ["sq. ft.", "SF"], ["SQ YD", "SY"],
-    ["cu. yd.", "CY"], ["tons", "TON"], ["ea", "EACH"], ["l.s.", "LS"],
+    ["cu. yd.", "CY"], ["tons", "TON"], ["gallons", "GAL"], ["ea", "EACH"], ["l.s.", "LS"],
   ])("normalizes %s to %s", (raw, normalized) => {
     expect(normalizePlanningUnit(raw)).toBe(normalized);
   });

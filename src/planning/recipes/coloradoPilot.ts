@@ -84,6 +84,7 @@ const sidewalkParameters = () => [
   parameter("widthFt", "Sidewalk width", "ft", 5, 0, { exclusiveMin: true }),
   parameter("sides", "Number of sides", "count", 2, 1, { max: 2, integer: true }),
   parameter("thicknessIn", "Concrete sidewalk thickness", "in", 6, 0, { exclusiveMin: true }),
+  parameter("rampCount", "Curb ramps", "count", 4, 0, { max: 200, integer: true }),
 ];
 
 const coAssumptions = [
@@ -104,7 +105,7 @@ const make = (
   components: ComponentDefinition[],
 ): PackageDefinition => ({
   packageId,
-  version: "pilot-1",
+  version: kind === "path" ? "pilot-1" : "pilot-2",
   state: "CO",
   kind,
   name,
@@ -119,7 +120,7 @@ export const COLORADO_PILOT_PACKAGES: readonly PackageDefinition[] = [
   make("co-resurfacing", "resurfacing", "Colorado Asphalt Resurfacing", asphaltParameters(), [
     component("milling", "Removal of asphalt mat (planing)", { kind: "area", length: "lengthMiles", width: "widthFt", unit: "SY" }, binding("co_cdot_202-00240", "Removal of Asphalt Mat (Planing)", "SY", "Exact CDOT item; milling area proxy does not encode variable milling depth.")),
     component("asphalt", "Hot mix asphalt, grading SX (75), PG 64-22", { kind: "asphalt_tons", length: "lengthMiles", width: "widthFt", thickness: "thicknessIn", density: "densityLbCf", materialFactor: "materialFactor", unit: "TON" }, binding("co_cdot_403-34741", "Hot Mix Asphalt (Grading SX) (75) (PG 64-22)", "TON", "Exact CDOT item; mixture, lift design, and placed section require project review."), { tags: ["surface"] }),
-    component("tack", "Tack coat", { kind: "fixed", value: 1, unit: "LS" }, null, { assumption: "Required one-lump-sum manual scope; no exact pilot item binding or percentage rate is assumed." }),
+    component("tack", "Tack coat application", { kind: "area", length: "lengthMiles", width: "widthFt", unit: "SY" }, null, { assumption: "Pilot $/SY application allowance; no CDOT tack-specific catalog binding was established. Confirm whether tack is incidental to the asphalt item before using both." }),
   ]),
   make("co-reconstruction", "reconstruction", "Colorado Concrete Reconstruction", [
     ...roadwayParameters(),
@@ -131,7 +132,7 @@ export const COLORADO_PILOT_PACKAGES: readonly PackageDefinition[] = [
     component("base", "Aggregate base course (Class 6)", { kind: "volume", length: "lengthMiles", width: "widthFt", depth: "baseDepthIn", unit: "CY" }, binding("co_cdot_304-06007", "Aggregate Base Course (Class 6)", "CY", "Exact CDOT volume item; 6-inch pilot base quantity is volume.")),
     component("excavation", "Unclassified excavation", { kind: "volume", length: "lengthMiles", width: "widthFt", depth: "excavationDepthIn", unit: "CY" }, binding("co_cdot_203-00000", "Unclassified Excavation", "CY", "Exact CDOT excavation item; excludes unmodeled mass grading and unsuitable-material handling.")),
     component("curb_gutter", "Curb and gutter Type 2, Section I-B", { kind: "linear", length: "lengthMiles", sides: "sides", unit: "LF" }, binding("co_cdot_609-21010", "Curb and Gutter Type 2 (Section I-B)", "LF", "Exact CDOT item; default quantity assumes curb on both sides.")),
-    component("removal", "Existing pavement removal", { kind: "area", length: "lengthMiles", width: "widthFt", unit: "SY" }, null, { assumption: "Required roadway-area removal scope remains manually priced until an exact suitable binding is selected." }),
+    component("removal", "Existing concrete pavement removal", { kind: "area", length: "lengthMiles", width: "widthFt", unit: "SY" }, binding("co_cdot_202-00210", "Removal of Concrete Pavement", "SY", "Exact CDOT concrete-pavement removal item. Verify haul/disposal and underlying base work; excludes unsuitable-material excavation.")),
   ]),
   make("co-path", "path", "Colorado Concrete Bikeway", pathParameters(), [
     component("pavement", "Concrete bikeway (6 inch)", { kind: "area", length: "lengthMiles", width: "widthFt", unit: "SY" }, binding("co_cdot_608-00026", "Concrete Bikeway (6 Inch)", "SY", "Exact 6-inch CDOT item; pilot proxy for path surface; verify joints and reinforcement.", { parameter: "thicknessIn", inches: 6 }), { tags: ["surface"] }),
@@ -140,6 +141,6 @@ export const COLORADO_PILOT_PACKAGES: readonly PackageDefinition[] = [
   ]),
   make("co-sidewalk", "sidewalk", "Colorado Concrete Sidewalk", sidewalkParameters(), [
     component("pavement", "Concrete sidewalk (6 inch)", { kind: "area", length: "lengthMiles", width: "widthFt", sides: "sides", unit: "SY" }, binding("co_cdot_608-00006", "Concrete Sidewalk (6 Inch)", "SY", "Exact 6-inch CDOT item; width is per side and area is multiplied by sides.", { parameter: "thicknessIn", inches: 6 }), { tags: ["surface"] }),
-    component("ramps_crossings", "Sidewalk ramps and crossings", { kind: "fixed", value: 1, unit: "LS" }, null, { assumption: "Required one-lump-sum manual/unpriced scope. Counted ramps and driveways need explicit custom work or a reasoned exclusion." }),
+    component("ramps_crossings", "Curb ramps", { kind: "count", count: "rampCount", unit: "EACH" }, null, { assumption: "Four provisional curb ramps assume two project ends on two sidewalk sides. Each uses an 80 SF assembly proxy; intermediate intersections, driveway crossings, removals and utility adjustments are excluded." }),
   ]),
 ];

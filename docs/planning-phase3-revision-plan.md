@@ -1,6 +1,6 @@
 # Planning Phase 3 Revision Plan: Planner-First Pilot
 
-Status: Proposed for implementation. This plan revises the local Phase 3 pilot before the optional-element work in Phase 4. It does not authorize publication or claim calibrated estimating accuracy.
+Status: Implemented locally for an engineer trial on 2026-10-07; visual and engineer trials remain open. The pilot-default register, planner-first UI, real-data verification, and remaining trial limits are recorded in `docs/planning-pilot-default-register.md` and `docs/planning-pilot-feedback.md`. This work does not authorize publication or claim calibrated estimating accuracy.
 
 Prepared: 2026-10-07. Baseline: local Phase 3 commit `2903566`, with the product-owner trial recorded in `docs/planning-pilot-feedback.md`.
 

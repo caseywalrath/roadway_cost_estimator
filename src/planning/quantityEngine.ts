@@ -127,6 +127,12 @@ export function evaluateQuantityRule(rule: QuantityRule, parameters: Record<stri
       }
       break;
     }
+    case "surface_application": {
+      const sf = areaSquareFeet(rule.length, rule.width);
+      const applicationRate = get(rule.applicationRate);
+      if (sf !== null && applicationRate !== null) result = (sf / 9) * applicationRate;
+      break;
+    }
     case "linear": {
       const length = lengthFeet(rule.length);
       const sides = rule.sides ? get(rule.sides) : 1;

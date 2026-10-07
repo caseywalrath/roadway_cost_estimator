@@ -1,5 +1,7 @@
 # Planning core contract v1
 
+Phase 3 planner-first amendment: this document records the original frozen Phase 0/1 `pilot-1` contract. New `pilot-2` recipes retain the same storage and calculation boundaries while adding `GAL` identity units, a `surface_application` quantity rule, exact pavement-removal bindings, counted sidewalk curb ramps, and frozen provisional manual-rate overrides. See `docs/planning-pilot-default-register.md` and `docs/planning-phase3-revision-plan.md` for those additions; existing saved `pilot-1` definitions remain valid and are never rewritten automatically.
+
 Phase 0 freezes this contract before Phase 1 production implementation. All recipes and section assumptions are provisional. This contract establishes numerical behavior, not engineering accuracy. Manifest state codes are uppercase `NE`/`CO`; exact agency identities remain lowercase `ne_ndot_*`/`co_cdot_*`. Historical NDOT catalog status does not establish obsolescence and does not block a published annual binding.
 
 ## Boundaries and exact Phase 1 APIs

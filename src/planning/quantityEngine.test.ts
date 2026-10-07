@@ -49,6 +49,7 @@ describe("quantity rules and package parameters", () => {
     const formulaParameters = { lengthMiles: 0.5, widthFt: 24, depthIn: 15, thicknessIn: 2, density: 145, factor: 1.05 };
     expect(evaluateQuantityRule({ kind: "area", length: "lengthMiles", width: "widthFt", unit: "SF" }, formulaParameters)).toMatchObject({ ok: true, value: 63_360 });
     expect(evaluateQuantityRule({ kind: "area", length: "lengthMiles", width: "widthFt", unit: "SY" }, formulaParameters)).toMatchObject({ ok: true, value: 7_040 });
+    expect(evaluateQuantityRule({ kind: "surface_application", length: "lengthMiles", width: "widthFt", applicationRate: "tackRate", unit: "GAL" }, { ...formulaParameters, tackRate: 0.1 })).toMatchObject({ ok: true, value: 704 });
     const asphalt = evaluateQuantityRule({ kind: "asphalt_tons", length: "lengthMiles", width: "widthFt", thickness: "thicknessIn", density: "density", materialFactor: "factor", unit: "TON" }, formulaParameters);
     expect(asphalt.ok).toBe(true);
     if (asphalt.ok) expect(asphalt.value).toBeCloseTo(803.88, 10);

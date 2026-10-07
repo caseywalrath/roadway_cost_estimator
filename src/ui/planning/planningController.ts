@@ -7,8 +7,10 @@ import { calculateScenarioCosts } from "../../planning/costEngine";
 import { comparePlanningScenarios } from "../../planning/compareScenarios";
 import { buildPlanningBackup, importPlanningBackup } from "../../planning/planningBackup";
 import { buildPlanningCsv } from "../../planning/planningCsv";
+import { buildPlannerEstimate } from "../../planning/plannerPresentation";
+import { pilotManualRate, pilotManualReason } from "../../planning/recipes/pilotDefaults";
 import { addPlanningScenario, createPackageInstance, createPlanningScenario, createPlanningWorkspace, duplicatePlanningScenario, editPlanningScenario, getScenarioReviewStatus, recordScenarioReview, replacePlanningScenario, setActivePlanningScenario } from "../../planning/planningWorkspace";
-import type { AllowanceDefinition, CustomComponent, DuplicateScenarioIds, PackageKind, PlanningIssue, PlanningScenario, PlanningState, PlanningUnit, PlanningWorkspace, ScenarioEdit } from "../../planning/types";
+import type { AllowanceDefinition, CustomComponent, DuplicateScenarioIds, PackageInstance, PackageKind, PlanningIssue, PlanningScenario, PlanningState, PlanningUnit, PlanningWorkspace, ScenarioEdit } from "../../planning/types";
 import { renderPlanningWorkspace, type PlanningViewModel } from "./renderPlanningWorkspace";
 import { PlanningEditCoordinator } from "../../planning/storage/planningEditCoordinator";
 
@@ -49,6 +51,7 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
   let message = "";
   let workspaces: PlanningWorkspace[] = [];
   let compareId = "";
+  let updatePreview: { instanceId: string; beforeAmount: number | null; afterAmount: number | null; beforeLabel: string; afterLabel: string } | null = null;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   let operation: Promise<unknown> = Promise.resolve();
   let coordinator: PlanningEditCoordinator | null = null;
@@ -89,6 +92,11 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
 
   function render() {
     if (!host || closed) return;
+    const actionsOpen = host.querySelector<HTMLDetailsElement>(".planning-actions")?.open ?? false;
+    const advancedOpen = host.querySelector<HTMLDetailsElement>(".planning-advanced")?.open ?? false;
+    const packageDetailsOpen = new Set([...host.querySelectorAll<HTMLDetailsElement>("details[data-detail][open]")].map((entry) => entry.dataset.detail));
+    const updateDetailsOpen = new Set([...host.querySelectorAll<HTMLDetailsElement>(".planning-package-update[open]")].map((entry) => entry.querySelector<HTMLElement>("[data-action='preview-package-update']")?.dataset.id));
+    const newProjectName = host.querySelector<HTMLInputElement>("[data-field='new-project-name']")?.value ?? "";
     const active = host.contains(document.activeElement) ? document.activeElement as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement : null;
     const identity = active ? { ...active.dataset } : null;
     const parentIdentity = active?.closest<HTMLElement>(".planning-rate-controls")?.dataset;
@@ -98,8 +106,13 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     const cost = scenario ? calculateScenarioCosts(scenario) : null;
     const other = workspace?.scenarios.find((entry) => entry.scenarioId === compareId) ?? null;
     const comparison = scenario && other && other.scenarioId !== scenario.scenarioId ? comparePlanningScenarios(scenario, other) : null;
-    const view: PlanningViewModel = { state, workspace, workspaces, scenario, cost, comparison: comparison?.ok ? comparison.value : null, compareId, recipes, message, dirty, busy, readOnly, persistent: repository?.isPersistent ?? false };
+    const view: PlanningViewModel = { state, workspace, workspaces, scenario, cost, comparison: comparison?.ok ? comparison.value : null, compareId, recipes, message, dirty, busy, readOnly, persistent: repository?.isPersistent ?? false, updatePreview };
     renderPlanningWorkspace(host, view);
+    const actions = host.querySelector<HTMLDetailsElement>(".planning-actions"); if (actions) actions.open = actionsOpen;
+    const advanced = host.querySelector<HTMLDetailsElement>(".planning-advanced"); if (advanced) advanced.open = advancedOpen;
+    host.querySelectorAll<HTMLDetailsElement>("details[data-detail]").forEach((entry) => { if (packageDetailsOpen.has(entry.dataset.detail)) entry.open = true; });
+    host.querySelectorAll<HTMLDetailsElement>(".planning-package-update").forEach((entry) => { if (updateDetailsOpen.has(entry.querySelector<HTMLElement>("[data-action='preview-package-update']")?.dataset.id)) entry.open = true; });
+    const nameDraft = host.querySelector<HTMLInputElement>("[data-field='new-project-name']"); if (nameDraft) nameDraft.value = newProjectName;
     host.querySelectorAll<HTMLInputElement>("[data-field]").forEach((input) => {
       const draft = invalidInputs.get(inputKey(input));
       if (draft !== undefined) { input.value = draft; input.setAttribute("aria-invalid", "true"); }
@@ -121,7 +134,7 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
   }
 
   function setWorkspace(next: PlanningWorkspace) {
-    workspace = next; dirty = true; message = "Unsaved changes"; render(); scheduleSave();
+    workspace = next; updatePreview = null; dirty = true; message = "Unsaved changes"; render(); scheduleSave();
   }
   function updateScenario(next: PlanningScenario) {
     if (!workspace) return;
@@ -166,7 +179,9 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     workspace = await repository.createWorkspace(result.value); savedRevision = workspace.revision; dirty = false;
     if (coordinator) readOnly = !(await coordinator.claim(workspace.workspaceId));
     workspaces = await repository.listWorkspaces(planningState);
-    await repository.setActiveWorkspaceId(planningState, workspace.workspaceId); render();
+    await repository.setActiveWorkspaceId(planningState, workspace.workspaceId);
+    createScenarioAction("Alternative A");
+    render();
   }
   async function switchWorkspace(workspaceId: string) {
     if (!repository || !(await flushDraft())) return;
@@ -183,8 +198,9 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     const active = setActivePlanningScenario(added.value, result.value.scenarioId, now());
     if (active.ok) setWorkspace(active.value);
   }
-  function addPackage(kind: PackageKind) {
+  function addPackage(kind: PackageKind, requestedLength?: number | null) {
     const scenario = selected(); if (!scenario) return;
+    const lengthText = host?.querySelector<HTMLInputElement>("[data-field='planner-length']")?.value ?? "";
     if (kind === "sidewalk" && scenario.packages.some((entry) => entry.definition.kind === "sidewalk")) {
       message = "This scenario already has a sidewalk package. Edit its sides and width to change the scope."; render(); return;
     }
@@ -202,6 +218,11 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     const instance = createPackageInstance({ instanceId: id(), segmentId, scopeId: kind === "sidewalk" ? `sidewalk-${id()}` : `base-${id()}`, definition });
     if (!instance.ok) { message = issueMessage(instance.issues); render(); return; }
     edit({ kind: "add_package", instance: instance.value });
+    const baseLength = selected()?.packages.find((entry) => entry.definition.kind !== "sidewalk");
+    const startingLength = kind === "sidewalk" ? baseLength?.parameterOverrides.lengthMiles?.value ?? baseLength?.definition.parameters.find((parameter) => parameter.key === "lengthMiles")?.defaultValue : requestedLength ?? numeric(lengthText);
+    if (typeof startingLength === "number" && Number.isFinite(startingLength) && startingLength > 0 && startingLength !== 0.5) {
+      edit({ kind: "parameter", instanceId: instance.value.instanceId, key: "lengthMiles", override: { value: startingLength, reason: "Planner project length" } });
+    }
     // Freeze exact current evidence; failures stay visibly unpriced.
     for (const component of definition.components) {
       if (!component.binding) continue;
@@ -209,22 +230,64 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
       const rate = planningState === "NE" ? resolveNebraskaAnnualRate(data, request) : buildColoradoContractRateSnapshot(data, request);
       if (rate.ok) edit({ kind: "reprice", instanceId: instance.value.instanceId, role: component.role, snapshot: rate.value });
     }
+    for (const component of definition.components) {
+      const provisional = pilotManualRate(planningState, kind, component.role);
+      if (provisional && provisional.unit === component.quantityRule.unit && provisional.packageVersion === definition.version) {
+        edit({ kind: "rate", instanceId: instance.value.instanceId, role: component.role, override: { value: provisional.rate, reason: pilotManualReason(provisional) } });
+      }
+    }
   }
   function duplicate() {
     const scenario = selected(); if (!workspace || !scenario) return;
     const map = (values: string[]) => Object.fromEntries(values.map((value) => [value, id()]));
     const ids: DuplicateScenarioIds = { scenarioId: id(), segmentIds: map(scenario.segments.map((x) => x.segmentId)), instanceIds: map(scenario.packages.map((x) => x.instanceId)), customComponentIds: map(scenario.customComponents.map((x) => x.componentId)), allowanceIds: map(scenario.allowances.map((x) => x.allowanceId)) };
-    const copy = duplicatePlanningScenario(scenario, ids, `${scenario.name} copy`, now());
+    const suffix = String.fromCharCode(65 + Math.min(workspace.scenarios.length, 25));
+    const copy = duplicatePlanningScenario(scenario, ids, `Alternative ${suffix}`, now());
     if (!copy.ok) { message = issueMessage(copy.issues); render(); return; }
     const added = addPlanningScenario(workspace, copy.value, now());
     if (!added.ok) { message = issueMessage(added.issues); render(); return; }
     const active = setActivePlanningScenario(added.value, copy.value.scenarioId, now()); if (active.ok) setWorkspace(active.value);
   }
 
+  function proposedPackageUpdate(scenario: PlanningScenario, instanceId: string): PlanningScenario | null {
+    const previous = scenario.packages.find((entry) => entry.instanceId === instanceId);
+    if (!previous) return null;
+    const definition = recipes.find((entry) => entry.kind === previous.definition.kind);
+    if (!definition || definition.version === previous.definition.version) return null;
+    const created = createPackageInstance({ instanceId, segmentId: previous.segmentId, scopeId: previous.scopeId, definition });
+    if (!created.ok) return null;
+    const nextInstance: PackageInstance = created.value;
+    const keys = new Set(definition.parameters.map((entry) => entry.key));
+    for (const [key, override] of Object.entries(previous.parameterOverrides)) if (keys.has(key)) nextInstance.parameterOverrides[key] = override;
+    for (const component of definition.components) {
+      const old = previous.definition.components.find((entry) => entry.role === component.role);
+      if (old?.quantityRule.unit === component.quantityRule.unit) {
+        if (previous.quantityOverrides[component.role]) nextInstance.quantityOverrides[component.role] = previous.quantityOverrides[component.role];
+        if (previous.rateOverrides[component.role]) nextInstance.rateOverrides[component.role] = previous.rateOverrides[component.role];
+      }
+      if (previous.exclusions[component.role]) nextInstance.exclusions[component.role] = previous.exclusions[component.role];
+      const oldSnapshot = previous.rateSnapshots[component.role];
+      if (component.binding && oldSnapshot?.agencyItemId === component.binding.agencyItemId && oldSnapshot.unit === component.binding.unit) {
+        nextInstance.rateSnapshots[component.role] = oldSnapshot;
+      } else if (component.binding) {
+        const request = { agencyItemId: component.binding.agencyItemId, unit: component.binding.unit, capturedAt: now() };
+        const result = planningState === "NE" ? resolveNebraskaAnnualRate(data, request) : buildColoradoContractRateSnapshot(data, request);
+        if (result.ok) nextInstance.rateSnapshots[component.role] = result.value;
+      }
+      const manual = pilotManualRate(planningState, definition.kind, component.role);
+      if (!nextInstance.rateOverrides[component.role] && manual?.packageVersion === definition.version && manual.unit === component.quantityRule.unit) {
+        nextInstance.rateOverrides[component.role] = { value: manual.rate, reason: pilotManualReason(manual) };
+      }
+    }
+    const next: PlanningScenario = JSON.parse(JSON.stringify(scenario));
+    next.packages[next.packages.findIndex((entry) => entry.instanceId === instanceId)] = nextInstance;
+    return next;
+  }
+
   function onChange(event: Event) {
     const target = event.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
     const field = target.dataset.field; if (!field) return;
-    const numericFields = new Set(["parameter", "quantity", "rate", "allowance-percent", "external-amount", "custom-quantity", "custom-unitRate"]);
+    const numericFields = new Set(["parameter", "quantity", "rate", "allowance-percent", "external-amount", "custom-quantity", "custom-unitRate", "planner-length", "planner-width", "sidewalk-width", "sidewalk-sides", "ramp-count"]);
     if (numericFields.has(field)) {
       const key = inputKey(target);
       if (target.value.trim() !== "" && !Number.isFinite(Number(target.value))) {
@@ -245,6 +308,33 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     if (field === "scenario-select") { if (workspace) { const result = setActivePlanningScenario(workspace, target.value, now()); if (result.ok) setWorkspace(result.value); } return; }
     if (field === "compare-select") { compareId = target.value; render(); return; }
     if (!scenario) return;
+    if (field === "base-kind") {
+      const kind = target.value as PackageKind;
+      if (!recipes.some((entry) => entry.kind === kind && kind !== "sidewalk")) return;
+      const current = scenario.packages.find((entry) => entry.definition.kind !== "sidewalk");
+      if (current?.definition.kind === kind) return;
+      const currentLength = current?.parameterOverrides.lengthMiles?.value ?? current?.definition.parameters.find((entry) => entry.key === "lengthMiles")?.defaultValue;
+      if (current) edit({ kind: "remove_package", instanceId: current.instanceId, reason: "Planner changed improvement type" });
+      addPackage(kind, currentLength);
+      return;
+    }
+    if (field === "sidewalk-enabled") {
+      const current = scenario.packages.find((entry) => entry.definition.kind === "sidewalk");
+      if ((target as HTMLInputElement).checked && !current) addPackage("sidewalk");
+      if (!(target as HTMLInputElement).checked && current) edit({ kind: "remove_package", instanceId: current.instanceId, reason: "Planner removed sidewalk" });
+      return;
+    }
+    if (["planner-length", "planner-width", "sidewalk-width", "sidewalk-sides", "ramp-count"].includes(field)) {
+      const value = numeric(target.value);
+      if (field === "planner-length") {
+        for (const instance of scenario.packages) edit({ kind: "parameter", instanceId: instance.instanceId, key: "lengthMiles", override: { value, reason: "Planner project length" } });
+      } else {
+        const instance = scenario.packages.find((entry) => field === "planner-width" ? entry.definition.kind !== "sidewalk" : entry.definition.kind === "sidewalk");
+        const key = field === "sidewalk-sides" ? "sides" : field === "ramp-count" ? "rampCount" : "widthFt";
+        if (instance) edit({ kind: "parameter", instanceId: instance.instanceId, key, override: { value, reason: `Planner ${field.replace(/-/g, " ")}` } });
+      }
+      return;
+    }
     if (field === "name" || field === "location" || field === "notes") { edit({ kind: "metadata", [field]: target.value }); return; }
     if (field === "parameter" || field === "quantity" || field === "rate") {
       const key = target.dataset.key ?? "";
@@ -280,8 +370,8 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     if (field === "external-decision" || field === "external-amount") {
       const existing = scenario.externalScopes.find((entry) => entry.scopeId === target.dataset.id); if (!existing) return;
       const decision = field === "external-decision" ? target.value as typeof existing.decision : existing.decision;
-      const reasonInput = target.closest(".planning-external")?.querySelector<HTMLInputElement>("[data-field='external-reason']");
-      edit({ kind: "external_scope", scope: { ...existing, decision, amount: field === "external-amount" ? numeric(target.value) : decision === "manual" ? existing.amount : null, reason: decision === "unassessed" ? "" : reasonInput?.value || reason } }); return;
+      const reasonInput = [...(host?.querySelectorAll<HTMLInputElement>("[data-field='external-reason']") ?? [])].find((entry) => entry.dataset.id === existing.scopeId);
+      edit({ kind: "external_scope", scope: { ...existing, decision, amount: field === "external-amount" ? numeric(target.value) : decision === "manual" ? existing.amount : null, reason: decision === "unassessed" ? "" : reasonInput?.value || existing.reason || reason } }); return;
     }
     if (field === "external-reason") { const existing = scenario.externalScopes.find((entry) => entry.scopeId === target.dataset.id); if (existing && existing.decision !== "unassessed") edit({ kind: "external_scope", scope: { ...existing, reason: target.value } }); return; }
     if (field.startsWith("custom-")) {
@@ -295,13 +385,36 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
   async function onClick(event: Event) {
     const target = (event.target as Element).closest<HTMLElement>("[data-action]"); if (!target) return;
     const action = target.dataset.action;
-    if (action === "create-workspace") { const name = prompt("Workspace name"); if (name) await queue(() => createWorkspaceAction(name)); }
-    if (action === "create-scenario") { const name = prompt("Scenario name"); if (name) createScenarioAction(name); }
+    if (action === "create-workspace") {
+      const name = host?.querySelector<HTMLInputElement>("[data-field='new-project-name']")?.value.trim() ?? "";
+      if (name) await queue(() => createWorkspaceAction(name));
+      else { message = "Enter a planning project name."; render(); }
+    }
+    if (action === "create-scenario") createScenarioAction(`Alternative ${String.fromCharCode(65 + Math.min(workspace?.scenarios.length ?? 0, 25))}`);
     if (action === "add-package") addPackage(target.dataset.kind as PackageKind);
     if (action === "duplicate") duplicate();
+    if (action === "preview-package-update") {
+      const scenario = selected(); const instanceId = target.dataset.id ?? "";
+      const proposal = scenario ? proposedPackageUpdate(scenario, instanceId) : null;
+      if (scenario && proposal) {
+        const before = buildPlannerEstimate(scenario, calculateScenarioCosts(scenario));
+        const after = buildPlannerEstimate(proposal, calculateScenarioCosts(proposal));
+        updatePreview = { instanceId, beforeAmount: before.amount, afterAmount: after.amount, beforeLabel: before.amountLabel, afterLabel: after.amountLabel };
+        render();
+      }
+    }
+    if (action === "adopt-package-update") {
+      const scenario = selected(); const instanceId = target.dataset.id ?? "";
+      if (scenario && updatePreview?.instanceId === instanceId) {
+        const proposal = proposedPackageUpdate(scenario, instanceId);
+        if (proposal) updateScenario(proposal);
+      }
+    }
     if (action === "save") await flushDraft();
     if (action === "take-over" && workspace && coordinator) { coordinator.takeOver(workspace.workspaceId); readOnly = false; message = "Editing ownership taken in this tab."; render(); }
     if (action === "export-json" && workspace) {
+      if (pendingInput && host?.contains(pendingInput)) { const input = pendingInput; pendingInput = null; onChange({ target: input } as unknown as Event); }
+      if (invalidInputs.size) { message = "Correct invalid numeric inputs before exporting a recovery copy."; render(); return; }
       const exported = workspace;
       file(`${exported.name}.rce-planning.json`, JSON.stringify(buildPlanningBackup(exported, now()), null, 2), "application/json");
       if (!dirty && repository) {
@@ -314,7 +427,7 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     if (action === "add-custom") {
       const scenario = selected(); if (!scenario) return;
       const segmentId = scenario.segments[0]?.segmentId; if (!segmentId) { message = "Add a package before custom scope."; render(); return; }
-      const component: CustomComponent = { componentId: id(), segmentId, scopeId: `custom-${id()}`, role: `custom_${id().slice(0, 8)}`, description: "Custom work", category: "construction", unit: "LS", quantity: null, unitRate: null, reason: "Planner-added scope", required: true, tags: [], exclusion: null };
+      const component: CustomComponent = { componentId: id(), segmentId, scopeId: `custom-${id()}`, role: `custom_${id().slice(0, 8)}`, description: "Other work to include", category: "construction", unit: "LS", quantity: 1, unitRate: null, reason: "Planner-added scope for engineer review", required: true, tags: [], exclusion: null };
       edit({ kind: "set_custom", component });
     }
     if (action === "remove-custom") { const componentId = target.dataset.id; if (componentId) edit({ kind: "remove_custom", componentId, reason: "Removed by planner" }); }

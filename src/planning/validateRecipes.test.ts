@@ -131,6 +131,13 @@ describe("planning recipe and scenario structural validation", () => {
     expect(codes).toContain("unit_mismatch");
   });
 
+  it("accepts surface application rules with a gallon output and GAL/SY rate", () => {
+    const definition = structuredClone(COLORADO_PILOT_PACKAGES.find((entry) => entry.kind === "path")!);
+    definition.parameters.push({ key: "tackRate", label: "Tack rate", unit: "GAL/SY", defaultValue: 0.1, optional: false, min: 0, assumption: { id: "tack", description: "Synthetic tack rate", origin: "pilot_assumption" } });
+    definition.components[0].quantityRule = { kind: "surface_application", length: "lengthMiles", width: "widthFt", applicationRate: "tackRate", unit: "GAL" };
+    expect(validatePackageDefinition(definition).filter((entry) => entry.path.includes("quantityRule"))).toEqual([]);
+  });
+
   it("detects cycles spanning named references and implicit construction subtotals", () => {
     const construction = allowance("direct-fee", { kind: "references", componentIds: [], allowanceIds: ["service-fee"] });
     const service = { ...allowance("service-fee", { kind: "construction_subtotal" }), category: "service" as const };

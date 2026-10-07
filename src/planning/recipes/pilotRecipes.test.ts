@@ -20,32 +20,47 @@ describe("Nebraska and Colorado pilot recipes", () => {
     expect(COLORADO_PILOT_PACKAGES.flatMap((entry) => entry.components).filter((entry) => entry.binding).every((entry) => entry.binding?.state === "CO")).toBe(true);
   });
 
-  it("keeps sidewalk scope to surface area and a visible required one-LS manual allowance", () => {
+  it("keeps sidewalk scope to surface area and a visible counted ramp allowance", () => {
     for (const definition of [...NEBRASKA_PILOT_PACKAGES, ...COLORADO_PILOT_PACKAGES].filter((entry) => entry.kind === "sidewalk")) {
       expect(definition.components.map((entry) => entry.role)).toEqual(["pavement", "ramps_crossings"]);
       const ramps = definition.components.find((entry) => entry.role === "ramps_crossings")!;
       expect(ramps.required).toBe(true);
       expect(ramps.binding).toBeNull();
-      expect(ramps.quantityRule).toEqual({ kind: "fixed", value: 1, unit: "LS" });
+      expect(ramps.quantityRule).toEqual({ kind: "count", count: "rampCount", unit: "EACH" });
+      const rampCount = definition.parameters.find((entry) => entry.key === "rampCount")!;
+      expect(rampCount.defaultValue).toBe(4);
+      expect(rampCount.integer).toBe(true);
+      expect(rampCount.unit).toBe("count");
       expect(definition.components.some((entry) => entry.role === "base" || entry.role === "excavation")).toBe(false);
     }
   });
 
-  it("keeps removal area and tack as required fixed-one manual scope", () => {
+  it("keeps exact reconstruction removals and state-specific resurfacing tack", () => {
     for (const definition of [...NEBRASKA_PILOT_PACKAGES, ...COLORADO_PILOT_PACKAGES]) {
       if (definition.kind === "resurfacing") {
         const tack = definition.components.find((entry) => entry.role === "tack")!;
         expect(tack.required).toBe(true);
-        expect(tack.binding).toBeNull();
-        expect(tack.quantityRule).toEqual({ kind: "fixed", value: 1, unit: "LS" });
+        if (definition.state === "NE") {
+          expect(tack.binding?.agencyItemId).toBe("ne_ndot_9053.00");
+          expect(tack.binding?.unit).toBe("GAL");
+          expect(tack.quantityRule).toEqual({ kind: "surface_application", length: "lengthMiles", width: "widthFt", applicationRate: "tackRateGalSy", unit: "GAL" });
+        } else {
+          expect(tack.binding).toBeNull();
+          expect(tack.quantityRule).toEqual({ kind: "area", length: "lengthMiles", width: "widthFt", unit: "SY" });
+        }
       }
       if (definition.kind === "reconstruction") {
         const removal = definition.components.find((entry) => entry.role === "removal")!;
         expect(removal.required).toBe(true);
-        expect(removal.binding).toBeNull();
+        expect(removal.binding?.agencyItemId).toBe(definition.state === "NE" ? "ne_ndot_1101.00" : "co_cdot_202-00210");
         expect(removal.quantityRule).toEqual({ kind: "area", length: "lengthMiles", width: "widthFt", unit: "SY" });
       }
     }
+  });
+
+  it("keeps the path package on pilot-1", () => {
+    expect(NEBRASKA_PILOT_PACKAGES.find((entry) => entry.kind === "path")?.version).toBe("pilot-1");
+    expect(COLORADO_PILOT_PACKAGES.find((entry) => entry.kind === "path")?.version).toBe("pilot-1");
   });
 
   it("uses the frozen CO cubic-yard base quantity and exposes the milling depth assumption", () => {

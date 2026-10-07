@@ -44,12 +44,17 @@ describe("Planning controller workspace transitions", () => {
   });
 
   it("creates a workspace after the create action", async () => {
-    vi.spyOn(window, "prompt").mockReturnValue("New pilot");
     const host = document.createElement("div");
     const controller = createPlanningController(data, repository([]));
     await controller.mount(host);
+    host.querySelector<HTMLInputElement>("[data-field='new-project-name']")!.value = "New pilot";
     host.querySelector<HTMLButtonElement>("[data-action='create-workspace']")!.click();
     await vi.waitFor(() => expect(host.querySelector("[data-field='workspace-select']")?.textContent).toContain("New pilot"));
+    await vi.waitFor(() => expect(host.querySelector<HTMLSelectElement>("[data-field='scenario-select']")?.textContent).toContain("Alternative A"));
+    expect(host.querySelector(".planning-advanced")?.hasAttribute("open")).toBe(false);
+    expect(host.querySelector("[data-field='base-kind']")).not.toBeNull();
+    expect(host.querySelector(".planning-estimate")?.textContent).toContain("Choose an improvement");
+    expect(host.textContent).not.toContain("Range not calibrated");
     controller.close();
   });
 
@@ -70,6 +75,30 @@ describe("Planning controller workspace transitions", () => {
     expect(percent.getAttribute("aria-invalid")).toBe("true");
     expect(await controller.flush()).toBe(false);
     expect(host.querySelector<HTMLInputElement>("[data-field='allowance-percent']")?.value).toBe("abc");
+    controller.close();
+  });
+
+  it("preserves a known property-impact reason when its amount changes", async () => {
+    const created = createPlanningScenario({ scenarioId: "estimate", state: "NE", name: "Estimate", now: timestamp });
+    if (!created.ok) throw Error("Fixture failed");
+    const added = addPlanningScenario(workspace("property"), created.value, timestamp);
+    if (!added.ok) throw Error("Fixture failed");
+    const active = setActivePlanningScenario(added.value, "estimate", timestamp);
+    if (!active.ok) throw Error("Fixture failed");
+    const store = repository([active.value]);
+    const host = document.createElement("div");
+    const controller = createPlanningController(data, store);
+    await controller.mount(host);
+    const decision = host.querySelector<HTMLSelectElement>("[data-field='external-decision'][data-id='right_of_way']")!;
+    decision.value = "manual";
+    decision.dispatchEvent(new Event("change", { bubbles: true }));
+    const reasonInput = host.querySelector<HTMLInputElement>("[data-field='external-reason'][data-id='right_of_way']")!;
+    reasonInput.value = "Concept parcel sketch";
+    reasonInput.dispatchEvent(new Event("change", { bubbles: true }));
+    const amount = host.querySelector<HTMLInputElement>("[data-field='external-amount'][data-id='right_of_way']")!;
+    amount.value = "12000";
+    amount.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(host.querySelector<HTMLInputElement>("[data-field='external-reason'][data-id='right_of_way']")?.value).toBe("Concept parcel sketch");
     controller.close();
   });
 });
