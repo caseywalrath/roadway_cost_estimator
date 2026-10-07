@@ -205,6 +205,8 @@ Phase 2 also adds versioned Planning JSON recovery and a deterministic cost-revi
 
 The Phase 3 planner-first revision retains that database and the embedded scenario contract. The UI calls a workspace a Planning project and a scenario an Alternative; creating a project creates Alternative A. Pilot-2 recipes add measured Nebraska tack-coat gallons, exact pavement-removal bindings in both states, and a counted curb-ramp proxy for optional sidewalk. Colorado tack and the two ramp assemblies use explicit provisional manual rates. Each new alternative freezes its recipe, exact rate snapshots and manual-rate reasons. Saved pilot-1 alternatives remain unchanged until a user previews and adopts the newer recipe. A pure presentation adapter shows priced included scope and plain-language review decisions while detailed controls remain under engineer review. Unknown property or major utility impacts still prevent a complete total, and comparisons require matching coverage.
 
+The proposed next revision is specified in [docs/planning-engineer-review-handoff-plan.md](docs/planning-engineer-review-handoff-plan.md). It assigns package/scope review to Planning and detailed item estimating to a new, one-way Project draft. The proposal supersedes Phase 5's complete-only transfer gate: valid incomplete alternatives may transfer only after Project gains explicit unresolved-work state and a priced-subtotal label. No handoff or Project draft-state code is implemented yet.
+
 - South Dakota regional letting archives.
 - Cross-state item comparison.
 - Automatic canonical equivalence.

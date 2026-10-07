@@ -1,6 +1,6 @@
 # Planning Module Implementation Plan
 
-Status: Phases 0–2 complete; Phase 3 implemented locally, with planner-first revision planned in `docs/planning-phase3-revision-plan.md` before Phase 4.
+Status: Phases 0–2 complete; Phase 3 and its planner-first revision implemented locally. The proposed engineer-review and Project draft revision is in `docs/planning-engineer-review-handoff-plan.md`.
 Prepared: 2026-10-06.
 Repository baseline inspected: `5ef3d9c` on current `origin/main`.
 Execution model: primarily Luna; Sol owns architecture, UI, persistence correctness, Project compatibility, ambiguous engineering mappings, and final integration/review.
@@ -347,12 +347,14 @@ Exit/M2: feedback is traceable to revised recipes; outdated reviews cannot appea
 
 ### Phase 5 — One-way Project snapshot handoff
 
+The later product-owner direction in [planning-engineer-review-handoff-plan.md](planning-engineer-review-handoff-plan.md) revises this phase. The next implementation should create an independent **Project draft** from a valid Planning alternative, including named unresolved work, and must add Project completeness labeling so a partial sum cannot appear as a complete total. Retain the exact-identity, frozen-provenance, contingency, and retry-safe persistence requirements unless the new plan explicitly changes them.
+
 **Lead: Sol. Luna may prepare legacy fixtures and run isolated compatibility checks.**
 
 Tasks:
 
-- Add `Create Project snapshot` for an explicitly named new Project in the scenario's state. No overwrite, append-to-existing or live synchronization in this release.
-- Require resolved pricing/completeness before creation. Explicit exclusions and None assumed declarations remain in the handoff. An incomplete scenario can still be saved/exported for review.
+- Add `Create Project from alternative` for an explicitly named new Project in the scenario's state. No overwrite, append-to-existing or live synchronization in this release.
+- Require a structurally valid alternative before creation. Valid incomplete alternatives may transfer as Project drafts only with explicit unresolved-work state and priced-subtotal labeling; explicit exclusions and None assumed declarations remain in the handoff.
 - Transfer catalog lines with their exact identities; use custom lines for percentage/fixed/manual components without fabricated catalog identities. Retain package, quantity, price and override provenance in a typed Planning-origin snapshot.
 - Preserve totals without changing existing Project contingency semantics: set native Project contingency to 0; transfer frozen Planning contingency as a clearly named custom Other Costs allowance; transfer construction allowances as Construction Costs and services/ROW/external costs as Other Costs. Explain that Other Costs includes the frozen planning contingency and it is no longer dynamically linked to Project edits.
 - Display a concise Planning-origin summary in Project identifying frozen contingency and one-way transfer. If the engineer later sets native contingency, expose that the frozen allowance is still present so it can be deliberately removed or retained.
@@ -362,7 +364,7 @@ Tasks:
 - Enable this transfer only when both repositories report persistent storage. In memory-only mode retain Planning review/export and explain that Project snapshot transfer requires working local storage. Do not promise crash recovery for memory-only data.
 - Changing Project lines does not reprice Planning or imply its review covers the edited Project. Regeneration creates a new snapshot rather than replacing engineer edits.
 
-Exit/M3: handoff and Project totals reconcile within one cent, with no doubled contingency or omitted components; existing Project backups still restore; Planning provenance survives backups/copies; a failed or retried transfer cannot damage existing work or silently duplicate a Project.
+Exit/M3: complete handoffs and Project totals reconcile within one cent; draft handoffs reconcile the priced subtotal and retain named unresolved work without a complete-total label. There is no doubled contingency or omitted component; existing Project backups still restore; Planning provenance survives backups/copies; a failed or retried transfer cannot damage existing work or silently duplicate a Project.
 
 ### Phase 6 — Release-candidate verification and documentation
 
@@ -403,7 +405,7 @@ Use meaningful reference cases rather than tests that reproduce the implementati
 | Ownership/state | Another tab cannot silently overwrite; state switch flushes or stays with a visible failure |
 | Recovery | JSON restores independent scenario IDs/references, assumptions, frozen rate basis and totals; malformed records fail as whole records |
 | Review invalidation | Scope, quantities, rates or allowance changes make a recorded review stale |
-| Project handoff | Complete scenario reconciles; native contingency is zero; frozen allowance and provenance are explicit; retries do not duplicate |
+| Project handoff | Complete scenario reconciles; valid incomplete scenario creates a draft with a priced subtotal and named unresolved work; native contingency is zero; frozen allowance and provenance are explicit; retries do not duplicate |
 | Interrupted handoff | Crash after intent-save, after Project creation, or during final Planning link-save is recoverable after reload; simultaneous same-intent attempts create one Project; memory-only mode disables transfer |
 | Existing features | Explorer, Nebraska annual history, Project editing/recovery and Excel import preserve current behavior |
 
