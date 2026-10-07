@@ -1,6 +1,6 @@
 # Planning Module Implementation Plan
 
-Status: Phases 0 and 1 complete; later phases remain pending.
+Status: Phases 0–2 complete; Phase 3 implemented locally, with planner-first revision planned in `docs/planning-phase3-revision-plan.md` before Phase 4.
 Prepared: 2026-10-06.
 Repository baseline inspected: `5ef3d9c` on current `origin/main`.
 Execution model: primarily Luna; Sol owns architecture, UI, persistence correctness, Project compatibility, ambiguous engineering mappings, and final integration/review.
