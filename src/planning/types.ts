@@ -143,6 +143,9 @@ export interface ContractRateSnapshot {
   requestedTo: string;
   datasetAnchor: string;
   sourceTypes: string[];
+  /** Explicit source filter requested by the user; empty means all cost-book sources. */
+  requestedSourceIds: string[];
+  /** Source IDs that actually contributed lines to the median. */
   sourceIds: string[];
   districts: string[];
   actualFrom: string;

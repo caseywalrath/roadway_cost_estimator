@@ -9,7 +9,7 @@ Execution model: primarily Luna; Sol owns architecture, UI, persistence correctn
 
 Build a working Planning module first, with plausible provisional packages that engineers can use, inspect, and revise. Do not require a completed calibration study or engineer approval of every default before building the pilot.
 
-The user approved the proposed Planning UI and planner workflow and requested this phased plan. On 2026-10-06 the user authorized Phase 0 as needed and Phase 1 implementation for both pilot states. This document defines implementation defaults for that request; later phases and deployment remain separate work. During an implementation session, execute the specified scope without repeatedly asking the user to approve routine reversible choices.
+The user approved the proposed Planning UI and planner workflow and requested this phased plan. On 2026-10-06 the user authorized Phase 0 as needed and Phase 1 for both pilot states; on 2026-10-07 the user authorized Phase 2. This document defines implementation defaults for those requests; later phases and deployment remain separate work. During an implementation session, execute the specified scope without repeatedly asking the user to approve routine reversible choices.
 
 The first usable pilot must let a planner select a project type, enter basic geometry, add common elements, obtain a traceable estimate for the priced scope, duplicate a scenario, edit assumptions, save locally, and export a reviewable backup. Engineers must be able to identify and change the assumptions responsible for a result.
 
@@ -446,7 +446,7 @@ Update this table during implementation; keep failures and remaining limitations
 | --- | --- | --- | --- | --- |
 | 0: Contract | Complete | Sol; primary binding verification | `src/planning/types.ts`, `contract.md`, independent reference fixtures; TypeScript passed | Provisional engineering assumptions; removal/tack manual or unpriced |
 | 1: Core | Complete | Luna implementation; Sol review; primary integration | Units/quantities, both recipe libraries, validation, cost engine, workspace/comparison; TypeScript and 63 tests passed | Provisional assumptions; real rate adapters, storage and UI remain later phases |
-| 2: Rates/recovery | Pending | Luna; Sol review | — | — |
+| 2: Rates/recovery | Complete | Luna implementation; Sol read-only review; primary integration | NE annual and CO contract adapters, versioned JSON recovery, deterministic CSV review; TypeScript and 84 Planning tests passed | No browser persistence/UI yet; rates and recipes remain provisional pending engineer trial |
 | 3: Working pilot | Pending | Sol UI/storage; Luna tests | — | Engineer trial begins after this phase |
 | 4: Revision/controls | Pending | Luna logic; Sol UI/mappings | — | Feedback and calibration remain iterative |
 | 5: Project handoff | Pending | Sol; Luna fixtures | — | Compatibility and frozen-contingency semantics |
@@ -460,6 +460,13 @@ Update this table during implementation; keep failures and remaining limitations
 - Sol's final review identified contingency category double-counting and overwritten substitution reasons. Both were corrected and tested. Original allowance-basis references also remap on duplication and normalize for comparisons.
 - Portable Node TypeScript checking passed. `vitest run src/planning` passed 63 tests across 8 files. No evidence, manifest, Project schema, app-shell or UI changes occurred; no build/browser/data validation was required for the isolated core.
 - This is a tested calculation foundation, not the engineer-usable M1 interface. Source rate selection/recovery starts in Phase 2; persistence and Planning UI start in Phase 3. No merge or deployment performed.
+
+### Phase 2 verification record — 2026-10-07
+
+- Nebraska's adapter selects one exact item and unit from the latest loaded calendar report by default, or an explicit report series/window. Missing items do not silently fall back to an older report. The snapshot retains the raw published unit, source row, report dates, URL/locator and complete-window NHCCI result; unavailable adjustment leaves the raw rate visible.
+- Colorado's adapter uses exact cost-book awarded evidence, a dataset-wide latest valid date, a concrete three-year inclusive window and optional source/district/date filters. It resolves reconstructed contract-item identities, excludes unresolved cross-source collisions, computes contract medians before the overall median, and records all contributing lines and excluded observations. Adjusted mode requires every selected line's NHCCI quarter. The provisional bikeway proxy has three independent contracts in the current default window and is labeled limited evidence.
+- Planning recovery uses a separate versioned JSON format. Validation retains invalid numeric drafts while rejecting malformed structure, references and frozen rate provenance. Import requires a unique caller-provided ID seed, remaps all scenario/entity references, clears active review and transfer state, and recalculates from frozen inputs. The CSV review builder has a fixed column order and includes inputs, defaults, source snapshots, overrides, exclusions, allowances, review state and nullable costs.
+- Sol reviewed evidence identity, dates, cross-source overlaps, recovery ID collisions and draft preservation. The primary corrected the identified gaps and checked the current Colorado cost-book join: 37,214 awarded observations map to matching contract items; no repeated nonblank official contract IDs were found across the 458 cost-book contracts. Portable TypeScript checking, 84 focused Planning tests across 12 files, and 5 existing data-loading/inflation tests passed. No production evidence, manifest, UI or Project changes were made, so data validation and browser checks were not needed. Phase 3 still owns storage and the working Planning interface.
 
 ## 12. Start prompt for an implementation session
 

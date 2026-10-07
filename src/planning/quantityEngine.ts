@@ -162,7 +162,11 @@ function validSnapshot(snapshot: RateSnapshot, binding: ItemBinding, state: Plan
   if (!finiteNonnegative(snapshot.rate) || snapshot.rate <= 0 || !finiteNonnegative(snapshot.rawRate) || snapshot.rawRate <= 0) issues.push(issue("missing_rate", path, "Automatic frozen rates must be positive finite values."));
   if (!nonblank(snapshot.policyVersion) || !nonblank(snapshot.capturedAt)) issues.push(issue("invalid_snapshot", path, "Rate snapshot is missing policy or capture provenance."));
   if (!(["none", "annual_window_nhcci", "observation_quarter_nhcci"] as string[]).includes(snapshot.inflation.method) || !(["available", "unavailable"] as string[]).includes(snapshot.inflation.availability)) issues.push(issue("invalid_snapshot", path, "Rate snapshot has an unsupported inflation method or availability."));
-  if (snapshot.inflation.availability === "available" && (!finiteNonnegative(snapshot.inflation.factor) || snapshot.inflation.factor === 0)) issues.push(issue("invalid_snapshot", path, "Available inflation adjustment requires a positive finite factor."));
+  if (snapshot.inflation.availability === "available" && snapshot.inflation.method === "observation_quarter_nhcci") {
+    if (snapshot.inflation.factor !== null) issues.push(issue("invalid_snapshot", path, "Colorado adjustment factors belong to individual evidence lines."));
+  } else if (snapshot.inflation.availability === "available" && (!finiteNonnegative(snapshot.inflation.factor) || snapshot.inflation.factor === 0)) {
+    issues.push(issue("invalid_snapshot", path, "Available annual inflation adjustment requires a positive finite factor."));
+  }
   if (snapshot.inflation.availability === "unavailable" && !nonblank(snapshot.inflation.reason)) issues.push(issue("invalid_snapshot", path, "Unavailable inflation adjustment requires a reason."));
   if (snapshot.inflation.targetPeriod !== null && !nonblank(snapshot.inflation.targetPeriod)) issues.push(issue("invalid_snapshot", path, "Inflation target period must be nonblank when supplied."));
   if (snapshot.kind === "ne_annual") {
@@ -176,7 +180,7 @@ function validSnapshot(snapshot: RateSnapshot, binding: ItemBinding, state: Plan
       nonblank(line.observationId) && nonblank(line.contractItemId) && nonblank(line.sourceId) && nonblank(line.date) &&
       finiteNonnegative(line.quantity) && line.quantity > 0 && normalizeUnitCompatible(line.unit, binding.unit) &&
       finiteNonnegative(line.rawRate) && line.rawRate > 0 && finiteNonnegative(line.rate) && line.rate > 0 && nonblank(line.sourceLocator);
-    if (state !== "CO" || !["none", "observation_quarter_nhcci"].includes(contract.inflation.method) || !nonblank(contract.datasetAnchor) || !contract.contracts.length || !contract.sourceIds.length || !contract.requestedFrom || !contract.requestedTo || !nonblank(contract.actualFrom) || !nonblank(contract.actualTo) || !contract.sourceTypes.length || !Array.isArray(contract.districts) || contract.contracts.some((row) => !nonblank(row.contractId) || !finiteNonnegative(row.medianRate) || row.medianRate <= 0 || !row.lines.length || row.lines.some((line) => !validLine(line)))) {
+    if (state !== "CO" || !["none", "observation_quarter_nhcci"].includes(contract.inflation.method) || !nonblank(contract.datasetAnchor) || !contract.contracts.length || !contract.sourceIds.length || !Array.isArray(contract.requestedSourceIds) || contract.requestedSourceIds.some((id) => !nonblank(id)) || !contract.requestedFrom || !contract.requestedTo || !nonblank(contract.actualFrom) || !nonblank(contract.actualTo) || !contract.sourceTypes.length || !Array.isArray(contract.districts) || contract.contracts.some((row) => !nonblank(row.contractId) || !finiteNonnegative(row.medianRate) || row.medianRate <= 0 || !row.lines.length || row.lines.some((line) => !validLine(line) || (contract.inflation.method === "observation_quarter_nhcci" && (!finiteNonnegative(line.inflationFactor) || line.inflationFactor === 0))))) {
       issues.push(issue("invalid_snapshot", path, "Colorado contract snapshot has invalid state or incomplete evidence provenance."));
     }
   } else {
