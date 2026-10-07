@@ -260,6 +260,14 @@ Acceptance checks using the supplied private workbooks and the production parser
 - `132nd and Giles - Cost Estimate.xlsx`, `Concept 1A!B13:F95`: 83 physical rows, 26 item rows, 5 repeated-header rows, 33 ambiguous rows, and 19 blank rows; the six visible Concept sheets and five hidden/support sheets were not combined.
 - `Ida Street _30Cost_Estimate.xlsx`, `Ida Street Imp!B12:F131`: 120 physical rows, 47 item rows, 6 repeated-header rows, 31 ambiguous rows, and 36 blank rows; the two alternative surfacing sections require explicit selection.
 
+## Planning pilot (Phase 3)
+
+The Planning tab is available for Nebraska and Colorado. A planner creates a state-specific workspace and scenario, adds one provisional base package with optional sidewalk, enters section geometry, and reviews exact-source rates. Nebraska defaults to the latest loaded calendar-year NDOT annual report; Colorado defaults to the three-year CDOT cost-book awarded-contract median policy. Source filters and periods can be changed explicitly. Missing rates, excluded work and unassessed external scope remain visible; a complete total is unavailable until required scope is resolved.
+
+Planning uses the separate `roadway-cost-estimator-planning` IndexedDB database. Writes check revisions and retain at most 20 previous snapshots per workspace. A separate BroadcastChannel claim prevents silent concurrent-tab edits. If IndexedDB is unavailable, the app explicitly uses memory for the current tab and offers `.rce-planning.json` recovery export. Workspace switching and state switching flush pending edits before replacing the active view. Recovery import creates an independent copy. CSV is a review artifact, not a recovery format.
+
+The pilot is local and provisional. Engineer trials and Project snapshot handoff remain later work. `docs/planning-pilot-feedback.md` provides the feedback record. The local built preview is served from `dist-check` on `http://127.0.0.1:4174/`.
+
 ## Next Product Steps
 
 Current sequencing lives in `project_roadmap.md`.

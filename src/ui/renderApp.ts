@@ -81,8 +81,9 @@ import {
 } from "./resultsScroll";
 import type { ResultsTableScrollPosition } from "./resultsScroll";
 import { renderExcelImportWizard } from "./renderExcelImport";
+import { createPlanningController } from "./planning/planningController";
 
-type AppView = "explorer" | "project" | "sourceReview";
+type AppView = "explorer" | "project" | "planning" | "sourceReview";
 type ProjectSubview = "workspace" | "manager";
 type SaveStatus = "idle" | "saving" | "saved" | "failed";
 type PendingFocus =
@@ -123,8 +124,8 @@ interface ProjectMetadataDraft extends ProjectMetadataEditorView {
 export async function renderApp(
   root: HTMLElement,
   data: AppData,
-  onStateChange: (stateCode: string, initialView?: "explorer" | "project") => void,
-  initialView: "explorer" | "project" = "explorer"
+  onStateChange: (stateCode: string, initialView?: "explorer" | "project" | "planning") => void,
+  initialView: "explorer" | "project" | "planning" = "explorer"
 ): Promise<void> {
   const emptyQuery: SearchQuery = {
     state: data.stateConfig.code,
@@ -182,6 +183,7 @@ export async function renderApp(
   let excelImportReadyDraft: ExcelImportReadyDraft | null = null;
   let excelImportProjectToOpenAfterCommit: { projectId: string; state: string } | null = null;
   const editCoordinator = new ProjectEditCoordinator();
+  const planningController = createPlanningController(data);
   editCoordinator.setLostOwnershipHandler(() => {
     projectReadOnly = true;
     render();
@@ -241,6 +243,7 @@ export async function renderApp(
             <nav class="app-view-tabs" aria-label="Primary views">
               ${renderViewTab("explorer", "Explorer", activeView)}
               ${renderViewTab("project", "Project", activeView)}
+              ${renderViewTab("planning", "Planning", activeView)}
             </nav>
           </div>
         </header>
@@ -275,7 +278,9 @@ export async function renderApp(
               : projectSubview === "manager"
                 ? renderProjectManager(projectState.projects, data.manifest.states, data.stateConfig.code, projectManagerFilters, activeProject, projectReadOnly, projectMetadataDraft)
                 : renderProjectWorkspace(activeProject, projectState.projects, data.manifest.states, data.stateConfig.code, projectReadOnly, projectMetadataDraft, projectSort)
-            : renderSourceReview(data, selectedSourceProjectId)}
+            : activeView === "planning"
+              ? '<section id="planning-root" aria-label="Planning workspace"></section>'
+              : renderSourceReview(data, selectedSourceProjectId)}
 
         <footer class="app-footer">
           <span class="app-footer__firm">Felsburg Holt &amp; Ullevig</span>
@@ -289,6 +294,11 @@ export async function renderApp(
       </main>
     `;
 
+    if (activeView === "planning") {
+      const host = root.querySelector<HTMLElement>("#planning-root");
+      if (host) void planningController.mount(host);
+    }
+
     applyPendingFocus(root, pendingFocus);
     pendingFocus = null;
     restoreEvidenceFilterFocus(root, pendingEvidenceFilterFocus);
@@ -297,14 +307,16 @@ export async function renderApp(
     pendingResultsTableScroll = null;
 
     root.querySelectorAll<HTMLButtonElement>("[data-app-view]").forEach((button) => {
-      button.addEventListener("click", () => {
+      button.addEventListener("click", async () => {
         const nextView = button.dataset.appView;
 
-        if (nextView !== "explorer" && nextView !== "project") {
+        if (nextView !== "explorer" && nextView !== "project" && nextView !== "planning") {
           return;
         }
+        if (nextView === activeView) return;
         if (excelImportController?.viewModel.commitStatus === "committing") return;
         if (!confirmDiscardProjectMetadataDraft()) return;
+        if (activeView === "planning" && !(await planningController.flush())) return;
 
         if (excelImportController && nextView !== "project") {
           excelImportController.cancel();
@@ -334,8 +346,12 @@ export async function renderApp(
           render();
           return;
         }
+        if (activeView === "planning" && !(await planningController.flush())) {
+          render();
+          return;
+        }
         cleanupProjectSession();
-        onStateChange(nextStateCode, "explorer");
+        onStateChange(nextStateCode, activeView === "planning" ? "planning" : "explorer");
       })();
     });
 
@@ -1649,6 +1665,7 @@ export async function renderApp(
   }
 
   function cleanupProjectSession(): void {
+    planningController.close();
     if (saveTimer !== null) window.clearTimeout(saveTimer);
     saveTimer = null;
     excelImportController?.dispose();

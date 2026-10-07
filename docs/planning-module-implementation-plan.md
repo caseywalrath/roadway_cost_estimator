@@ -447,7 +447,7 @@ Update this table during implementation; keep failures and remaining limitations
 | 0: Contract | Complete | Sol; primary binding verification | `src/planning/types.ts`, `contract.md`, independent reference fixtures; TypeScript passed | Provisional engineering assumptions; removal/tack manual or unpriced |
 | 1: Core | Complete | Luna implementation; Sol review; primary integration | Units/quantities, both recipe libraries, validation, cost engine, workspace/comparison; TypeScript and 63 tests passed | Provisional assumptions; real rate adapters, storage and UI remain later phases |
 | 2: Rates/recovery | Complete | Luna implementation; Sol read-only review; primary integration | NE annual and CO contract adapters, versioned JSON recovery, deterministic CSV review; TypeScript and 84 Planning tests passed | No browser persistence/UI yet; rates and recipes remain provisional pending engineer trial |
-| 3: Working pilot | Pending | Sol UI/storage; Luna tests | — | Engineer trial begins after this phase |
+| 3: Working pilot | Implemented locally; engineer trial pending | Sol UI/storage; Luna read-only audit; primary integration | Planning IndexedDB/controller/UI, TypeScript, 136 Planning/UI tests, production build, local HTTP preview | Browser automation unavailable on this host; engineer feedback and source-policy calibration remain pending |
 | 4: Revision/controls | Pending | Luna logic; Sol UI/mappings | — | Feedback and calibration remain iterative |
 | 5: Project handoff | Pending | Sol; Luna fixtures | — | Compatibility and frozen-contingency semantics |
 | 6: Release candidate | Pending | Sol review; Luna verification/docs | — | Separate merge/deployment authority |

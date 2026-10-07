@@ -25,7 +25,7 @@ loadManifest()
 async function activateState(
   manifest: AppManifest,
   stateCode: string,
-  initialView: "explorer" | "project" = "explorer"
+  initialView: "explorer" | "project" | "planning" = "explorer"
 ): Promise<void> {
   showLoading(`Loading ${stateCode} data`);
   try {
