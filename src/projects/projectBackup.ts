@@ -63,9 +63,11 @@ export function parseProjectBackup(value: unknown): ProjectBackupFile | null {
 
 export function createImportedCopy(project: UserProject): UserProject {
   const now = new Date().toISOString();
+  const newProjectId = createId("project");
+  const lineIds = new Map(project.lineItems.map((line) => [line.lineItemId, createId("line")]));
   return {
     ...structuredClone(project),
-    projectId: createId("project"),
+    projectId: newProjectId,
     name: `Copy of ${project.name.trim() || "Unnamed Project"}`,
     status: "active",
     archivedAt: null,
@@ -74,9 +76,17 @@ export function createImportedCopy(project: UserProject): UserProject {
     lastBackupRevision: null,
     createdAt: now,
     updatedAt: now,
+    ...(project.planningOrigin ? { planningOrigin: {
+      ...structuredClone(project.planningOrigin),
+      token: `copy:${newProjectId}:${project.planningOrigin.token}`,
+      frozenContingencyLineId: project.planningOrigin.frozenContingencyLineId
+        ? lineIds.get(project.planningOrigin.frozenContingencyLineId) ?? null : null,
+      decisions: project.planningOrigin.decisions.map((decision) => ({ ...decision,
+        lineItemId: decision.lineItemId ? lineIds.get(decision.lineItemId) ?? null : null }))
+    } } : {}),
     lineItems: project.lineItems.map((lineItem) => ({
       ...structuredClone(lineItem),
-      lineItemId: createId("line"),
+      lineItemId: lineIds.get(lineItem.lineItemId)!,
       createdAt: now,
       updatedAt: now
     }))

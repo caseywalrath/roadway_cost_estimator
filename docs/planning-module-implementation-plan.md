@@ -1,6 +1,6 @@
 # Planning Module Implementation Plan
 
-Status: Phases 0–2 complete; Phase 3 and its planner-first revision implemented locally. The proposed engineer-review and Project draft revision is in `docs/planning-engineer-review-handoff-plan.md`.
+Status: Phases 0–2 complete; Phase 3 and its planner-first revision implemented locally. The engineer-review and Project draft handoff revision is implemented locally; visual and engineer trials remain before release. See `docs/planning-engineer-review-handoff-plan.md`.
 Prepared: 2026-10-06.
 Repository baseline inspected: `5ef3d9c` on current `origin/main`.
 Execution model: primarily Luna; Sol owns architecture, UI, persistence correctness, Project compatibility, ambiguous engineering mappings, and final integration/review.
@@ -44,7 +44,7 @@ The user request explicitly reopens scenario modeling and automatic package esti
 | --- | --- | --- |
 | M1: Engineer-usable pilot | End of Phase 3 | Three package types in each pilot state, real state-specific rates where available, editable assumptions, saved scenarios, comparison and recovery export |
 | M2: Revised planning workflow | End of Phase 4 | Engineer feedback incorporated, optional elements, cost review export and review status |
-| M3: Engineer handoff | End of Phase 5 | Complete priced scenario becomes a traceable Project snapshot |
+| M3: Engineer handoff | End of Phase 5 | Valid alternative becomes a traceable Project snapshot; incomplete scope remains an explicit draft |
 | M4: Release candidate | End of Phase 6 | Compatibility checks, documentation and reviewed pilot limitations |
 
 ## 3. Model routing and agent operating rules
@@ -451,7 +451,7 @@ Update this table during implementation; keep failures and remaining limitations
 | 2: Rates/recovery | Complete | Luna implementation; Sol read-only review; primary integration | NE annual and CO contract adapters, versioned JSON recovery, deterministic CSV review; TypeScript and 84 Planning tests passed | No browser persistence/UI yet; rates and recipes remain provisional pending engineer trial |
 | 3: Working pilot | Implemented locally; engineer trial pending | Sol UI/storage; Luna read-only audit; primary integration | Planning IndexedDB/controller/UI, TypeScript, 136 Planning/UI tests, production build, local HTTP preview | Browser automation unavailable on this host; engineer feedback and source-policy calibration remain pending |
 | 4: Revision/controls | Pending | Luna logic; Sol UI/mappings | — | Feedback and calibration remain iterative |
-| 5: Project handoff | Pending | Sol; Luna fixtures | — | Compatibility and frozen-contingency semantics |
+| 5: Project handoff | Implemented locally; visual/engineer trial pending | Sol UI; Luna fixtures; primary integration | Pure NE/CO mapping, typed provenance/draft decisions, retry-safe intent, Project origin/review UI; TypeScript and focused tests pass | Local browser automation unavailable; engineering accuracy and usability review remain |
 | 6: Release candidate | Pending | Sol review; Luna verification/docs | — | Separate merge/deployment authority |
 
 ### Phase 0/1 verification record — 2026-10-06

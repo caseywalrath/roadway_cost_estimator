@@ -300,6 +300,9 @@ export function calculateScenarioCosts(scenario: PlanningScenario): ScenarioCost
         external = null;
         issues.push(issue("reason_required", `externalScopes/${scopeId}`, "None-assumed scope requires a reason."));
       }
+    } else if (scope.decision === "manual" && scope.amount === null && nonblank(scope.reason)) {
+      external = null;
+      issues.push(issue("unassessed_scope", `externalScopes/${scopeId}`, "Known external scope has no price yet."));
     } else if (scope.decision === "manual" && finiteNonnegative(scope.amount) && nonblank(scope.reason)) {
       if (external !== null) {
         external += scope.amount;

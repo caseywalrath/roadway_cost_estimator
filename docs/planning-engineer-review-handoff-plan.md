@@ -1,6 +1,6 @@
 # Planning engineer review and Project draft handoff plan
 
-Status: Proposed for implementation. Prepared 2026-10-07 from the local Phase 3 planner-first pilot (`1f617bb`) and product-owner feedback. This plan revises the engineer-review UI and supersedes the complete-only transfer gate in Phase 5 of `planning-module-implementation-plan.md`. It does not authorize a merge, deployment, or an accuracy claim.
+Status: Implemented locally on `codex/planning-engineer-review-handoff`; visual and engineer trials remain before release. Prepared 2026-10-07 from the local Phase 3 planner-first pilot (`1f617bb`) and product-owner feedback. This plan revises the engineer-review UI and supersedes the complete-only transfer gate in Phase 5 of `planning-module-implementation-plan.md`. It does not authorize a merge, deployment, or an accuracy claim.
 
 ## 1. Outcome and workspace boundary
 

@@ -1,4 +1,5 @@
 /** Planning contract v1. Pure core only; runtime imports from other app modules are prohibited. */
+import type { UserProject } from "../projects/projectWorkspace";
 export type PlanningState = "NE" | "CO";
 export type PlanningUnit = "LF" | "SF" | "SY" | "CY" | "TON" | "GAL" | "EACH" | "LS";
 export type PackageKind = "resurfacing" | "reconstruction" | "path" | "sidewalk";
@@ -274,7 +275,7 @@ export interface PlanningScenario {
   /** Copies preserve history as notes, but never resume original transfer operations. */
   history: string[];
   projectLink: { projectId: string; revision: number } | null;
-  handoffIntent: { token: string; fingerprint: string; targetProjectId: string; status: "pending" | "complete" } | null;
+  handoffIntent: { token: string; fingerprint: string; targetProjectId: string; payload?: UserProject; status: "pending" | "complete" } | null;
   createdAt: string;
   updatedAt: string;
 }

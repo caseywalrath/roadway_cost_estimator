@@ -13,6 +13,10 @@ import { addPlanningScenario, createPackageInstance, createPlanningScenario, cre
 import type { AllowanceDefinition, CustomComponent, DuplicateScenarioIds, PackageInstance, PackageKind, PlanningIssue, PlanningScenario, PlanningState, PlanningUnit, PlanningWorkspace, ScenarioEdit } from "../../planning/types";
 import { renderPlanningWorkspace, type PlanningViewModel } from "./renderPlanningWorkspace";
 import { PlanningEditCoordinator } from "../../planning/storage/planningEditCoordinator";
+import { createProjectFromAlternative } from "../../planning/projectHandoffService";
+import { buildProjectHandoff } from "../../planning/projectHandoff";
+import type { ProjectRepository } from "../../projects/projectRepository";
+import type { UserProject } from "../../projects/projectWorkspace";
 
 const now = () => new Date().toISOString();
 const id = () => crypto.randomUUID();
@@ -38,7 +42,10 @@ export interface PlanningPersistence {
 }
 
 /** A controller survives parent shell rerenders and owns the Planning draft. */
-export function createPlanningController(data: AppData, injected?: PlanningPersistence) {
+export function createPlanningController(data: AppData, injected?: PlanningPersistence, handoff?: {
+  projectRepository: ProjectRepository;
+  onProjectCreated: (project: UserProject) => Promise<void>;
+}) {
   const state = data.stateConfig.code.toUpperCase();
   let host: HTMLElement | null = null;
   let repository: PlanningPersistence | null = injected ?? null;
@@ -97,6 +104,7 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     const packageDetailsOpen = new Set([...host.querySelectorAll<HTMLDetailsElement>("details[data-detail][open]")].map((entry) => entry.dataset.detail));
     const updateDetailsOpen = new Set([...host.querySelectorAll<HTMLDetailsElement>(".planning-package-update[open]")].map((entry) => entry.querySelector<HTMLElement>("[data-action='preview-package-update']")?.dataset.id));
     const newProjectName = host.querySelector<HTMLInputElement>("[data-field='new-project-name']")?.value ?? "";
+    const handoffNameDraft = host.querySelector<HTMLInputElement>("[data-field='handoff-name']")?.value ?? "";
     const active = host.contains(document.activeElement) ? document.activeElement as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement : null;
     const identity = active ? { ...active.dataset } : null;
     const parentIdentity = active?.closest<HTMLElement>(".planning-rate-controls")?.dataset;
@@ -106,13 +114,27 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     const cost = scenario ? calculateScenarioCosts(scenario) : null;
     const other = workspace?.scenarios.find((entry) => entry.scenarioId === compareId) ?? null;
     const comparison = scenario && other && other.scenarioId !== scenario.scenarioId ? comparePlanningScenarios(scenario, other) : null;
-    const view: PlanningViewModel = { state, workspace, workspaces, scenario, cost, comparison: comparison?.ok ? comparison.value : null, compareId, recipes, message, dirty, busy, readOnly, persistent: repository?.isPersistent ?? false, updatePreview };
+    const handoffName = handoffNameDraft || `${scenario?.name ?? "Alternative"} — detailed estimate${scenario?.handoffIntent?.status === "complete" ? ` (${now().slice(0, 10)} snapshot)` : ""}`;
+    const pending = scenario?.handoffIntent?.status === "pending" ? scenario.handoffIntent.payload : null;
+    const handoffBuilt = scenario && workspace && !pending ? buildProjectHandoff({ workspace, scenario,
+      catalog: data.agencyItems, token: "preview", projectId: "preview", projectName: handoffName, now: now() }) : null;
+    const handoffPreview = pending ? {
+      projectName: pending.name, pricedSubtotal: pending.planningOrigin?.planningPricedSubtotal ?? 0,
+      unresolved: pending.planningOrigin?.decisions.filter((entry) => entry.status === "pending").map((entry) => entry.label) ?? [],
+      excludedScope: pending.planningOrigin?.excludedScope ?? [], errors: [],
+    } : handoffBuilt?.ok ? {
+      projectName: handoffBuilt.project.name, pricedSubtotal: handoffBuilt.project.planningOrigin?.planningPricedSubtotal ?? 0,
+      unresolved: handoffBuilt.project.planningOrigin?.decisions.filter((entry) => entry.status === "pending").map((entry) => entry.label) ?? [],
+      excludedScope: handoffBuilt.project.planningOrigin?.excludedScope ?? [], errors: [],
+    } : handoffBuilt ? { projectName: handoffName, pricedSubtotal: 0, unresolved: [], excludedScope: [], errors: handoffBuilt.errors } : null;
+    const view: PlanningViewModel = { state, workspace, workspaces, scenario, cost, comparison: comparison?.ok ? comparison.value : null, compareId, recipes, message, dirty, busy, readOnly, persistent: repository?.isPersistent ?? false, handoffPersistent: Boolean(repository?.isPersistent && handoff?.projectRepository.isPersistent), updatePreview, handoffPreview };
     renderPlanningWorkspace(host, view);
     const actions = host.querySelector<HTMLDetailsElement>(".planning-actions"); if (actions) actions.open = actionsOpen;
     const advanced = host.querySelector<HTMLDetailsElement>(".planning-advanced"); if (advanced) advanced.open = advancedOpen;
     host.querySelectorAll<HTMLDetailsElement>("details[data-detail]").forEach((entry) => { if (packageDetailsOpen.has(entry.dataset.detail)) entry.open = true; });
     host.querySelectorAll<HTMLDetailsElement>(".planning-package-update").forEach((entry) => { if (updateDetailsOpen.has(entry.querySelector<HTMLElement>("[data-action='preview-package-update']")?.dataset.id)) entry.open = true; });
     const nameDraft = host.querySelector<HTMLInputElement>("[data-field='new-project-name']"); if (nameDraft) nameDraft.value = newProjectName;
+    const handoffNameInput = host.querySelector<HTMLInputElement>("[data-field='handoff-name']"); if (handoffNameInput && handoffNameDraft) handoffNameInput.value = handoffNameDraft;
     host.querySelectorAll<HTMLInputElement>("[data-field]").forEach((input) => {
       const draft = invalidInputs.get(inputKey(input));
       if (draft !== undefined) { input.value = draft; input.setAttribute("aria-invalid", "true"); }
@@ -339,7 +361,7 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     if (field === "parameter" || field === "quantity" || field === "rate") {
       const key = target.dataset.key ?? "";
       const reasonInput = [...(host?.querySelectorAll<HTMLInputElement>("[data-field='override-reason']") ?? [])].find((entry) => entry.dataset.kind === field && entry.dataset.instanceId === instanceId && (field === "parameter" ? entry.dataset.key === key : entry.dataset.role === role));
-      const override = { value: numeric(target.value), reason: reasonInput?.value || reason };
+      const override = field !== "parameter" && target.value.trim() === "" ? null : { value: numeric(target.value), reason: reasonInput?.value || reason };
       edit(field === "parameter" ? { kind: "parameter", instanceId, key, override } : { kind: field, instanceId, role, override }); return;
     }
     if (field === "override-reason") {
@@ -349,11 +371,11 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
       if (kind === "quantity" || kind === "rate") { const previous = kind === "quantity" ? instance.quantityOverrides[role] : instance.rateOverrides[role]; if (previous) edit({ kind, instanceId, role, override: { ...previous, reason: target.value } }); }
       return;
     }
-    if (field === "exclude") {
-      const checked = (target as HTMLInputElement).checked;
+    if (field === "exclude" || field === "component-scope") {
+      const checked = field === "component-scope" ? target.value === "removed" : (target as HTMLInputElement).checked;
       const row = target.closest(".planning-edit-row");
       const explanation = row?.querySelector<HTMLInputElement>("[data-field='exclusion-reason']")?.value || "Excluded by planner";
-      const effect = row?.querySelector<HTMLInputElement>("[data-field='exclusion-effect']")?.value || "Remove this component from planned scope";
+      const effect = scenario.packages.find((entry) => entry.instanceId === instanceId)?.exclusions[role]?.sectionEffect || "Remove this component from planned scope";
       edit({ kind: "exclusion", instanceId, role, exclusion: checked ? { reason: explanation, sectionEffect: effect } : null }); return;
     }
     if (field === "exclusion-reason" || field === "exclusion-effect") {
@@ -374,6 +396,11 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
       edit({ kind: "external_scope", scope: { ...existing, decision, amount: field === "external-amount" ? numeric(target.value) : decision === "manual" ? existing.amount : null, reason: decision === "unassessed" ? "" : reasonInput?.value || existing.reason || reason } }); return;
     }
     if (field === "external-reason") { const existing = scenario.externalScopes.find((entry) => entry.scopeId === target.dataset.id); if (existing && existing.decision !== "unassessed") edit({ kind: "external_scope", scope: { ...existing, reason: target.value } }); return; }
+    if (field === "custom-scope" || field === "custom-exclusion-reason") {
+      const existing = scenario.customComponents.find((entry) => entry.componentId === target.dataset.id); if (!existing) return;
+      const exclusion = field === "custom-exclusion-reason" ? existing.exclusion ? { ...existing.exclusion, reason: target.value } : null : target.value === "removed" ? existing.exclusion ?? { reason: "Removed from planned scope; record the scope explanation", sectionEffect: "Remove this custom work from planned scope" } : null;
+      edit({ kind: "set_custom", component: { ...existing, exclusion } }); return;
+    }
     if (field.startsWith("custom-")) {
       const existing = scenario.customComponents.find((entry) => entry.componentId === target.dataset.id); if (!existing) return;
       const property = field.slice(7);
@@ -385,6 +412,28 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
   async function onClick(event: Event) {
     const target = (event.target as Element).closest<HTMLElement>("[data-action]"); if (!target) return;
     const action = target.dataset.action;
+    if (action === "create-project-handoff" || action === "create-another-project-handoff") {
+      const current = selected();
+      if (!workspace || !current || !repository || !handoff || readOnly) return;
+      if (!(await flushDraft())) return;
+      const saved = selected(); if (!saved || !workspace) return;
+      const name = host?.querySelector<HTMLInputElement>("[data-field='handoff-name']")?.value.trim()
+        || `${saved.name} — detailed estimate${saved.handoffIntent?.status === "complete" ? ` (${now().slice(0, 10)} snapshot)` : ""}`;
+      try {
+        busy = true; render();
+        const outcome = await createProjectFromAlternative({ planningRepository: repository,
+          projectRepository: handoff.projectRepository, workspaceId: workspace.workspaceId,
+          scenarioId: saved.scenarioId, expectedRevision: savedRevision, catalog: data.agencyItems,
+          projectName: name, now: now(), token: id(), projectId: `project_${id()}`, readOnly,
+          secondSnapshot: action === "create-another-project-handoff" });
+        workspace = outcome.workspace; savedRevision = workspace.revision; dirty = false;
+        workspaces = await repository.listWorkspaces(planningState);
+        message = outcome.linkPending ? "Project created. Planning link is pending; retry handoff to finish linking." : "Project created from Planning alternative.";
+        await handoff.onProjectCreated(outcome.project);
+      } catch (error) { message = `Project handoff failed: ${String(error)}`; render(); }
+      finally { busy = false; render(); }
+      return;
+    }
     if (action === "create-workspace") {
       const name = host?.querySelector<HTMLInputElement>("[data-field='new-project-name']")?.value.trim() ?? "";
       if (name) await queue(() => createWorkspaceAction(name));
@@ -466,11 +515,29 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     finally { input.value = ""; }
   }
 
+  async function openOrigin(event: Event) {
+    const detail = (event as CustomEvent<{ workspaceId: string; scenarioId: string }>).detail;
+    if (!repository && initialization) await initialization;
+    if (!detail || !repository || !pilot) return;
+    if (!(await flushDraft())) return;
+    const origin = await repository.getWorkspace(detail.workspaceId);
+    if (!origin || origin.state !== planningState || !origin.scenarios.some((entry) => entry.scenarioId === detail.scenarioId)) {
+      message = "The originating Planning alternative is unavailable in this browser."; render(); return;
+    }
+    workspace = { ...origin, activeScenarioId: detail.scenarioId };
+    savedRevision = origin.revision; dirty = false;
+    if (coordinator) readOnly = !(await coordinator.claim(origin.workspaceId));
+    await repository.setActiveWorkspaceId(planningState, origin.workspaceId);
+    render();
+  }
+
   return {
     async mount(root: HTMLElement) {
       if (closed) return;
       if (host) { host.removeEventListener("change", onChange); host.removeEventListener("click", onClick); host.removeEventListener("change", onFile); host.removeEventListener("input", onInput); }
       host = root;
+      window.removeEventListener("planning-open-origin", openOrigin);
+      window.addEventListener("planning-open-origin", openOrigin);
       host.addEventListener("change", onChange); host.addEventListener("click", onClick); host.addEventListener("change", onFile); host.addEventListener("input", onInput);
       render(); initialization ??= initialize(); await initialization;
     },
@@ -482,6 +549,7 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     close() {
       if (pendingInput && host?.contains(pendingInput)) { const input = pendingInput; pendingInput = null; onChange({ target: input } as unknown as Event); }
       closed = true; if (saveTimer) clearTimeout(saveTimer);
+      window.removeEventListener("planning-open-origin", openOrigin);
       if (host) { host.removeEventListener("change", onChange); host.removeEventListener("click", onClick); host.removeEventListener("change", onFile); host.removeEventListener("input", onInput); }
       void operation.then(() => flushDraft()).finally(() => { coordinator?.close(); repository?.close(); });
     },

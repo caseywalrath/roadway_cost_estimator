@@ -44,6 +44,8 @@ import {
   projectGroupSuggestions,
   projectLineTotal,
   projectOtherCost,
+  projectPlanningIsComplete,
+  projectPlanningReviewFingerprint,
   projectTotal,
   removeProjectLineItem,
   removeProjectFromState,
@@ -183,7 +185,25 @@ export async function renderApp(
   let excelImportReadyDraft: ExcelImportReadyDraft | null = null;
   let excelImportProjectToOpenAfterCommit: { projectId: string; state: string } | null = null;
   const editCoordinator = new ProjectEditCoordinator();
-  const planningController = createPlanningController(data);
+  const planningController = createPlanningController(data, undefined, {
+    projectRepository,
+    onProjectCreated: async (project: UserProject) => {
+      if (!(await flushPendingProjectSave())) throw new Error("Save pending Project edits before opening the Planning handoff.");
+      const saved = await projectRepository.getProject(project.projectId);
+      if (!saved) throw new Error("The created Project could not be read from browser storage.");
+      projectState = await projectRepository.loadWorkspaceState();
+      projectState = setActiveProject(projectState, saved.projectId, saved.state);
+      await projectRepository.setActiveProjectId(saved.state, saved.projectId);
+      projectReadOnly = !(await editCoordinator.claim(saved.projectId));
+      projectMetadataDraft = null;
+      activeView = "project";
+      projectSubview = "workspace";
+      lastSavedAt = saved.updatedAt;
+      lastSnapshotRevision = saved.revision;
+      saveStatus = "idle";
+      render();
+    }
+  });
   editCoordinator.setLostOwnershipHandler(() => {
     projectReadOnly = true;
     render();
@@ -1023,6 +1043,54 @@ export async function renderApp(
   }
 
   function bindProjectWorkspace(rootElement: HTMLElement): void {
+    rootElement.querySelector<HTMLFormElement>("[data-project-planning-review]")?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const project = getActiveProject(projectState, data.stateConfig.code);
+      const form = event.currentTarget as HTMLFormElement;
+      if (!project?.planningOrigin || projectReadOnly || !projectPlanningIsComplete(project)) return;
+      const reviewer = (form.querySelector<HTMLInputElement>("[name='reviewer']")?.value ?? "").trim();
+      const date = form.querySelector<HTMLInputElement>("[name='date']")?.value ?? "";
+      const notes = form.querySelector<HTMLTextAreaElement>("[name='notes']")?.value ?? "";
+      if (!reviewer || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+      const next: UserProject = { ...project, planningOrigin: { ...project.planningOrigin,
+        review: { reviewer, date, notes, fingerprint: projectPlanningReviewFingerprint(project) } } };
+      persistProjectState(replaceProject(projectState, next), true);
+    });
+    rootElement.querySelector<HTMLButtonElement>("[data-open-planning-origin]")?.addEventListener("click", async () => {
+      const origin = getActiveProject(projectState, data.stateConfig.code)?.planningOrigin;
+      if (!origin || !(await flushPendingProjectSave())) return;
+      activeView = "planning";
+      render();
+      window.dispatchEvent(new CustomEvent("planning-open-origin", { detail: { workspaceId: origin.workspaceId, scenarioId: origin.scenarioId } }));
+    });
+    rootElement.querySelectorAll<HTMLFormElement>("[data-project-planning-decision]").forEach((form) => {
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const project = getActiveProject(projectState, data.stateConfig.code);
+        const origin = project?.planningOrigin;
+        const decision = origin?.decisions.find((entry) => entry.decisionId === form.dataset.projectPlanningDecision);
+        if (!project || !origin || !decision || projectReadOnly) return;
+        const reason = (form.querySelector<HTMLInputElement>("[name='reason']")?.value ?? "").trim();
+        const status = (event as SubmitEvent).submitter instanceof HTMLButtonElement ? ((event as SubmitEvent).submitter as HTMLButtonElement).value : "resolved";
+        if (!reason || (status !== "resolved" && status !== "excluded")) return;
+        const line = project.lineItems.find((entry) => entry.lineItemId === decision.lineItemId);
+        if (status === "resolved" && decision.lineItemId && (!line || line.quantity === null || line.preferredUnitCost === null)) {
+          form.querySelector<HTMLElement>("[data-project-decision-error]")!.textContent = "Enter the associated line quantity and unit cost before resolving this decision, or explicitly exclude it.";
+          return;
+        }
+        const next: UserProject = { ...project, updatedAt: new Date().toISOString(),
+          lineItems: status === "excluded" && decision.lineItemId ? project.lineItems.filter((entry) => entry.lineItemId !== decision.lineItemId) : project.lineItems,
+          planningOrigin: { ...origin, decisions: origin.decisions.map((entry) => entry.decisionId === decision.decisionId ? { ...entry, status, reason } : entry) }
+        };
+        persistProjectState(replaceProject(projectState, next), true);
+      });
+    });
+    rootElement.querySelector<HTMLButtonElement>("[data-review-frozen-contingency]")?.addEventListener("click", (event) => {
+      const lineId = (event.currentTarget as HTMLButtonElement).dataset.reviewFrozenContingency;
+      const input = [...rootElement.querySelectorAll<HTMLInputElement>("[data-project-line-id][data-project-line-field='preferredUnitCost']")].find((entry) => entry.dataset.projectLineId === lineId);
+      input?.scrollIntoView({ block: "center" });
+      input?.focus();
+    });
     rootElement.querySelector<HTMLButtonElement>("#download-project-csv")?.addEventListener("click", () => {
       const activeProject = getActiveProject(projectState, data.stateConfig.code);
 
@@ -1036,13 +1104,20 @@ export async function renderApp(
       rootElement.querySelector<HTMLElement>("[data-project-other-cost]")!.textContent = formatProjectCurrency(projectOtherCost(project));
       rootElement.querySelector<HTMLElement>("[data-project-contingency-cost]")!.textContent = formatProjectCurrency(projectContingencyCost(project));
       rootElement.querySelector<HTMLElement>("[data-project-total]")!.textContent = formatProjectCurrency(projectTotal(project));
+      const label = rootElement.querySelector<HTMLElement>("[data-project-total-label]");
+      if (label) label.textContent = projectPlanningIsComplete(project) ? "Total Project Cost" : "Priced subtotal";
+      const frozenWarning = rootElement.querySelector<HTMLElement>("[data-project-frozen-warning]");
+      if (frozenWarning) frozenWarning.hidden = project.contingencyPercent <= 0;
     };
 
     const updateProjectTotalsInDom = (row: HTMLTableRowElement, lineItemId: string): void => {
       const activeProject = getActiveProject(projectState, data.stateConfig.code);
       const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId);
       if (!activeProject || !lineItem) return;
-      row.querySelector<HTMLElement>(`[data-project-line-total-id="${lineItemId}"]`)!.textContent = formatProjectCurrency(projectLineTotal(lineItem));
+      const totalCell = row.querySelector<HTMLElement>(`[data-project-line-total-id="${lineItemId}"]`)!;
+      const value = lineItem.planningOrigin && (lineItem.quantity === null || lineItem.preferredUnitCost === null) ? "Pending" : formatProjectCurrency(projectLineTotal(lineItem));
+      if (totalCell.firstChild?.nodeType === Node.TEXT_NODE) totalCell.firstChild.textContent = value;
+      else totalCell.prepend(document.createTextNode(value));
       updateProjectCostSummaryInDom(activeProject);
     };
 

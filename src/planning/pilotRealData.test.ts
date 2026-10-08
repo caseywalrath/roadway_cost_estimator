@@ -8,6 +8,7 @@ import { loadManifest, loadStateData } from "../data/loadData";
 import type { AppData } from "../data/schema";
 import { calculateScenarioCosts } from "./costEngine";
 import { buildPlannerEstimate } from "./plannerPresentation";
+import { buildProjectHandoff } from "./projectHandoff";
 import { createPackageInstance, createPlanningScenario, editPlanningScenario } from "./planningWorkspace";
 import { buildColoradoContractRateSnapshot } from "./rates/coloradoRates";
 import { resolveNebraskaAnnualRate } from "./rates/nebraskaRates";
@@ -98,6 +99,24 @@ describe("pilot packages against loaded public data", () => {
     expect(estimate.fullScope).toBe(false);
     expect(estimate.notices.some((notice) => /(?:co_|ne_|scenario-|segment-1|instance|agencyItemId)/i.test(notice.text))).toBe(false);
     console.info(`${state} ${definition.kind}: priced=${cost.pricedDirectSubtotal} estimate=${estimate.amount}`);
+  });
+
+  it.each(cases)("builds a reviewable Project draft for $label", ({ state, definition }) => {
+    const data = state === "NE" ? ne : co;
+    const scenario = addAndPrice(data, state, definition);
+    const built = buildProjectHandoff({
+      workspace: { schemaVersion: 1, workspaceId: `workspace-${state}`, state, name: "Pilot",
+        revision: 0, activeScenarioId: scenario.scenarioId, scenarios: [scenario],
+        createdAt: capturedAt, updatedAt: capturedAt, lastBackupAt: null, lastBackupRevision: null },
+      scenario, catalog: data.agencyItems, token: `token-${state}-${definition.kind}`,
+      projectId: `project-${state}-${definition.kind}`, projectName: `${state} ${definition.kind}`,
+      now: capturedAt,
+    });
+    expect(built.ok, built.ok ? undefined : built.errors.join("; ")).toBe(true);
+    if (!built.ok) return;
+    expect(built.project.planningOrigin?.decisions.some((decision) => decision.status === "pending")).toBe(true);
+    expect(built.project.lineItems.some((line) => line.lineItemType === "catalog")).toBe(true);
+    expect(built.project.contingencyPercent).toBe(0);
   });
 
   it("freezes the exact adapter snapshot shape and keeps manual rates separate", () => {

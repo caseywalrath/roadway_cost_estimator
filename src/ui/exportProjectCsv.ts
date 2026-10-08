@@ -1,6 +1,7 @@
 import {
   DEFAULT_PROJECT_SORT,
   projectCostSummary,
+  projectPlanningIsComplete,
   projectLineTotal,
   sortProjectLineItems,
   type ProjectLineItem,
@@ -28,7 +29,7 @@ const projectCsvColumns: ProjectCsvColumn[] = [
   { header: "Quantity", value: (_project, lineItem) => lineItem.quantity },
   { header: "Unit", value: (_project, lineItem) => lineItem.unit },
   { header: "Preferred Unit Cost", value: (_project, lineItem) => lineItem.preferredUnitCost },
-  { header: "Total Item Cost", value: (_project, lineItem) => projectLineTotal(lineItem) },
+  { header: "Total Item Cost", value: (project, lineItem) => project.planningOrigin && (lineItem.quantity === null || lineItem.preferredUnitCost === null) ? null : projectLineTotal(lineItem) },
   { header: "Line Notes", value: (_project, lineItem) => lineItem.notes },
   { header: "Evidence Row Count", value: (_project, lineItem) => lineItem.evidenceContext?.includedRowCount ?? 0 },
   {
@@ -60,8 +61,16 @@ export function buildProjectCsv(project: UserProject, sort: ProjectSort = DEFAUL
     ["Other costs", summary.otherCost].map(escapeCsvValue).join(","),
     ["Contingency percentage", summary.contingencyPercent].map(escapeCsvValue).join(","),
     ["Contingencies", summary.contingencyCost].map(escapeCsvValue).join(","),
-    ["Total Project Cost", summary.totalProjectCost].map(escapeCsvValue).join(",")
+    [projectPlanningIsComplete(project) ? "Total Project Cost" : "Priced subtotal", summary.totalProjectCost].map(escapeCsvValue).join(",")
   ];
+
+  if (project.planningOrigin) {
+    lines.push("", ["From Planning", project.planningOrigin.scenarioName].map(escapeCsvValue).join(","));
+    lines.push(["Snapshot", project.planningOrigin.capturedAt].map(escapeCsvValue).join(","));
+    for (const decision of project.planningOrigin.decisions.filter((entry) => entry.status === "pending")) {
+      lines.push(["Work to resolve", decision.label].map(escapeCsvValue).join(","));
+    }
+  }
 
   return lines.join("\r\n");
 }

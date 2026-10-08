@@ -360,7 +360,7 @@ export function validatePlanningScenario(scenario: PlanningScenario): PlanningIs
     if (!["right_of_way", "major_utilities"].includes(external.scopeId)) issues.push(issue("invalid_recipe", "scenario.externalScopes", "External scope ID is unsupported."));
     if (externalIds.has(external.scopeId)) issues.push(issue("duplicate_id", `scenario.externalScopes.${external.scopeId}`, "External scope decision must appear exactly once."));
     externalIds.add(external.scopeId);
-    if (external.decision === "manual" && (!finite(external.amount) || external.amount! < 0 || !nonblank(external.reason))) issues.push(issue("invalid_number", `scenario.externalScopes.${external.scopeId}`, "Manual external scope requires a finite nonnegative amount and reason."));
+    if (external.decision === "manual" && (external.amount !== null && (!finite(external.amount) || external.amount < 0) || !nonblank(external.reason))) issues.push(issue("invalid_number", `scenario.externalScopes.${external.scopeId}`, "Known external scope requires a reason and a nonnegative amount when priced."));
     if (external.decision === "none_assumed" && !nonblank(external.reason)) issues.push(issue("reason_required", `scenario.externalScopes.${external.scopeId}.reason`, "A none-assumed decision requires a reason."));
   }
   for (const id of ["right_of_way", "major_utilities"]) if (!externalIds.has(id)) issues.push(issue("missing_reference", `scenario.externalScopes.${id}`, `External scope decision ${id} is required exactly once.`));

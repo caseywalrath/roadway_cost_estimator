@@ -5,6 +5,7 @@ import type {
   EvidenceStats,
   SearchQuery
 } from "../data/schema";
+import type { AllowanceBase, RateBasis } from "../planning/types";
 
 export const PROJECT_WORKSPACE_SCHEMA_VERSION = 10;
 export const LEGACY_PROJECT_WORKSPACE_KEYS = [
@@ -36,6 +37,49 @@ export interface UserProject {
   createdAt: string;
   updatedAt: string;
   lineItems: ProjectLineItem[];
+  planningOrigin?: ProjectPlanningOrigin;
+}
+
+export interface ProjectPlanningDecision {
+  decisionId: string;
+  label: string;
+  kind: "line" | "scope" | "allowance";
+  lineItemId: string | null;
+  status: "pending" | "resolved" | "excluded";
+  reason: string;
+  sourceAmount: number | null;
+}
+
+export interface ProjectPlanningOrigin {
+  token: string;
+  workspaceId: string;
+  workspaceName: string;
+  scenarioId: string;
+  scenarioName: string;
+  fingerprint: string;
+  capturedAt: string;
+  includedScope: string[];
+  excludedScope: string[];
+  decisions: ProjectPlanningDecision[];
+  frozenContingencyLineId: string | null;
+  planningTotal: number | null;
+  planningPricedSubtotal: number;
+  review?: { reviewer: string; date: string; notes: string; fingerprint: string } | null;
+}
+
+export interface ProjectPlanningLineOrigin {
+  sourceId: string;
+  role: string;
+  packageId: string | null;
+  packageVersion: string | null;
+  sourceKind: "component" | "allowance" | "external" | "contingency";
+  originalQuantity: number | null;
+  originalUnitRate: number | null;
+  originalAmount: number | null;
+  originalUnit: string;
+  reason: string | null;
+  rateBasis: RateBasis | null;
+  allowanceRule: { percent: number | null; base: AllowanceBase; baseAmount: number | null } | null;
 }
 
 export interface ProjectCostSummary {
@@ -52,6 +96,7 @@ export interface ProjectLineItem {
   lineItemType: ProjectLineItemType | "explorer";
   costCategory: ProjectCostCategory;
   importSource?: ProjectLineImportSource;
+  planningOrigin?: ProjectPlanningLineOrigin;
   state: string;
   agencyId: string;
   agencyItemId: string;
@@ -323,8 +368,22 @@ export function addProjectLineItem(
   return updateProject(state, projectId, {
     ...project,
     lineItems: [...project.lineItems, lineItem],
+    ...(project.planningOrigin ? { planningOrigin: {
+      ...project.planningOrigin,
+      decisions: appendPendingLineDecision(project.planningOrigin.decisions, lineItem)
+    } } : {}),
     updatedAt: currentTimestamp()
   });
+}
+
+function appendPendingLineDecision(decisions: ProjectPlanningDecision[], line: ProjectLineItem, previous?: ProjectLineItem): ProjectPlanningDecision[] {
+  if (line.quantity !== null && line.preferredUnitCost !== null && line.preferredUnitCost !== 0) return decisions;
+  if (decisions.some((entry) => entry.lineItemId === line.lineItemId)) {
+    if (previous && previous.quantity === line.quantity && previous.preferredUnitCost === line.preferredUnitCost) return decisions;
+    return decisions.map((entry) => entry.lineItemId === line.lineItemId ? { ...entry, status: "pending", reason: "" } : entry);
+  }
+  return [...decisions, { decisionId: `price:${line.lineItemId}`, label: line.description || "New Project item",
+    kind: "line", lineItemId: line.lineItemId, status: "pending", reason: "", sourceAmount: null }];
 }
 
 export function replaceProjectLineItem(
@@ -342,10 +401,13 @@ export function replaceProjectLineItem(
     lineItems: project.lineItems.map((lineItem) => lineItem.lineItemId === lineItemId ? {
       ...replacement,
       lineItemId,
+      planningOrigin: replacement.planningOrigin ?? lineItem.planningOrigin,
       group: normalizeProjectGroup(replacement.group),
       createdAt: currentLine.createdAt,
       updatedAt: now
     } : lineItem),
+    ...(project.planningOrigin ? { planningOrigin: { ...project.planningOrigin,
+      decisions: appendPendingLineDecision(project.planningOrigin.decisions, { ...replacement, lineItemId }, currentLine) } } : {}),
     updatedAt: now
   });
 }
@@ -359,8 +421,12 @@ export function updateProjectLineItem(
   const project = state.projects.find((candidate) => candidate.projectId === projectId);
   if (!project) return state;
   const now = currentTimestamp();
+  const current = project.lineItems.find((line) => line.lineItemId === lineItemId);
+  const changed = current ? { ...current, ...fields } : null;
   return updateProject(state, projectId, {
     ...project,
+    ...(project.planningOrigin && changed ? { planningOrigin: { ...project.planningOrigin,
+      decisions: appendPendingLineDecision(project.planningOrigin.decisions, changed, current) } } : {}),
     lineItems: project.lineItems.map((lineItem) => {
       if (lineItem.lineItemId !== lineItemId) return lineItem;
       const allowedFields = lineItem.lineItemType === "custom"
@@ -412,6 +478,36 @@ export function updateProjectContingencyPercent(
 
 export function projectLineTotal(lineItem: ProjectLineItem): number {
   return (lineItem.quantity ?? 0) * (lineItem.preferredUnitCost ?? 0);
+}
+
+/** A Planning draft is complete only after every imported price and scope decision is explicit. */
+export function projectPlanningIsComplete(project: UserProject): boolean {
+  const origin = project.planningOrigin;
+  if (!origin) return true;
+  return origin.decisions.every((decision) => {
+    if (decision.status === "pending") return false;
+    if (decision.status === "excluded") return decision.reason.trim().length > 0;
+    if (decision.kind !== "line") return decision.reason.trim().length > 0;
+    const line = project.lineItems.find((entry) => entry.lineItemId === decision.lineItemId);
+    return Boolean(line && line.quantity !== null && line.preferredUnitCost !== null
+      && (line.preferredUnitCost !== 0 || decision.reason.trim().length > 0));
+  }) && project.lineItems.every((line) => line.quantity !== null && line.preferredUnitCost !== null);
+}
+
+export function projectPlanningPendingDecisions(project: UserProject): ProjectPlanningDecision[] {
+  return project.planningOrigin?.decisions.filter((decision) => decision.status === "pending") ?? [];
+}
+
+export function projectPlanningReviewFingerprint(project: UserProject): string {
+  return JSON.stringify({ contingencyPercent: project.contingencyPercent,
+    lines: project.lineItems.map((line) => [line.lineItemId, line.costCategory, line.agencyItemId,
+      line.itemCode, line.description, line.unit, line.quantity, line.preferredUnitCost, line.notes]),
+    decisions: project.planningOrigin?.decisions.map((decision) => [decision.decisionId, decision.status, decision.reason]) ?? [] });
+}
+
+export function projectPlanningReviewStatus(project: UserProject): "pending" | "current" | "stale" {
+  if (!project.planningOrigin?.review) return "pending";
+  return project.planningOrigin.review.fingerprint === projectPlanningReviewFingerprint(project) ? "current" : "stale";
 }
 
 export function projectConstructionCost(project: UserProject): number {
@@ -533,9 +629,11 @@ export function removeProjectLineItem(
 
 export function duplicateUserProject(project: UserProject): UserProject {
   const now = currentTimestamp();
+  const projectId = createId("project");
+  const lineIds = new Map(project.lineItems.map((line) => [line.lineItemId, createId("line")]));
   return {
     ...structuredClone(project),
-    projectId: createId("project"),
+    projectId,
     name: `Copy of ${project.name.trim() || "Unnamed Project"}`,
     status: "active",
     archivedAt: null,
@@ -544,9 +642,16 @@ export function duplicateUserProject(project: UserProject): UserProject {
     lastBackupRevision: null,
     createdAt: now,
     updatedAt: now,
+    ...(project.planningOrigin ? { planningOrigin: {
+      ...structuredClone(project.planningOrigin), token: `copy:${projectId}:${project.planningOrigin.token}`,
+      frozenContingencyLineId: project.planningOrigin.frozenContingencyLineId
+        ? lineIds.get(project.planningOrigin.frozenContingencyLineId) ?? null : null,
+      decisions: project.planningOrigin.decisions.map((decision) => ({ ...decision,
+        lineItemId: decision.lineItemId ? lineIds.get(decision.lineItemId) ?? null : null }))
+    } } : {}),
     lineItems: project.lineItems.map((lineItem) => ({
       ...structuredClone(lineItem),
-      lineItemId: createId("line"),
+      lineItemId: lineIds.get(lineItem.lineItemId)!,
       createdAt: now,
       updatedAt: now
     }))
@@ -683,6 +788,8 @@ function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 |
   if (!state) return null;
   const revision = schemaVersion >= 4 ? positiveInteger(value.revision) : 0;
   const status = schemaVersion >= 4 && value.status === "archived" ? "archived" : "active";
+  const planningOrigin = value.planningOrigin === undefined ? undefined : parseProjectPlanningOrigin(value.planningOrigin);
+  if (value.planningOrigin !== undefined && !planningOrigin) return null;
   return {
     projectId: value.projectId,
     state,
@@ -697,7 +804,8 @@ function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 |
     contingencyPercent: normalizeProjectContingencyPercent(value.contingencyPercent),
     createdAt: stringValue(value.createdAt) || currentTimestamp(),
     updatedAt: stringValue(value.updatedAt) || currentTimestamp(),
-    lineItems
+    lineItems,
+    ...(planningOrigin ? { planningOrigin } : {})
   };
 }
 
@@ -732,6 +840,8 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
     ? undefined
     : parseProjectLineImportSource(value.importSource);
   if (value.importSource !== undefined && value.importSource !== null && !importSource) return null;
+  const planningOrigin = value.planningOrigin === undefined ? undefined : parseProjectPlanningLineOrigin(value.planningOrigin);
+  if (value.planningOrigin !== undefined && !planningOrigin) return null;
   if (!state) return null;
   const quantity = nullableNumberValue(value.quantity);
   const preferredUnitCost = nullableNumberValue(value.preferredUnitCost);
@@ -748,6 +858,7 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
       lineItemType,
       costCategory,
       ...(importSource ? { importSource } : {}),
+      ...(planningOrigin ? { planningOrigin } : {}),
       state,
       agencyId,
       agencyItemId,
@@ -769,6 +880,7 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
     lineItemType,
     costCategory,
     ...(importSource ? { importSource } : {}),
+    ...(planningOrigin ? { planningOrigin } : {}),
     state,
     agencyId: "",
     agencyItemId: "",
@@ -783,6 +895,57 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
     evidenceContext: null,
     createdAt: stringValue(value.createdAt) || currentTimestamp(),
     updatedAt: stringValue(value.updatedAt) || currentTimestamp()
+  };
+}
+
+function parseProjectPlanningOrigin(value: unknown): ProjectPlanningOrigin | null {
+  if (!isRecord(value) || !isNonEmptyString(value.token) || !isNonEmptyString(value.workspaceId)
+    || !isNonEmptyString(value.scenarioId) || !isNonEmptyString(value.fingerprint)
+    || !isNonEmptyString(value.capturedAt) || !Array.isArray(value.includedScope)
+    || !Array.isArray(value.excludedScope) || !Array.isArray(value.decisions)
+    || !value.includedScope.every((entry) => typeof entry === "string")
+    || !value.excludedScope.every((entry) => typeof entry === "string")
+    || !isNullableStoredNumber(value.planningTotal) || typeof value.planningPricedSubtotal !== "number"
+    || !Number.isFinite(value.planningPricedSubtotal) || value.planningPricedSubtotal < 0) return null;
+  const decisions = value.decisions.map(parseProjectPlanningDecision);
+  if (decisions.some((entry) => !entry)) return null;
+  const review = value.review === undefined || value.review === null ? null : value.review;
+  if (review !== null && (!isRecord(review) || !isNonEmptyString(review.reviewer)
+    || !isNonEmptyString(review.date) || typeof review.notes !== "string"
+    || !isNonEmptyString(review.fingerprint))) return null;
+  return {
+    token: value.token, workspaceId: value.workspaceId, workspaceName: stringValue(value.workspaceName),
+    scenarioId: value.scenarioId, scenarioName: stringValue(value.scenarioName), fingerprint: value.fingerprint,
+    capturedAt: value.capturedAt, includedScope: [...value.includedScope] as string[],
+    excludedScope: [...value.excludedScope] as string[], decisions: decisions as ProjectPlanningDecision[],
+    frozenContingencyLineId: nullableString(value.frozenContingencyLineId),
+    planningTotal: value.planningTotal, planningPricedSubtotal: value.planningPricedSubtotal,
+    review: review as ProjectPlanningOrigin["review"]
+  };
+}
+
+function parseProjectPlanningDecision(value: unknown): ProjectPlanningDecision | null {
+  if (!isRecord(value) || !isNonEmptyString(value.decisionId) || !isNonEmptyString(value.label)
+    || (value.kind !== "line" && value.kind !== "scope" && value.kind !== "allowance")
+    || (value.status !== "pending" && value.status !== "resolved" && value.status !== "excluded")
+    || !isNullableStoredNumber(value.sourceAmount)) return null;
+  return { decisionId: value.decisionId, label: value.label, kind: value.kind,
+    lineItemId: nullableString(value.lineItemId), status: value.status,
+    reason: stringValue(value.reason), sourceAmount: value.sourceAmount };
+}
+
+function parseProjectPlanningLineOrigin(value: unknown): ProjectPlanningLineOrigin | null {
+  if (!isRecord(value) || !isNonEmptyString(value.sourceId) || !isNonEmptyString(value.role)
+    || !["component", "allowance", "external", "contingency"].includes(String(value.sourceKind))
+    || !isNullableStoredNumber(value.originalQuantity) || !isNullableStoredNumber(value.originalUnitRate)
+    || !isNullableStoredNumber(value.originalAmount) || typeof value.originalUnit !== "string") return null;
+  return {
+    sourceId: value.sourceId, role: value.role, packageId: nullableString(value.packageId),
+    packageVersion: nullableString(value.packageVersion), sourceKind: value.sourceKind as ProjectPlanningLineOrigin["sourceKind"],
+    originalQuantity: value.originalQuantity, originalUnitRate: value.originalUnitRate,
+    originalAmount: value.originalAmount, originalUnit: value.originalUnit,
+    reason: nullableString(value.reason), rateBasis: (value.rateBasis ?? null) as RateBasis | null,
+    allowanceRule: (value.allowanceRule ?? null) as ProjectPlanningLineOrigin["allowanceRule"]
   };
 }
 

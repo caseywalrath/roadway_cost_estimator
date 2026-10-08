@@ -90,6 +90,27 @@ body {
 .planning-panel summary { cursor: pointer; font-weight: 650; }
 .planning-link { border: 0 !important; padding-left: 0 !important; color: var(--accent-dark) !important; text-decoration: underline; }
 .planning-edit-row td { background: #fafcfc; }
+.planning-edit-row td { padding-top: 0; padding-bottom: 4px; }
+.planning-row-editor { margin: 0 !important; }
+.planning-row-editor > summary { width: fit-content; color: var(--accent-dark); font-size: .82rem; }
+.planning-row-editor[open] { padding: 8px 0 12px; }
+.planning-row-editor[open] > summary { margin-bottom: 8px; }
+.planning-scope-state { display: inline-block; font-weight: 650; }
+.planning-review-status { font-weight: 650; }
+.planning-handoff { border-top: 1px solid var(--line); padding-top: 14px; }
+.planning-handoff h3 { margin: 0; color: var(--heading); font-family: var(--font-heading); }
+.planning-handoff p { font-size: .88rem; }
+.planning-handoff dl { display: flex; flex-wrap: wrap; gap: 18px; }
+.planning-handoff dl div { display: grid; gap: 4px; }
+.planning-handoff dd { margin: 0; font-weight: 650; }
+.planning-handoff button { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.planning-component td:nth-child(2), .planning-component td:nth-child(3), .planning-component td:nth-child(4) { white-space: nowrap; }
+.planning-component td:nth-child(5) { max-width: 260px; font-size: .82rem; }
+.planning-component td:nth-child(5) p, .planning-component td:nth-child(5) small { overflow-wrap: anywhere; }
+.planning-component details > summary { font-size: .78rem; color: var(--accent-dark); }
+.planning-table-wrap:focus-visible { outline: 2px solid var(--accent); }
+
 .planning-unpriced td:first-child { border-left: 3px solid #c88526; }
 .planning-excluded td:first-child { border-left: 3px solid #9aa4ad; }
 .planning-issues { background: #fff7ed; border: 1px solid #eed4b0; border-radius: 8px; padding: 10px 16px; }
