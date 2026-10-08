@@ -113,6 +113,13 @@ export interface ProjectLineItem {
   updatedAt: string;
 }
 
+const PLANNING_SNAPSHOT_NOTE = "Planning starting snapshot; review before use.";
+
+/** Hides only the generated legacy handoff note; all user-authored notes remain intact. */
+export function projectLineNotes(line: ProjectLineItem): string {
+  return line.planningOrigin && line.notes === PLANNING_SNAPSHOT_NOTE ? "" : line.notes;
+}
+
 export type ProjectLineItemType = "catalog" | "custom";
 export type ProjectCostCategory = "construction" | "other";
 
@@ -869,7 +876,7 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
       unit,
       quantity,
       preferredUnitCost,
-      notes: stringValue(value.notes),
+      notes: planningOrigin && stringValue(value.notes) === PLANNING_SNAPSHOT_NOTE ? "" : stringValue(value.notes),
       evidenceContext,
       createdAt: stringValue(value.createdAt) || currentTimestamp(),
       updatedAt: stringValue(value.updatedAt) || currentTimestamp()
@@ -891,7 +898,7 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
     unit,
     quantity,
     preferredUnitCost,
-    notes: stringValue(value.notes),
+    notes: planningOrigin && stringValue(value.notes) === PLANNING_SNAPSHOT_NOTE ? "" : stringValue(value.notes),
     evidenceContext: null,
     createdAt: stringValue(value.createdAt) || currentTimestamp(),
     updatedAt: stringValue(value.updatedAt) || currentTimestamp()

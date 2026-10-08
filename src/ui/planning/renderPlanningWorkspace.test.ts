@@ -66,7 +66,7 @@ describe("Planning engineer review presentation", () => {
     expect(row?.querySelector('.planning-element-name')?.textContent).toBe("Curb and gutter");
     expect(row?.querySelector('.planning-element-cost')?.textContent).toBe("Price pending");
     expect(host.querySelectorAll('[data-action="remove-package"][data-id="curb"]')).toHaveLength(1);
-    expect(row?.querySelector('[data-action="remove-package"][data-id="curb"]')?.textContent).toBe("Remove element");
+    expect(row?.querySelector('[data-action="remove-package"][data-id="curb"]')?.getAttribute("aria-label")).toBe("Remove Curb and gutter");
   });
 
   it.each(["reconstruction", "path"])("omits optional curb and gutter for %s", (kind) => {
@@ -80,8 +80,9 @@ describe("Planning engineer review presentation", () => {
     const menu = host.querySelector('.planning-element-menu');
     expect(menu?.querySelector('summary')?.textContent).toBe("Add project element");
     expect(menu?.querySelectorAll('[data-action="add-package"]')).toHaveLength(2);
-    expect(menu?.textContent).toContain("Concrete from exact state item data plus provisional curb ramps");
-    expect(menu?.textContent).toContain("Exact state item data; installation only");
+    expect(menu?.textContent).toContain("Sidewalk");
+    expect(menu?.textContent).toContain("Curb and gutter");
+    expect(menu?.textContent).not.toContain("Concrete from exact state item data plus provisional curb ramps");
     expect(host.querySelector('[data-field="sidewalk-enabled"]')).toBeNull();
     expect(render(false, false, "").querySelector('[data-action="add-package"]')).toBeNull();
   });
@@ -138,8 +139,10 @@ describe("Planning engineer review presentation", () => {
     expect(host.querySelectorAll('[data-field="compare-select"]')).toHaveLength(1);
     expect(host.querySelectorAll('[data-action="duplicate"]')).toHaveLength(1);
     expect(host.querySelector('[data-action="duplicate"]')?.closest('.planning-actions')).not.toBeNull();
-    expect(host.textContent).toContain("Review before detailed estimate");
-    expect(host.querySelector('.planning-review-status')?.textContent).toContain("pending");
+    expect(host.textContent).toContain("Assumptions and next steps");
+    expect(host.querySelector('.planning-review-status')).toBeNull();
+    expect(host.querySelector('.planning-export')?.textContent).toContain("Current alternative CSV");
+    expect(host.querySelector('.planning-export')?.textContent).toContain("Planning project JSON");
   });
 
   it("presents work in six columns with closed editors and separate evidence", () => {
@@ -158,7 +161,7 @@ describe("Planning engineer review presentation", () => {
     expect(host.querySelector('[data-field="exclusion-effect"]')).toBeNull();
     expect(host.querySelector('[data-field="exclusion-reason"]')).toBeNull();
     expect(host.querySelector('[data-field="override-reason"][data-kind="quantity"]')).toBeNull();
-    expect(host.querySelector('[data-detail="record-review"]')).not.toBeNull();
-    expect(host.querySelector('[data-detail="all-review-decisions"]')?.closest('[data-detail="record-review"]')).toBeNull();
+    expect(host.querySelector('[data-detail="record-review"]')).toBeNull();
+    expect(host.querySelector('[data-detail="all-review-decisions"]')).toBeNull();
   });
 });

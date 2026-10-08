@@ -2,6 +2,7 @@ import {
   PROJECT_WORKSPACE_SCHEMA_VERSION,
   createId,
   projectCostSummary,
+  projectLineNotes,
   parseUserProjectV9,
   parseUserProjectV10,
   type ProjectCostSummary,
@@ -28,7 +29,7 @@ export function buildProjectBackup(project: UserProject): ProjectBackupFile {
     exportedAt: new Date().toISOString(),
     projectSchemaVersion: PROJECT_WORKSPACE_SCHEMA_VERSION,
     revision: project.revision,
-    project: structuredClone(project),
+    project: structuredClone({ ...project, lineItems: project.lineItems.map((line) => ({ ...line, notes: projectLineNotes(line) })) }),
     summary: projectCostSummary(project)
   };
 }

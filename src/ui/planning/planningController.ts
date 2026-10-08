@@ -6,7 +6,7 @@ import { buildColoradoContractRateSnapshot } from "../../planning/rates/colorado
 import { calculateScenarioCosts } from "../../planning/costEngine";
 import { comparePlanningScenarios } from "../../planning/compareScenarios";
 import { buildPlanningBackup, importPlanningBackup } from "../../planning/planningBackup";
-import { buildPlanningCsv } from "../../planning/planningCsv";
+import { buildPlanningEngineerCsv } from "../../planning/planningEngineerCsv";
 import { buildPlannerEstimate } from "../../planning/plannerPresentation";
 import { pilotManualRate, pilotManualReason } from "../../planning/recipes/pilotDefaults";
 import { addPlanningScenario, createPackageInstance, createPlanningScenario, createPlanningWorkspace, duplicatePlanningScenario, editPlanningScenario, getScenarioReviewStatus, recordScenarioReview, replacePlanningScenario, setActivePlanningScenario } from "../../planning/planningWorkspace";
@@ -398,7 +398,8 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
       const existing = scenario.externalScopes.find((entry) => entry.scopeId === target.dataset.id); if (!existing) return;
       const decision = field === "external-decision" ? target.value as typeof existing.decision : existing.decision;
       const reasonInput = [...(host?.querySelectorAll<HTMLInputElement>("[data-field='external-reason']") ?? [])].find((entry) => entry.dataset.id === existing.scopeId);
-      edit({ kind: "external_scope", scope: { ...existing, decision, amount: field === "external-amount" ? numeric(target.value) : decision === "manual" ? existing.amount : null, reason: decision === "unassessed" ? "" : reasonInput?.value || existing.reason || reason } }); return;
+      const decisionReason = decision === "unassessed" ? "" : decision === "none_assumed" && existing.decision !== "none_assumed" ? "Planner expects no project impact" : reasonInput?.value || existing.reason || reason;
+      edit({ kind: "external_scope", scope: { ...existing, decision, amount: field === "external-amount" ? numeric(target.value) : decision === "manual" ? existing.amount : null, reason: decisionReason } }); return;
     }
     if (field === "external-reason") { const existing = scenario.externalScopes.find((entry) => entry.scopeId === target.dataset.id); if (existing && existing.decision !== "unassessed") edit({ kind: "external_scope", scope: { ...existing, reason: target.value } }); return; }
     if (field === "custom-scope" || field === "custom-exclusion-reason") {
@@ -468,15 +469,20 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     if (action === "take-over" && workspace && coordinator) { coordinator.takeOver(workspace.workspaceId); readOnly = false; message = "Editing ownership taken in this tab."; render(); }
     if (action === "export-json" && workspace) {
       if (pendingInput && host?.contains(pendingInput)) { const input = pendingInput; pendingInput = null; onChange({ target: input } as unknown as Event); }
-      if (invalidInputs.size) { message = "Correct invalid numeric inputs before exporting a recovery copy."; render(); return; }
+      if (invalidInputs.size) { message = "Correct invalid numeric inputs before exporting."; render(); return; }
       const exported = workspace;
       file(`${exported.name}.rce-planning.json`, JSON.stringify(buildPlanningBackup(exported, now()), null, 2), "application/json");
       if (!dirty && repository) {
         try { workspace = await repository.recordBackup(exported.workspaceId, savedRevision); render(); }
-        catch { message = "Recovery file prepared, but its backup marker could not be saved."; render(); }
+        catch { message = "Planning project JSON prepared, but its backup marker could not be saved."; render(); }
       }
     }
-    if (action === "export-csv") { const scenario = selected(); if (scenario) file(`${scenario.name}.planning.csv`, buildPlanningCsv(scenario), "text/csv"); }
+    if (action === "export-csv") {
+      if (pendingInput && host?.contains(pendingInput)) { const input = pendingInput; pendingInput = null; onChange({ target: input } as unknown as Event); }
+      if (invalidInputs.size) { message = "Correct invalid numeric inputs before exporting."; render(); return; }
+      const scenario = selected();
+      if (scenario) file(`${scenario.name}.planning.csv`, buildPlanningEngineerCsv(scenario, workspace?.name ?? scenario.name), "text/csv");
+    }
     if (action === "import-json") host?.querySelector<HTMLInputElement>("[data-field='import-file']")?.click();
     if (action === "remove-custom") { const componentId = target.dataset.id; if (componentId) edit({ kind: "remove_custom", componentId, reason: "Removed by planner" }); }
     if (action === "remove-package") {
@@ -514,10 +520,10 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
       const json: unknown = JSON.parse(await input.files[0].text());
       const result = importPlanningBackup(json, now(), id());
       if (!result.ok) { message = issueMessage(result.issues); render(); return; }
-      if (result.value.state !== planningState) { message = "This recovery file belongs to another state."; render(); return; }
+      if (result.value.state !== planningState) { message = "This Planning project belongs to another state."; render(); return; }
       if (!(await flushDraft())) return;
       workspace = await repository.createWorkspace(result.value); savedRevision = workspace.revision; dirty = false;
-      workspaces = await repository.listWorkspaces(planningState); await repository.setActiveWorkspaceId(planningState, workspace.workspaceId); message = "Recovery copy imported"; render();
+      workspaces = await repository.listWorkspaces(planningState); await repository.setActiveWorkspaceId(planningState, workspace.workspaceId); message = "Planning project copy imported"; render();
     } catch (error) { message = `Import failed: ${String(error)}`; render(); }
     finally { input.value = ""; }
   }

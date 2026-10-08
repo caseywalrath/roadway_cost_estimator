@@ -50,7 +50,7 @@ export function buildProjectHandoff(input: {
       lineItemId: id, lineItemType: item ? "catalog" : "custom", costCategory: category,
       state: scenario.state, agencyId: item?.agencyId ?? "", agencyItemId: item?.agencyItemId ?? "",
       group, itemCode: item?.itemCode ?? "", description, descriptionOverrideEnabled: !item,
-      unit, quantity, preferredUnitCost: rate, notes: "Planning starting snapshot; review before use.",
+      unit, quantity, preferredUnitCost: rate, notes: "",
       evidenceContext: null, planningOrigin: origin, createdAt: now, updatedAt: now,
     });
     if (quantity === null || rate === null || rate === 0) {

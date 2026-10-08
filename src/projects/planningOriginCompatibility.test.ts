@@ -54,6 +54,17 @@ describe("Planning-origin Project compatibility", () => {
     expect(csv).toContain("Total Item Cost");
   });
 
+  it("clears only generated Planning line notes in display and exports", () => {
+    const project = draft();
+    project.lineItems[0].notes = "Planning starting snapshot; review before use.";
+    expect(parseUserProjectV10(project)?.lineItems[0].notes).toBe("");
+    expect(buildProjectCsv(project)).not.toContain("Planning starting snapshot; review before use.");
+    expect(JSON.stringify(buildProjectBackup(project))).not.toContain("Planning starting snapshot; review before use.");
+    project.lineItems[0].notes = "Engineer note";
+    expect(parseUserProjectV10(project)?.lineItems[0].notes).toBe("Engineer note");
+    expect(buildProjectCsv(project)).toContain("Engineer note");
+  });
+
   it("tracks Project review independently and stales it after a price change", () => {
     const project = draft();
     project.lineItems[0].preferredUnitCost = 250;

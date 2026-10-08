@@ -57,6 +57,8 @@ describe("project planning handoff", () => {
     expect(result.bridge.differenceFromCompleteTotal).toBe(0);
     expect(result.project.planningOrigin?.planningTotal).toBe(169_500);
     expect(result.project.lineItems).toHaveLength(6);
+    expect(result.project.lineItems.every((line) => line.notes === "")).toBe(true);
+    expect(result.project.notes).toBe("Test notes");
   });
 
   it("preserves incomplete scope as a pending decision and keeps null distinct from zero", () => {

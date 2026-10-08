@@ -3,6 +3,7 @@ import {
   projectCostSummary,
   projectPlanningIsComplete,
   projectLineTotal,
+  projectLineNotes,
   sortProjectLineItems,
   type ProjectLineItem,
   type ProjectSort,
@@ -30,7 +31,7 @@ const projectCsvColumns: ProjectCsvColumn[] = [
   { header: "Unit", value: (_project, lineItem) => lineItem.unit },
   { header: "Preferred Unit Cost", value: (_project, lineItem) => lineItem.preferredUnitCost },
   { header: "Total Item Cost", value: (project, lineItem) => project.planningOrigin && (lineItem.quantity === null || lineItem.preferredUnitCost === null) ? null : projectLineTotal(lineItem) },
-  { header: "Line Notes", value: (_project, lineItem) => lineItem.notes },
+  { header: "Line Notes", value: (_project, lineItem) => projectLineNotes(lineItem) },
   { header: "Evidence Row Count", value: (_project, lineItem) => lineItem.evidenceContext?.includedRowCount ?? 0 },
   {
     header: "Included Observation IDs",

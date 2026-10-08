@@ -4,9 +4,9 @@ import {
   projectConstructionCost,
   projectContingencyCost,
   projectLineTotal,
+  projectLineNotes,
   projectOtherCost,
   projectPlanningIsComplete,
-  projectPlanningReviewStatus,
   projectGroupSuggestions,
   projectTotal,
   sortProjectLineItems,
@@ -312,22 +312,27 @@ export function renderProjectPlanningPanel(project: UserProject, readOnly: boole
   const unpriced = project.lineItems.filter((line) => (line.quantity === null || line.preferredUnitCost === null) && !pending.some((decision) => decision.lineItemId === line.lineItemId));
   const scopeList = (entries: string[]) => entries.length ? `<ul>${entries.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("")}</ul>` : "<p class=\"muted\">None recorded.</p>";
   return `<section class="panel-block project-planning-origin" data-project-planning-panel>
-    <div class="panel-heading"><div><h3>From Planning</h3><p>${escapeHtml(origin.workspaceName)} / ${escapeHtml(origin.scenarioName)} · ${formatDateTime(origin.capturedAt)}</p></div><button type="button" class="secondary-button" data-open-planning-origin>Open source alternative</button></div>
-    <p class="muted">Amounts are a one-way starting snapshot. Project edits do not change Planning or recalculate frozen Planning allowances. Project decisions are independent of the Planning review.</p>
-    <details><summary>Included and excluded scope</summary><h4>Included scope</h4>${scopeList(origin.includedScope)}<h4>Excluded / none assumed</h4>${scopeList(origin.excludedScope)}</details>
-    <h4>Work to resolve${pending.length + unpriced.length ? ` (${pending.length + unpriced.length})` : ""}</h4>
+    <div class="panel-heading"><div><h3>From Planning</h3><p>${escapeHtml(origin.workspaceName)} / ${escapeHtml(origin.scenarioName)} · ${formatDateTime(origin.capturedAt)} · ${pending.length + unpriced.length} item${pending.length + unpriced.length === 1 ? "" : "s"} to resolve</p></div></div>
+    <p class="muted">This is an independent Project draft. Edit quantities and costs in the item table below.</p>
+    <details><summary>Origin and assumptions</summary><button type="button" class="secondary-button" data-open-planning-origin>Open source alternative</button><h4>Included scope</h4>${scopeList(origin.includedScope)}<h4>Excluded / none assumed</h4>${scopeList(origin.excludedScope)}<p>Planning allowances are frozen at handoff and do not recalculate with Project edits.</p></details>
+    <details class="project-planning-outstanding"><summary>Outstanding work (${pending.length + unpriced.length})</summary>
     ${unpriced.length ? `<ul>${unpriced.map((line) => `<li>${escapeHtml(line.description || line.itemCode || "Unnamed Project item")} — quantity or unit cost is unknown. Price or remove this Project item.</li>`).join("")}</ul>` : ""}
     ${pending.length ? pending.map((decision) => `<form data-project-planning-decision="${escapeHtml(decision.decisionId)}"><p><strong>${escapeHtml(decision.label)}</strong>${decision.lineItemId ? " — price or revise the associated Project item, then record the decision." : " — record the scope and cost treatment."}</p><label><span>Decision reason</span><input name="reason" aria-label="Decision reason for ${escapeHtml(decision.label)}" required value="${escapeHtml(decision.reason)}" ${readOnly ? "disabled" : ""} /></label><button type="submit" name="status" value="resolved" class="secondary-button" ${readOnly ? "disabled" : ""}>Resolve</button><button type="submit" name="status" value="excluded" class="secondary-button" ${readOnly ? "disabled" : ""}>Exclude${decision.lineItemId ? " and remove line" : ""}</button><p role="status" data-project-decision-error></p></form>`).join("") : "<p>No imported decisions remain pending. Unpriced Project items must also be priced or removed before a complete total is shown.</p>"}
+    </details>
     ${origin.decisions.some((decision) => decision.status !== "pending") ? `<details><summary>Recorded Project decisions</summary><ul>${origin.decisions.filter((decision) => decision.status !== "pending").map((decision) => `<li>${escapeHtml(decision.label)} — ${escapeHtml(decision.status)}: ${escapeHtml(decision.reason)}</li>`).join("")}</ul></details>` : ""}
     ${frozen ? `<p><strong>Frozen Planning contingency</strong>: ${frozen.quantity === null || frozen.preferredUnitCost === null ? "Pending" : formatCurrency(projectLineTotal(frozen))}. Review this Other Costs line deliberately when revising allowances.</p><p role="status" data-project-frozen-warning ${project.contingencyPercent > 0 ? "" : "hidden"}>Native Project contingency is above zero while the frozen Planning contingency line remains. This can double count contingency. <button type="button" class="text-button" data-review-frozen-contingency="${escapeHtml(frozen.lineItemId)}">Review frozen line</button></p>` : ""}
-    <p><strong>Project review:</strong> ${escapeHtml(projectPlanningReviewStatus(project))}</p>
-    ${projectPlanningIsComplete(project) ? `<details><summary>Record Project review</summary><form data-project-planning-review><label>Reviewer <input name="reviewer" required value="${escapeHtml(origin.review?.reviewer ?? "")}" ${readOnly ? "disabled" : ""}></label><label>Review date <input name="date" type="date" required value="${escapeHtml(origin.review?.date ?? new Date().toISOString().slice(0, 10))}" ${readOnly ? "disabled" : ""}></label><label>Review notes <textarea name="notes" ${readOnly ? "disabled" : ""}>${escapeHtml(origin.review?.notes ?? "")}</textarea></label><button type="submit" class="primary-button" ${readOnly ? "disabled" : ""}>Record review</button></form></details>` : ""}
   </section>`;
 }
 
 function renderPlanningLineSnapshot(line: ProjectLineItem): string {
   const origin = line.planningOrigin!;
-  return `<details><summary>Planning basis${origin.allowanceRule ? " (frozen)" : ""}</summary><p>${escapeHtml(origin.role)} · ${escapeHtml(origin.sourceKind)}${origin.packageId ? ` · ${escapeHtml(origin.packageId)} ${escapeHtml(origin.packageVersion ?? "")}` : ""}</p><p>Original quantity: ${origin.originalQuantity === null ? "Unknown" : formatNumber(origin.originalQuantity)} ${escapeHtml(origin.originalUnit)}; original rate: ${origin.originalUnitRate === null ? "Unknown" : formatCurrency(origin.originalUnitRate)}; original amount: ${origin.originalAmount === null ? "Unknown" : formatCurrency(origin.originalAmount)}.</p>${origin.reason ? `<p>${escapeHtml(origin.reason)}</p>` : ""}${origin.rateBasis ? `<pre>${escapeHtml(JSON.stringify(origin.rateBasis, null, 2))}</pre>` : ""}${origin.allowanceRule ? `<p>Frozen allowance rule: ${escapeHtml(JSON.stringify(origin.allowanceRule))}</p>` : ""}</details>`;
+  const source = origin.rateBasis?.kind === "manual" ? `Manual planning rate${origin.rateBasis.reason ? `: ${origin.rateBasis.reason}` : ""}`
+    : origin.rateBasis?.kind === "ne_annual" ? `NDOT annual average, ${origin.rateBasis.periodStart} to ${origin.rateBasis.periodEnd}. ${origin.rateBasis.sourceDescription}. ${origin.rateBasis.sourceLocator}`
+      : origin.rateBasis?.kind === "co_contract_median" ? `CDOT awarded median, ${origin.rateBasis.actualFrom} to ${origin.rateBasis.actualTo}, ${origin.rateBasis.contracts.length} contracts${origin.rateBasis.contracts[0]?.lines[0]?.sourceLocator ? `. Example source: ${origin.rateBasis.contracts[0].lines[0].sourceLocator}` : ""}`
+        : origin.sourceKind === "external" ? "Planner-entered major impact" : "Planning package assumption";
+  const base = origin.allowanceRule?.base;
+  const baseText = base?.kind === "direct_construction" ? "direct construction cost" : base?.kind === "construction_subtotal" ? "construction subtotal" : base?.kind === "construction_with_contingency" ? "construction subtotal including contingency" : base?.kind === "references" ? "selected Planning cost items" : "";
+  return `<details><summary>Planning basis${origin.allowanceRule ? " (frozen)" : ""}</summary><p>${escapeHtml(source)}</p><p>Original quantity: ${origin.originalQuantity === null ? "Unknown" : formatNumber(origin.originalQuantity)} ${escapeHtml(origin.originalUnit)}; rate: ${origin.originalUnitRate === null ? "Unknown" : formatCurrency(origin.originalUnitRate)}; amount: ${origin.originalAmount === null ? "Unknown" : formatCurrency(origin.originalAmount)}.</p>${origin.allowanceRule ? `<p>Frozen allowance: ${origin.allowanceRule.percent === null ? "Unknown percent" : `${formatNumber(origin.allowanceRule.percent)}%`} of ${escapeHtml(baseText)} (${origin.allowanceRule.baseAmount === null ? "base unknown" : formatCurrency(origin.allowanceRule.baseAmount)}).</p>` : ""}${origin.reason ? `<p>${escapeHtml(origin.reason)}</p>` : ""}</details>`;
 }
 
 function renderProjectCostSummary(project: UserProject, readOnly: boolean): string {
@@ -393,7 +398,7 @@ function renderProjectLineRow(lineItem: ProjectLineItem, readOnly: boolean, grou
     <td>${custom ? renderProjectLineInput(lineItem, "unit", "Unit", "project-line-unit-input", disabled) : escapeHtml(lineItem.unit)}</td>
     <td>${renderProjectLineInput(lineItem, "quantity", "Quantity", "project-line-number-input", disabled, "decimal")}</td>
     <td data-project-line-total-id="${escapeHtml(lineItem.lineItemId)}">${lineItem.planningOrigin && (lineItem.quantity === null || lineItem.preferredUnitCost === null) ? "Pending" : formatCurrency(projectLineTotal(lineItem))}${lineItem.planningOrigin ? renderPlanningLineSnapshot(lineItem) : ""}</td>
-    <td>${renderProjectLineInput(lineItem, "notes", "Notes", "project-line-notes-input", disabled)}</td>
+    <td>${renderProjectLineInput({ ...lineItem, notes: projectLineNotes(lineItem) }, "notes", "Notes", "project-line-notes-input", disabled)}</td>
     <td><button type="button" class="project-line-remove-button" data-remove-project-line-id="${escapeHtml(lineItem.lineItemId)}" aria-label="Remove ${escapeHtml(lineItem.itemCode || "custom item")} from project" title="Remove line" ${disabled}>${trashIcon()}</button></td>
   </tr>`;
 }
