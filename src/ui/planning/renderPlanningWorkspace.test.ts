@@ -6,10 +6,10 @@ import { NEBRASKA_PILOT_PACKAGES } from "../../planning/recipes/nebraskaPilot";
 import { renderPlanningWorkspace } from "./renderPlanningWorkspace";
 
 const timestamp = "2026-10-07T12:00:00.000Z";
-function render(edited = false, existingCustom = false, baseKind = "resurfacing", includeCurb = false) {
+function render(edited = false, existingCustom = false, baseKind = "resurfacing", includeCurb = false, includeSidewalk = false, elementPrices: "pending" | "partial" | "complete" = "pending") {
   const scenario = createPlanningScenario({ scenarioId: "alternative", state: "NE", name: "Alternative A", now: timestamp });
   const workspace = createPlanningWorkspace({ workspaceId: "planning", state: "NE", name: "Road", now: timestamp });
-  const definition = NEBRASKA_PILOT_PACKAGES.find((recipe) => recipe.kind === baseKind)!;
+  const definition = NEBRASKA_PILOT_PACKAGES.find((recipe) => recipe.kind === (baseKind || "resurfacing"))!;
   const instance = createPackageInstance({ instanceId: "base", segmentId: "segment", scopeId: "road", definition });
   if (!scenario.ok || !workspace.ok || !instance.ok) throw Error("Invalid fixture");
   if (edited) {
@@ -19,11 +19,23 @@ function render(edited = false, existingCustom = false, baseKind = "resurfacing"
     instance.value.exclusions[role] = { reason: "Handled in separate contract", sectionEffect: "Separate construction section" };
   }
   scenario.value.segments = [{ segmentId: "segment", name: "Road" }];
-  scenario.value.packages = [instance.value];
+  scenario.value.packages = baseKind ? [instance.value] : [];
   if (includeCurb) {
     const curb = createPackageInstance({ instanceId: "curb", segmentId: "segment", scopeId: "road", definition: NEBRASKA_PILOT_PACKAGES.find((recipe) => recipe.kind === "curb_gutter")! });
     if (!curb.ok) throw Error("Invalid curb fixture");
     scenario.value.packages.unshift(curb.value);
+  }
+  if (includeSidewalk) {
+    const sidewalk = createPackageInstance({ instanceId: "sidewalk", segmentId: "segment", scopeId: "sidewalk", definition: NEBRASKA_PILOT_PACKAGES.find((recipe) => recipe.kind === "sidewalk")! });
+    if (!sidewalk.ok) throw Error("Invalid sidewalk fixture");
+    scenario.value.packages.push(sidewalk.value);
+  }
+  if (elementPrices !== "pending") {
+    for (const element of scenario.value.packages.filter((entry) => ["sidewalk", "curb_gutter"].includes(entry.definition.kind))) {
+      element.definition.components.forEach((component, index) => {
+        if (elementPrices === "complete" || index === 0) element.rateOverrides[component.role] = { value: 100, reason: "Reviewed price" };
+      });
+    }
   }
   if (existingCustom) scenario.value.customComponents = [{
     componentId: "old-custom", segmentId: "segment", scopeId: "landscaping", role: "landscaping",
@@ -40,22 +52,67 @@ function render(edited = false, existingCustom = false, baseKind = "resurfacing"
 describe("Planning engineer review presentation", () => {
   it("offers curb and gutter for resurfacing and keeps it separate from the base improvement", () => {
     const host = render(false, false, "resurfacing", true);
-    expect(host.querySelector<HTMLInputElement>('[data-field="curb-enabled"]')?.checked).toBe(true);
+    expect(host.querySelector('[data-field="curb-enabled"]')).toBeNull();
+    expect(host.querySelector('[data-action="add-package"][data-kind="curb_gutter"]')).toBeNull();
+    expect(host.querySelector('[data-action="add-package"][data-kind="sidewalk"]')).not.toBeNull();
     expect(host.querySelector<HTMLSelectElement>('[data-field="curb-sides"]')?.value).toBe("2");
     expect(host.querySelector('[data-field="curb-sides"]')?.getAttribute('data-instance-id')).toBe("curb");
     expect(host.querySelector<HTMLSelectElement>('[data-field="base-kind"]')?.value).toBe("resurfacing");
     expect(host.querySelector('[data-field="base-kind"] option[value="curb_gutter"]')).toBeNull();
     expect(host.textContent).toContain("Optional element: Nebraska Curb and Gutter");
     expect(host.textContent).toContain("Existing curb removal is excluded");
+    const row = host.querySelector('[data-detail="element-curb"]');
+    expect(row?.hasAttribute('open')).toBe(false);
+    expect(row?.querySelector('.planning-element-name')?.textContent).toBe("Curb and gutter");
+    expect(row?.querySelector('.planning-element-cost')?.textContent).toBe("Price pending");
+    expect(host.querySelectorAll('[data-action="remove-package"][data-id="curb"]')).toHaveLength(1);
+    expect(row?.querySelector('[data-action="remove-package"][data-id="curb"]')?.textContent).toBe("Remove element");
   });
 
   it.each(["reconstruction", "path"])("omits optional curb and gutter for %s", (kind) => {
-    expect(render(false, false, kind).querySelector('[data-field="curb-enabled"]')).toBeNull();
+    const host = render(false, false, kind);
+    expect(host.querySelector('[data-action="add-package"][data-kind="curb_gutter"]')).toBeNull();
+    expect(host.querySelector('[data-action="add-package"][data-kind="sidewalk"]')).not.toBeNull();
+  });
+
+  it("offers eligible elements with their item basis in a single add menu", () => {
+    const host = render();
+    const menu = host.querySelector('.planning-element-menu');
+    expect(menu?.querySelector('summary')?.textContent).toBe("Add project element");
+    expect(menu?.querySelectorAll('[data-action="add-package"]')).toHaveLength(2);
+    expect(menu?.textContent).toContain("Concrete from exact state item data plus provisional curb ramps");
+    expect(menu?.textContent).toContain("Exact state item data; installation only");
+    expect(host.querySelector('[data-field="sidewalk-enabled"]')).toBeNull();
+    expect(render(false, false, "").querySelector('[data-action="add-package"]')).toBeNull();
+  });
+
+  it("renders sidewalk as a closed compact row with its scope and existing controls", () => {
+    const host = render(false, false, "resurfacing", true, true);
+    const row = host.querySelector('[data-detail="element-sidewalk"]');
+    expect(row?.hasAttribute('open')).toBe(false);
+    expect(row?.querySelector('.planning-element-scope')?.textContent).toContain("Both sides");
+    expect(row?.querySelector('.planning-element-scope')?.textContent).toContain("ft wide");
+    expect(row?.querySelector('.planning-element-scope')?.textContent).toContain("4 ramps");
+    for (const field of ["sidewalk-sides", "sidewalk-width", "ramp-count"]) {
+      expect(row?.querySelector(`[data-field="${field}"]`)?.getAttribute('data-instance-id')).toBe("sidewalk");
+    }
+    expect(host.querySelector('.planning-element-menu')).toBeNull();
+    expect(host.querySelectorAll('[data-action="remove-package"][data-id="sidewalk"]')).toHaveLength(1);
+  });
+
+  it("marks partial element costs and labels fully priced direct construction costs", () => {
+    const partial = render(false, false, "resurfacing", false, true, "partial");
+    expect(partial.querySelector('[data-detail="element-sidewalk"] .planning-element-cost')?.textContent).toMatch(/^\$[\d,]+ partial · price pending$/);
+    const complete = render(false, false, "resurfacing", true, true, "complete");
+    const label = complete.querySelector('[data-detail="element-sidewalk"] .planning-element-cost');
+    expect(label?.textContent).toMatch(/^\$[\d,]+$/);
+    expect(label?.getAttribute('aria-label')).toBe("Sidewalk direct construction cost");
+    expect(complete.querySelector('[data-detail="element-curb"] .planning-element-cost')?.textContent).toMatch(/^\$[\d,]+$/);
   });
 
   it("removes open-ended work entry and keeps old custom work removable in engineer review", () => {
     const host = render(false, true);
-    const elements = [...host.querySelectorAll('.planning-section')].find((section) => section.querySelector('h2')?.textContent === "Add project elements")!;
+    const elements = host.querySelector('.planning-elements')!;
     expect(host.querySelector('[data-action="add-custom"]')).toBeNull();
     expect(host.textContent).not.toContain("Other work to include");
     expect(elements.querySelector('[data-field="custom-description"]')).toBeNull();

@@ -351,18 +351,6 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
       addPackage(kind, currentLength);
       return;
     }
-    if (field === "sidewalk-enabled") {
-      const current = scenario.packages.find((entry) => entry.definition.kind === "sidewalk");
-      if ((target as HTMLInputElement).checked && !current) addPackage("sidewalk");
-      if (!(target as HTMLInputElement).checked && current) edit({ kind: "remove_package", instanceId: current.instanceId, reason: "Planner removed sidewalk" });
-      return;
-    }
-    if (field === "curb-enabled") {
-      const current = scenario.packages.find((entry) => entry.definition.kind === "curb_gutter");
-      if ((target as HTMLInputElement).checked && !current) addPackage("curb_gutter");
-      if (!(target as HTMLInputElement).checked && current) edit({ kind: "remove_package", instanceId: current.instanceId, reason: "Planner removed curb and gutter" });
-      return;
-    }
     if (["planner-length", "planner-width", "sidewalk-width", "sidewalk-sides", "curb-sides", "ramp-count"].includes(field)) {
       const value = numeric(target.value);
       if (field === "planner-length") {
@@ -457,7 +445,7 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
       else { message = "Enter a planning project name."; render(); }
     }
     if (action === "create-scenario") createScenarioAction(`Alternative ${String.fromCharCode(65 + Math.min(workspace?.scenarios.length ?? 0, 25))}`);
-    if (action === "add-package") addPackage(target.dataset.kind as PackageKind);
+    if (action === "add-package" && (target.dataset.kind === "sidewalk" || target.dataset.kind === "curb_gutter")) addPackage(target.dataset.kind);
     if (action === "duplicate") duplicate();
     if (action === "preview-package-update") {
       const scenario = selected(); const instanceId = target.dataset.id ?? "";

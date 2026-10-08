@@ -58,7 +58,7 @@ describe("Planning controller workspace transitions", () => {
     controller.close();
   });
 
-  it("adds curb from the planner checkbox and removes it when reconstruction replaces resurfacing", async () => {
+  it("adds and removes curb from the element picker and clears it when reconstruction replaces resurfacing", async () => {
     const created = createPlanningScenario({ scenarioId: "estimate", state: "NE", name: "Estimate", now: timestamp });
     if (!created.ok) throw Error("Fixture failed");
     const added = addPlanningScenario(workspace("curb"), created.value, timestamp);
@@ -72,15 +72,30 @@ describe("Planning controller workspace transitions", () => {
     const base = host.querySelector<HTMLSelectElement>("[data-field='base-kind']")!;
     base.value = "resurfacing";
     base.dispatchEvent(new Event("change", { bubbles: true }));
-    const curb = host.querySelector<HTMLInputElement>("[data-field='curb-enabled']")!;
-    curb.checked = true;
-    curb.dispatchEvent(new Event("change", { bubbles: true }));
+    host.querySelector<HTMLButtonElement>("[data-action='add-package'][data-kind='sidewalk']")!.click();
+    const sidewalkWidth = host.querySelector<HTMLInputElement>("[data-field='sidewalk-width']")!;
+    const sidewalkId = sidewalkWidth.dataset.instanceId;
+    const sidewalkRow = host.querySelector<HTMLDetailsElement>(`[data-detail='element-${sidewalkId}']`)!;
+    sidewalkRow.open = true;
+    sidewalkWidth.value = "7";
+    sidewalkWidth.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(host.querySelector<HTMLDetailsElement>(`[data-detail='element-${sidewalkId}']`)?.open).toBe(true);
+    expect(host.querySelector(`[data-detail='element-${sidewalkId}'] .planning-element-scope`)?.textContent).toContain("7 ft wide");
+    host.querySelector<HTMLButtonElement>(`[data-detail='element-${sidewalkId}'] [data-action='remove-package']`)!.click();
+    expect(host.querySelector("[data-action='add-package'][data-kind='sidewalk']")).not.toBeNull();
+    host.querySelector<HTMLButtonElement>("[data-action='add-package'][data-kind='curb_gutter']")!.click();
+    const curbId = host.querySelector<HTMLSelectElement>("[data-field='curb-sides']")?.dataset.instanceId;
+    expect(curbId).toBeTruthy();
     expect(host.querySelector<HTMLSelectElement>("[data-field='curb-sides']")?.value).toBe("2");
     expect(host.textContent).toContain("Optional element: Nebraska Curb and Gutter");
+    host.querySelector<HTMLButtonElement>(`[data-detail='element-${curbId}'] [data-action='remove-package']`)!.click();
+    expect(host.querySelector("[data-field='curb-sides']")).toBeNull();
+    expect(host.querySelector("[data-action='add-package'][data-kind='curb_gutter']")).not.toBeNull();
+    host.querySelector<HTMLButtonElement>("[data-action='add-package'][data-kind='curb_gutter']")!.click();
     const changed = host.querySelector<HTMLSelectElement>("[data-field='base-kind']")!;
     changed.value = "reconstruction";
     changed.dispatchEvent(new Event("change", { bubbles: true }));
-    expect(host.querySelector("[data-field='curb-enabled']")).toBeNull();
+    expect(host.querySelector("[data-action='add-package'][data-kind='curb_gutter']")).toBeNull();
     expect(host.textContent).not.toContain("Optional element: Nebraska Curb and Gutter");
     expect(host.querySelector<HTMLSelectElement>("[data-field='base-kind']")?.value).toBe("reconstruction");
     controller.close();
