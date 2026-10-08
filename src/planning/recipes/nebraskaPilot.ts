@@ -152,4 +152,10 @@ export const NEBRASKA_PILOT_PACKAGES: readonly PackageDefinition[] = [
     component("pavement", "5 inch concrete sidewalk", { kind: "area", length: "lengthMiles", width: "widthFt", sides: "sides", unit: "SY" }, binding("ne_ndot_3016.03", "CONCRETE CLASS 47B-3000 SIDEWALK 5\"", "SY", "Exact 5-inch NDOT sidewalk item; width is per side and area is multiplied by sides.", { parameter: "thicknessIn", inches: 5 }), { tags: ["surface"] }),
     component("ramps_crossings", "Curb ramps", { kind: "count", count: "rampCount", unit: "EACH" }, null, { assumption: "Four provisional curb ramps assume two project ends on two sidewalk sides. Each uses an 80 SF assembly proxy; intermediate intersections, driveway crossings, removals and utility adjustments are excluded." }),
   ]),
+  make("ne-curb-gutter", "curb_gutter", "Nebraska Curb and Gutter", [
+    parameter("lengthMiles", "Curb length", "miles", 0.5, 0, { exclusiveMin: true }),
+    parameter("sides", "Curb sides", "count", 2, 1, { max: 2, integer: true }),
+  ], [
+    component("curb_gutter", "Combination concrete curb and gutter", { kind: "linear", length: "lengthMiles", sides: "sides", unit: "LF" }, binding("ne_ndot_3014.11", "COMBINATION CONCRETE CLASS 47B-3500 CURB AND GUTTER", "LF", "Exact NDOT item for new curb and gutter; assumes a continuous run on the selected sides."), { assumption: "Existing curb removal, driveway returns, drainage connections, and interrupted runs are excluded and require engineer review." }),
+  ]),
 ];

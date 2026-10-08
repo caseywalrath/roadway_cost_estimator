@@ -2,7 +2,7 @@
 import type { UserProject } from "../projects/projectWorkspace";
 export type PlanningState = "NE" | "CO";
 export type PlanningUnit = "LF" | "SF" | "SY" | "CY" | "TON" | "GAL" | "EACH" | "LS";
-export type PackageKind = "resurfacing" | "reconstruction" | "path" | "sidewalk";
+export type PackageKind = "resurfacing" | "reconstruction" | "path" | "sidewalk" | "curb_gutter";
 export type CostCategory = "construction" | "service" | "external";
 export type ComponentStatus = "priced" | "unpriced" | "excluded";
 

@@ -58,6 +58,34 @@ describe("Planning controller workspace transitions", () => {
     controller.close();
   });
 
+  it("adds curb from the planner checkbox and removes it when reconstruction replaces resurfacing", async () => {
+    const created = createPlanningScenario({ scenarioId: "estimate", state: "NE", name: "Estimate", now: timestamp });
+    if (!created.ok) throw Error("Fixture failed");
+    const added = addPlanningScenario(workspace("curb"), created.value, timestamp);
+    if (!added.ok) throw Error("Fixture failed");
+    const active = setActivePlanningScenario(added.value, "estimate", timestamp);
+    if (!active.ok) throw Error("Fixture failed");
+    const pricingData = { ...data, agencyItems: [], agencyItemById: new Map(), itemPriceSummaries: [], itemPriceSummariesByAgencyItemId: new Map(), sourceById: new Map() } as unknown as AppData;
+    const host = document.createElement("div");
+    const controller = createPlanningController(pricingData, repository([active.value]));
+    await controller.mount(host);
+    const base = host.querySelector<HTMLSelectElement>("[data-field='base-kind']")!;
+    base.value = "resurfacing";
+    base.dispatchEvent(new Event("change", { bubbles: true }));
+    const curb = host.querySelector<HTMLInputElement>("[data-field='curb-enabled']")!;
+    curb.checked = true;
+    curb.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(host.querySelector<HTMLSelectElement>("[data-field='curb-sides']")?.value).toBe("2");
+    expect(host.textContent).toContain("Optional element: Nebraska Curb and Gutter");
+    const changed = host.querySelector<HTMLSelectElement>("[data-field='base-kind']")!;
+    changed.value = "reconstruction";
+    changed.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(host.querySelector("[data-field='curb-enabled']")).toBeNull();
+    expect(host.textContent).not.toContain("Optional element: Nebraska Curb and Gutter");
+    expect(host.querySelector<HTMLSelectElement>("[data-field='base-kind']")?.value).toBe("reconstruction");
+    controller.close();
+  });
+
   it("holds an invalid numeric draft and prevents saving a stale allowance", async () => {
     const scenario = createPlanningScenario({ scenarioId: "estimate", state: "NE", name: "Estimate", now: timestamp });
     if (!scenario.ok) throw Error("Fixture failed");

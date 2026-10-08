@@ -28,6 +28,7 @@ const file = (name: string, content: string, type: string) => {
 };
 const issueMessage = (issues: PlanningIssue[]) => issues.map((entry) => entry.message).join(" ");
 const numeric = (value: string): number | null => value.trim() === "" ? null : Number(value);
+const isBaseKind = (kind: PackageKind) => kind === "resurfacing" || kind === "reconstruction" || kind === "path";
 
 export interface PlanningPersistence {
   isPersistent: boolean;
@@ -223,25 +224,31 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
   function addPackage(kind: PackageKind, requestedLength?: number | null) {
     const scenario = selected(); if (!scenario) return;
     const lengthText = host?.querySelector<HTMLInputElement>("[data-field='planner-length']")?.value ?? "";
-    if (kind === "sidewalk" && scenario.packages.some((entry) => entry.definition.kind === "sidewalk")) {
-      message = "This scenario already has a sidewalk package. Edit its sides and width to change the scope."; render(); return;
+    const base = scenario.packages.find((entry) => isBaseKind(entry.definition.kind));
+    if (!isBaseKind(kind) && scenario.packages.some((entry) => entry.definition.kind === kind)) {
+      message = "This project element is already included. Edit its scope to change the quantity."; render(); return;
     }
-    if (kind !== "sidewalk" && scenario.packages.some((entry) => entry.definition.kind !== "sidewalk")) {
+    if (!isBaseKind(kind) && !base) { message = "Choose an improvement type before adding project elements."; render(); return; }
+    if (kind === "curb_gutter" && base?.definition.kind !== "resurfacing") {
+      message = "Curb and gutter can be added to asphalt resurfacing; concrete reconstruction already includes it."; render(); return;
+    }
+    if (isBaseKind(kind) && base) {
       message = "Remove the current base package before choosing another roadway or path package."; render(); return;
     }
     const definition = recipes.find((entry) => entry.kind === kind); if (!definition) return;
-    const segmentId = scenario.segments[0]?.segmentId ?? id();
+    const segmentId = kind === "curb_gutter" && base ? base.segmentId : scenario.segments[0]?.segmentId ?? id();
     if (!scenario.segments.length) {
       const segments = editPlanningScenario(scenario, { kind: "set_segments", segments: [{ segmentId, name: "Main segment" }] }, now());
       if (!segments.ok) { message = issueMessage(segments.issues); render(); return; }
       updateScenario(segments.value);
     }
     const current = selected(); if (!current) return;
-    const instance = createPackageInstance({ instanceId: id(), segmentId, scopeId: kind === "sidewalk" ? `sidewalk-${id()}` : `base-${id()}`, definition });
+    const scopeId = kind === "sidewalk" ? `sidewalk-${id()}` : kind === "curb_gutter" ? base!.scopeId : `base-${id()}`;
+    const instance = createPackageInstance({ instanceId: id(), segmentId, scopeId, definition });
     if (!instance.ok) { message = issueMessage(instance.issues); render(); return; }
     edit({ kind: "add_package", instance: instance.value });
-    const baseLength = selected()?.packages.find((entry) => entry.definition.kind !== "sidewalk");
-    const startingLength = kind === "sidewalk" ? baseLength?.parameterOverrides.lengthMiles?.value ?? baseLength?.definition.parameters.find((parameter) => parameter.key === "lengthMiles")?.defaultValue : requestedLength ?? numeric(lengthText);
+    const baseLength = selected()?.packages.find((entry) => isBaseKind(entry.definition.kind));
+    const startingLength = !isBaseKind(kind) ? baseLength?.parameterOverrides.lengthMiles?.value ?? baseLength?.definition.parameters.find((parameter) => parameter.key === "lengthMiles")?.defaultValue : requestedLength ?? numeric(lengthText);
     if (typeof startingLength === "number" && Number.isFinite(startingLength) && startingLength > 0 && startingLength !== 0.5) {
       edit({ kind: "parameter", instanceId: instance.value.instanceId, key: "lengthMiles", override: { value: startingLength, reason: "Planner project length" } });
     }
@@ -309,7 +316,7 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
   function onChange(event: Event) {
     const target = event.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
     const field = target.dataset.field; if (!field) return;
-    const numericFields = new Set(["parameter", "quantity", "rate", "allowance-percent", "external-amount", "custom-quantity", "custom-unitRate", "planner-length", "planner-width", "sidewalk-width", "sidewalk-sides", "ramp-count"]);
+    const numericFields = new Set(["parameter", "quantity", "rate", "allowance-percent", "external-amount", "custom-quantity", "custom-unitRate", "planner-length", "planner-width", "sidewalk-width", "sidewalk-sides", "curb-sides", "ramp-count"]);
     if (numericFields.has(field)) {
       const key = inputKey(target);
       if (target.value.trim() !== "" && !Number.isFinite(Number(target.value))) {
@@ -332,10 +339,14 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     if (!scenario) return;
     if (field === "base-kind") {
       const kind = target.value as PackageKind;
-      if (!recipes.some((entry) => entry.kind === kind && kind !== "sidewalk")) return;
-      const current = scenario.packages.find((entry) => entry.definition.kind !== "sidewalk");
+      if (!isBaseKind(kind) || !recipes.some((entry) => entry.kind === kind)) return;
+      const current = scenario.packages.find((entry) => isBaseKind(entry.definition.kind));
       if (current?.definition.kind === kind) return;
       const currentLength = current?.parameterOverrides.lengthMiles?.value ?? current?.definition.parameters.find((entry) => entry.key === "lengthMiles")?.defaultValue;
+      if (kind !== "resurfacing") {
+        const curb = scenario.packages.find((entry) => entry.definition.kind === "curb_gutter");
+        if (curb) edit({ kind: "remove_package", instanceId: curb.instanceId, reason: "Planner changed improvement type" });
+      }
       if (current) edit({ kind: "remove_package", instanceId: current.instanceId, reason: "Planner changed improvement type" });
       addPackage(kind, currentLength);
       return;
@@ -346,13 +357,19 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
       if (!(target as HTMLInputElement).checked && current) edit({ kind: "remove_package", instanceId: current.instanceId, reason: "Planner removed sidewalk" });
       return;
     }
-    if (["planner-length", "planner-width", "sidewalk-width", "sidewalk-sides", "ramp-count"].includes(field)) {
+    if (field === "curb-enabled") {
+      const current = scenario.packages.find((entry) => entry.definition.kind === "curb_gutter");
+      if ((target as HTMLInputElement).checked && !current) addPackage("curb_gutter");
+      if (!(target as HTMLInputElement).checked && current) edit({ kind: "remove_package", instanceId: current.instanceId, reason: "Planner removed curb and gutter" });
+      return;
+    }
+    if (["planner-length", "planner-width", "sidewalk-width", "sidewalk-sides", "curb-sides", "ramp-count"].includes(field)) {
       const value = numeric(target.value);
       if (field === "planner-length") {
         for (const instance of scenario.packages) edit({ kind: "parameter", instanceId: instance.instanceId, key: "lengthMiles", override: { value, reason: "Planner project length" } });
       } else {
-        const instance = scenario.packages.find((entry) => field === "planner-width" ? entry.definition.kind !== "sidewalk" : entry.definition.kind === "sidewalk");
-        const key = field === "sidewalk-sides" ? "sides" : field === "ramp-count" ? "rampCount" : "widthFt";
+        const instance = scenario.packages.find((entry) => field === "planner-width" ? isBaseKind(entry.definition.kind) : field === "curb-sides" ? entry.definition.kind === "curb_gutter" : entry.definition.kind === "sidewalk");
+        const key = field === "sidewalk-sides" || field === "curb-sides" ? "sides" : field === "ramp-count" ? "rampCount" : "widthFt";
         if (instance) edit({ kind: "parameter", instanceId: instance.instanceId, key, override: { value, reason: `Planner ${field.replace(/-/g, " ")}` } });
       }
       return;
@@ -473,14 +490,16 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     }
     if (action === "export-csv") { const scenario = selected(); if (scenario) file(`${scenario.name}.planning.csv`, buildPlanningCsv(scenario), "text/csv"); }
     if (action === "import-json") host?.querySelector<HTMLInputElement>("[data-field='import-file']")?.click();
-    if (action === "add-custom") {
-      const scenario = selected(); if (!scenario) return;
-      const segmentId = scenario.segments[0]?.segmentId; if (!segmentId) { message = "Add a package before custom scope."; render(); return; }
-      const component: CustomComponent = { componentId: id(), segmentId, scopeId: `custom-${id()}`, role: `custom_${id().slice(0, 8)}`, description: "Other work to include", category: "construction", unit: "LS", quantity: 1, unitRate: null, reason: "Planner-added scope for engineer review", required: true, tags: [], exclusion: null };
-      edit({ kind: "set_custom", component });
-    }
     if (action === "remove-custom") { const componentId = target.dataset.id; if (componentId) edit({ kind: "remove_custom", componentId, reason: "Removed by planner" }); }
-    if (action === "remove-package") { const instanceId = target.dataset.id; if (instanceId) edit({ kind: "remove_package", instanceId, reason: "Removed by planner" }); }
+    if (action === "remove-package") {
+      const instanceId = target.dataset.id;
+      const instance = selected()?.packages.find((entry) => entry.instanceId === instanceId);
+      if (instance && isBaseKind(instance.definition.kind)) {
+        const curb = selected()?.packages.find((entry) => entry.definition.kind === "curb_gutter");
+        if (curb) edit({ kind: "remove_package", instanceId: curb.instanceId, reason: "Removed with roadway base package" });
+      }
+      if (instanceId) edit({ kind: "remove_package", instanceId, reason: "Removed by planner" });
+    }
     if (action === "review") {
       const scenario = selected(); if (!scenario || !host) return;
       const reviewer = host.querySelector<HTMLInputElement>("[data-field='reviewer']")?.value ?? "";

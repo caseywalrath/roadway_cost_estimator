@@ -89,12 +89,18 @@ describe("pilot packages against loaded public data", () => {
     expect(active.length).toBeGreaterThan(0);
     expect(active.every((component) => component.status === "priced")).toBe(true);
     expect(cost.pricedDirectSubtotal).toBeGreaterThan(0);
-    if (definition.kind !== "sidewalk") expect(estimate.amount).toBeGreaterThan(0);
-    const width = definition.kind === "path" ? 10 : definition.kind === "sidewalk" ? 5 : 24;
-    const sides = definition.kind === "sidewalk" ? 2 : 1;
-    const halfMileAreaSy = 0.5 * 5280 * width * sides / 9;
-    const surface = cost.components.find((component) => component.role === "pavement" || component.role === "milling");
-    expect(surface?.quantity).toBeCloseTo(halfMileAreaSy, 8);
+    if (definition.kind !== "sidewalk" && definition.kind !== "curb_gutter") expect(estimate.amount).toBeGreaterThan(0);
+    if (definition.kind === "curb_gutter") {
+      const curb = cost.components.find((component) => component.role === "curb_gutter");
+      expect(curb?.quantity).toBe(0.5 * 5280 * 2);
+      expect(curb?.rateBasis?.kind).toBe(state === "NE" ? "ne_annual" : "co_contract_median");
+    } else {
+      const width = definition.kind === "path" ? 10 : definition.kind === "sidewalk" ? 5 : 24;
+      const sides = definition.kind === "sidewalk" ? 2 : 1;
+      const halfMileAreaSy = 0.5 * 5280 * width * sides / 9;
+      const surface = cost.components.find((component) => component.role === "pavement" || component.role === "milling");
+      expect(surface?.quantity).toBeCloseTo(halfMileAreaSy, 8);
+    }
     expect(cost.complete).toBe(false);
     expect(estimate.fullScope).toBe(false);
     expect(estimate.notices.some((notice) => /(?:co_|ne_|scenario-|segment-1|instance|agencyItemId)/i.test(notice.text))).toBe(false);
@@ -117,6 +123,34 @@ describe("pilot packages against loaded public data", () => {
     expect(built.project.planningOrigin?.decisions.some((decision) => decision.status === "pending")).toBe(true);
     expect(built.project.lineItems.some((line) => line.lineItemType === "catalog")).toBe(true);
     expect(built.project.contingencyPercent).toBe(0);
+  });
+
+  it.each(["NE", "CO"] as const)("adds optional curb to %s resurfacing using a frozen exact-item rate", (state) => {
+    const data = state === "NE" ? ne : co;
+    const definitions = state === "NE" ? NEBRASKA_PILOT_PACKAGES : COLORADO_PILOT_PACKAGES;
+    let scenario = addAndPrice(data, state, definitions.find((entry) => entry.kind === "resurfacing")!);
+    const baseCost = calculateScenarioCosts(scenario).pricedDirectSubtotal!;
+    const base = scenario.packages[0];
+    const curbDefinition = definitions.find((entry) => entry.kind === "curb_gutter")!;
+    const curb = createPackageInstance({ instanceId: `${state}-optional-curb`, segmentId: base.segmentId, scopeId: base.scopeId, definition: curbDefinition });
+    expect(curb.ok).toBe(true);
+    if (!curb.ok) return;
+    const added = editPlanningScenario(scenario, { kind: "add_package", instance: curb.value }, capturedAt);
+    expect(added.ok).toBe(true);
+    if (!added.ok) return;
+    scenario = added.value;
+    const binding = curbDefinition.components[0].binding!;
+    const request = { agencyItemId: binding.agencyItemId, unit: binding.unit, capturedAt };
+    const rate = state === "NE" ? resolveNebraskaAnnualRate(data, request) : buildColoradoContractRateSnapshot(data, request);
+    expect(rate.ok).toBe(true);
+    if (!rate.ok) return;
+    const priced = editPlanningScenario(scenario, { kind: "reprice", instanceId: curb.value.instanceId, role: "curb_gutter", snapshot: rate.value }, capturedAt);
+    expect(priced.ok).toBe(true);
+    if (!priced.ok) return;
+    const cost = calculateScenarioCosts(priced.value);
+    expect(cost.issues.some((issue) => issue.code === "scope_overlap")).toBe(false);
+    expect(cost.components.find((component) => component.instanceId === curb.value.instanceId)?.quantity).toBe(5280);
+    expect(cost.pricedDirectSubtotal).toBeGreaterThan(baseCost);
   });
 
   it("freezes the exact adapter snapshot shape and keeps manual rates separate", () => {

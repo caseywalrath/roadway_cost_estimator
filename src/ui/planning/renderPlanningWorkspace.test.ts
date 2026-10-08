@@ -6,10 +6,11 @@ import { NEBRASKA_PILOT_PACKAGES } from "../../planning/recipes/nebraskaPilot";
 import { renderPlanningWorkspace } from "./renderPlanningWorkspace";
 
 const timestamp = "2026-10-07T12:00:00.000Z";
-function render(edited = false) {
+function render(edited = false, existingCustom = false, baseKind = "resurfacing", includeCurb = false) {
   const scenario = createPlanningScenario({ scenarioId: "alternative", state: "NE", name: "Alternative A", now: timestamp });
   const workspace = createPlanningWorkspace({ workspaceId: "planning", state: "NE", name: "Road", now: timestamp });
-  const instance = createPackageInstance({ instanceId: "base", segmentId: "segment", scopeId: "road", definition: NEBRASKA_PILOT_PACKAGES[0] });
+  const definition = NEBRASKA_PILOT_PACKAGES.find((recipe) => recipe.kind === baseKind)!;
+  const instance = createPackageInstance({ instanceId: "base", segmentId: "segment", scopeId: "road", definition });
   if (!scenario.ok || !workspace.ok || !instance.ok) throw Error("Invalid fixture");
   if (edited) {
     const role = instance.value.definition.components[0].role;
@@ -19,6 +20,16 @@ function render(edited = false) {
   }
   scenario.value.segments = [{ segmentId: "segment", name: "Road" }];
   scenario.value.packages = [instance.value];
+  if (includeCurb) {
+    const curb = createPackageInstance({ instanceId: "curb", segmentId: "segment", scopeId: "road", definition: NEBRASKA_PILOT_PACKAGES.find((recipe) => recipe.kind === "curb_gutter")! });
+    if (!curb.ok) throw Error("Invalid curb fixture");
+    scenario.value.packages.unshift(curb.value);
+  }
+  if (existingCustom) scenario.value.customComponents = [{
+    componentId: "old-custom", segmentId: "segment", scopeId: "landscaping", role: "landscaping",
+    description: "Existing landscaping", category: "construction", unit: "EACH", quantity: 2,
+    unitRate: 100, reason: "Previous planner entry", required: true, tags: [], exclusion: null,
+  }];
   workspace.value.scenarios = [scenario.value];
   workspace.value.activeScenarioId = scenario.value.scenarioId;
   const host = document.createElement("div");
@@ -27,6 +38,34 @@ function render(edited = false) {
 }
 
 describe("Planning engineer review presentation", () => {
+  it("offers curb and gutter for resurfacing and keeps it separate from the base improvement", () => {
+    const host = render(false, false, "resurfacing", true);
+    expect(host.querySelector<HTMLInputElement>('[data-field="curb-enabled"]')?.checked).toBe(true);
+    expect(host.querySelector<HTMLSelectElement>('[data-field="curb-sides"]')?.value).toBe("2");
+    expect(host.querySelector('[data-field="curb-sides"]')?.getAttribute('data-instance-id')).toBe("curb");
+    expect(host.querySelector<HTMLSelectElement>('[data-field="base-kind"]')?.value).toBe("resurfacing");
+    expect(host.querySelector('[data-field="base-kind"] option[value="curb_gutter"]')).toBeNull();
+    expect(host.textContent).toContain("Optional element: Nebraska Curb and Gutter");
+    expect(host.textContent).toContain("Existing curb removal is excluded");
+  });
+
+  it.each(["reconstruction", "path"])("omits optional curb and gutter for %s", (kind) => {
+    expect(render(false, false, kind).querySelector('[data-field="curb-enabled"]')).toBeNull();
+  });
+
+  it("removes open-ended work entry and keeps old custom work removable in engineer review", () => {
+    const host = render(false, true);
+    const elements = [...host.querySelectorAll('.planning-section')].find((section) => section.querySelector('h2')?.textContent === "Add project elements")!;
+    expect(host.querySelector('[data-action="add-custom"]')).toBeNull();
+    expect(host.textContent).not.toContain("Other work to include");
+    expect(elements.querySelector('[data-field="custom-description"]')).toBeNull();
+    expect(elements.querySelector('[data-field="custom-quantity"]')).toBeNull();
+    expect(host.querySelector('[data-field="custom-description"]')?.closest('.planning-advanced')).not.toBeNull();
+    const remove = host.querySelector('[data-action="remove-custom"][data-id="old-custom"]');
+    expect(remove?.closest('.planning-advanced')).not.toBeNull();
+    expect(remove?.getAttribute('aria-label')).toBe("Remove Existing landscaping");
+  });
+
   it("keeps distinct quantity and price explanations and a single scope reason", () => {
     const host = render(true);
     expect(host.querySelector<HTMLInputElement>('[data-field="override-reason"][data-kind="quantity"]')?.value).toBe("Quantity field measurement");

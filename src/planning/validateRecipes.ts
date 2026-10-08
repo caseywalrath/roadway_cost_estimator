@@ -45,7 +45,7 @@ function packageIssues(definition: PackageDefinition): PlanningIssue[] {
   if (!nonblank(definition.packageId) || !nonblank(definition.version) || !nonblank(definition.name)) issues.push(issue("invalid_recipe", base, "Package ID, version, and name must be nonblank."));
   if (definition.status !== "provisional") issues.push(issue("invalid_recipe", `${base}.status`, "Pilot package status must be provisional."));
   if (definition.state !== "NE" && definition.state !== "CO") issues.push(issue("state_mismatch", `${base}.state`, "Planning package state must be NE or CO."));
-  if (!["resurfacing", "reconstruction", "path", "sidewalk"].includes(definition.kind)) issues.push(issue("invalid_recipe", `${base}.kind`, "Package kind is not supported."));
+  if (!["resurfacing", "reconstruction", "path", "sidewalk", "curb_gutter"].includes(definition.kind)) issues.push(issue("invalid_recipe", `${base}.kind`, "Package kind is not supported."));
 
   const parameters = new Map<string, PackageDefinition["parameters"][number]>();
   for (const [index, parameter] of (definition.parameters ?? []).entries()) {

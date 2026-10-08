@@ -5,9 +5,9 @@ import { validatePackageDefinition } from "../validateRecipes";
 
 describe("Nebraska and Colorado pilot recipes", () => {
   it.each([
-    ["NE", NEBRASKA_PILOT_PACKAGES, ["ne-resurfacing", "ne-reconstruction", "ne-path", "ne-sidewalk"]],
-    ["CO", COLORADO_PILOT_PACKAGES, ["co-resurfacing", "co-reconstruction", "co-path", "co-sidewalk"]],
-  ] as const)("defines four valid provisional %s packages", (_state, packages, ids) => {
+    ["NE", NEBRASKA_PILOT_PACKAGES, ["ne-resurfacing", "ne-reconstruction", "ne-path", "ne-sidewalk", "ne-curb-gutter"]],
+    ["CO", COLORADO_PILOT_PACKAGES, ["co-resurfacing", "co-reconstruction", "co-path", "co-sidewalk", "co-curb-gutter"]],
+  ] as const)("defines five valid provisional %s packages", (_state, packages, ids) => {
     expect(packages.map((entry) => entry.packageId).sort()).toEqual([...ids].sort());
     for (const definition of packages) expect(validatePackageDefinition(definition)).toEqual([]);
   });
@@ -32,6 +32,16 @@ describe("Nebraska and Colorado pilot recipes", () => {
       expect(rampCount.integer).toBe(true);
       expect(rampCount.unit).toBe("count");
       expect(definition.components.some((entry) => entry.role === "base" || entry.role === "excavation")).toBe(false);
+    }
+  });
+
+  it("uses exact state items and a one-or-two-side linear quantity for optional curb and gutter", () => {
+    for (const definition of [...NEBRASKA_PILOT_PACKAGES, ...COLORADO_PILOT_PACKAGES].filter((entry) => entry.kind === "curb_gutter")) {
+      expect(definition.components).toHaveLength(1);
+      expect(definition.components[0].role).toBe("curb_gutter");
+      expect(definition.components[0].binding?.agencyItemId).toBe(definition.state === "NE" ? "ne_ndot_3014.11" : "co_cdot_609-21010");
+      expect(definition.components[0].quantityRule).toEqual({ kind: "linear", length: "lengthMiles", sides: "sides", unit: "LF" });
+      expect(definition.parameters.find((entry) => entry.key === "sides")?.defaultValue).toBe(2);
     }
   });
 
