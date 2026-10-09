@@ -5,7 +5,7 @@ import rawLibrary from "../../../data/planning/co_element_library.json";
 import prices from "../../../public/data/states/co/planning_prices.json";
 import { calculateAlternative, roundElementAmount, roundTotalAmount } from "../../planning/calculate";
 import { resolveLibrary, validateLibrary } from "../../planning/library";
-import { openPlanningStore } from "../../planning/storage";
+import { openPlanningStore, type PlanningStore } from "../../planning/storage";
 import { createProject } from "../../planning/templates";
 import type { PriceTable } from "../../planning/types";
 import { createPlanningController, type PlanningController } from "./planningController";
@@ -420,9 +420,8 @@ describe("persistence", () => {
     expect(q(next, "[data-planning-project-name]").textContent).toBe("Main Street");
     expect(summaryTotal(next)).toBe(total);
     expect(q<HTMLInputElement>(next, "[data-element-amount='curb_gutter']").value).toBe("999,000");
-    // The old container no longer reacts.
-    setValue(q<HTMLInputElement>(root, "[data-element-amount='curb_gutter']"), "1");
-    expect(summaryTotal(next)).toBe(total);
+    // The rendered markup moved: the old container is empty and no longer reacts.
+    expect(root.childElementCount).toBe(0);
     // The new container does.
     setValue(q<HTMLInputElement>(next, "[data-element-amount='curb_gutter']"), "5000000");
     expect(summaryTotal(next)).not.toBe(total);
@@ -613,5 +612,210 @@ describe("project management", () => {
     controller.unmount();
     expect(document.body.querySelector(".planning-print")).toBeNull();
     expect(document.body.classList.contains("planning-printing")).toBe(false);
+  });
+});
+
+interface StoreControl {
+  failSaves: boolean;
+  failDelete: boolean;
+  closed: number;
+}
+
+function controlledStore(control: StoreControl): () => Promise<PlanningStore> {
+  return async () => {
+    const real = await openPlanningStore({ factory });
+    return {
+      listProjects: () => real.listProjects(),
+      getProject: (id) => real.getProject(id),
+      getLastProjectId: () => real.getLastProjectId(),
+      setLastProjectId: (id) => real.setLastProjectId(id),
+      saveProject: (project, revision, now) => (control.failSaves ? Promise.reject(new Error("QuotaExceeded")) : real.saveProject(project, revision, now)),
+      deleteProject: (id) => (control.failDelete ? Promise.reject(new Error("delete blocked")) : real.deleteProject(id)),
+      close: () => {
+        control.closed += 1;
+        real.close();
+      }
+    };
+  };
+}
+
+const NOT_SAVED = "Your last changes to Alpha are not saved. Fix the problem or reload before switching projects.";
+
+async function twoProjects(control: StoreControl) {
+  const { controller, root } = await open({ openStore: controlledStore(control) });
+  await createStreet(root, controller, "mill_overlay", "Beta");
+  q(root, "[data-planning-new-project]").click();
+  await createStreet(root, controller, "complete_street", "Alpha");
+  return { controller, root };
+}
+
+describe("failure handling", () => {
+  let control: StoreControl;
+  beforeEach(() => {
+    control = { failSaves: false, failDelete: false, closed: 0 };
+  });
+
+  it("does not switch projects after a failed save, keeps the edit, and saves it once storage recovers", async () => {
+    const { controller, root } = await twoProjects(control);
+    control.failSaves = true;
+    setValue(q<HTMLInputElement>(root, "[data-planning-budget]"), "5000000");
+    await controller.flush();
+    expect(q(root, "[data-planning-save-status]").textContent).toContain("QuotaExceeded");
+    q(root, "[data-planning-open-project='id-1']").click();
+    await controller.flush();
+    expect(q(root, "[data-planning-project-name]").textContent).toBe("Alpha");
+    expect(q(root, "[data-planning-notice]").textContent).toBe(NOT_SAVED);
+    expect(q<HTMLInputElement>(root, "[data-planning-budget]").value).toBe("5,000,000");
+
+    control.failSaves = false;
+    q(root, "[data-planning-open-project='id-1']").click();
+    await controller.flush();
+    expect(q(root, "[data-planning-project-name]").textContent).toBe("Beta");
+    const store = await openPlanningStore({ factory });
+    expect((await store.getProject("id-3"))?.budget).toBe(5000000);
+    store.close();
+  });
+
+  it("does not create a new project while the current one is unsaved", async () => {
+    const { controller, root } = await twoProjects(control);
+    control.failSaves = true;
+    setValue(q<HTMLInputElement>(root, "[data-planning-budget]"), "5000000");
+    await controller.flush();
+    q(root, "[data-planning-new-project]").click();
+    setValue(q<HTMLInputElement>(root, "[data-planning-new-name]"), "Gamma");
+    q(root, "[data-planning-create]").click();
+    await controller.flush();
+    expect(q(root, "[data-planning-new]")).not.toBeNull();
+    expect(q(root, "[data-planning-notice]").textContent).toBe(NOT_SAVED);
+    q(root, "[data-planning-new-cancel]").click();
+    expect(q<HTMLInputElement>(root, "[data-planning-budget]").value).toBe("5,000,000");
+  });
+
+  it("does not import over a project with an unsaved edit", async () => {
+    const { controller, root } = await twoProjects(control);
+    q(root, "[data-planning-export='json']").click();
+    control.failSaves = true;
+    setValue(q<HTMLInputElement>(root, "[data-planning-budget]"), "5000000");
+    await controller.flush();
+    const input = q<HTMLInputElement>(root, "[data-planning-import-input]");
+    Object.defineProperty(input, "files", { value: [new File([downloads[0].text], "a.planning.json")], configurable: true });
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    await controller.flush();
+    expect(q(root, "[data-planning-notice]").textContent).toBe(NOT_SAVED);
+    expect(root.querySelectorAll("[data-planning-open-project]").length).toBe(2);
+  });
+
+  it("does not switch away from a conflicted project", async () => {
+    const a = await twoProjects(control);
+    const b = await open({ openStore: controlledStore(control) });
+    setValue(q<HTMLInputElement>(a.root, "[data-planning-budget]"), "11111111");
+    await a.controller.flush();
+    setValue(q<HTMLInputElement>(b.root, "[data-planning-budget]"), "22222222");
+    await b.controller.flush();
+    q(b.root, "[data-planning-open-project='id-1']").click();
+    await b.controller.flush();
+    expect(q(b.root, "[data-planning-project-name]").textContent).toBe("Alpha");
+    expect(q(b.root, "[data-planning-notice]").textContent).toBe(NOT_SAVED);
+  });
+
+  it("reloads the current stored version, not the version from the first conflict", async () => {
+    const a = await open();
+    await createStreet(a.root, a.controller);
+    const b = await open();
+    setValue(q<HTMLInputElement>(a.root, "[data-planning-budget]"), "11111111");
+    await a.controller.flush();
+    setValue(q<HTMLInputElement>(b.root, "[data-planning-budget]"), "22222222");
+    await b.controller.flush();
+    expect(q(b.root, "[data-planning-save-status]").textContent).toContain("changed in another tab");
+    setValue(q<HTMLInputElement>(a.root, "[data-planning-budget]"), "33333333");
+    await a.controller.flush();
+    q(b.root, "[data-planning-reload]").click();
+    await b.controller.flush();
+    expect(q<HTMLInputElement>(b.root, "[data-planning-budget]").value).toBe("33,333,333");
+    setValue(q<HTMLInputElement>(b.root, "[data-planning-budget]"), "44444444");
+    await b.controller.flush();
+    expect(q(b.root, "[data-planning-save-status]").textContent).toMatch(/^Saved/);
+  });
+
+  it("reports a project deleted in another tab and falls back on reload", async () => {
+    const a = await open();
+    await createStreet(a.root, a.controller, "mill_overlay", "Only");
+    const b = await open();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    q(b.root, "[data-planning-delete-project]").click();
+    await b.controller.flush();
+    expect(b.root.querySelector("[data-planning-new]")).not.toBeNull();
+    setValue(q<HTMLInputElement>(a.root, "[data-planning-budget]"), "5000000");
+    await a.controller.flush();
+    expect(q(a.root, "[data-planning-save-status]").textContent).toContain("changed in another tab");
+    expect(q(a.root, "[data-planning-notice]").textContent).toBe("This planning project was deleted in another tab.");
+    q(a.root, "[data-planning-reload]").click();
+    await a.controller.flush();
+    expect(a.root.querySelector("[data-planning-new]")).not.toBeNull();
+    const store = await openPlanningStore({ factory });
+    expect(await store.listProjects()).toEqual([]);
+    store.close();
+  });
+
+  it("keeps the project displayed when deletion fails", async () => {
+    const { controller, root } = await twoProjects(control);
+    control.failDelete = true;
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    setValue(q<HTMLInputElement>(root, "[data-planning-budget]"), "5000000");
+    q(root, "[data-planning-delete-project]").click();
+    await controller.flush();
+    expect(q(root, "[data-planning-project-name]").textContent).toBe("Alpha");
+    expect(q(root, "[data-planning-notice]").textContent).toBe("Could not delete Alpha: delete blocked");
+    expect(q<HTMLInputElement>(root, "[data-planning-budget]").value).toBe("5,000,000");
+    expect(root.querySelectorAll("[data-planning-open-project]").length).toBe(2);
+    const store = await openPlanningStore({ factory });
+    expect((await store.getProject("id-3"))?.budget).toBe(5000000);
+    store.close();
+  });
+});
+
+describe("re-mounting and disposal", () => {
+  it("keeps uncommitted typing and focus when mounted on a fresh container", async () => {
+    const { controller, root } = await open();
+    await createStreet(root, controller);
+    const budget = q<HTMLInputElement>(root, "[data-planning-budget]");
+    budget.focus();
+    budget.value = "123456";
+    budget.setSelectionRange(2, 4);
+    const next = makeContainer();
+    root.remove();
+    controller.mount(next);
+    const moved = q<HTMLInputElement>(next, "[data-planning-budget]");
+    expect(moved).toBe(budget);
+    expect(moved.value).toBe("123456");
+    expect(document.activeElement).toBe(moved);
+    expect([moved.selectionStart, moved.selectionEnd]).toEqual([2, 4]);
+    // Listeners work on the new container and the typed text still commits.
+    moved.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(moved.value).toBe("123,456");
+    await controller.flush();
+    expect(q(next, "[data-planning-save-status]").textContent).toMatch(/^Saved/);
+  });
+
+  it("closes the store and stops listening on dispose", async () => {
+    const control: StoreControl = { failSaves: false, failDelete: false, closed: 0 };
+    const { controller, root } = await open({ openStore: controlledStore(control) });
+    await createStreet(root, controller);
+    const remove = vi.spyOn(document, "removeEventListener");
+    controller.dispose();
+    expect(control.closed).toBe(1);
+    expect(remove).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
+  });
+
+  it("saves a pending edit before closing the store on dispose", async () => {
+    const control: StoreControl = { failSaves: false, failDelete: false, closed: 0 };
+    const { controller, root } = await open({ openStore: controlledStore(control), saveDelayMs: 60_000 });
+    await createStreet(root, controller);
+    setValue(q<HTMLInputElement>(root, "[data-planning-budget]"), "5000000");
+    controller.dispose();
+    await vi.waitFor(() => expect(control.closed).toBe(1));
+    const store = await openPlanningStore({ factory });
+    expect((await store.getProject("id-1"))?.budget).toBe(5000000);
+    store.close();
   });
 });

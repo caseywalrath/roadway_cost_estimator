@@ -81,6 +81,8 @@ export interface PlanningController {
   unmount(): void;
   /** Resolves when loading and any pending operation are done and pending edits are saved. */
   flush(): Promise<void>;
+  /** Unmounts, removes the document listener, cancels timers and closes the store. The controller is not reused afterwards. */
+  dispose(): void;
 }
 
 type Phase = "idle" | "loading" | "error" | "new" | "ready";
@@ -93,6 +95,7 @@ interface FocusState {
 }
 
 const STORAGE_BLOCKED = "Planning projects cannot be saved in this browser. Changes will be lost when the page closes.";
+const DELETED_ELSEWHERE = "This planning project was deleted in another tab.";
 const CONFLICT_CODES = new Set(["missing_price", "unit_mismatch"]);
 
 const byUpdated = (a: PlanningProjectSummary, b: PlanningProjectSummary) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0);
@@ -112,6 +115,7 @@ function createMemoryStore(): PlanningStore {
     async saveProject(project, expectedRevision, now): Promise<SavePlanningResult> {
       const current = projects.get(project.id);
       if (current && current.revision !== expectedRevision) return { ok: false, reason: "conflict", current: structuredClone(current) };
+      if (!current && expectedRevision > 0) return { ok: false, reason: "conflict", current: null };
       const saved: PlanningProject = { ...structuredClone(project), revision: expectedRevision + 1, updatedAt: now };
       projects.set(saved.id, saved);
       return { ok: true, project: structuredClone(saved) };
@@ -178,11 +182,15 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
   let draft: NewProjectDraft = { name: "", templateId: null, inputs: { lengthMiles: 0, roadwayWidthFt: 0, intersections: 0 }, error: "" };
 
   let dirty = false;
+  /** True after a save was refused. `conflict` holds the stored version, or null when the project was deleted elsewhere. */
+  let conflicted = false;
   let conflict: PlanningProject | null = null;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   let inFlight: Promise<void> | null = null;
   const busy = new Set<Promise<unknown>>();
   let documentListening = false;
+  /** Last field focused in the mounted container; lets mount() restore focus after the page dropped it with the old DOM. */
+  let lastFocused: HTMLElement | null = null;
 
   const baselines = new WeakMap<Element, string>();
   const htmlCache = new WeakMap<Element, string>();
@@ -553,7 +561,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
   // ---------- Saving ----------
 
   function scheduleSave(): void {
-    if (!project || conflict) return;
+    if (!project || conflicted) return;
     dirty = true;
     setSaveStatus({ kind: "saving" });
     if (saveTimer) clearTimeout(saveTimer);
@@ -564,7 +572,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
   }
 
   async function runSaves(): Promise<void> {
-    while (dirty && project && store && !conflict) {
+    while (dirty && project && store && !conflicted) {
       const snapshot = project;
       dirty = false;
       let saved: SavePlanningResult;
@@ -580,24 +588,38 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
         if (!dirty) setSaveStatus({ kind: "saved", at: saved.project.updatedAt });
         await refreshProjects();
       } else {
+        conflicted = true;
         conflict = saved.current;
         setSaveStatus({ kind: "conflict" });
+        if (saved.current === null) setNotice({ kind: "error", text: DELETED_ELSEWHERE });
         return;
       }
     }
   }
 
-  function saveNow(): Promise<void> {
+  /** Saves pending edits. Resolves true when nothing is left unsaved; false after an error or a conflict. */
+  async function saveNow(): Promise<boolean> {
     if (saveTimer) {
       clearTimeout(saveTimer);
       saveTimer = null;
     }
-    if (inFlight) return inFlight;
-    if (!dirty) return Promise.resolve();
-    inFlight = runSaves().finally(() => {
-      inFlight = null;
-    });
-    return inFlight;
+    if (inFlight) await inFlight;
+    else if (dirty && !conflicted) {
+      inFlight = runSaves().finally(() => {
+        inFlight = null;
+      });
+      await inFlight;
+    }
+    return !conflicted && !dirty;
+  }
+
+  /** Saves the current project before another one replaces it. False (with an error notice) when the save failed. */
+  async function leaveCurrent(): Promise<boolean> {
+    if (!project) return true;
+    const name = project.name;
+    if (await saveNow()) return true;
+    setNotice({ kind: "error", text: `Your last changes to ${name} are not saved. Fix the problem or reload before switching projects.` });
+    return false;
   }
 
   async function refreshProjects(): Promise<void> {
@@ -613,6 +635,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
 
   function setCurrent(next: PlanningProject, status?: SaveStatus): void {
     project = next;
+    conflicted = false;
     conflict = null;
     dirty = false;
     renaming = false;
@@ -626,7 +649,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
   }
 
   async function openProject(id: string): Promise<void> {
-    await saveNow();
+    if (!(await leaveCurrent())) return;
     const found = await store.getProject(id);
     if (!found) {
       await refreshProjects();
@@ -696,7 +719,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     focusSelector("[data-planning-new-name]");
   }
 
-  function createFromPanel(): void {
+  async function createFromPanel(): Promise<void> {
     const panel = qs("[data-planning-new]");
     if (!panel) return;
     readDraft();
@@ -717,44 +740,67 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       if (!parsed.ok || parsed.value === null) return fail(definition.integer ? "Enter a whole number of 0 or more." : "Enter a number of 0 or more.");
       inputs[definition.key] = parsed.value;
     }
+    if (!(await leaveCurrent())) return;
     const created = createProject(library, { id: deps.newId(), name, now: deps.now(), templateId: draft.templateId, alternativeId: deps.newId() });
     draft.error = "";
     setCurrent({ ...created, inputs }, { kind: "saving" });
     dirty = true;
     void store.setLastProjectId(created.id).catch(() => undefined);
-    track(saveNow());
+    await saveNow();
   }
 
-  async function deleteCurrentProject(): Promise<void> {
-    if (!project) return;
-    if (!window.confirm(`Delete planning project ${project.name}? This cannot be undone.`)) return;
-    const id = project.id;
-    if (saveTimer) clearTimeout(saveTimer);
-    saveTimer = null;
-    await (inFlight ?? Promise.resolve());
-    dirty = false;
-    project = null;
-    await store.deleteProject(id);
-    projects = await store.listProjects();
-    if (projects.length > 0) {
-      const next = await store.getProject(projects[0].id);
-      if (next) {
-        setCurrent(next);
-        return;
-      }
+  /** Opens the most recently updated stored project, or the new-project panel when none remain. */
+  async function openMostRecentOrNew(): Promise<void> {
+    const list = await store.listProjects();
+    const next = list.length > 0 ? await store.getProject(list[0].id) : null;
+    projects = list;
+    if (next) {
+      setCurrent(next);
+      return;
     }
+    project = null;
+    conflicted = false;
+    conflict = null;
+    dirty = false;
     void store.setLastProjectId(null).catch(() => undefined);
     draft = defaultDraft(library.templates[0]?.id ?? null);
     phase = "new";
     renderRoot();
   }
 
+  async function deleteCurrentProject(): Promise<void> {
+    if (!project) return;
+    const { id, name } = project;
+    if (!window.confirm(`Delete planning project ${name}? This cannot be undone.`)) return;
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = null;
+    await (inFlight ?? Promise.resolve());
+    try {
+      await store.deleteProject(id);
+      await openMostRecentOrNew();
+    } catch (error) {
+      setNotice({ kind: "error", text: `Could not delete ${name}: ${messageOf(error)}` });
+      if (project && dirty) scheduleSave();
+    }
+  }
+
   async function reloadSaved(): Promise<void> {
     if (!project) return;
     const id = project.id;
-    const latest = conflict ?? (await store.getProject(id));
+    let latest: PlanningProject | null;
+    try {
+      latest = (await store.getProject(id)) ?? conflict;
+    } catch (error) {
+      setNotice({ kind: "error", text: `Could not reload ${project.name}: ${messageOf(error)}` });
+      return;
+    }
     if (!latest) {
-      setNotice({ kind: "error", text: "This planning project no longer exists in storage." });
+      try {
+        notice = { kind: "error", text: DELETED_ELSEWHERE };
+        await openMostRecentOrNew();
+      } catch (error) {
+        setNotice({ kind: "error", text: `${DELETED_ELSEWHERE} The project list could not be read: ${messageOf(error)}` });
+      }
       return;
     }
     setNotice(storageBlocked ? { kind: "info", text: STORAGE_BLOCKED } : null);
@@ -776,7 +822,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
         setNotice({ kind: "error", text: `Could not import ${file.name}: ${parsed.issues[0]?.message ?? "The file could not be read."}` });
         return;
       }
-      await saveNow();
+      if (!(await leaveCurrent())) return;
       const copy = importProjectCopy(parsed.project, { newId: deps.newId, now: deps.now() });
       const saved = await store.saveProject(copy, 0, deps.now());
       if (!saved.ok) throw new Error("A project with this id already exists.");
@@ -796,7 +842,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
   function exportJson(): void {
     if (!project) return;
     closeMenus();
-    const filename = `${project.name.replace(/[\\/:*?"<>|]/g, "_").trim() || "planning"}.planning.json`;
+    const filename = planningCsvFilename(project).replace(/\.planning\.csv$/, ".planning.json");
     download(filename, buildShareFile(project, library, deps.now()), "application/json");
   }
 
@@ -1112,7 +1158,13 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
 
   function onFocusIn(event: FocusEvent): void {
     const t = event.target;
+    if (t instanceof HTMLElement) lastFocused = t;
     if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement) baselines.set(t, t.value);
+  }
+
+  function onFocusOut(event: FocusEvent): void {
+    // Removing a focused node from the page can also report a focusout; only a real blur clears it.
+    if (lastFocused && event.target === lastFocused && lastFocused.isConnected) lastFocused = null;
   }
 
   function onKeydown(event: KeyboardEvent): void {
@@ -1130,7 +1182,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
         confirmAddAlternative();
       } else if (t.matches("[data-planning-new-name], [data-planning-new-input]")) {
         event.preventDefault();
-        createFromPanel();
+        track(createFromPanel());
       }
       return;
     }
@@ -1177,7 +1229,10 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       qs<HTMLInputElement>("[data-planning-import-input]")?.click();
       return;
     }
-    if ((el = hit("[data-planning-create]"))) return createFromPanel();
+    if ((el = hit("[data-planning-create]"))) {
+      track(createFromPanel());
+      return;
+    }
     if ((el = hit("[data-planning-new-cancel]"))) {
       phase = "ready";
       renderRoot();
@@ -1233,13 +1288,55 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
 
   // ---------- Public API ----------
 
+  /**
+   * The app rebuilds its DOM and mounts again on a fresh container. The rendered Planning markup is moved into
+   * the new container instead of re-rendered, so uncommitted typing and focus survive.
+   */
   function mount(next: HTMLElement): void {
+    const previous = container;
+    const reuse = previous !== null && previous.firstChild !== null && (previous === next || next.firstChild === null);
+    let focused: { el: HTMLElement; start: number | null; end: number | null } | null = null;
+    if (reuse && previous) {
+      const doc = previous.ownerDocument;
+      let active: Element | null = doc.activeElement;
+      // A container removed from the page takes focus with it; fall back to the last field that had it.
+      if ((!active || active === doc.body) && lastFocused && previous.contains(lastFocused)) active = lastFocused;
+      if (active instanceof HTMLElement && active !== previous && previous.contains(active)) {
+        let start: number | null = null;
+        let end: number | null = null;
+        if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
+          try {
+            start = active.selectionStart;
+            end = active.selectionEnd;
+          } catch {
+            // Input types without a selection range.
+          }
+        }
+        focused = { el: active, start, end };
+      }
+    }
     unmount();
     container = next;
+    if (reuse && previous && previous !== next) {
+      while (previous.firstChild) next.appendChild(previous.firstChild);
+    }
+    if (focused) {
+      // Focus before the listeners attach, so onFocusIn does not reset the Escape baseline.
+      focused.el.focus({ preventScroll: true });
+      const { el, start } = focused;
+      if (start !== null && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) {
+        try {
+          el.setSelectionRange(start, focused.end ?? start);
+        } catch {
+          // Input types without a selection range.
+        }
+      }
+    }
     next.addEventListener("change", onChange);
     next.addEventListener("click", onClick);
     next.addEventListener("keydown", onKeydown);
     next.addEventListener("focusin", onFocusIn);
+    next.addEventListener("focusout", onFocusOut);
     next.addEventListener("toggle", onToggle, true);
     if (!documentListening) {
       documentListening = true;
@@ -1249,7 +1346,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       phase = "loading";
       renderRoot();
       initPromise = track(initialize());
-    } else {
+    } else if (!reuse) {
       renderRoot();
     }
   }
@@ -1260,8 +1357,10 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     container.removeEventListener("click", onClick);
     container.removeEventListener("keydown", onKeydown);
     container.removeEventListener("focusin", onFocusIn);
+    container.removeEventListener("focusout", onFocusOut);
     container.removeEventListener("toggle", onToggle, true);
     container = null;
+    lastFocused = null;
     removePrintMarkup();
     if (dirty) void track(saveNow());
   }
@@ -1272,5 +1371,19 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     await saveNow();
   }
 
-  return { mount, unmount, flush };
+  function dispose(): void {
+    unmount();
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = null;
+    if (documentListening) {
+      documentListening = false;
+      document.removeEventListener("visibilitychange", onVisibility);
+    }
+    // A pending save or load still needs the store; close once it settles.
+    const close = () => (store as PlanningStore | undefined)?.close();
+    if (busy.size === 0) close();
+    else void Promise.allSettled([...busy]).then(close);
+  }
+
+  return { mount, unmount, flush, dispose };
 }

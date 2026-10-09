@@ -370,7 +370,9 @@ export async function renderApp(
           return;
         }
         await planningController?.flush();
-        planningController?.unmount();
+        // Release the Planning store and listeners; a new controller is created if Planning is opened again.
+        planningController?.dispose();
+        planningController = null;
         cleanupProjectSession();
         onStateChange(nextStateCode, "explorer");
       })();

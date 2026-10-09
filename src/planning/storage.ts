@@ -13,12 +13,13 @@ export interface PlanningProjectSummary {
 
 export type SavePlanningResult =
   | { ok: true; project: PlanningProject }
-  | { ok: false; reason: "conflict"; current: PlanningProject };
+  /** `current` is null when no stored record exists but a revision above 0 was expected (deleted elsewhere). */
+  | { ok: false; reason: "conflict"; current: PlanningProject | null };
 
 export interface PlanningStore {
   listProjects(): Promise<PlanningProjectSummary[]>;
   getProject(id: string): Promise<PlanningProject | null>;
-  /** New projects use expectedRevision 0. A stale revision returns a conflict with the stored project. */
+  /** New projects use expectedRevision 0. A stale revision returns a conflict with the stored project; a missing record with expectedRevision above 0 returns a conflict with current null. */
   saveProject(project: PlanningProject, expectedRevision: number, now: string): Promise<SavePlanningResult>;
   deleteProject(id: string): Promise<void>;
   getLastProjectId(): Promise<string | null>;
@@ -135,7 +136,7 @@ class IndexedDbPlanningStore implements PlanningStore {
       const read = projects.get(project.id);
       read.onsuccess = () => {
         const current = isPlanningProject(read.result) ? read.result : null;
-        if (current && current.revision !== expectedRevision) {
+        if ((current && current.revision !== expectedRevision) || (!current && expectedRevision > 0)) {
           result = { ok: false, reason: "conflict", current };
           return;
         }

@@ -72,10 +72,20 @@ describe("planning storage", () => {
     expect(stale.ok).toBe(false);
     if (stale.ok) return;
     expect(stale.reason).toBe("conflict");
-    expect(stale.current.name).toBe("Renamed");
+    expect(stale.current?.name).toBe("Renamed");
     expect((await s.getProject("p1"))?.name).toBe("Renamed");
     const duplicateNew = await s.saveProject(makeProject("p1"), 0, "2026-02-04T00:00:00.000Z");
     expect(duplicateNew.ok).toBe(false);
+  });
+
+  it("returns a conflict with no current project when the record was deleted", async () => {
+    const s = await open();
+    const first = await s.saveProject(makeProject("p1"), 0, "2026-02-01T00:00:00.000Z");
+    if (!first.ok) throw new Error("expected save");
+    await s.deleteProject("p1");
+    const result = await s.saveProject(first.project, 1, "2026-02-02T00:00:00.000Z");
+    expect(result).toEqual({ ok: false, reason: "conflict", current: null });
+    expect(await s.getProject("p1")).toBeNull();
   });
 
   it("lists projects newest first and deletes", async () => {
