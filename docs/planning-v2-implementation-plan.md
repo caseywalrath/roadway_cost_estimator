@@ -253,6 +253,34 @@ Mapping defaults for 5a to confirm or revise:
 
 **Exit:** a created Project opens in the normal item table, reconciles to Planning, and existing Projects, backups, and CSV exports behave as before.
 
+#### 5a. Mapping specification (decided)
+
+The engineer Project model differs from Planning in one way that matters: Project contingency applies to construction **and** other costs, while Planning contingency applies to construction only, and Planning design and construction engineering are rates of (construction + contingency). The mapping below keeps native Project contingency and still reconciles exactly.
+
+Let C = Planning construction, k = stage contingency rate, d and e = design and construction engineering rates, R and U = right-of-way and utility amounts. Planning total T = C(1 + k)(1 + d + e) + R + U.
+
+| Planning part | Project line(s) | Category | Group |
+|---|---|---|---|
+| Item component of an enabled, non-overridden element | Catalog line: exact `agencyItemId`, quantity rounded to 0.01, unit cost = price-table price | Construction | Element label |
+| Item with no catalog record, or catalog unit different from the component unit | Custom line with the item code in `itemCode` and a note | Construction | Element label |
+| Assembly component | Custom line: "Element – component", assembly unit, quantity, unit cost; note = basis | Construction | Element label |
+| Overridden element | One custom line, 1 LS at the entered amount; note says it includes allowances | Construction | Element label |
+| Minor items, traffic control, mobilization | Three custom lines, 1 LS each, computed from D = sum of the non-overridden lines as created: D·m, D(1+m)·t, D(1+m)(1+t)·b. Mobilization absorbs the cent residual so construction lines sum to C | Construction | Allowances |
+| Contingency | Native `contingencyPercent` = k × 100 | — | — |
+| Design, construction engineering | Custom lines, 1 LS at d·C and e·C. Project contingency then makes them d·C(1+k) and e·C(1+k), equal to Planning | Other | Engineering and other costs |
+| Right-of-way, utility relocation (when > 0) | Custom lines, 1 LS at R/(1+k) and U/(1+k); the note states the entered amount and why it is shown net of contingency | Other | Engineering and other costs |
+
+Project total = (C + dC + eC + R/(1+k) + U/(1+k))(1 + k) = T. Unit costs are rounded to cents, so the difference is under $1.
+
+Other rules:
+
+- Zero-quantity and zero-amount lines are skipped. Allowance lines are skipped when D = 0.
+- Project name: "<Planning name> – <alternative name>". Notes: where it came from, stage, price basis, Planning total, date. Notes are shown on the Project screen, so the origin is visible without new UI.
+- New optional field `UserProject.planningOrigin` {planningProjectId, planningProjectName, alternativeId, alternativeName, createdAt, planningTotal}. Absent on every other Project. Kept by the v10 parser, backups, duplicates; listed in the Project CSV summary. No schema version change.
+- No intents, decisions, frozen lines, or priced-subtotal mode. Later edits in either screen do not sync.
+
+
+
 ### Phase 6 — Integration and documentation
 
 **Owner:** orchestrator; Opus subagent for an adversarial review of the full diff; Haiku for the final regression run.

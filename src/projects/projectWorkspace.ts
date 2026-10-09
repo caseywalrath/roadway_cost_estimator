@@ -36,6 +36,18 @@ export interface UserProject {
   createdAt: string;
   updatedAt: string;
   lineItems: ProjectLineItem[];
+  /** Set when the Project was created from a Planning estimate. Absent on all other Projects. */
+  planningOrigin?: ProjectPlanningOrigin;
+}
+
+export interface ProjectPlanningOrigin {
+  planningProjectId: string;
+  planningProjectName: string;
+  alternativeId: string;
+  alternativeName: string;
+  createdAt: string;
+  /** Planning total (full precision) at the time the Project was created. */
+  planningTotal: number;
 }
 
 export interface ProjectCostSummary {
@@ -683,6 +695,7 @@ function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 |
   if (!state) return null;
   const revision = schemaVersion >= 4 ? positiveInteger(value.revision) : 0;
   const status = schemaVersion >= 4 && value.status === "archived" ? "archived" : "active";
+  const planningOrigin = schemaVersion >= 10 ? parseProjectPlanningOrigin(value.planningOrigin) : null;
   return {
     projectId: value.projectId,
     state,
@@ -697,8 +710,18 @@ function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 |
     contingencyPercent: normalizeProjectContingencyPercent(value.contingencyPercent),
     createdAt: stringValue(value.createdAt) || currentTimestamp(),
     updatedAt: stringValue(value.updatedAt) || currentTimestamp(),
-    lineItems
+    lineItems,
+    ...(planningOrigin ? { planningOrigin } : {})
   };
+}
+
+function parseProjectPlanningOrigin(value: unknown): ProjectPlanningOrigin | null {
+  if (!isRecord(value)) return null;
+  const { planningProjectId, planningProjectName, alternativeId, alternativeName, createdAt, planningTotal } = value;
+  if (typeof planningProjectId !== "string" || typeof planningProjectName !== "string"
+    || typeof alternativeId !== "string" || typeof alternativeName !== "string"
+    || typeof createdAt !== "string" || typeof planningTotal !== "number" || !Number.isFinite(planningTotal)) return null;
+  return { planningProjectId, planningProjectName, alternativeId, alternativeName, createdAt, planningTotal };
 }
 
 function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10): ProjectLineItem | null {

@@ -576,6 +576,35 @@ describe("project management", () => {
     expect(document.body.classList.contains("planning-printing")).toBe(false);
   });
 
+  it("hides Create engineer Project when the host supplies no handoff", async () => {
+    const { controller, root } = await open();
+    await createStreet(root, controller);
+    expect(root.querySelector("[data-planning-create-project]")).toBeNull();
+  });
+
+  it("saves, then hands the selected alternative to the host to create a Project", async () => {
+    const calls: Array<{ name: string; alternativeId: string; revision: number }> = [];
+    const createEngineerProject = vi.fn(async (_library: unknown, planning: { name: string; revision: number }, alternativeId: string) => {
+      calls.push({ name: planning.name, alternativeId, revision: planning.revision });
+    });
+    const { controller, root } = await open({ createEngineerProject });
+    await createStreet(root, controller);
+    q(root, "[data-planning-create-project]").click();
+    await controller.flush();
+    expect(createEngineerProject).toHaveBeenCalledTimes(1);
+    expect(calls[0].name).toBe("Main Street");
+    expect(calls[0].alternativeId).toBe(q(root, "[data-planning-alt][aria-pressed='true']").dataset.planningAlt);
+    expect(calls[0].revision).toBeGreaterThan(0);
+  });
+
+  it("shows an error notice when creating the Project fails", async () => {
+    const { controller, root } = await open({ createEngineerProject: async () => { throw new Error("storage full"); } });
+    await createStreet(root, controller);
+    q(root, "[data-planning-create-project]").click();
+    await controller.flush();
+    expect(root.textContent).toContain("Could not create the engineer Project: storage full");
+  });
+
   it("removes the print markup on unmount", async () => {
     const { controller, root } = await open({ print: () => undefined });
     await createStreet(root, controller);

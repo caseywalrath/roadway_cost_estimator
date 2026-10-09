@@ -72,6 +72,8 @@ export interface PlanningViewModel {
   renaming: boolean;
   saveStatus: SaveStatus;
   notice: Notice | null;
+  /** Show "Create engineer Project" (the host app supplied the handoff). */
+  canCreateProject: boolean;
 }
 
 const CORRIDOR_LABELS: Record<string, string> = {
@@ -507,6 +509,7 @@ export function renderSummary(vm: PlanningViewModel): string {
     <span data-summary="budgetLine"${budget ? "" : " hidden"}>Budget <span data-summary="budgetValue">${esc(budget?.budgetText ?? "")}</span> · <strong class="${budget?.over ? "planning-budget--over" : "planning-budget--under"}" data-summary="budgetRemaining">${esc(budget?.remainingText ?? "")}</strong></span>
   </div>
   <p class="muted">Prices: ${esc(vm.library.priceBasisLabel)}</p>
+  ${vm.canCreateProject ? `<div><button type="button" class="secondary-button" data-planning-create-project>Create engineer Project</button><p class="muted">Copies this alternative into a new Project as pay items and lump-sum lines. Later changes here do not update that Project.</p></div>` : ""}
   <p class="visually-hidden" aria-live="polite" data-planning-announce></p>
 </aside>`;
 }

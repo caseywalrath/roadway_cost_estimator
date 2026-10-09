@@ -60,7 +60,14 @@ export function buildProjectCsv(project: UserProject, sort: ProjectSort = DEFAUL
     ["Other costs", summary.otherCost].map(escapeCsvValue).join(","),
     ["Contingency percentage", summary.contingencyPercent].map(escapeCsvValue).join(","),
     ["Contingencies", summary.contingencyCost].map(escapeCsvValue).join(","),
-    ["Total Project Cost", summary.totalProjectCost].map(escapeCsvValue).join(",")
+    ["Total Project Cost", summary.totalProjectCost].map(escapeCsvValue).join(","),
+    ...(project.planningOrigin
+      ? [
+          ["Created from Planning", `${project.planningOrigin.planningProjectName} - ${project.planningOrigin.alternativeName}`].map(escapeCsvValue).join(","),
+          ["Planning total at creation", project.planningOrigin.planningTotal].map(escapeCsvValue).join(","),
+          ["Created from Planning at", project.planningOrigin.createdAt].map(escapeCsvValue).join(",")
+        ]
+      : [])
   ];
 
   return lines.join("\r\n");

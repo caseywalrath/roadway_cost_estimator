@@ -30,6 +30,7 @@ import {
   addProject,
   addProjectLineItem,
   createDefaultProjectSort,
+  createId,
   createUserProject,
   createCatalogProjectLineItem,
   createCustomProjectLineItem,
@@ -84,6 +85,7 @@ import { renderExcelImportWizard } from "./renderExcelImport";
 import { createPlanningController, type PlanningController } from "./planning/planningController";
 import { loadPlanningLibrary } from "../planning/library";
 import { openPlanningStore } from "../planning/storage";
+import { planningAlternativeToProject, type CatalogEntry } from "../planning/toProject";
 
 type AppView = "explorer" | "project" | "planning" | "sourceReview";
 
@@ -311,7 +313,15 @@ export async function renderApp(
         loadLibrary: () => loadPlanningLibrary(),
         openStore: () => openPlanningStore(),
         now: () => new Date().toISOString(),
-        newId: () => crypto.randomUUID()
+        newId: () => crypto.randomUUID(),
+        createEngineerProject: async (library, planning, alternativeId) => {
+          const created = planningAlternativeToProject(library, planning, alternativeId, {
+            now: new Date().toISOString(),
+            newId: (prefix) => createId(prefix),
+            catalog: planningCatalogEntry
+          });
+          await openNewProject(created.project);
+        }
       });
       planningController.mount(planningMount);
     } else {
@@ -1377,8 +1387,28 @@ export async function renderApp(
   }
 
   async function createAndOpenProject(name: string, stateCode: string, location = "", notes = ""): Promise<void> {
+    await openNewProject(createUserProject(name, stateCode, location, notes));
+  }
+
+  let planningCatalog: Map<string, CatalogEntry> | null = null;
+
+  /** Catalog record for a Planning price-table item id, used when a Planning alternative becomes a Project. */
+  function planningCatalogEntry(agencyItemId: string): CatalogEntry | null {
+    planningCatalog ??= new Map(data.agencyItems.map((item) => [item.agencyItemId, {
+      agencyId: item.agencyId,
+      agencyItemId: item.agencyItemId,
+      itemCode: item.itemCode,
+      description: item.officialDescription,
+      unit: item.officialUnit
+    }]));
+    return planningCatalog.get(agencyItemId) ?? null;
+  }
+
+  /** Saves a new Project and opens it in the Project workspace. */
+  async function openNewProject(draft: UserProject): Promise<void> {
     if (!(await flushPendingProjectSave())) return;
-    const project = await projectRepository.createProject(createUserProject(name, stateCode, location, notes));
+    const stateCode = draft.state;
+    const project = await projectRepository.createProject(draft);
     projectState = addProject(projectState, project);
     await projectRepository.setActiveProjectId(stateCode, project.projectId);
     ensurePersistentStorageRequested();
@@ -1389,6 +1419,7 @@ export async function renderApp(
       return;
     }
     projectReadOnly = !(await editCoordinator.claim(project.projectId));
+    activeView = "project";
     projectSubview = "workspace";
     lastSavedAt = project.updatedAt;
     saveStatus = "saved";

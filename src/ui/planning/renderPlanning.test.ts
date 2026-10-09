@@ -29,6 +29,7 @@ function makeVm(project: PlanningProject, extra: Partial<PlanningViewModel> = {}
     renaming: false,
     saveStatus: { kind: "saved", at: "2026-01-01T12:00:00.000Z" },
     notice: null,
+    canCreateProject: false,
     ...extra
   };
 }

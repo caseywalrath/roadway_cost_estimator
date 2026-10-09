@@ -1,6 +1,6 @@
 # Planning v2 core
 
-Pure TypeScript for the Colorado planner. No DOM and no storage in this folder except `storage.ts` (Phase 3). Types are in `types.ts`. Plan: `docs/planning-v2-implementation-plan.md`. Values: `docs/planning-v2-calibration.md`.
+Pure TypeScript for the Colorado planner. No DOM in this folder; `storage.ts` is the only module that uses IndexedDB. Types are in `types.ts`. Plan: `docs/planning-v2-implementation-plan.md`. Values: `docs/planning-v2-calibration.md`.
 
 ## Files and API
 
@@ -12,6 +12,9 @@ Pure TypeScript for the Colorado planner. No DOM and no storage in this folder e
 | `templates.ts` | `createProject(library, options)`, `createAlternative(library, templateId, options)` |
 | `edit.ts` | Immutable edit helpers: `setBaseTreatment`, `setElementEnabled`, `setElementInput`, `resetElementInput`, `setElementOverride`, `addAlternative`, `duplicateAlternative`, `removeAlternative`, `renameAlternative`, `setProjectInput`, `setStage`, `setEngineering`, `setBudget` |
 | `shareFile.ts` | `buildShareFile(project, library, now)`, `parseShareFile(text, library)`, `importProjectCopy(project, options)` |
+| `exportCsv.ts` | `buildPlanningCsv(library, project, exportedAt)`, `planningCsvFilename(project)` |
+| `toProject.ts` | `planningAlternativeToProject(library, project, alternativeId, { now, newId, catalog })` returns `{ project, planningTotal, projectTotal, difference }` |
+| `storage.ts` | `openPlanningStore()` (IndexedDB `roadway-cost-estimator-planning-v2`), `saveProject(project, expectedRevision, now)` with a revision conflict check |
 
 Ids and timestamps are passed in (`options.id`, `options.now`, `options.newId()`), so every function is deterministic and testable.
 
@@ -68,3 +71,11 @@ A component whose `when` condition is false is skipped. A missing, negative, or 
 ```
 
 `parseShareFile` rejects other formats and versions, validates every field type, drops selections for element ids the library does not have (issue `unknown_element`), and fills missing project inputs from library defaults. `importProjectCopy` assigns a new project id and new alternative ids, sets revision 0 (not yet saved), and keeps all names and values. Storage increments revision on each save.
+
+## CSV export
+
+UTF-8 with BOM, CRLF. A Field/Value preamble (project, stage, corridor inputs, price basis), a blank line, then one table: for each alternative, an Element row per included element, Pay item rows under each non-overridden element (direct cost before the allowance multiplier), and Summary rows. Amounts use the screen rounding. Text that starts with `=`, `+`, `-`, `@`, tab or CR gets a leading apostrophe.
+
+## Engineer Project handoff
+
+`planningAlternativeToProject` follows the mapping in `docs/planning-v2-implementation-plan.md` section 5a. Item components become catalog lines when the catalog has the item with the same unit; assembly components, overridden elements, allowances, engineering, right-of-way and utilities become custom lines. The Project uses native contingency at the stage rate; engineering lines are rate × construction and right-of-way and utility lines are shown net of contingency, so the Project total equals the Planning total within $1. The Project carries `planningOrigin`.

@@ -72,6 +72,8 @@ export interface PlanningControllerDeps {
   download?: (filename: string, text: string, mimeType: string) => void;
   /** Opens the print dialog. Default: window.print(). */
   print?: () => void;
+  /** Creates and opens an engineer Project from one alternative. Absent = the button is hidden. */
+  createEngineerProject?: (library: ResolvedLibrary, project: PlanningProject, alternativeId: string) => Promise<void>;
 }
 
 export interface PlanningController {
@@ -240,7 +242,8 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       addAltName,
       renaming,
       saveStatus,
-      notice
+      notice,
+      canCreateProject: deps.createEngineerProject !== undefined
     };
   }
 
@@ -828,6 +831,16 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     print();
   }
 
+  async function createEngineerProject(): Promise<void> {
+    if (!project || !deps.createEngineerProject) return;
+    try {
+      await saveNow();
+      await deps.createEngineerProject(library, project, selectedId());
+    } catch (error) {
+      setNotice({ kind: "error", text: `Could not create the engineer Project: ${messageOf(error)}` });
+    }
+  }
+
   function exportFrom(kind: string): void {
     if (kind === "print") printSummary();
     else if (kind === "csv") exportCsv();
@@ -1211,6 +1224,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       track(deleteCurrentProject());
     } else if ((el = hit("[data-planning-export]"))) exportFrom(el.dataset.planningExport ?? "");
     else if ((el = hit("[data-planning-reload]"))) track(reloadSaved());
+    else if ((el = hit("[data-planning-create-project]"))) track(createEngineerProject());
   }
 
   function onVisibility(): void {
