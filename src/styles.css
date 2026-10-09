@@ -3580,3 +3580,19 @@ tbody tr:last-child td {
   .planning-add-alternative { grid-template-columns: minmax(0, 1fr); }
   .planning-inputs { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ===== Planning v2 print ===== */
+@media screen {
+  .planning-print { display: none; }
+}
+
+@media print {
+  body.planning-printing > :not(.planning-print) { display: none !important; }
+  .planning-print { display: block; color: var(--heading); }
+  .planning-print-page { break-before: page; }
+  .planning-print table { width: 100%; min-width: 0; }
+  .planning-print .summary-table th,
+  .planning-print .summary-table td { white-space: normal; }
+  .planning-print .planning-print-amount { text-align: right; font-variant-numeric: tabular-nums; }
+  .planning-print tbody th[scope="row"] { background: none; font-size: 0.88rem; font-weight: 400; text-transform: none; }
+}

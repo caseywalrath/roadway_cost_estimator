@@ -246,6 +246,8 @@ export function renderHeader(vm: PlanningViewModel): string {
     <details class="project-switcher" data-planning-menu="export">
       <summary>Export</summary>
       <div class="project-switcher-menu"><div class="project-switcher-actions">
+        <button type="button" data-planning-export="print">Print summary</button>
+        <button type="button" data-planning-export="csv">Download CSV</button>
         <button type="button" data-planning-export="json">Download JSON</button>
       </div></div>
     </details>

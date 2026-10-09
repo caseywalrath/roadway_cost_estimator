@@ -58,12 +58,9 @@ describe("renderPlanningView", () => {
     expect(root.textContent).toContain(`Prices: ${library.priceBasisLabel}`);
   });
 
-  it("offers JSON export only (print and CSV are later)", () => {
-    expect(root.querySelector('[data-planning-export="json"]')).not.toBeNull();
-    expect(root.querySelector('[data-planning-export="print"]')).toBeNull();
-    expect(root.querySelector('[data-planning-export="csv"]')).toBeNull();
-    expect(root.textContent).not.toContain("Print summary");
-    expect(root.textContent).not.toContain("Download CSV");
+  it("offers print, CSV and JSON export in that order", () => {
+    const kinds = [...root.querySelectorAll<HTMLElement>("[data-planning-export]")].map((b) => b.dataset.planningExport);
+    expect(kinds).toEqual(["print", "csv", "json"]);
   });
 
   it("uses radios for the base group and checkboxes for corridor elements", () => {

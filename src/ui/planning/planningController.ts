@@ -18,6 +18,7 @@ import {
   setProjectInput,
   setStage
 } from "../../planning/edit";
+import { buildPlanningCsv, planningCsvFilename } from "../../planning/exportCsv";
 import { buildShareFile, importProjectCopy, parseShareFile } from "../../planning/shareFile";
 import type { PlanningProjectSummary, PlanningStore, SavePlanningResult } from "../../planning/storage";
 import { createProject } from "../../planning/templates";
@@ -33,6 +34,7 @@ import type {
   ResolvedLibrary
 } from "../../planning/types";
 import { formatEntered, formatPlain, formatTotalAmount, inputBrief, parseDollar, parseNumber, parsePercent, percentNumber } from "./format";
+import { renderPrintSummary } from "./printSummary";
 import {
   budgetInfo,
   groupSubtotalText,
@@ -66,8 +68,10 @@ export interface PlanningControllerDeps {
   newId: () => string;
   /** Delay after the last edit before saving. Default 500. */
   saveDelayMs?: number;
-  /** JSON export. Default: Blob + anchor click. */
-  download?: (filename: string, text: string) => void;
+  /** JSON and CSV export. Default: Blob + anchor click. */
+  download?: (filename: string, text: string, mimeType: string) => void;
+  /** Opens the print dialog. Default: window.print(). */
+  print?: () => void;
 }
 
 export interface PlanningController {
@@ -123,8 +127,8 @@ function createMemoryStore(): PlanningStore {
   };
 }
 
-function defaultDownload(filename: string, text: string): void {
-  const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+function defaultDownload(filename: string, text: string, mimeType: string): void {
+  const url = URL.createObjectURL(new Blob([text], { type: mimeType }));
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
@@ -149,6 +153,7 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
 export function createPlanningController(deps: PlanningControllerDeps): PlanningController {
   const saveDelay = deps.saveDelayMs ?? 500;
   const download = deps.download ?? defaultDownload;
+  const print = deps.print ?? (() => window.print());
 
   let container: HTMLElement | null = null;
   let phase: Phase = "idle";
@@ -789,7 +794,44 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     if (!project) return;
     closeMenus();
     const filename = `${project.name.replace(/[\\/:*?"<>|]/g, "_").trim() || "planning"}.planning.json`;
-    download(filename, buildShareFile(project, library, deps.now()));
+    download(filename, buildShareFile(project, library, deps.now()), "application/json");
+  }
+
+  function exportCsv(): void {
+    if (!project) return;
+    closeMenus();
+    download(planningCsvFilename(project), buildPlanningCsv(library, project, deps.now()), "text/csv;charset=utf-8");
+  }
+
+  // ---------- Print ----------
+
+  let cleanupPrint: (() => void) | null = null;
+
+  /** Removes the print markup and the body class. Safe to call more than once. */
+  function removePrintMarkup(): void {
+    if (cleanupPrint) cleanupPrint();
+    cleanupPrint = null;
+    for (const el of document.body.querySelectorAll(".planning-print")) el.remove();
+    document.body.classList.remove("planning-printing");
+  }
+
+  function printSummary(): void {
+    if (!project) return;
+    closeMenus();
+    removePrintMarkup();
+    const results = project.alternatives.map((alt) => calculateAlternative(library, project!, alt.id));
+    document.body.insertAdjacentHTML("beforeend", renderPrintSummary(library, project, results, deps.now()));
+    document.body.classList.add("planning-printing");
+    const onAfterPrint = () => removePrintMarkup();
+    window.addEventListener("afterprint", onAfterPrint, { once: true });
+    cleanupPrint = () => window.removeEventListener("afterprint", onAfterPrint);
+    print();
+  }
+
+  function exportFrom(kind: string): void {
+    if (kind === "print") printSummary();
+    else if (kind === "csv") exportCsv();
+    else exportJson();
   }
 
   // ---------- Field commits ----------
@@ -1167,7 +1209,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     else if ((el = hit("[data-planning-delete-project]"))) {
       closeMenus();
       track(deleteCurrentProject());
-    } else if ((el = hit("[data-planning-export]"))) exportJson();
+    } else if ((el = hit("[data-planning-export]"))) exportFrom(el.dataset.planningExport ?? "");
     else if ((el = hit("[data-planning-reload]"))) track(reloadSaved());
   }
 
@@ -1206,6 +1248,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     container.removeEventListener("focusin", onFocusIn);
     container.removeEventListener("toggle", onToggle, true);
     container = null;
+    removePrintMarkup();
     if (dirty) void track(saveNow());
   }
 

@@ -22,7 +22,7 @@ let counter: number;
 let clock: number;
 let containers: HTMLElement[];
 let controllers: PlanningController[];
-let downloads: Array<{ filename: string; text: string }>;
+let downloads: Array<{ filename: string; text: string; mimeType: string }>;
 
 beforeEach(() => {
   factory = new IDBFactory();
@@ -46,7 +46,7 @@ function makeController(overrides: Partial<Parameters<typeof createPlanningContr
     now: () => new Date(Date.UTC(2026, 0, 1, 12, 0, clock++)).toISOString(),
     newId: () => `id-${++counter}`,
     saveDelayMs: 5,
-    download: (filename, text) => downloads.push({ filename, text }),
+    download: (filename, text, mimeType) => downloads.push({ filename, text, mimeType }),
     ...overrides
   });
   controllers.push(controller);
@@ -525,6 +525,7 @@ describe("project management", () => {
     q(root, "[data-planning-export='json']").click();
     expect(downloads.length).toBe(1);
     expect(downloads[0].filename).toBe("Main Street.planning.json");
+    expect(downloads[0].mimeType).toBe("application/json");
     expect(JSON.parse(downloads[0].text).project.name).toBe("Main Street");
 
     const input = q<HTMLInputElement>(root, "[data-planning-import-input]");
@@ -547,10 +548,41 @@ describe("project management", () => {
     expect(root.querySelector("[data-planning-new]")).not.toBeNull();
   });
 
-  it("offers no print or CSV entries", async () => {
+  it("downloads CSV with the csv mime type", async () => {
     const { controller, root } = await open();
     await createStreet(root, controller);
-    expect(root.querySelector("[data-planning-export='print']")).toBeNull();
-    expect(root.querySelector("[data-planning-export='csv']")).toBeNull();
+    q(root, "[data-planning-export='csv']").click();
+    expect(downloads.length).toBe(1);
+    expect(downloads[0].filename.endsWith(".planning.csv")).toBe(true);
+    expect(downloads[0].mimeType).toBe("text/csv;charset=utf-8");
+    expect(downloads[0].text).toContain("Main Street");
+  });
+
+  it("prints the summary and cleans up after printing", async () => {
+    const print = vi.fn(() => {
+      expect(document.body.querySelector(".planning-print")).not.toBeNull();
+      expect(document.body.classList.contains("planning-printing")).toBe(true);
+    });
+    const { controller, root } = await open({ print });
+    await createStreet(root, controller);
+    q(root, "[data-planning-export='print']").click();
+    expect(print).toHaveBeenCalledTimes(1);
+    expect(document.body.querySelectorAll(".planning-print").length).toBe(1);
+    expect(document.body.querySelector(".planning-print h1")?.textContent).toBe("Main Street");
+    q(root, "[data-planning-export='print']").click();
+    expect(document.body.querySelectorAll(".planning-print").length).toBe(1);
+    window.dispatchEvent(new Event("afterprint"));
+    expect(document.body.querySelector(".planning-print")).toBeNull();
+    expect(document.body.classList.contains("planning-printing")).toBe(false);
+  });
+
+  it("removes the print markup on unmount", async () => {
+    const { controller, root } = await open({ print: () => undefined });
+    await createStreet(root, controller);
+    q(root, "[data-planning-export='print']").click();
+    expect(document.body.querySelector(".planning-print")).not.toBeNull();
+    controller.unmount();
+    expect(document.body.querySelector(".planning-print")).toBeNull();
+    expect(document.body.classList.contains("planning-printing")).toBe(false);
   });
 });
