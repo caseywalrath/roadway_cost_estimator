@@ -1,0 +1,43 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_627-00008,627-00008,Modified Epoxy Pavement Marking,GAL,155,36,171.85,141.90,292.50,157
+co_cdot_627-00013,627-00013,Pavement Marking Paint (High Build),GAL,123,17,91.00,65.78,126.50,130
+co_cdot_202-00090,202-00090,Removal of Delineator,EACH,117,23,16.65,10.05,30.00,118
+co_cdot_627-30405,627-30405,Preformed Thermoplastic Pavement Marking (Word- Symbol),SF,85,25,27.43,21.00,32.00,85
+co_cdot_627-30410,627-30410,Preformed Thermoplastic Pavement Marking (Xwalk- Stop Line),SF,76,24,18.77,15.97,24.00,76
+co_cdot_627-00016,627-00016,Pavement Marking Paint (High Build)(Temporary),GAL,56,13,100.00,80.00,148.50,56
+co_cdot_627-01010,627-01010,Preformed Plastic Pavement Marking (Type I)(Inlaid),SF,47,17,24.25,22.05,27.74,48
+co_cdot_627-30411,627-30411,Preformed Thermoplastic Pavement Marking (Xwalk- Stop Line) (Special),SF,44,15,19.30,16.33,22.06,44
+co_cdot_627-30407,627-30407,Preformed Thermoplastic Pavement Marking (Word- Symbol) (Special),SF,35,10,24.55,21.45,26.75,35
+co_cdot_627-00009,627-00009,Modified Epoxy Pavement Marking(Inlaid),GAL,20,5,246.39,200.00,356.25,20
+co_cdot_627-02010,627-02010,Preformed Plastic Pavement Marking (Type II) (Inlaid),SF,17,6,25.00,19.62,31.25,17
+co_cdot_627-01011,627-01011,Preformed Plastic Pavement Marking (Contrast)(Inlaid),SF,13,6,26.65,25.24,40.48,14
+co_cdot_627-30205,627-30205,Thermoplastic Pavement Marking (Word-Symbol),SF,12,2,28.00,25.93,31.00,12
+co_cdot_627-30210,627-30210,Thermoplastic Pavement Marking (Xwalk-Stopline),SF,11,3,18.00,14.88,22.70,11
+co_cdot_627-01001,627-01001,Preformed Plastic Pavement Marking (Type I),SF,8,1,46.80,26.48,60.62,8
+co_cdot_627-00005,627-00005,Epoxy Pavement Marking,GAL,7,1,181.33,160.83,368.79,7
+co_cdot_627-00011,627-00011,Pavement Marking Paint (Waterborne),GAL,7,2,114.00,81.65,120.00,8
+co_cdot_630-80392,630-80392,Stackable Tubular Marker,EACH,7,1,28.60,26.25,41.50,7
+co_cdot_627-00001,627-00001,Pavement Marking Paint,GAL,6,3,265.00,150.00,393.35,6
+co_cdot_627-30408,627-30408,Preformed Thermoplastic Pavement Marking (Shield),SF,6,3,29.75,29.39,33.75,6
+co_cdot_627-30323,627-30323,Preformed Plastic Pavement Marking (Word- Symbol)(Type I)(Inlaid),SF,5,2,25.00,22.46,27.98,5
+co_cdot_627-00002,627-00002,Thermoplastic Pavement Marking,SF,4,3,23.50,19.20,29.93,4
+co_cdot_627-00003,627-00003,Thermoplastic Pavement Marking (Inlaid),SF,4,1,42.05,31.08,55.98,5
+co_cdot_627-30328,627-30328,Preformed Plastic Pavement Marking (XWalk-Stop Line)(Type I)(Inlaid),SF,4,2,19.67,16.23,24.13,5
+co_cdot_627-00007,627-00007,Epoxy Pavement Marking (Special),GAL,2,0,205.00,182.50,227.50,2
+co_cdot_627-00014,627-00014,Pavement Marking Paint (Low Temperature),GAL,2,0,140.50,122.75,158.24,2
+co_cdot_627-00030,627-00030,Raised Pavement Marker (Temporary),EACH,2,0,4.00,3.50,4.50,2
+co_cdot_627-00070,627-00070,Preformed Thermoplastic Pavement Marking,SF,2,1,33.50,32.25,34.75,3
+co_cdot_627-40012,627-40012,Methyl Methacrylate Pavement Marking (Word Symbol)(Inlaid),SF,2,1,13.25,9.38,17.12,2
+co_cdot_627-40013,627-40013,Methyl Methacrylate Pavement Marking (X Walk Stop line)(Inlaid),SF,2,1,11.75,8.62,14.88,2
+co_cdot_627-00019,627-00019,Pavement Marking Paint (High Build)(Inlaid),GAL,1,0,121.00,121.00,121.00,1
+co_cdot_627-00021,627-00021,Modified Epoxy Pavement Marking (Contrast),GAL,1,1,125.50,125.50,125.50,1
+co_cdot_627-00025,627-00025,4 Inch Pavement Marking Tape (Removable),LF,1,0,5.50,5.50,5.50,1
+co_cdot_627-00031,627-00031,Raised Pavement Marker,EACH,1,1,50.00,50.00,50.00,1
+co_cdot_627-00032,627-00032,Raised Flexible Pavement Marker (Temporary),EACH,1,0,1.15,1.15,1.15,1
+co_cdot_627-00215,627-00215,Hot Applied Multipolymer Pavement Marking (150 mil),SF,1,1,10.25,10.25,10.25,1
+co_cdot_627-00216,627-00216,Hot Applied Multipolymer Pavement Marking (200 mil),SF,1,1,11.75,11.75,11.75,1
+co_cdot_627-02001,627-02001,Preformed Plastic Pavement Marking (Type II),SF,1,0,23.00,23.00,23.00,1
+co_cdot_627-30105,627-30105,Pavement Marking Paint (Word-Symbol),SF,1,0,78.00,78.00,78.00,1
+co_cdot_630-80401,630-80401,Delineator (Type I) (Temporary),EACH,1,0,66.00,66.00,66.00,1
+co_cdot_630-80402,630-80402,Delineator (Type II) (Temporary),EACH,1,0,66.00,66.00,66.00,1
+co_cdot_630-80403,630-80403,Delineator (Type III) (Temporary),EACH,1,0,66.00,66.00,66.00,1

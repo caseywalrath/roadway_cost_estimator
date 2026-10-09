@@ -1,0 +1,12 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_304-06007,304-06007,Aggregate Base Course (Class 6),CY,107,25,101.50,75.00,157.04,107
+co_cdot_203-00010,203-00010,Unclassified Excavation (Complete In Place),CY,69,16,45.00,30.00,71.91,71
+co_cdot_304-06000,304-06000,Aggregate Base Course (Class 6),TON,68,21,65.00,50.00,108.50,70
+co_cdot_203-00000,203-00000,Unclassified Excavation,CY,36,11,68.76,42.51,134.25,36
+co_cdot_608-00006,608-00006,Concrete Sidewalk (6 Inch),SY,33,19,91.00,75.00,145.00,34
+co_cdot_304-06008,304-06008,Aggregate Base Course (Class 6) (Special),CY,19,2,90.00,65.64,108.15,19
+co_cdot_304-06009,304-06009,Aggregate Base Course (Class 6) (Special),TON,4,1,87.46,47.19,135.75,4
+co_cdot_608-00026,608-00026,Concrete Bikeway (6 Inch),SY,3,2,73.28,71.01,95.54,3
+co_cdot_608-00040,608-00040,Concrete Bikeway (Special),SY,2,2,118.58,103.64,133.51,2
+co_cdot_304-06004,304-06004,Aggregate Base Course (Class 6),SY,1,0,21.79,21.79,21.79,1
+co_cdot_608-01600,608-01600,Aggregate Walkway,SY,1,0,44.00,44.00,44.00,1

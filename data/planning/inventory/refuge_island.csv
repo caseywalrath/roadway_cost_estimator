@@ -1,0 +1,11 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_202-00190,202-00190,Removal of Concrete Median Cover Material,SY,43,24,32.00,16.95,45.98,44
+co_cdot_610-00030,610-00030,Median Cover Material (Concrete),SF,32,13,23.04,18.72,30.45,32
+co_cdot_610-00020,610-00020,Median Cover Material (Patterned Concrete),SF,30,12,23.32,17.73,27.82,30
+co_cdot_609-20010,609-20010,Curb Type 2 (Section B),LF,29,19,46.00,36.25,58.00,29
+co_cdot_202-00195,202-00195,Removal of Median Cover,SY,8,5,38.50,29.22,57.60,8
+co_cdot_610-00024,610-00024,Median Cover Material (4 Inch Patterned Concrete),SF,7,5,22.38,14.96,31.00,8
+co_cdot_610-00026,610-00026,Median Cover Material (6 Inch Patterned Concrete),SF,7,5,17.00,16.26,26.50,7
+co_cdot_609-40120,609-40120,Curb (Median) (Special),SY,6,2,169.03,136.38,225.51,6
+co_cdot_610-00035,610-00035,Median Cover Material (Concrete)(Special),SF,6,4,25.45,21.88,35.85,6
+co_cdot_609-20000,609-20000,Curb Type 2 (Section B) (Special),LF,3,1,79.95,65.28,80.97,3

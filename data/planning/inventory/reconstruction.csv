@@ -1,0 +1,50 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_202-00240,202-00240,Removal of Asphalt Mat (Planing),SY,149,29,4.90,3.00,11.00,154
+co_cdot_202-00220,202-00220,Removal of Asphalt Mat,SY,144,38,20.00,11.99,38.52,147
+co_cdot_304-06007,304-06007,Aggregate Base Course (Class 6),CY,107,25,101.50,75.00,157.04,107
+co_cdot_203-00010,203-00010,Unclassified Excavation (Complete In Place),CY,69,16,45.00,30.00,71.91,71
+co_cdot_304-06000,304-06000,Aggregate Base Course (Class 6),TON,68,21,65.00,50.00,108.50,70
+co_cdot_202-00210,202-00210,Removal of Concrete Pavement,SY,58,27,38.92,22.07,54.26,60
+co_cdot_202-00246,202-00246,Removal of Asphalt Mat (Planing) (Special),SY,40,8,19.00,10.19,32.07,40
+co_cdot_203-00000,203-00000,Unclassified Excavation,CY,36,11,68.76,42.51,134.25,36
+co_cdot_403-34751,403-34751,Hot Mix Asphalt (Grading SX) (75) (PG 64-28),TON,36,5,164.50,118.25,241.50,36
+co_cdot_403-34721,403-34721,Hot Mix Asphalt (Grading SX) (75) (PG 58-28),TON,27,2,146.00,127.28,178.00,27
+co_cdot_403-33841,403-33841,Hot Mix Asphalt (Grading S) (100) (PG 64-22),TON,22,8,127.31,115.10,147.65,23
+co_cdot_403-34871,403-34871,Hot Mix Asphalt (Grading SX) (100) (PG 76-28),TON,22,10,152.30,128.78,219.75,22
+co_cdot_304-06008,304-06008,Aggregate Base Course (Class 6) (Special),CY,19,2,90.00,65.64,108.15,19
+co_cdot_403-34701,403-34701,Hot Mix Asphalt (Grading SX) (75),TON,17,0,110.00,96.00,170.00,18
+co_cdot_412-00800,412-00800,Concrete Pavement (8 Inch),SY,16,6,123.50,96.73,156.79,16
+co_cdot_403-34801,403-34801,Hot Mix Asphalt (Grading SX) (100),TON,13,5,108.00,92.50,190.00,14
+co_cdot_403-34731,403-34731,Hot Mix Asphalt (Grading SX) (75) (PG 58-34),TON,12,0,165.00,146.50,219.50,13
+co_cdot_403-34851,403-34851,Hot Mix Asphalt (Grading SX) (100) (PG 64-28),TON,12,7,142.50,117.75,153.65,13
+co_cdot_403-36721,403-36721,Hot Mix Asphalt (Grading ST)(75)(PG 58-28),TON,12,1,136.00,128.00,147.38,12
+co_cdot_412-01000,412-01000,Concrete Pavement (10 Inch),SY,11,9,185.00,140.31,235.00,11
+co_cdot_403-34771,403-34771,Hot Mix Asphalt (Grading SX) (75) (PG 76-28),TON,10,3,127.50,113.89,152.75,10
+co_cdot_403-36701,403-36701,Hot Mix Asphalt (Grading ST)(75),TON,9,0,94.90,86.00,141.00,10
+co_cdot_403-34741,403-34741,Hot Mix Asphalt (Grading SX) (75) (PG 64-22),TON,8,4,120.00,113.27,155.00,8
+co_cdot_412-00900,412-00900,Concrete Pavement (9 Inch),SY,7,3,152.00,108.06,166.50,7
+co_cdot_412-01050,412-01050,Concrete Pavement (10-1/2 Inch),SY,7,4,136.10,120.76,139.81,9
+co_cdot_202-00217,202-00217,Remove Concrete Pavement (Planing) (Special),SY,6,2,62.50,49.36,73.00,6
+co_cdot_412-00801,412-00801,Concrete Pavement (8 Inch) (Special),SY,6,3,178.67,168.08,207.19,6
+co_cdot_403-34841,403-34841,Hot Mix Asphalt (Grading SX) (100) (PG 64-22),TON,5,1,136.00,125.00,157.82,5
+co_cdot_412-00805,412-00805,Concrete Pavement (8 Inch) (Fast Track),SY,5,2,155.00,135.00,190.00,5
+co_cdot_304-06009,304-06009,Aggregate Base Course (Class 6) (Special),TON,4,1,87.46,47.19,135.75,4
+co_cdot_403-33741,403-33741,Hot Mix Asphalt (Grading S) (75) (PG 64-22),TON,4,1,178.00,117.83,244.50,4
+co_cdot_412-00850,412-00850,Concrete Pavement (8-1/2 Inch),SY,4,1,125.23,105.09,163.40,4
+co_cdot_202-00215,202-00215,Removal of Concrete Pavement (Planing),SY,3,1,31.00,17.40,61.94,3
+co_cdot_412-00920,412-00920,Concrete Pavement (9 Inch) (Fast Track),SY,2,1,173.50,162.75,184.25,2
+co_cdot_412-00950,412-00950,Concrete Pavement (9-1/2 Inch),SY,2,1,716.28,424.43,1008.14,2
+co_cdot_412-01001,412-01001,Concrete Pavement (10 Inch) (Special),SY,2,2,207.50,203.75,211.25,2
+co_cdot_412-01020,412-01020,Concrete Pavement (10 Inch) (Fast Track),SY,2,2,175.00,157.50,192.50,2
+co_cdot_412-01060,412-01060,Concrete Pavement (10-1/2 Inch) (Fast Track),SY,2,2,150.28,141.83,158.74,2
+co_cdot_202-00212,202-00212,Removal of Concrete Pavement (Special),SY,1,0,12.36,12.36,12.36,1
+co_cdot_202-00226,202-00226,Removal of Asphalt Mat (Special),SY,1,0,30.00,30.00,30.00,1
+co_cdot_202-00241,202-00241,Removal of Asphalt Mat (Planing)(Special),CY,1,0,8.50,8.50,8.50,1
+co_cdot_304-06004,304-06004,Aggregate Base Course (Class 6),SY,1,0,21.79,21.79,21.79,1
+co_cdot_403-33751,403-33751,Hot Mix Asphalt (Grading S) (75) (PG 64-28),TON,1,1,124.29,124.29,124.29,1
+co_cdot_403-33821,403-33821,Hot Mix Asphalt (Grading S) (100) (PG 58-28),TON,1,1,270.00,270.00,270.00,1
+co_cdot_403-33851,403-33851,Hot Mix Asphalt (Grading S) (100) (PG 64-28),TON,1,0,166.89,166.89,166.89,1
+co_cdot_403-34601,403-34601,Hot Mix Asphalt (Grading SX) (50),TON,1,0,83.70,83.70,83.70,1
+co_cdot_412-00851,412-00851,Concrete Pavement (8-1/2 Inch) (Special),SY,1,0,102.00,102.00,102.00,1
+co_cdot_412-00870,412-00870,Concrete Pavement (8-1/2 Inch) (Fast Track),SY,1,0,159.00,159.00,159.00,1
+co_cdot_412-00951,412-00951,Concrete Pavement (9-1/2 Inch) (Special),SY,1,0,210.00,210.00,210.00,1

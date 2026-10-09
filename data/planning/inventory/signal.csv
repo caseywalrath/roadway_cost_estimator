@@ -1,0 +1,52 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_614-70336,614-70336,Traffic Signal Face (12-12-12),EACH,43,23,1280.00,1007.50,1588.15,45
+co_cdot_614-70150,614-70150,Pedestrian Signal Face (16) (Countdown),EACH,33,22,850.00,742.94,983.80,33
+co_cdot_614-84000,614-84000,Traffic Signal Pedestal Pole Steel,EACH,32,22,3350.00,2985.75,4500.00,32
+co_cdot_614-72855,614-72855,Traffic Signal Controller Cabinet,EACH,31,15,35114.00,29267.50,45150.00,32
+co_cdot_614-70448,614-70448,Traffic Signal Face (12-12-12-12),EACH,24,14,1387.00,1127.00,1610.20,24
+co_cdot_614-81155,614-81155,Traffic Signal-Light Pole Steel (1-55 Foot Mast Arm),EACH,18,8,27012.62,24576.00,33050.00,18
+co_cdot_614-70200,614-70200,Accessible Pedestrian Signal,EACH,16,11,2332.50,1750.00,3047.25,16
+co_cdot_614-72875,614-72875,Loop Detector Wire,LF,16,3,23.71,18.86,27.19,16
+co_cdot_614-81145,614-81145,Traffic Signal-Light Pole Steel (1-45 Foot Mast Arm),EACH,16,10,26355.00,24133.25,30260.50,16
+co_cdot_614-81135,614-81135,Traffic Signal-Light Pole Steel (1-35 Foot Mast Arm),EACH,14,10,25000.00,23933.75,27332.25,14
+co_cdot_614-81140,614-81140,Traffic Signal-Light Pole Steel (1-40 Foot Mast Arm),EACH,14,10,25641.50,22488.75,27500.00,14
+co_cdot_614-86248,614-86248,Traffic Signal Controller (Type 2070LC),EACH,14,6,8714.50,7736.00,9603.72,14
+co_cdot_614-81130,614-81130,Traffic Signal-Light Pole Steel (1-30 Foot Mast Arm),EACH,11,7,22000.00,20436.50,23071.50,11
+co_cdot_614-81150,614-81150,Traffic Signal-Light Pole Steel (1-50 Foot Mast Arm),EACH,11,7,26015.15,24500.00,29386.50,11
+co_cdot_614-81020,614-81020,Traffic Signal-Light Pole Steel (2 Mast Arm),EACH,10,8,49592.72,41757.56,59260.00,10
+co_cdot_614-10160,614-10160,Signal Head Backplates,EACH,9,4,347.00,305.00,385.00,9
+co_cdot_614-72884,614-72884,Traffic Signal Vehicle Detector (Micro Wave Type),EACH,7,2,12500.00,11299.63,12893.40,8
+co_cdot_614-72885,614-72885,Traffic Signal Vehicle Detector (Special),EACH,7,5,11550.00,9843.00,13136.66,8
+co_cdot_614-81165,614-81165,Traffic Signal-Light Pole Steel (1-65 Foot Mast Arm),EACH,7,3,45500.00,39400.00,48725.00,7
+co_cdot_614-81160,614-81160,Traffic Signal Light Pole Steel (1-60 Foot Mast Arm),EACH,6,5,38550.00,36412.50,40916.25,6
+co_cdot_614-86748,614-86748,Controller (Type 2070),EACH,5,3,10000.00,9000.00,10200.00,5
+co_cdot_614-70560,614-70560,Traffic Signal Face (12-12-12-12-12),EACH,4,3,1300.00,1192.82,1500.00,4
+co_cdot_614-72854,614-72854,Traffic Controller Cabinet,EACH,4,3,39000.00,38088.00,42375.00,4
+co_cdot_614-75840,614-75840,Traffic Signal Controller (Install Only),EACH,3,1,2680.00,1995.00,5866.00,3
+co_cdot_614-81125,614-81125,Traffic Signal-Light Pole Steel (1-25 Foot Mast Arm),EACH,3,1,27000.00,25250.00,29450.00,3
+co_cdot_614-81170,614-81170,Traffic Signal-Light Pole Steel (1-70 Foot Mast Arm),EACH,3,2,49000.00,43830.00,50000.00,3
+co_cdot_614-81175,614-81175,Traffic Signal-Light Pole Steel (1-75 Foot Mast Arm),EACH,3,1,44200.00,43000.00,47100.00,3
+co_cdot_614-84100,614-84100,Traffic Signal Pedestal Pole Aluminum,EACH,3,2,3100.00,3000.50,3155.00,3
+co_cdot_614-70112,614-70112,Traffic Signal Face (12),EACH,2,1,564.61,543.80,585.41,2
+co_cdot_614-70117,614-70117,Pedestrian Signal Face (16),EACH,2,2,970.00,955.00,985.00,2
+co_cdot_614-75855,614-75855,Traffic Signal Controller Cabinet (Install Only),EACH,2,2,8284.26,7662.39,8906.13,2
+co_cdot_614-81120,614-81120,Traffic Signal-Light Pole Steel (1-20 Foot Mast Arm),EACH,2,2,21462.50,20899.25,22025.75,2
+co_cdot_614-81250,614-81250,Traffic Signal-Light Pole Steel (2-50 Foot Mast Arm),EACH,2,1,91078.50,75717.75,106439.25,2
+co_cdot_614-81550,614-81550,Traffic Signal-Light Pole Steel (2-50&60 Foot Mast Arm),EACH,2,1,64909.00,63204.50,66613.50,2
+co_cdot_614-10105,614-10105,Controller (Install Only),EACH,1,0,1840.00,1840.00,1840.00,1
+co_cdot_614-70000,614-70000,Programmable Traffic Signal Face,EACH,1,0,6500.00,6500.00,6500.00,1
+co_cdot_614-70010,614-70010,Modification of Signal Face,EACH,1,0,1290.00,1290.00,1290.00,1
+co_cdot_614-70113,614-70113,Pedestrian Signal Face (12),EACH,1,0,861.00,861.00,861.00,1
+co_cdot_614-70118,614-70118,Pedestrian Signal Face (18),EACH,1,0,1050.00,1050.00,1050.00,1
+co_cdot_614-72430,614-72430,Traffic Signal (24 Inch x 30 Inch Blankout LED Sign),EACH,1,1,6500.00,6500.00,6500.00,1
+co_cdot_614-72858,614-72858,Pedestal Pole (3 Foot 6 Inch),EACH,1,1,1053.00,1053.00,1053.00,1
+co_cdot_614-72877,614-72877,Traffic Signal Vehicle Detector (Install Only),EACH,1,0,1690.00,1690.00,1690.00,1
+co_cdot_614-75875,614-75875,Loop Detector Wire (Install Only),LF,1,1,15.00,15.00,15.00,1
+co_cdot_614-79336,614-79336,Traffic Signal Face (12-12-12) (Furnish Only),EACH,1,0,1800.00,1800.00,1800.00,1
+co_cdot_614-81000,614-81000,Traffic Signal-Light Pole Steel,EACH,1,1,19677.02,19677.02,19677.02,1
+co_cdot_614-81011,614-81011,Traffic Signal-Light Pole Steel (1 Mast Arm) (Install Only),EACH,1,1,1858.59,1858.59,1858.59,1
+co_cdot_614-81540,614-81540,Sig-Light Pole Steel (2-25&40 Ft),EACH,1,1,40000.00,40000.00,40000.00,1
+co_cdot_614-81555,614-81555,Traffic Signal-Light Pole Steel (2-55&65 Foot Mast Arm),EACH,1,1,69782.00,69782.00,69782.00,1
+co_cdot_614-81560,614-81560,Traffic Signal-Light Pole Steel (2-60&65 Foot Mast Arm),EACH,1,1,70007.00,70007.00,70007.00,1
+co_cdot_614-82020,614-82020,Traffic Signal Pole Steel (2 Mast Arm),EACH,1,0,40193.00,40193.00,40193.00,1
+co_cdot_614-86238,614-86238,Traffic Signal Controller (Solid State) (Full-Actuated) (8 Phase),EACH,1,0,5530.00,5530.00,5530.00,1

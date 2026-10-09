@@ -1,0 +1,37 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_603-01185,603-01185,18 Inch Reinforced Concrete Pipe (Complete In Place),LF,33,9,233.93,150.00,346.50,35
+co_cdot_604-30010,604-30010,Manhole Slab Base (10 Foot),EACH,33,11,12167.10,10000.00,16452.78,34
+co_cdot_604-00305,604-00305,Inlet Type C (5 Foot),EACH,30,10,8650.00,6731.16,11586.68,31
+co_cdot_603-01245,603-01245,24 Inch Reinforced Concrete Pipe (Complete In Place),LF,29,8,259.51,206.09,367.25,31
+co_cdot_604-30005,604-30005,Manhole Slab Base (5 Foot),EACH,27,11,8670.01,8090.00,10194.53,28
+co_cdot_603-05018,603-05018,18 Inch Reinforced Concrete End Section,EACH,25,7,3190.20,2200.00,4186.59,27
+co_cdot_603-05024,603-05024,24 Inch Reinforced Concrete End Section,EACH,21,6,3580.00,2600.00,6000.00,22
+co_cdot_604-19105,604-19105,Inlet Type R L 5 (5 Foot),EACH,21,10,11307.65,8253.16,15000.00,23
+co_cdot_604-30015,604-30015,Manhole Slab Base (15 Foot),EACH,20,7,15012.99,12375.00,19623.89,20
+co_cdot_604-19110,604-19110,Inlet Type R L 5 (10 Foot),EACH,19,6,14750.00,12309.58,17500.00,19
+co_cdot_604-19205,604-19205,Inlet Type R L 10 (5 Foot),EACH,15,8,15475.10,12500.00,16972.08,15
+co_cdot_604-00310,604-00310,Inlet Type C (10 Foot),EACH,13,5,12500.00,8579.06,13862.32,13
+co_cdot_604-39000,604-39000,Manhole Special,EACH,12,4,15571.37,12283.86,19325.00,14
+co_cdot_604-19210,604-19210,Inlet Type R L 10 (10 Foot),EACH,11,5,20100.00,15850.00,21592.72,11
+co_cdot_603-01180,603-01180,18 Inch Reinforced Concrete Pipe,LF,8,4,234.61,186.91,300.00,8
+co_cdot_604-39050,604-39050,Manhole (Traffic Management System),EACH,8,3,16922.35,11620.61,19426.76,8
+co_cdot_604-30020,604-30020,Manhole Slab Base (20 Foot),EACH,7,3,17900.00,14050.00,22141.50,7
+co_cdot_603-01240,603-01240,24 Inch Reinforced Concrete Pipe,LF,6,2,236.60,232.31,435.00,6
+co_cdot_604-00315,604-00315,Inlet Type C (15 Foot),EACH,5,2,14100.00,11000.00,17600.00,5
+co_cdot_604-19115,604-19115,Inlet Type R L 5 (15 Foot),EACH,4,0,13450.00,12097.50,17550.00,4
+co_cdot_604-19305,604-19305,Inlet Type R L 15 (5 Foot),EACH,4,2,21000.00,17800.00,24850.00,4
+co_cdot_604-19310,604-19310,Inlet Type R L 15 (10 Foot),EACH,3,1,26710.00,22467.29,26955.00,3
+co_cdot_604-31010,604-31010,Manhole Box Base (10 Foot),EACH,3,0,20900.00,18950.00,28056.94,3
+co_cdot_604-30000,604-30000,Manhole Slab Base (Special),EACH,2,0,14562.50,14343.75,14781.25,2
+co_cdot_604-31000,604-31000,Manhole Box Base (Special),EACH,2,0,35750.00,28625.00,42875.00,2
+co_cdot_604-31005,604-31005,Manhole Box Base (5 Foot),EACH,2,0,17900.00,16450.00,19350.00,2
+co_cdot_604-31015,604-31015,Manhole Box Base (15 Foot),EACH,2,1,27200.00,25950.00,28450.00,2
+co_cdot_604-31020,604-31020,Manhole Box Base (20 Foot),EACH,2,0,26500.00,25600.00,27400.00,2
+co_cdot_604-39005,604-39005,Manhole Special (5 Foot),EACH,2,0,20157.19,19185.78,21128.60,2
+co_cdot_603-03180,603-03180,18 Inch Reinforced Concrete Pipe Special,LF,1,0,963.80,963.80,963.80,1
+co_cdot_604-00350,604-00350,Inlet Type C (Special),EACH,1,0,26008.98,26008.98,26008.98,1
+co_cdot_604-19120,604-19120,Inlet Type R L 5 (20 Foot),EACH,1,0,18200.00,18200.00,18200.00,1
+co_cdot_604-19215,604-19215,Inlet Type R L 10 (15 Foot),EACH,1,0,20250.00,20250.00,20250.00,1
+co_cdot_604-19405,604-19405,Inlet Type R Special (5 Foot),EACH,1,0,10400.00,10400.00,10400.00,1
+co_cdot_604-30025,604-30025,Manhole Slab Base (25 Foot),EACH,1,0,9200.00,9200.00,9200.00,1
+co_cdot_604-39020,604-39020,Manhole Special (20 Foot),EACH,1,1,49071.02,49071.02,49071.02,1

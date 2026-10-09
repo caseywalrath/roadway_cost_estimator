@@ -1,0 +1,23 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_202-00240,202-00240,Removal of Asphalt Mat (Planing),SY,149,29,4.90,3.00,11.00,154
+co_cdot_411-10255,411-10255,Emulsified Asphalt (Slow-Setting),GAL,117,16,5.50,4.10,8.00,117
+co_cdot_202-00246,202-00246,Removal of Asphalt Mat (Planing) (Special),SY,40,8,19.00,10.19,32.07,40
+co_cdot_403-34751,403-34751,Hot Mix Asphalt (Grading SX) (75) (PG 64-28),TON,36,5,164.50,118.25,241.50,36
+co_cdot_403-34721,403-34721,Hot Mix Asphalt (Grading SX) (75) (PG 58-28),TON,27,2,146.00,127.28,178.00,27
+co_cdot_403-33841,403-33841,Hot Mix Asphalt (Grading S) (100) (PG 64-22),TON,22,8,127.31,115.10,147.65,23
+co_cdot_403-34871,403-34871,Hot Mix Asphalt (Grading SX) (100) (PG 76-28),TON,22,10,152.30,128.78,219.75,22
+co_cdot_403-34701,403-34701,Hot Mix Asphalt (Grading SX) (75),TON,17,0,110.00,96.00,170.00,18
+co_cdot_403-34801,403-34801,Hot Mix Asphalt (Grading SX) (100),TON,13,5,108.00,92.50,190.00,14
+co_cdot_403-34731,403-34731,Hot Mix Asphalt (Grading SX) (75) (PG 58-34),TON,12,0,165.00,146.50,219.50,13
+co_cdot_403-34851,403-34851,Hot Mix Asphalt (Grading SX) (100) (PG 64-28),TON,12,7,142.50,117.75,153.65,13
+co_cdot_403-34771,403-34771,Hot Mix Asphalt (Grading SX) (75) (PG 76-28),TON,10,3,127.50,113.89,152.75,10
+co_cdot_403-34741,403-34741,Hot Mix Asphalt (Grading SX) (75) (PG 64-22),TON,8,4,120.00,113.27,155.00,8
+co_cdot_403-34841,403-34841,Hot Mix Asphalt (Grading SX) (100) (PG 64-22),TON,5,1,136.00,125.00,157.82,5
+co_cdot_411-10216,411-10216,Emulsified Asphalt (CRS-2P),GAL,5,0,2.85,2.50,3.75,5
+co_cdot_403-33741,403-33741,Hot Mix Asphalt (Grading S) (75) (PG 64-22),TON,4,1,178.00,117.83,244.50,4
+co_cdot_411-10253,411-10253,Emulsified Asphalt (CSS-1H),GAL,4,0,2.88,2.25,3.15,4
+co_cdot_202-00241,202-00241,Removal of Asphalt Mat (Planing)(Special),CY,1,0,8.50,8.50,8.50,1
+co_cdot_403-33751,403-33751,Hot Mix Asphalt (Grading S) (75) (PG 64-28),TON,1,1,124.29,124.29,124.29,1
+co_cdot_403-33821,403-33821,Hot Mix Asphalt (Grading S) (100) (PG 58-28),TON,1,1,270.00,270.00,270.00,1
+co_cdot_403-33851,403-33851,Hot Mix Asphalt (Grading S) (100) (PG 64-28),TON,1,0,166.89,166.89,166.89,1
+co_cdot_403-34601,403-34601,Hot Mix Asphalt (Grading SX) (50),TON,1,0,83.70,83.70,83.70,1
