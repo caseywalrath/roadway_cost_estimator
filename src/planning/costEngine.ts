@@ -34,7 +34,7 @@ export function createDefaultAllowances(state: PlanningState): AllowanceDefiniti
     percent,
     base,
     originalBasis: { percent, base: structuredClone(base), enabled },
-    assumption: allowanceAssumption(state, role, `${name} is a provisional Planning allowance; confirm project-specific basis and percentage.`),
+    assumption: allowanceAssumption(state, role, `${name}: ${percent}% of ${base.kind.replace(/_/g, " ")}.`),
     overrideReason: null,
     overlapTags,
     exclusion: null,

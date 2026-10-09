@@ -35,6 +35,9 @@ describe("planner estimate presentation", () => {
     expect(view.excludedScope).toContain("Property acquisition");
     expect(view.excludedScope).toContain("Major utility relocation");
     expect(view.notices.map((item) => item.text).join(" ")).not.toContain("right_of_way");
+    expect(view.lines.find((line) => line.label === "Contingency")).toMatchObject({ detail: "25%", amount: cost.contingency });
+    expect(view.lines.filter((line) => line.group === "construction").reduce((total, line) => total + (line.amount ?? 0), 0)).toBeCloseTo(view.construction!);
+    expect(view.lines.filter((line) => line.group === "other").reduce((total, line) => total + (line.amount ?? 0), 0)).toBeCloseTo(view.otherProjectCosts!);
   });
 
   it("compares only alternatives with matching included-scope coverage", () => {
@@ -61,5 +64,19 @@ describe("planner estimate presentation", () => {
     expect(cost.external).toBeNull();
     expect(view.otherProjectCosts).toBe((cost.services ?? 0) + 5000);
     expect(view.amount).toBe((view.construction ?? 0) + (view.otherProjectCosts ?? 0));
+  });
+
+  it("reconciles displayed lines and total after both major impacts are assessed", () => {
+    const scenario = pricedPath();
+    scenario.externalScopes = [
+      { scopeId: "right_of_way", decision: "none_assumed", amount: null, reason: "No acquisition" },
+      { scopeId: "major_utilities", decision: "manual", amount: 12_000, reason: "Known relocation" },
+    ];
+    const cost = calculateScenarioCosts(scenario);
+    const view = buildPlannerEstimate(scenario, cost);
+    expect(cost.complete).toBe(true);
+    expect(view.lines.find((line) => line.label === "Major utility relocation")?.amount).toBe(12_000);
+    expect(view.lines.reduce((total, line) => total + (line.amount ?? 0), 0)).toBeCloseTo(cost.total!);
+    expect(view.amount).toBeCloseTo(cost.total!);
   });
 });

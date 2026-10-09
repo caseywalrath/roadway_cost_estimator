@@ -72,6 +72,7 @@ export function buildColoradoContractRateSnapshot(data: AppData, request: Colora
   const requestedTo = request.to ?? anchor;
   const districts = request.districts ?? [];
   const sourceFilter = request.sourceIds ?? [];
+  const indexByPeriod = indexMap(data);
   const observations = eligibleDataset.filter((o) => o.agencyItemId === request.agencyItemId && o.unitNormalized.toUpperCase() === request.unit.toUpperCase());
   const selected = observations.filter((o) => {
     const d = sourceDate(o, data); const c = data.contractById.get(o.contractId); const s = data.sourceById.get(o.sourceId);
@@ -81,6 +82,11 @@ export function buildColoradoContractRateSnapshot(data: AppData, request: Colora
     if (d < requestedFrom || d > requestedTo) return reject("Outside requested inclusive date window.");
     if (!finitePositive(o.quantity)) return reject("Quantity is not positive and finite.");
     if (!finitePositive(o.unitPrice)) return reject("Unit rate is not positive and finite.");
+    if (request.targetQuarter) {
+      const sourceQuarter = quarter(d);
+      const sourceIndex = sourceQuarter ? indexByPeriod.get(sourceQuarter) : null;
+      if (!sourceIndex || !finitePositive(sourceIndex.indexValue)) return reject("NHCCI is unavailable for this observation quarter; excluded from adjusted rate.");
+    }
     if (!c || c.state !== "CO" || c.agencyId !== "co_cdot" || s?.agencyId !== "co_cdot") return reject("Contract or source is not Colorado CDOT evidence.");
     if (districts.length && !districts.some((wanted) => isStatewide(wanted) ? isStatewide(c.district) : normalizedDistrict(wanted) === normalizedDistrict(c.district))) return reject("Excluded by district filter.");
     return true;
@@ -112,13 +118,11 @@ export function buildColoradoContractRateSnapshot(data: AppData, request: Colora
     if (rows.length === 1) chosen.push(rows[0]);
     else rows.forEach((r) => excluded.push({ observationId: r.observation.observationId, reason: "Unresolved collision: more than one awarded observation claims one source contract-item." }));
   }
-  const indexByPeriod = indexMap(data);
   let target: InflationIndexRecord | null = null;
   if (request.targetQuarter) target = indexByPeriod.get(request.targetQuarter) ?? null;
   const adjusted = !!request.targetQuarter;
   if (adjusted) {
     if (!target || !finitePositive(target.indexValue)) return { ok: false, issues: [...errors, issue("missing_rate", "Requested NHCCI target quarter is unavailable.")] };
-    for (const row of chosen) { const q = quarter(sourceDate(row.observation, data)!); const idx = q ? indexByPeriod.get(q) : null; if (!idx || !finitePositive(idx.indexValue)) return { ok: false, issues: [...errors, issue("missing_rate", "Adjusted mode requires NHCCI coverage for every selected observation.")] }; }
   }
   const linesByContract = new Map<string, ContractLineContribution[]>();
   for (const row of chosen) {

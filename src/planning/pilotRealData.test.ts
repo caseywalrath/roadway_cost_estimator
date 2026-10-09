@@ -48,8 +48,12 @@ function addAndPrice(data: AppData, state: PlanningState, definition: PackageDef
   for (const component of definition.components) {
     if (component.binding) {
       const request = { agencyItemId: component.binding.agencyItemId, unit: component.binding.unit, capturedAt };
-      const result = state === "NE" ? resolveNebraskaAnnualRate(data, request) : buildColoradoContractRateSnapshot(data, request);
+      const targetQuarter = [...data.inflationIndexByPeriod.values()].filter((row) => row.indexValue > 0)
+        .sort((a, b) => b.periodYear - a.periodYear || b.periodQuarter - a.periodQuarter)[0]?.periodLabel;
+      const result = state === "NE" ? resolveNebraskaAnnualRate(data, request) : buildColoradoContractRateSnapshot(data, { ...request, targetQuarter });
+      if (state === "CO" && !result.ok) throw new Error(`${definition.kind}/${component.role}: ${result.issues.map((issue) => issue.message).join("; ")}`);
       if (result.ok) {
+        if (state === "CO") expect(result.value.inflation.availability).toBe("available");
         const repriced = editPlanningScenario(scenario, { kind: "reprice", instanceId: instance.value.instanceId, role: component.role, snapshot: result.value }, capturedAt);
         if (!repriced.ok) throw new Error(repriced.issues.map((issue) => issue.message).join("; "));
         scenario = repriced.value;

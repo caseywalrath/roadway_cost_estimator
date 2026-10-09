@@ -10,6 +10,7 @@ export interface PlannerEstimate {
   notices: PlannerNotice[];
   excludedScope: string[];
   coverageKey: string;
+  lines: { label: string; amount: number | null; detail?: string; group: "construction" | "other" }[];
 }
 
 const externalName = (id: string) => id === "right_of_way" ? "Property acquisition" : "Major utility relocation";
@@ -38,16 +39,29 @@ export function buildPlannerEstimate(scenario: PlanningScenario, cost: ScenarioC
       if (snapshot.kind === "co_contract_median" && snapshot.limitedEvidence) notices.push({ kind: "evidence", text: `${instance.definition.name} uses limited Colorado bid-price evidence; check the source before relying on it.` });
     }
   }
-  const construction = sum(cost.constructionSubtotal, cost.contingency);
-  const knownExternal = scenario.externalScopes.reduce((total, scope) => total + (scope.decision === "manual" && typeof scope.amount === "number" && Number.isFinite(scope.amount) ? scope.amount : 0), 0);
-  const pricedExternalWork = cost.components.filter((item) => item.category === "external" && item.status === "priced")
-    .reduce((total, item) => total + (item.extendedCost ?? 0), 0);
-  const pricedExternalAllowances = cost.allowances.filter((item) => item.category === "external" && item.status === "priced")
-    .reduce((total, item) => total + (item.amount ?? 0), 0);
-  const otherProjectCosts = sum(cost.services, knownExternal, pricedExternalWork, pricedExternalAllowances);
+  const lines: PlannerEstimate["lines"] = [];
+  for (const instance of scenario.packages) {
+    const selected = cost.components.filter((item) => item.instanceId === instance.instanceId && item.status !== "excluded");
+    if (!selected.length) continue;
+    const priced = selected.filter((item) => item.status === "priced" && item.extendedCost !== null);
+    const amount = priced.length ? priced.reduce((total, item) => total + item.extendedCost!, 0) : null;
+    lines.push({ label: instance.definition.kind === "sidewalk" ? "Sidewalk" : instance.definition.kind === "curb_gutter" ? "Curb and gutter" : instance.definition.name, amount, detail: selected.some((item) => item.status !== "priced") ? "Partial" : undefined, group: selected[0].category === "construction" ? "construction" : "other" });
+  }
+  for (const component of cost.components.filter((item) => item.instanceId === null && item.status !== "excluded")) {
+    lines.push({ label: component.description, amount: component.status === "priced" ? component.extendedCost : null, group: component.category === "construction" ? "construction" : "other" });
+  }
+  for (const allowance of cost.allowances.filter((item) => item.status !== "excluded")) {
+    lines.push({ label: allowance.name, amount: allowance.status === "priced" ? allowance.amount : null, detail: allowance.percent === null ? undefined : `${allowance.percent}%`, group: allowance.category === "construction" ? "construction" : allowance.role === "contingency" ? "construction" : "other" });
+  }
+  for (const scope of scenario.externalScopes.filter((item) => item.decision === "manual")) {
+    lines.push({ label: externalName(scope.scopeId), amount: scope.amount, group: "other" });
+  }
+  const pricedSum = (group: "construction" | "other") => lines.filter((line) => line.group === group).reduce((total, line) => total + (line.amount ?? 0), 0);
+  const construction = pricedSum("construction");
+  const otherProjectCosts = pricedSum("other");
   const includedAmount = sum(construction, otherProjectCosts);
   const hasUnpricedWork = activeComponents.some((item) => item.status !== "priced") || cost.allowances.some((item) => item.status === "unpriced");
-  const amount = !hasBase ? null : cost.complete ? cost.total : hasUnpricedWork ? cost.pricedDirectSubtotal : includedAmount;
+  const amount = !hasBase ? null : cost.complete ? cost.total : includedAmount;
   const amountLabel = !hasBase ? "Choose an improvement" : cost.complete ? "Planning estimate for included scope" : hasUnpricedWork ? "Priced items so far" : "Planning subtotal for included scope";
   const excludedScope = [
     ...scenario.externalScopes.filter((scope) => scope.decision === "unassessed").map((scope) => externalName(scope.scopeId)),
@@ -62,7 +76,7 @@ export function buildPlannerEstimate(scenario: PlanningScenario, cost: ScenarioC
     allowances: cost.allowances.map((item) => [item.role, item.status]).sort(),
     external: scenario.externalScopes.map((scope) => [scope.scopeId, scope.decision === "unassessed" ? "unassessed" : scope.decision === "none_assumed" ? "none" : scope.amount === null ? "unpriced" : "priced"]).sort(),
   };
-  return { amount, amountLabel, construction: hasBase ? construction : null, otherProjectCosts: hasBase ? otherProjectCosts : null, fullScope: hasBase && cost.complete, notices: [...new Map(notices.map((notice) => [notice.text, notice])).values()], excludedScope, coverageKey: JSON.stringify(coverage) };
+  return { amount, amountLabel, construction: hasBase ? construction : null, otherProjectCosts: hasBase ? otherProjectCosts : null, fullScope: hasBase && cost.complete, notices: [...new Map(notices.map((notice) => [notice.text, notice])).values()], excludedScope, coverageKey: JSON.stringify(coverage), lines };
 }
 
 export function comparePlannerEstimates(left: PlannerEstimate, right: PlannerEstimate): number | null {

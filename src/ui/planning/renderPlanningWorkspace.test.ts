@@ -60,7 +60,6 @@ describe("Planning engineer review presentation", () => {
     expect(host.querySelector<HTMLSelectElement>('[data-field="base-kind"]')?.value).toBe("resurfacing");
     expect(host.querySelector('[data-field="base-kind"] option[value="curb_gutter"]')).toBeNull();
     expect(host.textContent).toContain("Optional element: Nebraska Curb and Gutter");
-    expect(host.textContent).toContain("Existing curb removal is excluded");
     const row = host.querySelector('[data-detail="element-curb"]');
     expect(row?.hasAttribute('open')).toBe(false);
     expect(row?.querySelector('.planning-element-name')?.textContent).toBe("Curb and gutter");
@@ -141,8 +140,13 @@ describe("Planning engineer review presentation", () => {
     expect(host.querySelector('[data-action="duplicate"]')?.closest('.planning-actions')).not.toBeNull();
     expect(host.textContent).toContain("Assumptions and next steps");
     expect(host.querySelector('.planning-review-status')).toBeNull();
-    expect(host.querySelector('.planning-export')?.textContent).toContain("Current alternative CSV");
-    expect(host.querySelector('.planning-export')?.textContent).toContain("Planning project JSON");
+    expect(host.querySelector('.planning-export')?.textContent).toContain("Share Project");
+    expect(host.querySelector('.planning-export')?.textContent).toContain("Current Alternative (CSV)");
+    expect(host.querySelector('.planning-export')?.textContent).toContain("Entire Project (JSON)");
+    expect(host.querySelector('[data-detail="quantity-assumptions"] summary')?.textContent).toBe("Quantity assumptions");
+    expect(host.querySelector('.planning-estimate')?.textContent).not.toContain("Provisional planning prices");
+    expect(host.querySelector('.planning-estimate')?.textContent).not.toContain("Order-of-magnitude estimate");
+    expect(host.querySelector('.planning-estimate')?.textContent).toContain("Contingency");
   });
 
   it("presents work in six columns with closed editors and separate evidence", () => {

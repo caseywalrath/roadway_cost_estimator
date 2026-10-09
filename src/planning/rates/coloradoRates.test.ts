@@ -45,6 +45,23 @@ describe("Colorado contract median adapter", () => {
     expect(result.ok).toBe(false);
   });
 
+  it("excludes a source quarter without NHCCI while retaining indexed Colorado evidence", () => {
+    const data = fixture();
+    data.observations.push({ ...data.observations[0], observationId: "old_awarded_bid", contractId: "A", dateBasis: "2024-12-01" } as any);
+    data.contractItems.push({ ...data.contractItems[0], contractItemId: "old_item" } as any);
+    data.inflationIndexes = [
+      { periodLabel: "2025 Q1", indexValue: 100 } as any,
+      { periodLabel: "2025 Q2", indexValue: 125 } as any,
+    ];
+    data.inflationIndexByPeriod = new Map(data.inflationIndexes.map((row) => [row.periodLabel, row]));
+    const result = buildColoradoContractRateSnapshot(data, { agencyItemId: "co_cdot_403-34741", unit: "TON", targetQuarter: "2025 Q2", capturedAt: "2026-10-07T00:00:00Z" });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.rate).toBe(75);
+      expect(result.value.excludedEvidence.some((row) => row.observationId === "old_awarded_bid" && row.reason.includes("NHCCI"))).toBe(true);
+    }
+  });
+
   it("excludes an observation whose derived contract-item identity is unresolved", () => {
     const data = fixture();
     data.contractItems = data.contractItems.filter((x: any) => x.contractItemId !== "b_item");

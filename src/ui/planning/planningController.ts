@@ -29,6 +29,9 @@ const file = (name: string, content: string, type: string) => {
 const issueMessage = (issues: PlanningIssue[]) => issues.map((entry) => entry.message).join(" ");
 const numeric = (value: string): number | null => value.trim() === "" ? null : Number(value);
 const isBaseKind = (kind: PackageKind) => kind === "resurfacing" || kind === "reconstruction" || kind === "path";
+const latestInflationQuarter = (data: AppData): string | undefined => [...data.inflationIndexByPeriod.values()]
+  .filter((row) => Number.isFinite(row.indexValue) && row.indexValue > 0)
+  .sort((a, b) => b.periodYear - a.periodYear || b.periodQuarter - a.periodQuarter)[0]?.periodLabel;
 
 export interface PlanningPersistence {
   isPersistent: boolean;
@@ -256,7 +259,7 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
     for (const component of definition.components) {
       if (!component.binding) continue;
       const request = { agencyItemId: component.binding.agencyItemId, unit: component.binding.unit, capturedAt: now() };
-      const rate = planningState === "NE" ? resolveNebraskaAnnualRate(data, request) : buildColoradoContractRateSnapshot(data, request);
+      const rate = planningState === "NE" ? resolveNebraskaAnnualRate(data, request) : buildColoradoContractRateSnapshot(data, { ...request, targetQuarter: latestInflationQuarter(data) });
       if (rate.ok) edit({ kind: "reprice", instanceId: instance.value.instanceId, role: component.role, snapshot: rate.value });
     }
     for (const component of definition.components) {
@@ -296,11 +299,11 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
       }
       if (previous.exclusions[component.role]) nextInstance.exclusions[component.role] = previous.exclusions[component.role];
       const oldSnapshot = previous.rateSnapshots[component.role];
-      if (component.binding && oldSnapshot?.agencyItemId === component.binding.agencyItemId && oldSnapshot.unit === component.binding.unit) {
+      if (component.binding && oldSnapshot?.agencyItemId === component.binding.agencyItemId && oldSnapshot.unit === component.binding.unit && !(planningState === "CO" && oldSnapshot.inflation.availability !== "available")) {
         nextInstance.rateSnapshots[component.role] = oldSnapshot;
       } else if (component.binding) {
         const request = { agencyItemId: component.binding.agencyItemId, unit: component.binding.unit, capturedAt: now() };
-        const result = planningState === "NE" ? resolveNebraskaAnnualRate(data, request) : buildColoradoContractRateSnapshot(data, request);
+        const result = planningState === "NE" ? resolveNebraskaAnnualRate(data, request) : buildColoradoContractRateSnapshot(data, { ...request, targetQuarter: latestInflationQuarter(data) });
         if (result.ok) nextInstance.rateSnapshots[component.role] = result.value;
       }
       const manual = pilotManualRate(planningState, definition.kind, component.role);
@@ -508,7 +511,7 @@ export function createPlanningController(data: AppData, injected?: PlanningPersi
       const controls = [...(host?.querySelectorAll<HTMLElement>(".planning-rate-controls") ?? [])].find((entry) => entry.dataset.rateInstance === instance.instanceId && entry.dataset.rateRole === component.role);
       const value = (key: string) => controls?.querySelector<HTMLInputElement | HTMLSelectElement>(`[data-rate='${key}']`)?.value.trim() ?? "";
       const request = { agencyItemId: component.binding.agencyItemId, unit: component.binding.unit as PlanningUnit, capturedAt: now() };
-      const result = planningState === "NE" ? resolveNebraskaAnnualRate(data, { ...request, reportSeries: value("series") === "july_june" ? "july_june" : "calendar_year", ...(value("period-start") ? { periodStart: value("period-start") } : {}), ...(value("period-end") ? { periodEnd: value("period-end") } : {}) }) : buildColoradoContractRateSnapshot(data, { ...request, ...(value("from") ? { from: value("from") } : {}), ...(value("to") ? { to: value("to") } : {}), districts: value("districts") ? value("districts").split(",").map((entry) => entry.trim()).filter(Boolean) : [], sourceIds: value("sources") ? value("sources").split(",").map((entry) => entry.trim()).filter(Boolean) : [] });
+      const result = planningState === "NE" ? resolveNebraskaAnnualRate(data, { ...request, reportSeries: value("series") === "july_june" ? "july_june" : "calendar_year", ...(value("period-start") ? { periodStart: value("period-start") } : {}), ...(value("period-end") ? { periodEnd: value("period-end") } : {}) }) : buildColoradoContractRateSnapshot(data, { ...request, targetQuarter: latestInflationQuarter(data), ...(value("from") ? { from: value("from") } : {}), ...(value("to") ? { to: value("to") } : {}), districts: value("districts") ? value("districts").split(",").map((entry) => entry.trim()).filter(Boolean) : [], sourceIds: value("sources") ? value("sources").split(",").map((entry) => entry.trim()).filter(Boolean) : [] });
       if (result.ok) edit({ kind: "reprice", instanceId: instance.instanceId, role: component.role, snapshot: result.value });
       else { message = issueMessage(result.issues); render(); }
     }
