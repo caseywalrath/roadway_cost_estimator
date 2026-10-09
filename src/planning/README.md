@@ -67,4 +67,4 @@ A component whose `when` condition is false is skipped. A missing, negative, or 
 { "format": "roadway-cost-estimator/planning", "formatVersion": 2, "exportedAt": "ISO", "state": "CO", "priceBasis": "label", "project": { "...PlanningProject" } }
 ```
 
-`parseShareFile` rejects other formats and versions, validates every field type, drops selections for element ids the library does not have (issue `unknown_element`), and fills missing project inputs from library defaults. `importProjectCopy` assigns a new project id and new alternative ids, sets revision 1, and keeps all names and values.
+`parseShareFile` rejects other formats and versions, validates every field type, drops selections for element ids the library does not have (issue `unknown_element`), and fills missing project inputs from library defaults. `importProjectCopy` assigns a new project id and new alternative ids, sets revision 0 (not yet saved), and keeps all names and values. Storage increments revision on each save.
