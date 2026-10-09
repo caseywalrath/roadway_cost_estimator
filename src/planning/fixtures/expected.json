@@ -1,0 +1,1261 @@
+{
+  "description": "Independent Python computation (scratchpad make_fixtures.py) from src/planning/README.md rules only. Conventions: component amount = quantity x unitPrice (before the multiplier); element direct = sum of component amounts; calculated = direct x multiplier; element amount = override ?? calculated; construction = sum of amounts of enabled base/corridor/spot elements; contingency = construction x stage rate; design and CE = (construction + contingency) x 0.10; total = construction + contingency + design + CE + right-of-way + utility relocation; range = total x (1 + rangeLow/High). Full float precision. Element cases use base_none as base for corridor and spot elements. Template cases use Concept stage, no budget, ROW and utilities 0. The extra case is complete_street at Planning study with budget, ROW, utilities, a sidewalk override, and reconstruction concrete/concrete.",
+  "scenarios": [
+    {
+      "id": "S1",
+      "projectInputs": {
+        "lengthMiles": 1,
+        "roadwayWidthFt": 40,
+        "intersections": 4
+      },
+      "elements": [
+        {
+          "elementId": "base_none",
+          "baseElementId": "base_none",
+          "direct": 0.0,
+          "multiplier": 1.879896,
+          "calculated": 0.0,
+          "components": []
+        },
+        {
+          "elementId": "mill_overlay",
+          "baseElementId": "mill_overlay",
+          "direct": 448469.56,
+          "multiplier": 1.8027360000000001,
+          "calculated": 808472.22071616,
+          "components": [
+            {
+              "id": "planing",
+              "quantity": 23466.666666666668,
+              "unitPrice": 3.57,
+              "amount": 83776.0
+            },
+            {
+              "id": "asphalt",
+              "quantity": 2679.6,
+              "unitPrice": 136.1,
+              "amount": 364693.56
+            }
+          ]
+        },
+        {
+          "elementId": "reconstruction",
+          "baseElementId": "reconstruction",
+          "direct": 2583236.2355555557,
+          "multiplier": 1.9096000000000004,
+          "calculated": 4932947.91541689,
+          "components": [
+            {
+              "id": "remove_asphalt",
+              "quantity": 23466.666666666668,
+              "unitPrice": 20.4,
+              "amount": 478720.0
+            },
+            {
+              "id": "excavation",
+              "quantity": 7822.222222222223,
+              "unitPrice": 61.98,
+              "amount": 484821.3333333333
+            },
+            {
+              "id": "base",
+              "quantity": 3911.1111111111113,
+              "unitPrice": 134.39,
+              "amount": 525614.2222222222
+            },
+            {
+              "id": "asphalt",
+              "quantity": 8038.8,
+              "unitPrice": 136.1,
+              "amount": 1094080.68
+            }
+          ]
+        },
+        {
+          "elementId": "path",
+          "baseElementId": "path",
+          "direct": 890843.5555555556,
+          "multiplier": 1.5592500000000002,
+          "calculated": 1389047.8140000002,
+          "components": [
+            {
+              "id": "surface",
+              "quantity": 5866.666666666667,
+              "unitPrice": 108.79,
+              "amount": 638234.6666666667
+            },
+            {
+              "id": "base",
+              "quantity": 977.7777777777778,
+              "unitPrice": 134.39,
+              "amount": 131403.55555555556
+            },
+            {
+              "id": "excavation",
+              "quantity": 1955.5555555555557,
+              "unitPrice": 61.98,
+              "amount": 121205.33333333333
+            }
+          ]
+        },
+        {
+          "elementId": "sidewalk",
+          "baseElementId": "base_none",
+          "direct": 765881.6000000001,
+          "multiplier": 1.879896,
+          "calculated": 1439777.7563136,
+          "components": [
+            {
+              "id": "sidewalk",
+              "quantity": 7040.0,
+              "unitPrice": 108.79,
+              "amount": 765881.6000000001
+            }
+          ]
+        },
+        {
+          "elementId": "curb_gutter",
+          "baseElementId": "base_none",
+          "direct": 618816.0,
+          "multiplier": 1.879896,
+          "calculated": 1163309.723136,
+          "components": [
+            {
+              "id": "curb_gutter",
+              "quantity": 10560,
+              "unitPrice": 41.32,
+              "amount": 436339.2
+            },
+            {
+              "id": "removal",
+              "quantity": 10560,
+              "unitPrice": 17.28,
+              "amount": 182476.80000000002
+            }
+          ]
+        },
+        {
+          "elementId": "bike_lanes",
+          "baseElementId": "base_none",
+          "direct": 32000.0,
+          "multiplier": 1.879896,
+          "calculated": 60156.672,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 1,
+              "unitPrice": 32000,
+              "amount": 32000
+            }
+          ]
+        },
+        {
+          "elementId": "buffered_bike_lane",
+          "baseElementId": "base_none",
+          "direct": 46000.0,
+          "multiplier": 1.879896,
+          "calculated": 86475.216,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 1,
+              "unitPrice": 46000,
+              "amount": 46000
+            }
+          ]
+        },
+        {
+          "elementId": "lighting",
+          "baseElementId": "base_none",
+          "direct": 1120000.0,
+          "multiplier": 1.879896,
+          "calculated": 2105483.52,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 1,
+              "unitPrice": 1120000,
+              "amount": 1120000
+            }
+          ]
+        },
+        {
+          "elementId": "landscaping",
+          "baseElementId": "base_none",
+          "direct": 828000.0,
+          "multiplier": 1.879896,
+          "calculated": 1556553.888,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 2,
+              "unitPrice": 414000,
+              "amount": 828000
+            }
+          ]
+        },
+        {
+          "elementId": "drainage",
+          "baseElementId": "base_none",
+          "direct": 1450000.0,
+          "multiplier": 1.879896,
+          "calculated": 2725849.2,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 1,
+              "unitPrice": 1450000,
+              "amount": 1450000
+            }
+          ]
+        },
+        {
+          "elementId": "ada_ramps",
+          "baseElementId": "base_none",
+          "direct": 116800.0,
+          "multiplier": 1.879896,
+          "calculated": 219571.8528,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 16,
+              "unitPrice": 7300,
+              "amount": 116800
+            }
+          ]
+        },
+        {
+          "elementId": "crosswalk",
+          "baseElementId": "base_none",
+          "direct": 51200.0,
+          "multiplier": 1.879896,
+          "calculated": 96250.6752,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 8,
+              "unitPrice": 6400,
+              "amount": 51200
+            }
+          ]
+        },
+        {
+          "elementId": "rrfb",
+          "baseElementId": "base_none",
+          "direct": 34000.0,
+          "multiplier": 1.879896,
+          "calculated": 63916.464,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 1,
+              "unitPrice": 34000,
+              "amount": 34000
+            }
+          ]
+        },
+        {
+          "elementId": "signal",
+          "baseElementId": "base_none",
+          "direct": 379000.0,
+          "multiplier": 1.879896,
+          "calculated": 712480.584,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 1,
+              "unitPrice": 379000,
+              "amount": 379000
+            }
+          ]
+        },
+        {
+          "elementId": "refuge_island",
+          "baseElementId": "base_none",
+          "direct": 23000.0,
+          "multiplier": 1.879896,
+          "calculated": 43237.608,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 1,
+              "unitPrice": 23000,
+              "amount": 23000
+            }
+          ]
+        },
+        {
+          "elementId": "bus_stop",
+          "baseElementId": "base_none",
+          "direct": 14400.0,
+          "multiplier": 1.879896,
+          "calculated": 27070.5024,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 2,
+              "unitPrice": 7200,
+              "amount": 14400
+            }
+          ]
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "mill_overlay",
+          "baseType": "mill_overlay",
+          "multiplier": 1.8027360000000001,
+          "construction": 1019031.7855161601,
+          "contingency": 305709.53565484803,
+          "design": 132474.13211710082,
+          "constructionEngineering": 132474.13211710082,
+          "total": 1589689.5854052096,
+          "rangeLow": 1192267.189053907,
+          "rangeHigh": 2384534.378107814,
+          "rightOfWay": 0.0,
+          "utilityRelocation": 0.0,
+          "budgetRemaining": null,
+          "effectiveProjectInputs": {
+            "lengthMiles": 1,
+            "roadwayWidthFt": 40,
+            "intersections": 4
+          }
+        },
+        {
+          "templateId": "full_reconstruction",
+          "baseType": "reconstruction",
+          "multiplier": 1.9096000000000004,
+          "construction": 11058070.882456891,
+          "contingency": 3317421.2647370673,
+          "design": 1437549.214719396,
+          "constructionEngineering": 1437549.214719396,
+          "total": 17250590.576632753,
+          "rangeLow": 12937942.932474565,
+          "rangeHigh": 25875885.86494913,
+          "rightOfWay": 0.0,
+          "utilityRelocation": 0.0,
+          "budgetRemaining": null,
+          "effectiveProjectInputs": {
+            "lengthMiles": 1,
+            "roadwayWidthFt": 40,
+            "intersections": 4
+          }
+        },
+        {
+          "templateId": "complete_street",
+          "baseType": "reconstruction",
+          "multiplier": 1.9096000000000004,
+          "construction": 14963584.80245689,
+          "contingency": 4489075.440737067,
+          "design": 1945266.0243193954,
+          "constructionEngineering": 1945266.0243193954,
+          "total": 23343192.291832745,
+          "rangeLow": 17507394.21887456,
+          "rangeHigh": 35014788.43774912,
+          "rightOfWay": 0.0,
+          "utilityRelocation": 0.0,
+          "budgetRemaining": null,
+          "effectiveProjectInputs": {
+            "lengthMiles": 1,
+            "roadwayWidthFt": 40,
+            "intersections": 4
+          }
+        },
+        {
+          "templateId": "sidewalk_gap",
+          "baseType": "elements_only",
+          "multiplier": 1.879896,
+          "construction": 939460.7309568,
+          "contingency": 281838.21928704,
+          "design": 122129.89502438401,
+          "constructionEngineering": 122129.89502438401,
+          "total": 1465558.7402926078,
+          "rangeLow": 1099169.0552194559,
+          "rangeHigh": 2198338.1104389117,
+          "rightOfWay": 0.0,
+          "utilityRelocation": 0.0,
+          "budgetRemaining": null,
+          "effectiveProjectInputs": {
+            "lengthMiles": 1,
+            "roadwayWidthFt": 40,
+            "intersections": 4
+          }
+        },
+        {
+          "templateId": "multi_use_path",
+          "baseType": "path",
+          "multiplier": 1.5592500000000002,
+          "construction": 1442062.3140000002,
+          "contingency": 432618.6942000001,
+          "design": 187468.10082000005,
+          "constructionEngineering": 187468.10082000005,
+          "total": 2249617.2098400006,
+          "rangeLow": 1687212.9073800005,
+          "rangeHigh": 3374425.814760001,
+          "rightOfWay": 0.0,
+          "utilityRelocation": 0.0,
+          "budgetRemaining": null,
+          "effectiveProjectInputs": {
+            "lengthMiles": 1,
+            "roadwayWidthFt": 40,
+            "intersections": 4
+          }
+        },
+        {
+          "templateId": "intersection_safety",
+          "baseType": "elements_only",
+          "multiplier": 1.879896,
+          "construction": 834673.824,
+          "contingency": 250402.1472,
+          "design": 108507.59712,
+          "constructionEngineering": 108507.59712,
+          "total": 1302091.1654400001,
+          "rangeLow": 976568.3740800001,
+          "rangeHigh": 1953136.7481600002,
+          "rightOfWay": 0.0,
+          "utilityRelocation": 0.0,
+          "budgetRemaining": null,
+          "effectiveProjectInputs": {
+            "lengthMiles": 0.1,
+            "roadwayWidthFt": 40,
+            "intersections": 1
+          }
+        }
+      ],
+      "extra": {
+        "templateId": "complete_street",
+        "stageId": "planning_study",
+        "budget": 20000000,
+        "rightOfWay": 500000,
+        "utilityRelocation": 250000,
+        "overrides": {
+          "sidewalk": 1000000
+        },
+        "inputs": {
+          "reconstruction": {
+            "existingSurface": "concrete",
+            "newSurface": "concrete"
+          }
+        },
+        "summary": {
+          "baseType": "reconstruction",
+          "multiplier": 1.9096000000000004,
+          "construction": 18529931.09902223,
+          "contingency": 4632482.774755557,
+          "design": 2316241.3873777785,
+          "constructionEngineering": 2316241.3873777785,
+          "rightOfWay": 500000,
+          "utilityRelocation": 250000,
+          "total": 28544896.648533344,
+          "rangeLow": 22835917.318826675,
+          "rangeHigh": 37108365.64309335,
+          "budgetRemaining": -8544896.648533344
+        },
+        "elements": [
+          {
+            "elementId": "reconstruction",
+            "baseElementId": "reconstruction",
+            "direct": 4949080.888888889,
+            "multiplier": 1.9096000000000004,
+            "calculated": 9450764.865422225,
+            "amount": 9450764.865422225,
+            "components": [
+              {
+                "id": "remove_concrete",
+                "quantity": 23466.666666666668,
+                "unitPrice": 40.52,
+                "amount": 950869.3333333335
+              },
+              {
+                "id": "excavation",
+                "quantity": 7822.222222222223,
+                "unitPrice": 61.98,
+                "amount": 484821.3333333333
+              },
+              {
+                "id": "base",
+                "quantity": 3911.1111111111113,
+                "unitPrice": 134.39,
+                "amount": 525614.2222222222
+              },
+              {
+                "id": "concrete",
+                "quantity": 23466.666666666668,
+                "unitPrice": 127.32,
+                "amount": 2987776.0
+              }
+            ]
+          },
+          {
+            "elementId": "curb_gutter",
+            "baseElementId": "reconstruction",
+            "direct": 618816.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 1181691.0336000002,
+            "amount": 1181691.0336000002,
+            "components": [
+              {
+                "id": "curb_gutter",
+                "quantity": 10560,
+                "unitPrice": 41.32,
+                "amount": 436339.2
+              },
+              {
+                "id": "removal",
+                "quantity": 10560,
+                "unitPrice": 17.28,
+                "amount": 182476.80000000002
+              }
+            ]
+          },
+          {
+            "elementId": "sidewalk",
+            "baseElementId": "reconstruction",
+            "direct": 1021926.4000000001,
+            "multiplier": 1.9096000000000004,
+            "calculated": 1951470.6534400007,
+            "amount": 1000000,
+            "components": [
+              {
+                "id": "sidewalk",
+                "quantity": 7040.0,
+                "unitPrice": 108.79,
+                "amount": 765881.6000000001
+              },
+              {
+                "id": "removal",
+                "quantity": 7040.0,
+                "unitPrice": 36.37,
+                "amount": 256044.8
+              }
+            ]
+          },
+          {
+            "elementId": "buffered_bike_lane",
+            "baseElementId": "reconstruction",
+            "direct": 46000.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 87841.60000000002,
+            "amount": 87841.60000000002,
+            "components": [
+              {
+                "id": "assembly",
+                "quantity": 1,
+                "unitPrice": 46000,
+                "amount": 46000
+              }
+            ]
+          },
+          {
+            "elementId": "lighting",
+            "baseElementId": "reconstruction",
+            "direct": 1120000.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 2138752.0000000005,
+            "amount": 2138752.0000000005,
+            "components": [
+              {
+                "id": "assembly",
+                "quantity": 1,
+                "unitPrice": 1120000,
+                "amount": 1120000
+              }
+            ]
+          },
+          {
+            "elementId": "landscaping",
+            "baseElementId": "reconstruction",
+            "direct": 828000.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 1581148.8000000003,
+            "amount": 1581148.8000000003,
+            "components": [
+              {
+                "id": "assembly",
+                "quantity": 2,
+                "unitPrice": 414000,
+                "amount": 828000
+              }
+            ]
+          },
+          {
+            "elementId": "drainage",
+            "baseElementId": "reconstruction",
+            "direct": 1450000.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 2768920.0000000005,
+            "amount": 2768920.0000000005,
+            "components": [
+              {
+                "id": "assembly",
+                "quantity": 1,
+                "unitPrice": 1450000,
+                "amount": 1450000
+              }
+            ]
+          },
+          {
+            "elementId": "ada_ramps",
+            "baseElementId": "reconstruction",
+            "direct": 116800.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 223041.28000000006,
+            "amount": 223041.28000000006,
+            "components": [
+              {
+                "id": "assembly",
+                "quantity": 16,
+                "unitPrice": 7300,
+                "amount": 116800
+              }
+            ]
+          },
+          {
+            "elementId": "crosswalk",
+            "baseElementId": "reconstruction",
+            "direct": 51200.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 97771.52000000002,
+            "amount": 97771.52000000002,
+            "components": [
+              {
+                "id": "assembly",
+                "quantity": 8,
+                "unitPrice": 6400,
+                "amount": 51200
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "S2",
+      "projectInputs": {
+        "lengthMiles": 0.5,
+        "roadwayWidthFt": 24,
+        "intersections": 2
+      },
+      "elements": [
+        {
+          "elementId": "base_none",
+          "baseElementId": "base_none",
+          "direct": 0.0,
+          "multiplier": 1.879896,
+          "calculated": 0.0,
+          "components": []
+        },
+        {
+          "elementId": "mill_overlay",
+          "baseElementId": "mill_overlay",
+          "direct": 134540.86800000002,
+          "multiplier": 1.8027360000000001,
+          "calculated": 242541.66621484805,
+          "components": [
+            {
+              "id": "planing",
+              "quantity": 7040.0,
+              "unitPrice": 3.57,
+              "amount": 25132.8
+            },
+            {
+              "id": "asphalt",
+              "quantity": 803.8800000000001,
+              "unitPrice": 136.1,
+              "amount": 109408.06800000001
+            }
+          ]
+        },
+        {
+          "elementId": "reconstruction",
+          "baseElementId": "reconstruction",
+          "direct": 774970.8706666667,
+          "multiplier": 1.9096000000000004,
+          "calculated": 1479884.374625067,
+          "components": [
+            {
+              "id": "remove_asphalt",
+              "quantity": 7040.0,
+              "unitPrice": 20.4,
+              "amount": 143616.0
+            },
+            {
+              "id": "excavation",
+              "quantity": 2346.6666666666665,
+              "unitPrice": 61.98,
+              "amount": 145446.4
+            },
+            {
+              "id": "base",
+              "quantity": 1173.3333333333333,
+              "unitPrice": 134.39,
+              "amount": 157684.26666666663
+            },
+            {
+              "id": "asphalt",
+              "quantity": 2411.6400000000003,
+              "unitPrice": 136.1,
+              "amount": 328224.204
+            }
+          ]
+        },
+        {
+          "elementId": "path",
+          "baseElementId": "path",
+          "direct": 445421.7777777778,
+          "multiplier": 1.5592500000000002,
+          "calculated": 694523.9070000001,
+          "components": [
+            {
+              "id": "surface",
+              "quantity": 2933.3333333333335,
+              "unitPrice": 108.79,
+              "amount": 319117.3333333334
+            },
+            {
+              "id": "base",
+              "quantity": 488.8888888888889,
+              "unitPrice": 134.39,
+              "amount": 65701.77777777778
+            },
+            {
+              "id": "excavation",
+              "quantity": 977.7777777777778,
+              "unitPrice": 61.98,
+              "amount": 60602.666666666664
+            }
+          ]
+        },
+        {
+          "elementId": "sidewalk",
+          "baseElementId": "base_none",
+          "direct": 382940.80000000005,
+          "multiplier": 1.879896,
+          "calculated": 719888.8781568,
+          "components": [
+            {
+              "id": "sidewalk",
+              "quantity": 3520.0,
+              "unitPrice": 108.79,
+              "amount": 382940.80000000005
+            }
+          ]
+        },
+        {
+          "elementId": "curb_gutter",
+          "baseElementId": "base_none",
+          "direct": 309408.0,
+          "multiplier": 1.879896,
+          "calculated": 581654.861568,
+          "components": [
+            {
+              "id": "curb_gutter",
+              "quantity": 5280.0,
+              "unitPrice": 41.32,
+              "amount": 218169.6
+            },
+            {
+              "id": "removal",
+              "quantity": 5280.0,
+              "unitPrice": 17.28,
+              "amount": 91238.40000000001
+            }
+          ]
+        },
+        {
+          "elementId": "bike_lanes",
+          "baseElementId": "base_none",
+          "direct": 16000.0,
+          "multiplier": 1.879896,
+          "calculated": 30078.336,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 0.5,
+              "unitPrice": 32000,
+              "amount": 16000.0
+            }
+          ]
+        },
+        {
+          "elementId": "buffered_bike_lane",
+          "baseElementId": "base_none",
+          "direct": 23000.0,
+          "multiplier": 1.879896,
+          "calculated": 43237.608,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 0.5,
+              "unitPrice": 46000,
+              "amount": 23000.0
+            }
+          ]
+        },
+        {
+          "elementId": "lighting",
+          "baseElementId": "base_none",
+          "direct": 560000.0,
+          "multiplier": 1.879896,
+          "calculated": 1052741.76,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 0.5,
+              "unitPrice": 1120000,
+              "amount": 560000.0
+            }
+          ]
+        },
+        {
+          "elementId": "landscaping",
+          "baseElementId": "base_none",
+          "direct": 414000.0,
+          "multiplier": 1.879896,
+          "calculated": 778276.944,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 1.0,
+              "unitPrice": 414000,
+              "amount": 414000.0
+            }
+          ]
+        },
+        {
+          "elementId": "drainage",
+          "baseElementId": "base_none",
+          "direct": 725000.0,
+          "multiplier": 1.879896,
+          "calculated": 1362924.6,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 0.5,
+              "unitPrice": 1450000,
+              "amount": 725000.0
+            }
+          ]
+        },
+        {
+          "elementId": "ada_ramps",
+          "baseElementId": "base_none",
+          "direct": 58400.0,
+          "multiplier": 1.879896,
+          "calculated": 109785.9264,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 8,
+              "unitPrice": 7300,
+              "amount": 58400
+            }
+          ]
+        },
+        {
+          "elementId": "crosswalk",
+          "baseElementId": "base_none",
+          "direct": 25600.0,
+          "multiplier": 1.879896,
+          "calculated": 48125.3376,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 4,
+              "unitPrice": 6400,
+              "amount": 25600
+            }
+          ]
+        },
+        {
+          "elementId": "rrfb",
+          "baseElementId": "base_none",
+          "direct": 34000.0,
+          "multiplier": 1.879896,
+          "calculated": 63916.464,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 1,
+              "unitPrice": 34000,
+              "amount": 34000
+            }
+          ]
+        },
+        {
+          "elementId": "signal",
+          "baseElementId": "base_none",
+          "direct": 379000.0,
+          "multiplier": 1.879896,
+          "calculated": 712480.584,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 1,
+              "unitPrice": 379000,
+              "amount": 379000
+            }
+          ]
+        },
+        {
+          "elementId": "refuge_island",
+          "baseElementId": "base_none",
+          "direct": 23000.0,
+          "multiplier": 1.879896,
+          "calculated": 43237.608,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 1,
+              "unitPrice": 23000,
+              "amount": 23000
+            }
+          ]
+        },
+        {
+          "elementId": "bus_stop",
+          "baseElementId": "base_none",
+          "direct": 14400.0,
+          "multiplier": 1.879896,
+          "calculated": 27070.5024,
+          "components": [
+            {
+              "id": "assembly",
+              "quantity": 2,
+              "unitPrice": 7200,
+              "amount": 14400
+            }
+          ]
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "mill_overlay",
+          "baseType": "mill_overlay",
+          "multiplier": 1.8027360000000001,
+          "construction": 347821.4486148481,
+          "contingency": 104346.43458445442,
+          "design": 45216.78831993025,
+          "constructionEngineering": 45216.78831993025,
+          "total": 542601.459839163,
+          "rangeLow": 406951.0948793723,
+          "rangeHigh": 813902.1897587446,
+          "rightOfWay": 0.0,
+          "utilityRelocation": 0.0,
+          "budgetRemaining": null,
+          "effectiveProjectInputs": {
+            "lengthMiles": 0.5,
+            "roadwayWidthFt": 24,
+            "intersections": 2
+          }
+        },
+        {
+          "templateId": "full_reconstruction",
+          "baseType": "reconstruction",
+          "multiplier": 1.9096000000000004,
+          "construction": 4542445.8581450675,
+          "contingency": 1362733.7574435202,
+          "design": 590517.9615588587,
+          "constructionEngineering": 590517.9615588587,
+          "total": 7086215.538706305,
+          "rangeLow": 5314661.654029729,
+          "rangeHigh": 10629323.308059458,
+          "rightOfWay": 0.0,
+          "utilityRelocation": 0.0,
+          "budgetRemaining": null,
+          "effectiveProjectInputs": {
+            "lengthMiles": 0.5,
+            "roadwayWidthFt": 24,
+            "intersections": 2
+          }
+        },
+        {
+          "templateId": "complete_street",
+          "baseType": "reconstruction",
+          "multiplier": 1.9096000000000004,
+          "construction": 6495202.818145067,
+          "contingency": 1948560.8454435202,
+          "design": 844376.3663588588,
+          "constructionEngineering": 844376.3663588588,
+          "total": 10132516.396306306,
+          "rangeLow": 7599387.29722973,
+          "rangeHigh": 15198774.59445946,
+          "rightOfWay": 0.0,
+          "utilityRelocation": 0.0,
+          "budgetRemaining": null,
+          "effectiveProjectInputs": {
+            "lengthMiles": 0.5,
+            "roadwayWidthFt": 24,
+            "intersections": 2
+          }
+        },
+        {
+          "templateId": "sidewalk_gap",
+          "baseType": "elements_only",
+          "multiplier": 1.879896,
+          "construction": 469730.3654784,
+          "contingency": 140919.10964352,
+          "design": 61064.947512192004,
+          "constructionEngineering": 61064.947512192004,
+          "total": 732779.3701463039,
+          "rangeLow": 549584.5276097279,
+          "rangeHigh": 1099169.0552194559,
+          "rightOfWay": 0.0,
+          "utilityRelocation": 0.0,
+          "budgetRemaining": null,
+          "effectiveProjectInputs": {
+            "lengthMiles": 0.5,
+            "roadwayWidthFt": 24,
+            "intersections": 2
+          }
+        },
+        {
+          "templateId": "multi_use_path",
+          "baseType": "path",
+          "multiplier": 1.5592500000000002,
+          "construction": 747538.4070000001,
+          "contingency": 224261.52210000003,
+          "design": 97179.99291000003,
+          "constructionEngineering": 97179.99291000003,
+          "total": 1166159.9149200004,
+          "rangeLow": 874619.9361900003,
+          "rangeHigh": 1749239.8723800005,
+          "rightOfWay": 0.0,
+          "utilityRelocation": 0.0,
+          "budgetRemaining": null,
+          "effectiveProjectInputs": {
+            "lengthMiles": 0.5,
+            "roadwayWidthFt": 24,
+            "intersections": 2
+          }
+        },
+        {
+          "templateId": "intersection_safety",
+          "baseType": "elements_only",
+          "multiplier": 1.879896,
+          "construction": 834673.824,
+          "contingency": 250402.1472,
+          "design": 108507.59712,
+          "constructionEngineering": 108507.59712,
+          "total": 1302091.1654400001,
+          "rangeLow": 976568.3740800001,
+          "rangeHigh": 1953136.7481600002,
+          "rightOfWay": 0.0,
+          "utilityRelocation": 0.0,
+          "budgetRemaining": null,
+          "effectiveProjectInputs": {
+            "lengthMiles": 0.1,
+            "roadwayWidthFt": 24,
+            "intersections": 1
+          }
+        }
+      ],
+      "extra": {
+        "templateId": "complete_street",
+        "stageId": "planning_study",
+        "budget": 20000000,
+        "rightOfWay": 500000,
+        "utilityRelocation": 250000,
+        "overrides": {
+          "sidewalk": 1000000
+        },
+        "inputs": {
+          "reconstruction": {
+            "existingSurface": "concrete",
+            "newSurface": "concrete"
+          }
+        },
+        "summary": {
+          "baseType": "reconstruction",
+          "multiplier": 1.9096000000000004,
+          "construction": 7874812.576426667,
+          "contingency": 1968703.1441066668,
+          "design": 984351.5720533334,
+          "constructionEngineering": 984351.5720533334,
+          "rightOfWay": 500000,
+          "utilityRelocation": 250000,
+          "total": 12562218.864640001,
+          "rangeLow": 10049775.091712002,
+          "rangeHigh": 16330884.524032002,
+          "budgetRemaining": 7437781.135359999
+        },
+        "elements": [
+          {
+            "elementId": "reconstruction",
+            "baseElementId": "reconstruction",
+            "direct": 1484724.2666666666,
+            "multiplier": 1.9096000000000004,
+            "calculated": 2835229.459626667,
+            "amount": 2835229.459626667,
+            "components": [
+              {
+                "id": "remove_concrete",
+                "quantity": 7040.0,
+                "unitPrice": 40.52,
+                "amount": 285260.80000000005
+              },
+              {
+                "id": "excavation",
+                "quantity": 2346.6666666666665,
+                "unitPrice": 61.98,
+                "amount": 145446.4
+              },
+              {
+                "id": "base",
+                "quantity": 1173.3333333333333,
+                "unitPrice": 134.39,
+                "amount": 157684.26666666663
+              },
+              {
+                "id": "concrete",
+                "quantity": 7040.0,
+                "unitPrice": 127.32,
+                "amount": 896332.7999999999
+              }
+            ]
+          },
+          {
+            "elementId": "curb_gutter",
+            "baseElementId": "reconstruction",
+            "direct": 309408.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 590845.5168000001,
+            "amount": 590845.5168000001,
+            "components": [
+              {
+                "id": "curb_gutter",
+                "quantity": 5280.0,
+                "unitPrice": 41.32,
+                "amount": 218169.6
+              },
+              {
+                "id": "removal",
+                "quantity": 5280.0,
+                "unitPrice": 17.28,
+                "amount": 91238.40000000001
+              }
+            ]
+          },
+          {
+            "elementId": "sidewalk",
+            "baseElementId": "reconstruction",
+            "direct": 510963.20000000007,
+            "multiplier": 1.9096000000000004,
+            "calculated": 975735.3267200004,
+            "amount": 1000000,
+            "components": [
+              {
+                "id": "sidewalk",
+                "quantity": 3520.0,
+                "unitPrice": 108.79,
+                "amount": 382940.80000000005
+              },
+              {
+                "id": "removal",
+                "quantity": 3520.0,
+                "unitPrice": 36.37,
+                "amount": 128022.4
+              }
+            ]
+          },
+          {
+            "elementId": "buffered_bike_lane",
+            "baseElementId": "reconstruction",
+            "direct": 23000.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 43920.80000000001,
+            "amount": 43920.80000000001,
+            "components": [
+              {
+                "id": "assembly",
+                "quantity": 0.5,
+                "unitPrice": 46000,
+                "amount": 23000.0
+              }
+            ]
+          },
+          {
+            "elementId": "lighting",
+            "baseElementId": "reconstruction",
+            "direct": 560000.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 1069376.0000000002,
+            "amount": 1069376.0000000002,
+            "components": [
+              {
+                "id": "assembly",
+                "quantity": 0.5,
+                "unitPrice": 1120000,
+                "amount": 560000.0
+              }
+            ]
+          },
+          {
+            "elementId": "landscaping",
+            "baseElementId": "reconstruction",
+            "direct": 414000.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 790574.4000000001,
+            "amount": 790574.4000000001,
+            "components": [
+              {
+                "id": "assembly",
+                "quantity": 1.0,
+                "unitPrice": 414000,
+                "amount": 414000.0
+              }
+            ]
+          },
+          {
+            "elementId": "drainage",
+            "baseElementId": "reconstruction",
+            "direct": 725000.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 1384460.0000000002,
+            "amount": 1384460.0000000002,
+            "components": [
+              {
+                "id": "assembly",
+                "quantity": 0.5,
+                "unitPrice": 1450000,
+                "amount": 725000.0
+              }
+            ]
+          },
+          {
+            "elementId": "ada_ramps",
+            "baseElementId": "reconstruction",
+            "direct": 58400.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 111520.64000000003,
+            "amount": 111520.64000000003,
+            "components": [
+              {
+                "id": "assembly",
+                "quantity": 8,
+                "unitPrice": 7300,
+                "amount": 58400
+              }
+            ]
+          },
+          {
+            "elementId": "crosswalk",
+            "baseElementId": "reconstruction",
+            "direct": 25600.0,
+            "multiplier": 1.9096000000000004,
+            "calculated": 48885.76000000001,
+            "amount": 48885.76000000001,
+            "components": [
+              {
+                "id": "assembly",
+                "quantity": 4,
+                "unitPrice": 6400,
+                "amount": 25600
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
