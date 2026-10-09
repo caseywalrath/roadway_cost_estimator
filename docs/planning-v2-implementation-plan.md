@@ -170,6 +170,41 @@ Decide: element list and templates as priced; minor/TC/mobilization factors; sta
 
 ### Phase 3 — Storage and planner UI
 
+**UI convention rule.** Planning reuses the app's shared classes and tokens. It does not redefine them.
+
+- Use the shared classes: `panel-block`, `panel-heading`, `eyebrow`, `primary-button`, `secondary-button`, `text-button`, `muted`, `label-row`, `table-scroll`, `summary-table`.
+- Use the `:root` color tokens only. No hard-coded hex values.
+- Do not add a blanket rule such as `.planning-panel button { … }`. That pattern restyled every control in the pilot.
+- New `planning-*` classes are limited to layout and to elements that have no existing equivalent: element rows, the alternatives button row, and the total block.
+- Task 3a lists each new class and states why no shared class fits. Review at STOP 2 checks this list.
+
+**Basic layout (desktop).**
+
+```
+Planning                                   [Project ▾] [Export ▾]
+┌ Corridor ───────────────────────────────────────────────────────┐
+│ Template [Resurface + ADA ▾]  Length 0.8 mi  Width 44 ft  Int 6 │
+│ Stage [Concept ▾]                                               │
+└─────────────────────────────────────────────────────────────────┘
+┌ Elements (≈65%) ─────────────────────┐ ┌ Summary (≈35%, sticky)─┐
+│ BASE TREATMENT (select one)          │ │ [Alt A][Alt B][+ Alt]  │
+│ (•) Mill & overlay     $1,420,000 ▸  │ │ Description ________   │
+│ ( ) Full reconstruct   $4,900,000 ▸  │ │                        │
+│ CORRIDOR ELEMENTS                    │ │ Construction  $2.31M   │
+│ [x] Sidewalk 6 ft      $  610,000 ▸  │ │ Contingency 30% $0.69M │
+│ [ ] Curb & gutter      $  —       ▸  │ │ Design 12%     $0.28M  │
+│ SPOT ELEMENTS                        │ │ CE 15%         $0.35M  │
+│ [x] ADA ramps  (24)    $  168,000 ▸  │ │ ROW / utilities $0.10M │
+│ OTHER COSTS                          │ │ ────────────────────── │
+│ ROW $____  Utilities $____           │ │ TOTAL       $3.73M     │
+└──────────────────────────────────────┘ │ Range $3.2M – $4.6M    │
+                                         │ Budget $4.0M → +$0.27M │
+                                         └────────────────────────┘
+```
+
+- `▸` opens a small inputs disclosure for that row. It holds quantity, unit price with its source, and an override.
+- At narrow widths (under about 900 px), the summary moves above the elements as a compact total bar. The full summary follows the elements.
+
 | Task | Model | Ownership |
 |---|---|---|
 | 3a. Layout and interaction design: Lucerne-style grouped rows (toggle or radio, label, dollar box, small inputs disclosure), corridor inputs strip, template picker, summary panel with alternatives as package buttons, description, budget remaining, range, stage selector, narrow-width behavior | Opus | design note in `docs/planning-v2-ui.md` with annotated markup structure |
