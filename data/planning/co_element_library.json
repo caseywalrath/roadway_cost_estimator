@@ -1,0 +1,356 @@
+{
+  "schemaVersion": 1,
+  "state": "CO",
+  "label": "Colorado municipal corridor planning library",
+  "priceTable": "public/data/states/co/planning_prices.json",
+  "notes": "Hand-edited. Item components price from the generated price table (2026 planning basis). Component unitCost values are direct 2026 assembly costs from docs/planning-v2-calibration.md section 4. Factors and stage values from sections 1.1 and 1.3 of the same report.",
+  "projectInputs": [
+    { "key": "lengthMiles", "label": "Corridor length", "unit": "mi", "default": 0.5, "min": 0 },
+    { "key": "roadwayWidthFt", "label": "Roadway width (curb to curb)", "unit": "ft", "default": 40, "min": 0 },
+    { "key": "intersections", "label": "Intersections", "unit": "count", "default": 4, "min": 0, "integer": true }
+  ],
+  "stages": [
+    { "id": "concept", "label": "Concept", "contingency": 0.30, "rangeLow": -0.25, "rangeHigh": 0.50 },
+    { "id": "planning_study", "label": "Planning study", "contingency": 0.25, "rangeLow": -0.20, "rangeHigh": 0.30 }
+  ],
+  "defaultStage": "concept",
+  "engineering": { "design": 0.10, "constructionEngineering": 0.10 },
+  "factors": {
+    "mill_overlay": { "minor": 0.56, "trafficControl": 0.08, "mobilization": 0.07, "basis": "CDOT urban complete contracts 2023-03-26 onward, n = 8" },
+    "reconstruction": { "minor": 0.55, "trafficControl": 0.12, "mobilization": 0.10, "basis": "CDOT statewide complete contracts, n = 29; minor is a judgment value between statewide (0.42) and urban/FHU evidence (0.76-1.26)" },
+    "path": { "minor": 0.35, "trafficControl": 0.05, "mobilization": 0.10, "basis": "Judgment; no CDOT path contracts in the data" },
+    "elements_only": { "minor": 0.46, "trafficControl": 0.16, "mobilization": 0.11, "basis": "CDOT urban complete contracts 2023-03-26 onward, n = 22" }
+  },
+  "groups": [
+    { "id": "base", "label": "Base treatment", "selection": "one" },
+    { "id": "corridor", "label": "Corridor elements", "selection": "any" },
+    { "id": "spot", "label": "Spot elements", "selection": "any" },
+    { "id": "other", "label": "Other costs", "selection": "amount" }
+  ],
+  "elements": [
+    {
+      "id": "base_none",
+      "group": "base",
+      "label": "No base treatment",
+      "baseType": "elements_only",
+      "inputs": [],
+      "components": [],
+      "note": "Elements only. Factors for elements-only contracts apply."
+    },
+    {
+      "id": "mill_overlay",
+      "group": "base",
+      "label": "Mill and overlay",
+      "baseType": "mill_overlay",
+      "inputs": [
+        { "key": "lengthMiles", "label": "Length", "unit": "mi", "inherit": "lengthMiles" },
+        { "key": "widthFt", "label": "Width", "unit": "ft", "inherit": "roadwayWidthFt" },
+        { "key": "thicknessIn", "label": "Overlay thickness", "unit": "in", "default": 2 },
+        { "key": "densityLbCf", "label": "Asphalt density", "unit": "lb/cf", "default": 145, "advanced": true },
+        { "key": "materialFactor", "label": "Asphalt material factor", "unit": "x", "default": 1.05, "advanced": true }
+      ],
+      "components": [
+        { "id": "planing", "label": "Removal of asphalt mat (planing)", "item": "co_cdot_202-00240", "quantity": { "kind": "area", "length": "lengthMiles", "width": "widthFt", "unit": "SY" } },
+        { "id": "asphalt", "label": "Hot mix asphalt (Grading S) (100) (PG 64-22)", "item": "co_cdot_403-33841", "quantity": { "kind": "asphalt_tons", "length": "lengthMiles", "width": "widthFt", "thickness": "thicknessIn", "density": "densityLbCf", "materialFactor": "materialFactor", "unit": "TON" } }
+      ],
+      "note": "Mill and replace the full roadway width. Tack, patching, manhole adjustments and restriping are carried in the minor-items factor."
+    },
+    {
+      "id": "reconstruction",
+      "group": "base",
+      "label": "Full-depth reconstruction",
+      "baseType": "reconstruction",
+      "inputs": [
+        { "key": "lengthMiles", "label": "Length", "unit": "mi", "inherit": "lengthMiles" },
+        { "key": "widthFt", "label": "Width", "unit": "ft", "inherit": "roadwayWidthFt" },
+        { "key": "existingSurface", "label": "Existing surface", "default": "asphalt", "options": ["asphalt", "concrete"] },
+        { "key": "newSurface", "label": "New surface", "default": "asphalt", "options": ["asphalt", "concrete"] },
+        { "key": "asphaltThicknessIn", "label": "New asphalt thickness", "unit": "in", "default": 6, "when": { "input": "newSurface", "equals": "asphalt" } },
+        { "key": "baseDepthIn", "label": "Aggregate base depth", "unit": "in", "default": 6 },
+        { "key": "excavationDepthIn", "label": "Excavation depth", "unit": "in", "default": 12 },
+        { "key": "densityLbCf", "label": "Asphalt density", "unit": "lb/cf", "default": 145, "advanced": true },
+        { "key": "materialFactor", "label": "Asphalt material factor", "unit": "x", "default": 1.05, "advanced": true }
+      ],
+      "components": [
+        { "id": "remove_asphalt", "label": "Removal of asphalt mat", "item": "co_cdot_202-00220", "quantity": { "kind": "area", "length": "lengthMiles", "width": "widthFt", "unit": "SY" }, "when": { "input": "existingSurface", "equals": "asphalt" } },
+        { "id": "remove_concrete", "label": "Removal of concrete pavement", "item": "co_cdot_202-00210", "quantity": { "kind": "area", "length": "lengthMiles", "width": "widthFt", "unit": "SY" }, "when": { "input": "existingSurface", "equals": "concrete" } },
+        { "id": "excavation", "label": "Unclassified excavation (complete in place)", "item": "co_cdot_203-00010", "quantity": { "kind": "volume", "length": "lengthMiles", "width": "widthFt", "depth": "excavationDepthIn", "unit": "CY" } },
+        { "id": "base", "label": "Aggregate base course (Class 6)", "item": "co_cdot_304-06007", "quantity": { "kind": "volume", "length": "lengthMiles", "width": "widthFt", "depth": "baseDepthIn", "unit": "CY" } },
+        { "id": "asphalt", "label": "Hot mix asphalt (Grading S) (100) (PG 64-22)", "item": "co_cdot_403-33841", "quantity": { "kind": "asphalt_tons", "length": "lengthMiles", "width": "widthFt", "thickness": "asphaltThicknessIn", "density": "densityLbCf", "materialFactor": "materialFactor", "unit": "TON" }, "when": { "input": "newSurface", "equals": "asphalt" } },
+        { "id": "concrete", "label": "Concrete pavement (8 inch)", "item": "co_cdot_412-00800", "quantity": { "kind": "area", "length": "lengthMiles", "width": "widthFt", "unit": "SY" }, "when": { "input": "newSurface", "equals": "concrete" } }
+      ],
+      "note": "Remove existing pavement, excavate, place aggregate base and new pavement across the roadway width. Curb, sidewalk and drainage are separate elements."
+    },
+    {
+      "id": "path",
+      "group": "base",
+      "label": "New multi-use path",
+      "baseType": "path",
+      "inputs": [
+        { "key": "lengthMiles", "label": "Length", "unit": "mi", "inherit": "lengthMiles" },
+        { "key": "widthFt", "label": "Path width", "unit": "ft", "default": 10 },
+        { "key": "baseDepthIn", "label": "Aggregate base depth", "unit": "in", "default": 6 },
+        { "key": "excavationDepthIn", "label": "Excavation depth", "unit": "in", "default": 12 }
+      ],
+      "components": [
+        { "id": "surface", "label": "Concrete sidewalk (6 inch) as path surface", "item": "co_cdot_608-00006", "quantity": { "kind": "area", "length": "lengthMiles", "width": "widthFt", "unit": "SY" } },
+        { "id": "base", "label": "Aggregate base course (Class 6)", "item": "co_cdot_304-06007", "quantity": { "kind": "volume", "length": "lengthMiles", "width": "widthFt", "depth": "baseDepthIn", "unit": "CY" } },
+        { "id": "excavation", "label": "Unclassified excavation (complete in place)", "item": "co_cdot_203-00010", "quantity": { "kind": "volume", "length": "lengthMiles", "width": "widthFt", "depth": "excavationDepthIn", "unit": "CY" } }
+      ],
+      "note": "Concrete Bikeway (6 Inch) has only 3 contracts; the 6 inch sidewalk item is used as the surface price."
+    },
+    {
+      "id": "sidewalk",
+      "group": "corridor",
+      "label": "Sidewalk",
+      "inputs": [
+        { "key": "lengthMiles", "label": "Length", "unit": "mi", "inherit": "lengthMiles" },
+        { "key": "sides", "label": "Sides", "default": 2, "options": [1, 2] },
+        { "key": "widthFt", "label": "Width", "unit": "ft", "default": 6 },
+        { "key": "existingSidewalk", "label": "Remove existing sidewalk", "default": "no", "options": ["no", "yes"] }
+      ],
+      "components": [
+        { "id": "sidewalk", "label": "Concrete sidewalk (6 inch)", "item": "co_cdot_608-00006", "quantity": { "kind": "area", "length": "lengthMiles", "width": "widthFt", "sides": "sides", "unit": "SY" } },
+        { "id": "removal", "label": "Removal of sidewalk", "item": "co_cdot_202-00200", "quantity": { "kind": "area", "length": "lengthMiles", "width": "widthFt", "sides": "sides", "unit": "SY" }, "when": { "input": "existingSidewalk", "equals": "yes" } }
+      ],
+      "note": "New 6 inch concrete sidewalk; removal of existing walk when selected."
+    },
+    {
+      "id": "curb_gutter",
+      "group": "corridor",
+      "label": "Curb and gutter",
+      "inputs": [
+        { "key": "lengthMiles", "label": "Length", "unit": "mi", "inherit": "lengthMiles" },
+        { "key": "sides", "label": "Sides", "default": 2, "options": [1, 2] },
+        { "key": "existingCurb", "label": "Remove existing curb and gutter", "default": "yes", "options": ["no", "yes"] }
+      ],
+      "components": [
+        { "id": "curb_gutter", "label": "Curb and gutter Type 2 (Section I-B)", "item": "co_cdot_609-21010", "quantity": { "kind": "linear", "length": "lengthMiles", "sides": "sides", "unit": "LF" } },
+        { "id": "removal", "label": "Removal of curb and gutter", "item": "co_cdot_202-00203", "quantity": { "kind": "linear", "length": "lengthMiles", "sides": "sides", "unit": "LF" }, "when": { "input": "existingCurb", "equals": "yes" } }
+      ],
+      "note": "Continuous curb and gutter on the selected sides."
+    },
+    {
+      "id": "bike_lanes",
+      "group": "corridor",
+      "label": "Bike lanes (striping and symbols)",
+      "inputs": [
+        { "key": "lengthMiles", "label": "Length", "unit": "mi", "inherit": "lengthMiles" }
+      ],
+      "components": [
+        { "id": "assembly", "label": "Bike lane striping and symbols, both sides", "unitCost": 32000, "unit": "MILE", "quantity": { "kind": "miles", "length": "lengthMiles" }, "basis": "Calibration report 4.10" }
+      ],
+      "note": "6 inch lane line both sides and bike symbols about every 250 ft."
+    },
+    {
+      "id": "buffered_bike_lane",
+      "group": "corridor",
+      "label": "Buffered bike lane",
+      "inputs": [
+        { "key": "lengthMiles", "label": "Length", "unit": "mi", "inherit": "lengthMiles" },
+        { "key": "delineators", "label": "Add delineators", "default": "no", "options": ["no", "yes"] }
+      ],
+      "components": [
+        { "id": "assembly", "label": "Buffered bike lane markings, both sides", "unitCost": 46000, "unit": "MILE", "quantity": { "kind": "miles", "length": "lengthMiles" }, "basis": "Calibration report 4.11" },
+        { "id": "delineators", "label": "Delineators every 40 ft, both sides", "unitCost": 30000, "unit": "MILE", "quantity": { "kind": "miles", "length": "lengthMiles" }, "when": { "input": "delineators", "equals": "yes" }, "basis": "Calibration report 4.11" }
+      ],
+      "note": "Two buffer lines and symbols both sides; delineators optional."
+    },
+    {
+      "id": "lighting",
+      "group": "corridor",
+      "label": "Corridor lighting",
+      "inputs": [
+        { "key": "lengthMiles", "label": "Length", "unit": "mi", "inherit": "lengthMiles" }
+      ],
+      "components": [
+        { "id": "assembly", "label": "Street lighting, both sides at 200 ft", "unitCost": 1120000, "unit": "MILE", "quantity": { "kind": "miles", "length": "lengthMiles" }, "basis": "Calibration report 4.1" }
+      ],
+      "note": "30 ft steel standards with LED luminaires, foundations, conduit, pull boxes and wiring."
+    },
+    {
+      "id": "landscaping",
+      "group": "corridor",
+      "label": "Landscaping / tree lawn",
+      "inputs": [
+        { "key": "lengthMiles", "label": "Length", "unit": "mi", "inherit": "lengthMiles" },
+        { "key": "sides", "label": "Sides", "default": 2, "options": [1, 2] }
+      ],
+      "components": [
+        { "id": "assembly", "label": "6 ft tree lawn with trees at 40 ft and irrigation", "unitCost": 414000, "unit": "MILE", "quantity": { "kind": "miles", "length": "lengthMiles", "sides": "sides" }, "basis": "Calibration report 4.2" }
+      ],
+      "note": "Cost per mile per side."
+    },
+    {
+      "id": "drainage",
+      "group": "corridor",
+      "label": "Storm drainage allowance",
+      "inputs": [
+        { "key": "lengthMiles", "label": "Length", "unit": "mi", "inherit": "lengthMiles" }
+      ],
+      "components": [
+        { "id": "assembly", "label": "Inlets, laterals and storm pipe allowance", "unitCost": 1450000, "unit": "MILE", "quantity": { "kind": "miles", "length": "lengthMiles" }, "basis": "Calibration report 4.3" }
+      ],
+      "note": "Median of FHU municipal estimates per implied mile."
+    },
+    {
+      "id": "ada_ramps",
+      "group": "spot",
+      "label": "ADA curb ramps",
+      "inputs": [
+        { "key": "count", "label": "Ramps", "unit": "count", "integer": true, "defaultFrom": { "input": "intersections", "multiply": 4 } }
+      ],
+      "components": [
+        { "id": "assembly", "label": "Concrete curb ramp with detectable warning", "unitCost": 7300, "unit": "EACH", "quantity": { "kind": "count", "count": "count" }, "basis": "Calibration report 4.8" }
+      ],
+      "note": "Default is four ramps per intersection."
+    },
+    {
+      "id": "crosswalk",
+      "group": "spot",
+      "label": "Marked crosswalk",
+      "inputs": [
+        { "key": "count", "label": "Crosswalks", "unit": "count", "integer": true, "defaultFrom": { "input": "intersections", "multiply": 2 } }
+      ],
+      "components": [
+        { "id": "assembly", "label": "High-visibility crosswalk, about 60 ft", "unitCost": 6400, "unit": "EACH", "quantity": { "kind": "count", "count": "count" }, "basis": "Calibration report 4.9" }
+      ],
+      "note": "Default is two crosswalks per intersection."
+    },
+    {
+      "id": "rrfb",
+      "group": "spot",
+      "label": "Enhanced crossing (RRFB)",
+      "inputs": [
+        { "key": "count", "label": "Crossings", "unit": "count", "integer": true, "default": 1 }
+      ],
+      "components": [
+        { "id": "assembly", "label": "RRFB pair with push buttons", "unitCost": 34000, "unit": "EACH", "quantity": { "kind": "count", "count": "count" }, "basis": "Calibration report 4.4" }
+      ],
+      "note": "Per crossing."
+    },
+    {
+      "id": "signal",
+      "group": "spot",
+      "label": "New or rebuilt signal",
+      "inputs": [
+        { "key": "count", "label": "Signals", "unit": "count", "integer": true, "default": 1 }
+      ],
+      "components": [
+        { "id": "assembly", "label": "Four-leg signalized intersection", "unitCost": 379000, "unit": "EACH", "quantity": { "kind": "count", "count": "count" }, "basis": "Calibration report 4.5" }
+      ],
+      "note": "Poles, mast arms, heads, controller, detection and wiring."
+    },
+    {
+      "id": "refuge_island",
+      "group": "spot",
+      "label": "Median refuge island",
+      "inputs": [
+        { "key": "count", "label": "Islands", "unit": "count", "integer": true, "default": 1 }
+      ],
+      "components": [
+        { "id": "assembly", "label": "Refuge island, about 60 ft by 8 ft", "unitCost": 23000, "unit": "EACH", "quantity": { "kind": "count", "count": "count" }, "basis": "Calibration report 4.6" }
+      ],
+      "note": "Curb, median cover and ramps through the island."
+    },
+    {
+      "id": "bus_stop",
+      "group": "spot",
+      "label": "Bus stop upgrade",
+      "inputs": [
+        { "key": "count", "label": "Stops", "unit": "count", "integer": true, "default": 2 }
+      ],
+      "components": [
+        { "id": "assembly", "label": "ADA boarding pad and shelter pad", "unitCost": 7200, "unit": "EACH", "quantity": { "kind": "count", "count": "count" }, "basis": "Calibration report 4.7" }
+      ],
+      "note": "Concrete pads only; shelter and amenities are not included."
+    },
+    {
+      "id": "right_of_way",
+      "group": "other",
+      "label": "Right-of-way",
+      "inputs": [],
+      "components": [],
+      "note": "Planner dollar entry. Not part of construction; not multiplied by factors or contingency."
+    },
+    {
+      "id": "utility_relocation",
+      "group": "other",
+      "label": "Utility relocation",
+      "inputs": [],
+      "components": [],
+      "note": "Planner dollar entry. Not part of construction; not multiplied by factors or contingency."
+    }
+  ],
+  "templates": [
+    {
+      "id": "mill_overlay",
+      "label": "Mill and overlay",
+      "description": "Resurface the roadway and bring curb ramps to ADA standard.",
+      "elements": [
+        { "id": "mill_overlay" },
+        { "id": "ada_ramps" }
+      ]
+    },
+    {
+      "id": "full_reconstruction",
+      "label": "Full reconstruction",
+      "description": "Rebuild the pavement section with new curb and gutter, sidewalk, ramps and drainage.",
+      "elements": [
+        { "id": "reconstruction" },
+        { "id": "curb_gutter" },
+        { "id": "sidewalk", "inputs": { "existingSidewalk": "yes" } },
+        { "id": "ada_ramps" },
+        { "id": "drainage" }
+      ]
+    },
+    {
+      "id": "complete_street",
+      "label": "Complete street",
+      "description": "Reconstruction with sidewalks, buffered bike lanes, lighting, tree lawn and crossings.",
+      "elements": [
+        { "id": "reconstruction" },
+        { "id": "curb_gutter" },
+        { "id": "sidewalk", "inputs": { "existingSidewalk": "yes" } },
+        { "id": "buffered_bike_lane" },
+        { "id": "lighting" },
+        { "id": "landscaping" },
+        { "id": "drainage" },
+        { "id": "ada_ramps" },
+        { "id": "crosswalk" }
+      ]
+    },
+    {
+      "id": "sidewalk_gap",
+      "label": "Sidewalk gap",
+      "description": "Fill a sidewalk gap on one side with curb ramps.",
+      "elements": [
+        { "id": "base_none" },
+        { "id": "sidewalk", "inputs": { "sides": 1 } },
+        { "id": "ada_ramps" }
+      ]
+    },
+    {
+      "id": "multi_use_path",
+      "label": "Multi-use path",
+      "description": "New 10 ft concrete path with an enhanced crossing.",
+      "elements": [
+        { "id": "path" },
+        { "id": "rrfb" }
+      ]
+    },
+    {
+      "id": "intersection_safety",
+      "label": "Intersection safety",
+      "description": "Rebuild one signalized intersection with ramps, crosswalks and a refuge island.",
+      "projectInputs": { "lengthMiles": 0.1, "intersections": 1 },
+      "elements": [
+        { "id": "base_none" },
+        { "id": "signal" },
+        { "id": "ada_ramps" },
+        { "id": "crosswalk" },
+        { "id": "refuge_island" }
+      ]
+    }
+  ]
+}

@@ -22,7 +22,7 @@ def main() -> None:
     parser.add_argument("--data-root", default=DATA_ROOT, type=Path)
     parser.add_argument("--output", default=OUTPUT_PATH, type=Path)
     parser.add_argument("--window-years", default=3, type=int)
-    parser.add_argument("--escalation", default=1.0, type=float)
+    parser.add_argument("--escalation", default=1.02, type=float, help="Latest NHCCI quarter to 2026 planning basis (calibration report section 5).")
     parser.add_argument("--urban-min", default=8, type=int)
     parser.add_argument("--min-contracts", default=3, type=int)
     args = parser.parse_args()

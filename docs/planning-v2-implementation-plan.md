@@ -1,6 +1,6 @@
 # Planning v2 implementation plan (Colorado)
 
-Status: in progress (Phase 1). Prepared 2026-10-09.
+Status: Phase 1 complete; awaiting STOP 1 review. Prepared 2026-10-09.
 Branch: `claude/planning-v2`, created from `origin/main` (`5ef3d9c`). The earlier pilot remains on `codex/planning-cost-clarity` as a read-only reference; nothing from it is merged wholesale.
 
 ## 1. Outcome
@@ -284,7 +284,7 @@ Nebraska, Iowa and South Dakota Planning; shared accounts or server storage; an 
 | Phase | Status | Models used | Checks | Notes |
 |---|---|---|---|---|
 | 0 | Done | Opus (orchestrator) | tsc clean; vitest 155/155; Python 58 OK (6 skipped); data validation PASS | `CLAUDE.md` added; environment caveat removed |
-| 1 | Not started | | | |
+| 1 | Done; at STOP 1 | Haiku (1a), Sonnet (1b), Opus (1c/1d), orchestrator (1e) | generator tests 12/12, deterministic rerun identical, independent recompute of 608-00006 and 609-21010 prices, inventory counts rechecked, mob factor recomputed independently, 3 assembly prices spot-checked, reference quantities reproduce | Escalation 1.02 applied as generator default pending STOP 1; HMA bound to 403-33841; path factors are judgment (no CDOT path contracts) |
 | 2 | Not started | | | |
 | 3 | Not started | | | |
 | 4 | Not started | | | |
