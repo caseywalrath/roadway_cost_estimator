@@ -1,6 +1,6 @@
 # Planning v2 implementation plan (Colorado)
 
-Status: STOP 1 passed (all Phase 1 values accepted 2026-10-09); Phase 2 complete; Phase 3 in progress. Prepared 2026-10-09.
+Status: STOP 1 passed (all Phase 1 values accepted 2026-10-09); Phase 3 complete; awaiting STOP 2 review. Prepared 2026-10-09.
 Branch: `claude/planning-v2`, created from `origin/main` (`5ef3d9c`). The earlier pilot remains on `codex/planning-cost-clarity` as a read-only reference; nothing from it is merged wholesale.
 
 ## 1. Outcome
@@ -286,7 +286,7 @@ Nebraska, Iowa and South Dakota Planning; shared accounts or server storage; an 
 | 0 | Done | Opus (orchestrator) | tsc clean; vitest 155/155; Python 58 OK (6 skipped); data validation PASS | `CLAUDE.md` added; environment caveat removed |
 | 1 | Done; at STOP 1 | Haiku (1a), Sonnet (1b), Opus (1c/1d), orchestrator (1e) | generator tests 12/12, deterministic rerun identical, independent recompute of 608-00006 and 609-21010 prices, inventory counts rechecked, mob factor recomputed independently, 3 assembly prices spot-checked, reference quantities reproduce | Escalation 1.02 applied as generator default pending STOP 1; HMA bound to 403-33841; path factors are judgment (no CDOT path contracts) |
 | 2 | Done | Orchestrator (2a types/contract), Sonnet (2b core, 2c share file), Haiku (2d fixtures) | tsc clean; full vitest 257/257 (23 files); fixtures from independent Python match TS for 17 elements × 6 templates × 2 scenarios plus budget/override case; template totals equal the Phase 1 evaluator | STOP 1 accepted all values. Core 1,045 lines (target 1,200) |
-| 3 | Not started | | | |
+| 3 | Done; at STOP 2 | Opus (3a design), Sonnet (3b storage, 3c UI), orchestrator (tab wiring, screenshot pass) | tsc clean; vitest 325/325 (27 files); production build OK; Planning CSS has no hex/rgb literals; desktop 1440 px and narrow 390 px flow screenshots (create from template, budget, override, inputs disclosure, add alternative, reload keeps data); no console errors | Controller is 1,219 lines; Phase 6 adversarial review to cover it |
 | 4 | Not started | | | |
 | 5 | Not started | | | |
 | 6 | Not started | | | |

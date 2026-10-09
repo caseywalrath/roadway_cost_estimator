@@ -81,8 +81,13 @@ import {
 } from "./resultsScroll";
 import type { ResultsTableScrollPosition } from "./resultsScroll";
 import { renderExcelImportWizard } from "./renderExcelImport";
+import { createPlanningController, type PlanningController } from "./planning/planningController";
+import { loadPlanningLibrary } from "../planning/library";
+import { openPlanningStore } from "../planning/storage";
 
-type AppView = "explorer" | "project" | "sourceReview";
+type AppView = "explorer" | "project" | "planning" | "sourceReview";
+
+const PLANNING_STATES = new Set(["CO"]);
 type ProjectSubview = "workspace" | "manager";
 type SaveStatus = "idle" | "saving" | "saved" | "failed";
 type PendingFocus =
@@ -157,6 +162,7 @@ export async function renderApp(
   let selectedBidderDetailKey: string | null = null;
   let selectedSourceProjectId: string | null = null;
   let activeView: AppView = initialView;
+  let planningController: PlanningController | null = null;
   let projectSubview: ProjectSubview = "workspace";
   let projectManagerFilters: ProjectManagerFilters = { query: "", state: "all", status: "active" };
   let projectReadOnly = false;
@@ -241,6 +247,7 @@ export async function renderApp(
             <nav class="app-view-tabs" aria-label="Primary views">
               ${renderViewTab("explorer", "Explorer", activeView)}
               ${renderViewTab("project", "Project", activeView)}
+              ${PLANNING_STATES.has(data.stateConfig.code) ? renderViewTab("planning", "Planning", activeView) : ""}
             </nav>
           </div>
         </header>
@@ -269,7 +276,9 @@ export async function renderApp(
                 annualInflationAdjustedPriceSet
               )}
             </section>
-          ` : activeView === "project"
+          ` : activeView === "planning"
+            ? `<section class="planning-host" data-planning-mount></section>`
+            : activeView === "project"
             ? excelImportController
               ? renderExcelImportWizard(excelImportController.viewModel, data.manifest.states, activeProject ? (activeProject.name.trim() || "Untitled Project") : null)
               : projectSubview === "manager"
@@ -296,13 +305,27 @@ export async function renderApp(
     restoreResultsTableScroll(root, pendingResultsTableScroll);
     pendingResultsTableScroll = null;
 
+    const planningMount = root.querySelector<HTMLElement>("[data-planning-mount]");
+    if (planningMount) {
+      planningController ??= createPlanningController({
+        loadLibrary: () => loadPlanningLibrary(),
+        openStore: () => openPlanningStore(),
+        now: () => new Date().toISOString(),
+        newId: () => crypto.randomUUID()
+      });
+      planningController.mount(planningMount);
+    } else {
+      planningController?.unmount();
+    }
+
     root.querySelectorAll<HTMLButtonElement>("[data-app-view]").forEach((button) => {
       button.addEventListener("click", () => {
         const nextView = button.dataset.appView;
 
-        if (nextView !== "explorer" && nextView !== "project") {
+        if (nextView !== "explorer" && nextView !== "project" && nextView !== "planning") {
           return;
         }
+        if (activeView === "planning" && nextView !== "planning") void planningController?.flush();
         if (excelImportController?.viewModel.commitStatus === "committing") return;
         if (!confirmDiscardProjectMetadataDraft()) return;
 
@@ -334,6 +357,8 @@ export async function renderApp(
           render();
           return;
         }
+        await planningController?.flush();
+        planningController?.unmount();
         cleanupProjectSession();
         onStateChange(nextStateCode, "explorer");
       })();

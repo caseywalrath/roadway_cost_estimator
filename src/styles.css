@@ -3493,3 +3493,90 @@ tbody tr:last-child td {
 .excel-import-confirmation-costs summary, .excel-import-skipped-summary summary { cursor: pointer; color: var(--heading); font-weight: 600; }
 .excel-import-skipped-summary button { margin-top: 12px; }
 @media (max-width: 480px) { .excel-import-outcome-counts div { flex-direction: column; gap: 0; } }
+
+/* ===== Planning v2 ===== */
+/* Colors come only from :root tokens. Layout and the parts with no shared class are listed in docs/planning-v2-ui.md section 5. */
+.planning-view { display: grid; gap: 16px; min-width: 0; }
+
+.planning-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 18px; }
+.planning-header-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+.planning-corridor-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 12px 0; }
+
+.planning-layout { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(320px, 1fr); gap: 16px; align-items: start; }
+
+.planning-group { min-width: 0; margin: 0 0 18px; border: 0; padding: 0; }
+.planning-group:last-child { margin-bottom: 0; }
+.planning-group-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; width: 100%; margin-bottom: 4px; padding: 0; }
+.planning-group-heading > .eyebrow { margin: 0; }
+.planning-group-heading > strong { margin-left: auto; color: var(--heading); }
+
+.planning-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; border-top: 1px solid var(--line); padding: 10px 0; }
+.planning-row-label { color: var(--heading); font-size: 0.92rem; font-weight: 700; }
+.planning-row--off .planning-amount-input { color: var(--text-muted); }
+
+.planning-amount { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 2px 4px; width: 9.75rem; color: var(--text-muted); }
+.planning-amount-input { width: 100%; min-height: 36px; padding: 4px 8px; text-align: right; font-variant-numeric: tabular-nums; }
+.planning-amount-note { grid-column: 1 / -1; justify-self: end; margin: 0; font-size: 0.78rem; text-align: right; }
+.planning-amount-note:empty { display: none; }
+
+.planning-row-details { grid-column: 1 / -1; min-width: 0; border-radius: 6px; }
+.planning-row-details[open] { background: var(--panel-alt); padding: 4px 10px 10px; }
+.planning-row-details > summary { display: flex; align-items: center; gap: 8px; padding: 2px 0; color: var(--text-muted); cursor: pointer; font-size: 0.82rem; list-style: none; }
+.planning-row-details > summary::-webkit-details-marker { display: none; }
+.planning-row-details > summary::before {
+  content: ""; flex: 0 0 auto; width: 7px; height: 7px;
+  border-right: 2px solid var(--accent-dark); border-bottom: 2px solid var(--accent-dark);
+  transform: translateY(-1px) rotate(-45deg); transition: transform 140ms ease;
+}
+.planning-row-details[open] > summary::before { transform: translateY(-2px) rotate(45deg); }
+
+.planning-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px 12px; margin: 8px 0; }
+.planning-inputs > details { grid-column: 1 / -1; }
+
+.planning-components { display: grid; gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
+.planning-components > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; border-top: 1px solid var(--line); padding-top: 8px; font-size: 0.86rem; }
+.planning-components > li > strong { grid-column: 2; grid-row: 1 / span 2; align-self: start; color: var(--heading); font-variant-numeric: tabular-nums; }
+.planning-components > li > small { grid-column: 1 / -1; }
+
+.planning-summary { position: sticky; top: 18px; display: grid; gap: 12px; align-self: start; }
+.planning-alternatives { display: flex; flex-wrap: wrap; gap: 6px; }
+.planning-alt-button { display: grid; min-height: 46px; align-content: center; text-align: left; }
+.planning-alt-button > small { font-weight: 700; font-variant-numeric: tabular-nums; }
+.planning-add-alternative { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-alt); padding: 12px; }
+.planning-add-alternative > .filter-validation-message { grid-column: 1 / -1; }
+.planning-add-alternative[hidden] { display: none; }
+
+.planning-summary-lines { display: grid; margin: 0; }
+.planning-summary-lines > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding: 8px 0; }
+.planning-summary-lines dt { margin: 0; color: var(--heading); font-weight: 700; }
+.planning-summary-lines dd { margin: 0; color: var(--heading); font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
+
+.planning-total { display: grid; gap: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-alt); padding: 12px 14px; }
+.planning-total > strong { color: var(--heading); font-family: var(--font-heading); font-size: 2rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.planning-budget--under { color: var(--good); font-weight: 800; }
+.planning-budget--over { color: var(--bad); font-weight: 800; }
+
+.planning-total-bar { display: none; }
+
+.planning-template-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+.planning-template-option { align-items: start; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 10px 12px; cursor: pointer; }
+.planning-template-option:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.planning-template-option small { display: block; font-weight: 400; }
+.planning-new { display: grid; gap: 14px; max-width: 900px; }
+
+@media (max-width: 899px) {
+  .planning-layout { grid-template-columns: minmax(0, 1fr); }
+  .planning-summary { position: static; }
+  .planning-template-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .planning-total-bar {
+    position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 8px 12px; box-shadow: var(--shadow);
+  }
+  .planning-total-bar > .text-button { margin-left: auto; }
+}
+
+@media (max-width: 559px) {
+  .planning-template-options,
+  .planning-add-alternative { grid-template-columns: minmax(0, 1fr); }
+  .planning-inputs { grid-template-columns: minmax(0, 1fr); }
+}
