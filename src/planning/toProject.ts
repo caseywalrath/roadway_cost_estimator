@@ -108,7 +108,8 @@ export function planningAlternativeToProject(
       continue;
     }
     for (const component of element.components) {
-      const quantity = cents(component.quantity);
+      // 4 decimals: per-mile assemblies cost up to $1.45M/mi, so 0.01 mi rounding would move real cost into the residual.
+      const quantity = Math.round(component.quantity * 10000) / 10000;
       if (quantity === 0) continue;
       const unitCost = cents(component.unitPrice);
       let line: ProjectLineItem;

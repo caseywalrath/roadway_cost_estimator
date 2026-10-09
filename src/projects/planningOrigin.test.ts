@@ -54,3 +54,13 @@ describe("Project planningOrigin", () => {
     expect(buildProjectCsv(createUserProject("Plain", "CO"))).not.toContain("Created from Planning");
   });
 });
+
+describe("Project CSV formula protection", () => {
+  it("prefixes text that a spreadsheet would run as a formula", () => {
+    const project = { ...projectWithOrigin(), name: "=HYPERLINK(\"x\")", planningOrigin: { ...origin, planningProjectName: "+cmd" } };
+    const csv = buildProjectCsv(project);
+    expect(csv).toContain("\"'=HYPERLINK(\"\"x\"\")\"");
+    expect(csv).toContain("'+cmd - Alternative A");
+    expect(csv).not.toMatch(/(^|,)=HYPERLINK/m);
+  });
+});

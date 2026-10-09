@@ -2,6 +2,7 @@
 // Depends only on ./types. Pure: ids and timestamps are passed in.
 import type {
   Alternative,
+  ElementInputDefinition,
   ElementSelection,
   InputValue,
   PlanningIssue,
@@ -82,6 +83,8 @@ export function parseShareFile(text: string, library: ParseLibrary): ParseShareR
   }
 
   const elementIds = new Set(library.elements.map((e) => e.id));
+  const elementInputs = new Map(library.elements.map((e) => [e.id, e.inputs]));
+  const baseIds = library.elements.filter((e) => e.group === "base").map((e) => e.id);
   const alternatives: Alternative[] = [];
   const seenIds = new Set<string>();
   for (let i = 0; i < p.alternatives.length; i += 1) {
@@ -119,14 +122,18 @@ export function parseShareFile(text: string, library: ParseLibrary): ParseShareR
         if (sel.inputs !== undefined && !isRecord(sel.inputs)) {
           issue("invalid_input_value", `${selPath}.inputs`, "Inputs must be an object; ignored.");
         } else if (isRecord(sel.inputs)) {
+          const definitions = elementInputs.get(elementId) ?? [];
           for (const [key, value] of Object.entries(sel.inputs)) {
             if (BLOCKED_KEYS.has(key)) {
               continue;
             }
-            if (isFiniteNumber(value) || typeof value === "string") {
+            const definition = definitions.find((d) => d.key === key);
+            if (!definition) {
+              issue("unknown_input", `${selPath}.inputs.${key}`, `Element ${elementId} has no input ${key}; dropped.`);
+            } else if (isValidInput(definition, value)) {
               inputs[key] = value;
             } else {
-              issue("invalid_input_value", `${selPath}.inputs.${key}`, "Input must be a finite number or a string; dropped.");
+              issue("invalid_input_value", `${selPath}.inputs.${key}`, `${definition.label} has an invalid value; using the default.`);
             }
           }
         }
@@ -138,6 +145,11 @@ export function parseShareFile(text: string, library: ParseLibrary): ParseShareR
         }
         selections[elementId] = { enabled: sel.enabled === true, inputs, override };
       }
+    }
+    const enabledBases = baseIds.filter((id) => selections[id]?.enabled);
+    for (const id of enabledBases.slice(1)) {
+      selections[id] = { ...selections[id], enabled: false };
+      issue("multiple_base", `${path}.selections.${id}`, `Only one base treatment can be selected; ${id} was turned off.`);
     }
     alternatives.push({
       id: a.id,
@@ -211,6 +223,16 @@ export function parseShareFile(text: string, library: ParseLibrary): ParseShareR
     selectedAlternativeId
   };
   return { ok: true, project, issues };
+}
+
+/** A share-file input value must fit the library definition: an allowed option, or a number within its limits. */
+function isValidInput(definition: ElementInputDefinition, value: unknown): value is InputValue {
+  if (definition.options) return definition.options.some((option) => option === value);
+  const numeric = typeof definition.default === "number" || definition.inherit !== undefined || definition.defaultFrom !== undefined;
+  if (!numeric) return typeof value === "string";
+  return isFiniteNumber(value)
+    && value >= (definition.min ?? 0)
+    && (!definition.integer || Number.isInteger(value));
 }
 
 function cleanName(value: unknown): string {

@@ -26,7 +26,7 @@ function makeProject(): PlanningProject {
         name: "Option A",
         description: "First",
         selections: {
-          mill_overlay: { enabled: true, inputs: { thicknessIn: 3, note: "x" }, override: null },
+          mill_overlay: { enabled: true, inputs: { thicknessIn: 3, materialFactor: 1.1 }, override: null },
           base_none: { enabled: false, inputs: {}, override: 0 }
         }
       },
@@ -141,7 +141,7 @@ describe("parseShareFile", () => {
     const text = fileText((f) => {
       f.project.alternatives[0].selections.mill_overlay = {
         enabled: "yes",
-        inputs: { ok: 1, text: "a", flag: true, nested: { a: 1 }, missing: null },
+        inputs: { thicknessIn: 3, densityLbCf: "145", materialFactor: -1, widthFt: true, lengthMiles: null, unknownKey: 1 },
         override: "12"
       };
     });
@@ -150,11 +150,30 @@ describe("parseShareFile", () => {
     if (result.ok) {
       expect(result.project.alternatives[0].selections.mill_overlay).toEqual({
         enabled: false,
-        inputs: { ok: 1, text: "a" },
+        inputs: { thicknessIn: 3 },
         override: null
       });
-      expect(result.issues.filter((i) => i.code === "invalid_input_value")).toHaveLength(3);
+      expect(result.issues.filter((i) => i.code === "invalid_input_value")).toHaveLength(4);
+      expect(result.issues.filter((i) => i.code === "unknown_input")).toHaveLength(1);
       expect(result.issues.map((i) => i.code)).toContain("invalid_override");
+    }
+  });
+
+  it("rejects option values outside the library list and keeps only the first base treatment", () => {
+    const text = fileText((f) => {
+      f.project.alternatives[0].selections.sidewalk = { enabled: true, inputs: { sides: "2", existingSidewalk: "maybe", widthFt: 8 }, override: null };
+      f.project.alternatives[0].selections.reconstruction = { enabled: true, inputs: { existingSurface: "Concrete", asphaltThicknessIn: -4 }, override: null };
+    });
+    const result = parseShareFile(text, library);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const sels = result.project.alternatives[0].selections;
+      expect(sels.sidewalk.inputs).toEqual({ widthFt: 8 });
+      expect(sels.reconstruction.inputs).toEqual({});
+      expect(sels.mill_overlay.enabled).toBe(true);
+      expect(sels.reconstruction.enabled).toBe(false);
+      expect(result.issues.map((i) => i.code)).toContain("multiple_base");
+      expect(result.issues.filter((i) => i.code === "invalid_input_value")).toHaveLength(4);
     }
   });
 
@@ -180,7 +199,7 @@ describe("parseShareFile", () => {
     if (result.ok) {
       const sels = result.project.alternatives[0].selections;
       expect(Object.keys(sels).sort()).toEqual(["base_none", "mill_overlay"]);
-      expect(Object.keys(sels.mill_overlay.inputs).sort()).toEqual(["note", "thicknessIn"]);
+      expect(Object.keys(sels.mill_overlay.inputs).sort()).toEqual(["materialFactor", "thicknessIn"]);
       expect(Object.getPrototypeOf(sels)).toBe(Object.prototype);
       expect(({} as any).polluted).toBeUndefined();
       expect(result.issues.some((i) => i.code === "unknown_element")).toBe(false);

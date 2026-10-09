@@ -4,7 +4,7 @@ import prices from "../../public/data/states/co/planning_prices.json";
 import rawLibrary from "../../data/planning/co_element_library.json";
 import { parseUserProjectV10, projectCostSummary } from "../projects/projectWorkspace";
 import { calculateAlternative } from "./calculate";
-import { setElementOverride, setEngineering, setStage } from "./edit";
+import { setElementOverride, setEngineering, setProjectInput, setStage } from "./edit";
 import { resolveLibrary } from "./library";
 import { createProject } from "./templates";
 import { planningAlternativeToProject, type CatalogEntry, type ToProjectOptions } from "./toProject";
@@ -84,7 +84,7 @@ describe("line mapping", () => {
       group: "Sidewalk",
       descriptionOverrideEnabled: false,
       evidenceContext: null,
-      quantity: cents(component.quantity),
+      quantity: Math.round(component.quantity * 10000) / 10000,
       preferredUnitCost: cents(component.unitPrice),
       notes: `Planning: ${sidewalk.label} – ${component.label}`,
       createdAt: NOW,
@@ -108,7 +108,7 @@ describe("line mapping", () => {
       agencyItemId: "",
       descriptionOverrideEnabled: true,
       unit: comp.unit,
-      quantity: cents(comp.quantity),
+      quantity: Math.round(comp.quantity * 10000) / 10000,
       preferredUnitCost: cents(comp.unitPrice),
       notes: comp.source.kind === "assembly" ? `Planning assembly cost per ${comp.unit}. Basis: ${comp.source.basis}.` : ""
     });
@@ -270,5 +270,16 @@ describe("project fields", () => {
 
   it("throws on an unknown alternative", () => {
     expect(() => planningAlternativeToProject(library, make("mill_overlay"), "nope", makeOptions())).toThrow(/nope/u);
+  });
+  it("keeps short per-mile quantities precise so the mobilization line is not distorted", () => {
+    const planning = setProjectInput(make("complete_street"), "lengthMiles", 0.125);
+    const result = calculateAlternative(library, planning, "a1");
+    const { project } = planningAlternativeToProject(library, planning, "a1", makeOptions());
+    const direct = result.elements.filter((e) => e.enabled && e.override === null).reduce((sum, e) => sum + e.direct, 0);
+    const { minor, trafficControl, mobilization } = result.summary.factors;
+    const expected = direct * (1 + minor) * (1 + trafficControl) * mobilization;
+    const line = project.lineItems.find((l) => l.description.startsWith("Mobilization allowance"))!;
+    expect(Math.abs((line.preferredUnitCost ?? 0) - expected)).toBeLessThan(5);
+    expect(project.lineItems.some((l) => l.quantity === 0.125)).toBe(true);
   });
 });

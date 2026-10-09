@@ -320,7 +320,9 @@ export async function renderApp(
             newId: (prefix) => createId(prefix),
             catalog: planningCatalogEntry
           });
-          await openNewProject(created.project);
+          if (!(await openNewProject(created.project))) {
+            throw new Error("the open engineer Project has unsaved changes that could not be saved. Open the Project tab, resolve them, and try again.");
+          }
         }
       });
       planningController.mount(planningMount);
@@ -1405,8 +1407,9 @@ export async function renderApp(
   }
 
   /** Saves a new Project and opens it in the Project workspace. */
-  async function openNewProject(draft: UserProject): Promise<void> {
-    if (!(await flushPendingProjectSave())) return;
+  /** Returns false when pending edits to the active Project could not be saved first; nothing is created then. */
+  async function openNewProject(draft: UserProject): Promise<boolean> {
+    if (!(await flushPendingProjectSave())) return false;
     const stateCode = draft.state;
     const project = await projectRepository.createProject(draft);
     projectState = addProject(projectState, project);
@@ -1416,7 +1419,7 @@ export async function renderApp(
     if (stateCode !== data.stateConfig.code) {
       cleanupProjectSession();
       onStateChange(stateCode, "project");
-      return;
+      return true;
     }
     projectReadOnly = !(await editCoordinator.claim(project.projectId));
     activeView = "project";
@@ -1424,6 +1427,7 @@ export async function renderApp(
     lastSavedAt = project.updatedAt;
     saveStatus = "saved";
     render();
+    return true;
   }
 
   async function activateProject(projectId: string): Promise<void> {

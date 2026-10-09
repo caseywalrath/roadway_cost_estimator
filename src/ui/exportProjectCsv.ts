@@ -113,7 +113,9 @@ function escapeCsvValue(value: string | number | null): string {
     return "";
   }
 
-  const text = String(value);
+  let text = String(value);
+  // Text that a spreadsheet would run as a formula gets a leading apostrophe; numbers are written as-is.
+  if (typeof value === "string" && /^[=+\-@\t\r]/.test(text) && !/^-[0-9]+(?:\.[0-9]+)?$/.test(text)) text = `'${text}`;
 
   if (/[",\r\n]/.test(text)) {
     return `"${text.replace(/"/g, '""')}"`;
