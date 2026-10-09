@@ -1,6 +1,6 @@
 # Planning v2 implementation plan (Colorado)
 
-Status: approved direction, not started. Prepared 2026-10-09.
+Status: in progress (Phase 1). Prepared 2026-10-09.
 Branch: `claude/planning-v2`, created from `origin/main` (`5ef3d9c`). The earlier pilot remains on `codex/planning-cost-clarity` as a read-only reference; nothing from it is merged wholesale.
 
 ## 1. Outcome
@@ -132,10 +132,10 @@ Rules (adapted from `AGENTS.md`):
 **Owner:** orchestrator (no delegation).
 
 - Create `CLAUDE.md` adapting `codex.md` and `AGENTS.md` for Claude: model routing in section 6, cloud-session commands, verification by change type, and the known environment limitation below.
-- Cloud environment: `npm ci` fails because the network policy blocks `cdn.sheetjs.com` (the `xlsx` dependency). Until that host is allowed, sessions install dependencies outside the repository with the npm-registry `xlsx@0.18.5` as a stand-in. Typecheck then reports three known errors in `src/projects/excelImport/readWorkbook.ts`; those errors are not v2 regressions.
+- Cloud environment: the network policy allows `cdn.sheetjs.com`, so `npm ci` installs the real `xlsx` dependency and typecheck is clean.
 - Delete nothing from `main`.
 
-**Exit:** `CLAUDE.md` committed; typecheck and existing tests run with only the known environment errors.
+**Exit:** `CLAUDE.md` committed; typecheck and existing tests pass.
 
 ### Phase 1 — Price table, element library, and calibration report
 
@@ -166,7 +166,7 @@ Decide: element list and templates as priced; minor/TC/mobilization factors; sta
 | 2c. JSON share format v2: build, parse, validate, import as an independent copy | Sonnet | `src/planning/shareFile.ts` |
 | 2d. Reference fixtures: independently computed expected amounts for every element and template at default inputs | Haiku | `src/planning/fixtures/*.json`, `*.test.ts` |
 
-**Exit:** typecheck clean apart from known environment errors; fixtures pass; core size within target.
+**Exit:** typecheck clean; fixtures pass; core size within target.
 
 ### Phase 3 — Storage and planner UI
 
@@ -283,7 +283,7 @@ Nebraska, Iowa and South Dakota Planning; shared accounts or server storage; an 
 
 | Phase | Status | Models used | Checks | Notes |
 |---|---|---|---|---|
-| 0 | Not started | | | |
+| 0 | Done | Opus (orchestrator) | tsc clean; vitest 155/155; Python 58 OK (6 skipped); data validation PASS | `CLAUDE.md` added; environment caveat removed |
 | 1 | Not started | | | |
 | 2 | Not started | | | |
 | 3 | Not started | | | |
