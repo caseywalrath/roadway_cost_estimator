@@ -19,6 +19,7 @@ The app is an evidence browser and limited local project workspace. It is not an
 - Local source monitoring: `tools/source_monitor/`, a repository-tracked Python web tool that binds only to `127.0.0.1:4180`; its scan state and cache remain under ignored `data/raw/source_monitor/`.
 - Curated, versioned source documents required to reproduce committed imports: `data/source_documents/{state}/`.
 - Browser project storage: IndexedDB database `roadway-cost-estimator`, with independent Project, settings, revision, and migration-backup stores.
+- Browser Planning storage: IndexedDB database `roadway-cost-estimator-planning-v2` (stores `projects` and `meta`), separate from Project storage.
 
 The schema-v2 loader reads the manifest, loads only the selected state's core tables, builds relationship maps, and defers `bid_item_prices.csv` until a bidder or source-detail view is opened.
 
@@ -32,7 +33,8 @@ Optional state partitions may also declare `item_price_summaries.csv` for non-co
 4. `src/data/schema.ts` defines the shared contract, project-number, agency-item, bid, item-price, observation, taxonomy, and manifest interfaces.
 5. `src/matching/buildEvidenceResult.ts` groups generalized observations by contract item and filters exact `agencyItemId` evidence.
 6. `src/ui` renders manifest-provided labels, capabilities, columns, source filters, details, and exports. Source Review is a state-specific auxiliary view with list and full-width project-detail states.
-7. `src/projects/projectRepository.ts` opens IndexedDB, preserves and migrates legacy v1-v3 storage, and exposes asynchronous Project operations. `src/projects/projectWorkspace.ts` defines the current Project workspace schema and pure workspace mutations.
+7. For Colorado only, the Planning tab mounts `src/ui/planning/planningController.ts`, which loads the element library (bundled from `data/planning/co_element_library.json`) and fetches `public/data/states/co/planning_prices.json`. See "Planning (Colorado)" below.
+8. `src/projects/projectRepository.ts` opens IndexedDB, preserves and migrates legacy v1-v3 storage, and exposes asynchronous Project operations. `src/projects/projectWorkspace.ts` defines the current Project workspace schema and pure workspace mutations.
 
 ## Local Data Source Monitor
 
@@ -146,11 +148,24 @@ The staged package currently contains 23,636 parsed annual rows, five committed 
 - Brand assets live in `public/brand/` (copied to the site root at build time): `FHU-logo.png` (the firm's official horizontal lockup) and `favicon.png` (a square crop of the same logo's road mark, cropped/padded from the official artwork rather than hand-drawn). The logo is referenced from the header in `src/ui/renderApp.ts` and the status panels in `src/main.ts`; the favicon is linked from `index.html`. Static assets must live under `public/` to be served by the Vite build; a root-level file is not bundled.
 - A branded footer (firm name, product title, year) renders at the bottom of the app shell from `src/ui/renderApp.ts`. The product title itself remains data-driven from `manifest.json`.
 
+## Planning (Colorado)
+
+Planning is a planning-level estimator for corridor alternatives. It is separate from the evidence browser and from the engineer Project, and is shown only when Colorado is selected (`PLANNING_STATES` in `src/ui/renderApp.ts`).
+
+- **Price table.** `scripts/build_planning_prices.py` builds `public/data/states/co/planning_prices.json` from committed CDOT awarded-bid observations over a 3-year window: per-item median of per-contract medians, urban pool when an item has at least 8 urban contracts, at least 3 contracts, NHCCI-adjusted to 2025 Q4 and escalated by 1.02. Rules and values: `docs/planning-v2-calibration.md`.
+- **Library.** `data/planning/co_element_library.json` defines project inputs, stages, engineering rates, factor sets by base type, element groups (base, corridor, spot, other), elements with inputs and components (price-table items or assembly unit costs), and templates.
+- **Core.** `src/planning/` is pure TypeScript: library validation and price binding, quantity rules, the cost model, immutable edit helpers, templates, share-file JSON, CSV export, and the Project mapping. Contract and formulas: `src/planning/README.md`.
+- **Cost model.** Element amount = direct × (1 + minor) × (1 + traffic control) × (1 + mobilization) for the alternative's base type, or the planner's entered amount. Contingency is a stage rate on construction; design and construction engineering are rates of construction plus contingency; right-of-way and utilities are entered amounts. The range applies stage percentages to the total.
+- **UI.** `src/ui/planning/` holds formatting, string renderers, the print summary, and the controller. The controller persists across `renderApp` redraws and is re-mounted into `[data-planning-mount]`; it uses delegated events and targeted DOM updates, autosaves 500 ms after the last edit, and detects edits from another tab by revision.
+- **Exports.** Print summary (selected alternative plus an alternatives comparison), CSV (element, pay item and summary rows), and JSON share files (`roadway-cost-estimator/planning`, format version 2) that import as independent copies.
+- **Engineer Project handoff.** "Create engineer Project" converts the selected alternative with `planningAlternativeToProject` (mapping in `docs/planning-v2-implementation-plan.md` section 5a) and opens it in the Project workspace. The Project total equals the Planning total within $1. Later edits in either screen do not sync.
+
 ## Project Workspace Rules
 
 - Schema v10 stores each Project independently in IndexedDB. Each Project stores a non-negative `contingencyPercent`; each line has type `catalog` or `custom`, an independent `costCategory` (`construction` or `other`), and an optional Project-specific `group`. Missing categories in older records normalize from line type so existing subtotals remain unchanged. Imported lines may also retain validated workbook provenance without storing the workbook itself.
 - Catalog lines retain official `state`, `agencyId`, `agencyItemId`, code, and unit identity. Their description is locked to the official catalog value by default, but an engineer may explicitly unlock a Project line's description after confirmation; this does not alter its catalog identity. Pricing evidence is optional metadata: Item Search entries retain their evidence snapshot, while exact-code Project entries may have no snapshot. The entry path does not determine line identity. Catalog quantity and unit cost may remain incomplete until the engineer fills them in. Custom lines accept free-form group, item code, description, unit, notes, and nullable Unit Cost/Quantity without catalog identity or evidence context.
 - Project status, revision, archive time, and backup revision are persisted with the Project.
+- A Project created from Planning carries an optional `planningOrigin` (Planning project and alternative ids and names, creation time, Planning total). Other Projects omit it. The v10 parser, backups, duplicates and imported copies keep it, and the Project CSV summary lists it.
 - Active Project identity is stored independently per state. Switching states restores the last active Project for that state and never creates a Project implicitly.
 - v1-v3 browser storage migrates without deleting the legacy keys. Exact raw values and migration reports remain in the `migrationBackups` store. Blank zero-line Projects traceable to the former automatic-default behavior are removed once; named Projects and Projects containing metadata or lines are preserved.
 - Invalid legacy Projects are rejected as complete units rather than silently losing invalid lines.

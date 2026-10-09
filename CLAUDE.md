@@ -11,7 +11,7 @@ This file adapts `AGENTS.md` and `codex.md` for Claude Code sessions. Where they
 
 ## Session start
 
-1. Read this file, `architecture_overview.md`, and any active plan in `docs/` (currently `docs/planning-v2-implementation-plan.md`).
+1. Read this file, `architecture_overview.md`, and any active plan in `docs/` (currently `docs/planning-v2-implementation-plan.md`). Planning code: `src/planning/README.md`.
 2. `git fetch origin <branch>` and `git status -sb`. Work on the branch named in the active plan or session instructions.
 3. Run `npm ci` if `node_modules` is missing.
 
@@ -24,6 +24,7 @@ This file adapts `AGENTS.md` and `codex.md` for Claude Code sessions. Where they
 | Web tests | `npx vitest run` (or one file: `npx vitest run src/path/file.test.ts`) |
 | Python tests | `npm test` (runs `python -m unittest` over `scripts/test_*.py` listed in `package.json`); single file: `python -m unittest scripts/test_x.py` |
 | Data validation | `python scripts/validate_data_package.py` |
+| Planning price table (Colorado) | `python scripts/build_planning_prices.py`, then `npx vitest run src/planning` |
 | Production build | `node ./node_modules/vite/bin/vite.js build --outDir dist-check` |
 | Dev server for screenshots | `node ./node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5173` (run in background) |
 | Screenshots | Playwright with the preinstalled Chromium (`/opt/pw-browsers`); do not run `playwright install` |

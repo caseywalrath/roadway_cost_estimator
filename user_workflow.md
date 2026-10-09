@@ -386,6 +386,20 @@ Expected roadway reviewer feedback:
 - "This record is useful evidence but needs an adjustment."
 - "This row should be excluded in a later manual review set."
 
+## Planning estimates (Colorado)
+
+The **Planning** tab appears next to Explorer and Project when Colorado is selected. It produces planning-level costs for corridor alternatives before design. It does not use or change the evidence table or any engineer Project until you choose **Create engineer Project**.
+
+1. **Start a planning project.** Enter a name and choose a template (Mill and overlay, Full reconstruction, Complete street, Sidewalk gap, Multi-use path, Intersection safety) or a blank start. Use **Planning projects > Import JSON** to open a file someone shared.
+2. **Set the corridor.** Enter length (miles), roadway width (feet), intersections, the project stage (Concept or Planning study), and an optional budget. Element quantities follow these values unless you change an element's own inputs.
+3. **Choose elements.** Pick one base treatment. Check the corridor and spot elements to include. Each row shows its amount; rows that are off show their amount greyed. Open the line under a row to change its inputs, see each pay item with quantity, unit price and price source, and see the allowance for minor items, traffic control and mobilization.
+4. **Enter your own amount** in a row's dollar box to replace the calculated amount. **Reset to calculated** restores it. Enter right-of-way and utility relocation amounts under Other costs.
+5. **Compare alternatives.** Use **+ Alternative** to add one from a template or blank, or **Duplicate** to copy the selected one. Each alternative button shows its total. The summary shows construction, contingency, design, construction engineering, right-of-way, utilities, the total, its range, and the budget remaining.
+6. **Export.** **Export > Print summary** prints the selected alternative and a comparison of all alternatives. **Download CSV** gives element, pay item and summary rows with the same rounding as the screen. **Download JSON** saves the whole planning project; another person can import it as an independent copy.
+7. **Hand off to design.** **Create engineer Project** copies the selected alternative into a new Project and opens it. Pay items become catalog lines with their CDOT item codes; assemblies, entered amounts, allowances, engineering, right-of-way and utilities become lump-sum or custom lines. The Project uses the stage contingency as its contingency percentage, and its total equals the Planning total. The Project notes record where it came from. Later changes in Planning do not update the Project.
+
+Planning saves automatically in this browser. If the same planning project is changed in another tab, the screen says so and offers to reload the saved version. Amounts are planning-level: element and summary lines are rounded to $1,000 and totals to $10,000. Unit prices are CDOT awarded-bid medians, adjusted to 2026; see `docs/planning-v2-calibration.md`.
+
 ## Roadway Engineer Review Workflow
 
 For early feedback sessions, the project manager should use the prototype as a structured review aid.

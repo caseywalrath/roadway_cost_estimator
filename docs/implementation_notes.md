@@ -252,6 +252,26 @@ Acceptance checks using the supplied private workbooks and the production parser
 - `132nd and Giles - Cost Estimate.xlsx`, `Concept 1A!B13:F95`: 83 physical rows, 26 item rows, 5 repeated-header rows, 33 ambiguous rows, and 19 blank rows; the six visible Concept sheets and five hidden/support sheets were not combined.
 - `Ida Street _30Cost_Estimate.xlsx`, `Ida Street Imp!B12:F131`: 120 physical rows, 47 item rows, 6 repeated-header rows, 31 ambiguous rows, and 36 blank rows; the two alternative surfacing sections require explicit selection.
 
+## Planning v2 (Colorado)
+
+Plan and decisions: `docs/planning-v2-implementation-plan.md`. Values and evidence: `docs/planning-v2-calibration.md`. Screen design: `docs/planning-v2-ui.md`. Core contract: `src/planning/README.md`.
+
+Regenerate the price table after a Colorado evidence refresh:
+
+```text
+python scripts/build_planning_prices.py
+python -m unittest scripts/test_build_planning_prices.py
+```
+
+Defaults: 3-year window, escalation 1.02, urban pool at 8 or more urban contracts, minimum 3 contracts. The output is deterministic for the same inputs. After regenerating, run `npx vitest run src/planning` and review changed template totals before committing; the fixture tests in `src/planning/fixtures/` hold expected values from an independent computation and will fail when prices move.
+
+Design points:
+
+- The element library is bundled; the price table is fetched at run time. A library item missing from the price table or with a different unit is reported as an issue and priced at $0.
+- The planner controller survives `renderApp` redraws and re-mounts into `[data-planning-mount]`. Leaving the tab or switching states flushes pending saves.
+- Planning CSS uses the shared classes and `:root` tokens; Planning-only classes cover layout. Print uses a `body.planning-printing` class that hides everything except the inserted `.planning-print` markup.
+- The engineer Project handoff reconciles to the Planning total within $1 (see the mapping in the plan, section 5a).
+
 ## Next Product Steps
 
 Current sequencing lives in `project_roadmap.md`.
