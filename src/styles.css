@@ -3616,3 +3616,26 @@ tbody tr:last-child td {
 .excel-import-confirmation-costs summary, .excel-import-skipped-summary summary { cursor: pointer; color: var(--heading); font-weight: 600; }
 .excel-import-skipped-summary button { margin-top: 12px; }
 @media (max-width: 480px) { .excel-import-outcome-counts div { flex-direction: column; gap: 0; } }
+.project-planning-impacts {
+  margin-block: 0.75rem;
+}
+
+.project-planning-impact {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.project-planning-impact > span {
+  color: var(--muted);
+}
+
+.project-planning-impact > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-left: auto;
+}

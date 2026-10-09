@@ -259,6 +259,12 @@ Saved evidence context:
 
 ## 8. Review the Project workspace
 
+### Planning prototype handoff
+
+In Nebraska or Colorado Planning, create alternatives and add available project elements. Use **Export for engineer** to download a compact CSV for the current alternative, or a Planning project JSON containing all alternatives and frozen assumptions. The engineer can import that JSON through Planning actions in another browser; the import creates an independent local copy. From the chosen alternative, **Create Project from alternative** makes a one-way Project draft.
+
+The engineer edits quantities, unit costs, and Notes in the normal Project item table. A positive unit cost resolves a pending imported price decision. A zero unit cost needs an explanation in that item's Notes. Removing an imported line records its exclusion. Under **From Planning > Major project impacts**, choose **No impact expected** or **Add cost item** for property acquisition and major utilities. An added item is an editable Other Costs line with a blank price; pricing or removing it records the choice. These impact choices can be revisited. The summary says **Priced subtotal** until all unknown imported work and impact choices are handled, then **Total Project Cost**. Frozen Planning contingency remains an Other Costs line; adding native Project contingency beside it shows a double-count warning.
+
 The Project tab opens the active browser Project for the selected state. Multiple Colorado and Iowa Projects can coexist, and the Project manager can switch between them.
 
 Project fields:

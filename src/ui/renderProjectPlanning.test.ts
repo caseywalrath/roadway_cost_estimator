@@ -23,14 +23,14 @@ describe("Planning-origin Project presentation", () => {
     const output = html(fixture());
     expect(output).toContain("Priced subtotal");
     expect(output).not.toContain(">Total Project Cost<");
-    expect(output).toContain("Work to resolve (1)");
+    expect(output).toContain("Outstanding items (1)");
     expect(output).toContain("Other work");
     expect(output).toContain("Source &lt;project&gt;");
     expect(output).toContain("data-open-planning-origin");
-    expect(output).toContain("one-way starting snapshot");
-    expect(output).toContain('name="reason"');
+    expect(output).toContain("independent Project draft");
+    expect(output).not.toContain('name="reason"');
   });
-  it("keeps decisions pending when a price is entered, then shows a full total after explicit resolution", () => {
+  it("shows a full total after the price decision is resolved", () => {
     const project = fixture();
     project.lineItems[0].preferredUnitCost = 200;
     expect(html(project)).toContain("Priced subtotal");
@@ -45,7 +45,17 @@ describe("Planning-origin Project presentation", () => {
     const output = html(project, true);
     expect(output).toContain("double count contingency");
     expect(output).toContain("data-review-frozen-contingency");
-    expect(output).toContain('value="resolved" class="secondary-button" disabled');
+    expect(output).not.toContain('data-project-planning-decision');
+  });
+  it("shows compact actions for an unresolved major impact", () => {
+    const project = fixture();
+    project.planningOrigin!.decisions.push({ decisionId: "scope:right_of_way", label: "Right-of-way", kind: "scope",
+      lineItemId: null, status: "pending", reason: "", sourceAmount: null });
+    const output = html(project);
+    expect(output).toContain("Major project impacts");
+    expect(output).toContain("No impact expected");
+    expect(output).toContain("Add cost item");
+    expect(output).not.toContain("Decision reason");
   });
   it("retains legacy Project totals without a Planning panel", () => {
     const output = html(createUserProject("Legacy", "CO"));

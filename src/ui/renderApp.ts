@@ -33,6 +33,7 @@ import {
   createUserProject,
   createCatalogProjectLineItem,
   createCustomProjectLineItem,
+  chooseProjectPlanningImpact,
   duplicateUserProject,
   enableProjectLineDescriptionOverride,
   findExactProjectCatalogItem,
@@ -45,7 +46,6 @@ import {
   projectLineTotal,
   projectOtherCost,
   projectPlanningIsComplete,
-  projectPlanningReviewFingerprint,
   projectTotal,
   removeProjectLineItem,
   removeProjectFromState,
@@ -1043,19 +1043,6 @@ export async function renderApp(
   }
 
   function bindProjectWorkspace(rootElement: HTMLElement): void {
-    rootElement.querySelector<HTMLFormElement>("[data-project-planning-review]")?.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const project = getActiveProject(projectState, data.stateConfig.code);
-      const form = event.currentTarget as HTMLFormElement;
-      if (!project?.planningOrigin || projectReadOnly || !projectPlanningIsComplete(project)) return;
-      const reviewer = (form.querySelector<HTMLInputElement>("[name='reviewer']")?.value ?? "").trim();
-      const date = form.querySelector<HTMLInputElement>("[name='date']")?.value ?? "";
-      const notes = form.querySelector<HTMLTextAreaElement>("[name='notes']")?.value ?? "";
-      if (!reviewer || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
-      const next: UserProject = { ...project, planningOrigin: { ...project.planningOrigin,
-        review: { reviewer, date, notes, fingerprint: projectPlanningReviewFingerprint(project) } } };
-      persistProjectState(replaceProject(projectState, next), true);
-    });
     rootElement.querySelector<HTMLButtonElement>("[data-open-planning-origin]")?.addEventListener("click", async () => {
       const origin = getActiveProject(projectState, data.stateConfig.code)?.planningOrigin;
       if (!origin || !(await flushPendingProjectSave())) return;
@@ -1063,26 +1050,12 @@ export async function renderApp(
       render();
       window.dispatchEvent(new CustomEvent("planning-open-origin", { detail: { workspaceId: origin.workspaceId, scenarioId: origin.scenarioId } }));
     });
-    rootElement.querySelectorAll<HTMLFormElement>("[data-project-planning-decision]").forEach((form) => {
-      form.addEventListener("submit", (event) => {
-        event.preventDefault();
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-project-impact-choice]").forEach((button) => {
+      button.addEventListener("click", () => {
         const project = getActiveProject(projectState, data.stateConfig.code);
-        const origin = project?.planningOrigin;
-        const decision = origin?.decisions.find((entry) => entry.decisionId === form.dataset.projectPlanningDecision);
-        if (!project || !origin || !decision || projectReadOnly) return;
-        const reason = (form.querySelector<HTMLInputElement>("[name='reason']")?.value ?? "").trim();
-        const status = (event as SubmitEvent).submitter instanceof HTMLButtonElement ? ((event as SubmitEvent).submitter as HTMLButtonElement).value : "resolved";
-        if (!reason || (status !== "resolved" && status !== "excluded")) return;
-        const line = project.lineItems.find((entry) => entry.lineItemId === decision.lineItemId);
-        if (status === "resolved" && decision.lineItemId && (!line || line.quantity === null || line.preferredUnitCost === null)) {
-          form.querySelector<HTMLElement>("[data-project-decision-error]")!.textContent = "Enter the associated line quantity and unit cost before resolving this decision, or explicitly exclude it.";
-          return;
-        }
-        const next: UserProject = { ...project, updatedAt: new Date().toISOString(),
-          lineItems: status === "excluded" && decision.lineItemId ? project.lineItems.filter((entry) => entry.lineItemId !== decision.lineItemId) : project.lineItems,
-          planningOrigin: { ...origin, decisions: origin.decisions.map((entry) => entry.decisionId === decision.decisionId ? { ...entry, status, reason } : entry) }
-        };
-        persistProjectState(replaceProject(projectState, next), true);
+        const choice = button.dataset.projectImpactChoice;
+        if (!project || projectReadOnly || (choice !== "none" && choice !== "add")) return;
+        persistProjectState(chooseProjectPlanningImpact(projectState, project.projectId, button.dataset.projectImpactId ?? "", choice), true);
       });
     });
     rootElement.querySelector<HTMLButtonElement>("[data-review-frozen-contingency]")?.addEventListener("click", (event) => {
@@ -1260,6 +1233,7 @@ export async function renderApp(
           confirmExactProjectCatalogMatch(input.dataset.projectLineId ?? "");
         }
         void queueProjectSave();
+        if (getActiveProject(projectState, data.stateConfig.code)?.planningOrigin) render();
       });
       input.addEventListener("change", () => {
         if (input.dataset.projectLineField !== "costCategory") return;

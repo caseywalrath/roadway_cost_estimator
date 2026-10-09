@@ -384,13 +384,45 @@ export function addProjectLineItem(
 }
 
 function appendPendingLineDecision(decisions: ProjectPlanningDecision[], line: ProjectLineItem, previous?: ProjectLineItem): ProjectPlanningDecision[] {
-  if (line.quantity !== null && line.preferredUnitCost !== null && line.preferredUnitCost !== 0) return decisions;
+  const priced = line.quantity !== null && line.preferredUnitCost !== null && line.preferredUnitCost > 0;
+  const zeroExplained = line.quantity !== null && line.preferredUnitCost === 0 && projectLineNotes(line).trim().length > 0;
   if (decisions.some((entry) => entry.lineItemId === line.lineItemId)) {
-    if (previous && previous.quantity === line.quantity && previous.preferredUnitCost === line.preferredUnitCost) return decisions;
-    return decisions.map((entry) => entry.lineItemId === line.lineItemId ? { ...entry, status: "pending", reason: "" } : entry);
+    if (previous && previous.quantity === line.quantity && previous.preferredUnitCost === line.preferredUnitCost && previous.notes === line.notes) return decisions;
+    return decisions.map((entry) => entry.lineItemId === line.lineItemId
+      ? { ...entry, status: priced || zeroExplained ? "resolved" : "pending",
+          reason: priced ? "Priced in Project" : zeroExplained ? "Zero cost explained in item Notes" : "" }
+      : entry);
   }
+  if (priced) return decisions;
   return [...decisions, { decisionId: `price:${line.lineItemId}`, label: line.description || "New Project item",
-    kind: "line", lineItemId: line.lineItemId, status: "pending", reason: "", sourceAmount: null }];
+    kind: "line", lineItemId: line.lineItemId, status: zeroExplained ? "resolved" : "pending",
+    reason: zeroExplained ? "Zero cost explained in item Notes" : "", sourceAmount: null }];
+}
+
+/** Records a major-impact choice without changing the frozen Planning snapshot. */
+export function chooseProjectPlanningImpact(state: ProjectWorkspaceState, projectId: string, decisionId: string, choice: "none" | "add"): ProjectWorkspaceState {
+  const project = state.projects.find((candidate) => candidate.projectId === projectId);
+  const origin = project?.planningOrigin;
+  const decision = origin?.decisions.find((entry) => entry.decisionId === decisionId && entry.kind === "scope");
+  if (!project || !origin || !decision) return state;
+  const previous = decision.lineItemId ? project.lineItems.find((line) => line.lineItemId === decision.lineItemId) : null;
+  const line = choice === "add" ? previous ?? {
+    ...createCustomProjectLineItem(project.state, "other"), group: "Other costs", description: decision.label,
+    unit: "LS", quantity: 1,
+    planningOrigin: { sourceId: decisionId.slice(6), role: decisionId.slice(6), packageId: null, packageVersion: null,
+      sourceKind: "external" as const, originalQuantity: null, originalUnitRate: null, originalAmount: decision.sourceAmount,
+      originalUnit: "LS", reason: null, rateBasis: null, allowanceRule: null }
+  } : null;
+  const positive = line?.quantity !== null && line?.preferredUnitCost !== null && (line?.preferredUnitCost ?? 0) > 0;
+  const explainedZero = line?.quantity !== null && line?.preferredUnitCost === 0 && projectLineNotes(line).trim().length > 0;
+  const updated = choice === "none" ? { ...decision, lineItemId: null, status: "excluded" as const, reason: "No impact expected in Project" }
+    : { ...decision, lineItemId: line!.lineItemId, status: positive || explainedZero ? "resolved" as const : "pending" as const,
+        reason: positive ? "Priced in Project" : explainedZero ? "Zero cost explained in item Notes" : "" };
+  return updateProject(state, projectId, { ...project,
+    lineItems: choice === "none" ? project.lineItems.filter((entry) => entry.lineItemId !== decision.lineItemId)
+      : previous ? project.lineItems : [...project.lineItems, line!],
+    planningOrigin: { ...origin, decisions: origin.decisions.map((entry) => entry.decisionId === decisionId ? updated : entry) },
+    updatedAt: currentTimestamp() });
 }
 
 export function replaceProjectLineItem(
@@ -497,7 +529,7 @@ export function projectPlanningIsComplete(project: UserProject): boolean {
     if (decision.kind !== "line") return decision.reason.trim().length > 0;
     const line = project.lineItems.find((entry) => entry.lineItemId === decision.lineItemId);
     return Boolean(line && line.quantity !== null && line.preferredUnitCost !== null
-      && (line.preferredUnitCost !== 0 || decision.reason.trim().length > 0));
+      && (line.preferredUnitCost !== 0 || projectLineNotes(line).trim().length > 0));
   }) && project.lineItems.every((line) => line.quantity !== null && line.preferredUnitCost !== null);
 }
 
@@ -630,6 +662,10 @@ export function removeProjectLineItem(
   return updateProject(state, projectId, {
     ...project,
     lineItems: project.lineItems.filter((lineItem) => lineItem.lineItemId !== lineItemId),
+    ...(project.planningOrigin ? { planningOrigin: { ...project.planningOrigin,
+      decisions: project.planningOrigin.decisions.map((decision) => decision.lineItemId === lineItemId
+        ? { ...decision, status: "excluded" as const, lineItemId: decision.kind === "scope" ? null : decision.lineItemId,
+            reason: "Removed in Project" } : decision) } } : {}),
     updatedAt: currentTimestamp()
   });
 }
