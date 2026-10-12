@@ -46,6 +46,11 @@ import {
   renderElementInputs,
   renderLoadError,
   renderLoading,
+  UNUSED_IN_PROJECT,
+  UNUSED_IN_TEMPLATE,
+  defaultProjectName,
+  unusedDraftInputs,
+  usedCorridorInputs,
   renderNewPreviewBody,
   renderNewPreviewDetails,
   renderNewProjectPanel,
@@ -263,7 +268,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     const inputs = {} as ProjectInputs;
     for (const definition of library.projectInputs) inputs[definition.key] = definition.default;
     Object.assign(inputs, template?.projectInputs);
-    return { name: "", templateId: template ? template.id : null, inputs, error: "" };
+    return { name: defaultProjectName(library, template ? template.id : null), templateId: template ? template.id : null, inputs, error: "" };
   }
 
   // ---------- DOM helpers ----------
@@ -554,6 +559,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       patchSummary();
       patchAlternativeButtons();
       if (options.rows !== false) patchRows(options.committed ?? null);
+      patchCorridorUse();
       announce();
     }
     if (options.save !== false) scheduleSave();
@@ -719,12 +725,33 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     }
   }
 
+  /** Dims corridor fields that no included element reads. */
+  function markCorridorUse(unused: Set<string>, text: string): void {
+    for (const label of qsa("[data-corridor-field]")) {
+      const off = unused.has(label.dataset.corridorField ?? "");
+      label.classList.toggle("planning-corridor-field--unused", off);
+      const hint = qs("[data-corridor-unused]", label);
+      if (hint) {
+        hint.textContent = off ? text : "";
+        hint.hidden = !off;
+      }
+    }
+  }
+
+  function patchCorridorUse(): void {
+    const used = usedCorridorInputs(library, result.elements.filter((e) => e.enabled).map((e) => e.elementId));
+    markCorridorUse(new Set(library.projectInputs.map((p) => p.key).filter((k) => !used.has(k))), UNUSED_IN_PROJECT);
+  }
+
   /** Refreshes the preview beside the new-project form from the current draft. */
   function patchNewPreview(): void {
+    markCorridorUse(unusedDraftInputs(library, draft), UNUSED_IN_TEMPLATE);
     const preview = qs("[data-planning-new-preview]");
     if (preview) preview.innerHTML = renderNewPreviewBody(library, draft);
     const details = qs("[data-planning-new-details]");
     if (details) details.innerHTML = renderNewPreviewDetails(library, draft);
+    const bar = qs("[data-planning-new-bar-total]");
+    if (bar) bar.textContent = qs("[data-planning-new-preview] .planning-total strong")?.textContent ?? "";
   }
 
   function showNewPanel(): void {
@@ -747,8 +774,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
         error.hidden = false;
       }
     };
-    const name = draft.name.trim();
-    if (!name) return fail("Enter a project name.");
+    const name = draft.name.trim() || defaultProjectName(library, draft.templateId);
     const inputs = {} as ProjectInputs;
     for (const definition of library.projectInputs) {
       const field = qs<HTMLInputElement>(`[data-planning-new-input="${definition.key}"]`, panel);
@@ -1160,7 +1186,14 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     }
     if (phase === "new") {
       if (t.matches('input[name="planning-template"]')) {
+        const previousDefault = defaultProjectName(library, draft.templateId);
         readDraft();
+        const nameField = qs<HTMLInputElement>("[data-planning-new-name]");
+        if (nameField && (nameField.value.trim() === "" || nameField.value === previousDefault)) {
+          draft.name = defaultProjectName(library, draft.templateId);
+          nameField.value = draft.name;
+        }
+        if (nameField) nameField.placeholder = defaultProjectName(library, draft.templateId);
         const defaults = defaultDraft(draft.templateId);
         draft.inputs = defaults.inputs;
         for (const field of qsa<HTMLInputElement>("[data-planning-new-input]")) {

@@ -218,7 +218,9 @@ describe("renderNewProjectPanel", () => {
     const radios = panel.querySelectorAll<HTMLInputElement>("input[name='planning-template']");
     expect(radios.length).toBe(library.templates.length + 1);
     expect([...radios].find((r) => r.checked)?.value).toBe("mill_overlay");
-    expect(panel.querySelector("h2")?.textContent).toBe("New planning estimate");
+    expect(panel.querySelector<HTMLInputElement>(".planning-header [data-planning-new-name]")?.value).toBe("");
+    expect(panel.querySelector<HTMLInputElement>("[data-planning-new-name]")?.placeholder).toBe("Mill and overlay estimate");
+    expect(panel.querySelector("[data-corridor-field='roadwayWidthFt']")?.classList.contains("planning-corridor-field--unused")).toBe(false);
     expect(panel.querySelectorAll("[data-planning-new-input]").length).toBe(3);
     expect(panel.querySelector("[data-planning-new-cancel]")).toBeNull();
     expect(panel.querySelector("[data-planning-create]")?.textContent).toBe("Create project");
@@ -233,9 +235,10 @@ describe("renderNewProjectPanel", () => {
   it("keeps the header and two-column layout of the finished project", () => {
     const panel = panelFor();
     expect(panel.querySelector(".planning-header [data-planning-menu='actions']")).not.toBeNull();
-    expect(panel.querySelector(".planning-layout > section[aria-label='Starting template']")).not.toBeNull();
+    expect(panel.querySelector(".planning-layout > .planning-main > section[aria-label='Starting template'] + section [data-planning-new-input]")).not.toBeNull();
+    expect(panel.querySelector(".planning-main [data-planning-create]")).not.toBeNull();
+    expect(panel.querySelector("aside.planning-summary [data-planning-create]")).toBeNull();
     expect(panel.querySelector(".planning-layout > aside.planning-summary")).not.toBeNull();
-    expect(panel.querySelector("[data-planning-new] [data-planning-new-name]")).not.toBeNull();
   });
 
   it("disables actions that need an open project, keeps Import and project switching, and has no current project", () => {

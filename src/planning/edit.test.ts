@@ -20,7 +20,7 @@ const make = (templateId: string | null) =>
 describe("templates", () => {
   it("creates a project from a template", () => {
     const p = make("intersection_safety");
-    expect(p.inputs).toEqual({ lengthMiles: 0.1, roadwayWidthFt: 40, intersections: 1 });
+    expect(p.inputs).toEqual({ lengthMiles: 0.5, roadwayWidthFt: 40, intersections: 1 });
     expect(p.stageId).toBe("concept");
     expect(p.engineering).toEqual({ design: 0.1, constructionEngineering: 0.1 });
     expect(p.budget).toBeNull();

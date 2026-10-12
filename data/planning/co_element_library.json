@@ -343,7 +343,7 @@
       "id": "intersection_safety",
       "label": "Intersection safety",
       "description": "Rebuild one signalized intersection with ramps, crosswalks and a refuge island.",
-      "projectInputs": { "lengthMiles": 0.1, "intersections": 1 },
+      "projectInputs": { "intersections": 1 },
       "elements": [
         { "id": "base_none" },
         { "id": "signal" },

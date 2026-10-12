@@ -272,14 +272,34 @@ ${renderActionsMenu(renderProjectMenuItems(vm.projects, project), false)}
 </section>`;
 }
 
-function renderCorridorField(library: ResolvedLibrary, key: string, value: number, attribute: string): string {
-  const definition = library.projectInputs.find((p) => p.key === key);
-  const mode = definition?.integer ? "numeric" : "decimal";
-  return `<label><span>${esc(CORRIDOR_LABELS[key] ?? key)}</span><input type="text" inputmode="${mode}" ${attribute}="${esc(key)}" value="${esc(formatPlain(value))}" /><p class="filter-validation-message" role="alert" hidden></p></label>`;
+/** Corridor values that feed at least one of the given elements: an element input inherits it or derives its default from it. */
+export function usedCorridorInputs(library: ResolvedLibrary, elementIds: Iterable<string>): Set<string> {
+  const ids = new Set(elementIds);
+  const used = new Set<string>();
+  for (const element of library.elements) {
+    if (!ids.has(element.id)) continue;
+    for (const input of element.inputs) {
+      if (input.inherit) used.add(input.inherit);
+      if (input.defaultFrom) used.add(input.defaultFrom.input);
+    }
+  }
+  return used;
 }
 
-export function renderCorridorPanel(library: ResolvedLibrary, project: PlanningProject): string {
-  const fields = library.projectInputs.map((p) => renderCorridorField(library, p.key, project.inputs[p.key], "data-planning-project-input")).join("");
+export const UNUSED_IN_PROJECT = "Not used by the elements in this alternative";
+export const UNUSED_IN_TEMPLATE = "Not used by this template";
+
+function renderCorridorField(library: ResolvedLibrary, key: string, value: number, attribute: string, unusedText = ""): string {
+  const definition = library.projectInputs.find((p) => p.key === key);
+  const mode = definition?.integer ? "numeric" : "decimal";
+  return `<label class="planning-corridor-field${unusedText ? " planning-corridor-field--unused" : ""}" data-corridor-field="${esc(key)}"><span>${esc(CORRIDOR_LABELS[key] ?? key)}</span><input type="text" inputmode="${mode}" ${attribute}="${esc(key)}" value="${esc(formatPlain(value))}" /><small class="muted" data-corridor-unused${unusedText ? "" : " hidden"}>${esc(unusedText)}</small><p class="filter-validation-message" role="alert" hidden></p></label>`;
+}
+
+export function renderCorridorPanel(library: ResolvedLibrary, project: PlanningProject, result?: AlternativeResult): string {
+  const used = result ? usedCorridorInputs(library, result.elements.filter((e) => e.enabled).map((e) => e.elementId)) : null;
+  const fields = library.projectInputs
+    .map((p) => renderCorridorField(library, p.key, project.inputs[p.key], "data-planning-project-input", used && !used.has(p.key) ? UNUSED_IN_PROJECT : ""))
+    .join("");
   const stages = library.stages.map((s) => `<option value="${esc(s.id)}"${s.id === project.stageId ? " selected" : ""}>${esc(s.label)}</option>`).join("");
   return `<section class="panel-block">
   <div class="panel-heading"><h3>Corridor</h3></div>
@@ -575,13 +595,15 @@ export function renderPlanningView(vm: PlanningViewModel): string {
   return `<section class="planning-view" data-planning-root>
 ${renderHeader(vm)}
 ${renderNotice(vm.notice)}
-${renderCorridorPanel(vm.library, vm.project)}
 ${renderTotalBar(vm)}
 <div class="planning-layout">
+  <div class="planning-main">
+  ${renderCorridorPanel(vm.library, vm.project, vm.result)}
   <section class="panel-block" aria-label="Elements">
   ${renderOriginLegend()}
 ${renderElementGroups(vm)}
   </section>
+  </div>
 ${renderSummary(vm)}
 </div>
 </section>`;
@@ -625,6 +647,19 @@ export function renderNewPreviewDetails(library: ResolvedLibrary, draft: NewProj
   ${list}`;
 }
 
+/** Default project name for a template: "Complete street estimate", or "New planning estimate" for Blank. */
+export function defaultProjectName(library: ResolvedLibrary, templateId: string | null): string {
+  const template = library.templates.find((t) => t.id === templateId);
+  return template ? `${template.label} estimate` : "New planning estimate";
+}
+
+/** Corridor values the draft's template does not use. */
+export function unusedDraftInputs(library: ResolvedLibrary, draft: NewProjectDraft): Set<string> {
+  const template = library.templates.find((t) => t.id === draft.templateId);
+  const used = usedCorridorInputs(library, template ? template.elements.map((e) => e.id) : []);
+  return new Set(library.projectInputs.map((p) => p.key).filter((key) => !used.has(key)));
+}
+
 export function renderNewProjectPanel(
   library: ResolvedLibrary,
   draft: NewProjectDraft,
@@ -640,46 +675,55 @@ export function renderNewProjectPanel(
     .join("\n");
   const blank = `<label class="checkbox-label planning-template-option"><input type="radio" name="planning-template" value=""${draft.templateId === null ? " checked" : ""} />
       <span><strong>Blank</strong><small class="muted">No elements selected.</small></span></label>`;
-  const fields = library.projectInputs.map((p) => renderCorridorField(library, p.key, draft.inputs[p.key], "data-planning-new-input")).join("");
+  const unused = unusedDraftInputs(library, draft);
+  const fields = library.projectInputs
+    .map((p) => renderCorridorField(library, p.key, draft.inputs[p.key], "data-planning-new-input", unused.has(p.key) ? UNUSED_IN_TEMPLATE : ""))
+    .join("");
+  const total = formatTotalAmount(newProjectPreview(library, draft).summary.total);
   return `<section class="planning-view" data-planning-root>
+<div class="planning-new" data-planning-new>
 <section class="panel-block planning-header">
-  <div>
+  <div class="planning-new-title">
     <p class="eyebrow">Planning estimate</p>
-    <h2>New planning estimate</h2>
-    <p class="muted">Name it, set the corridor and choose a starting template. You can change anything afterwards.</p>
+    <label><span class="visually-hidden">Project name</span><input type="text" class="planning-name-input" data-planning-new-name aria-label="Project name" value="${esc(draft.name)}" placeholder="${esc(defaultProjectName(library, draft.templateId))}" /></label>
   </div>
   <div class="planning-header-actions">
 ${renderActionsMenu(renderProjectMenuItems(projects, project, false), true)}
   </div>
 </section>
 ${renderNotice(notice)}
-<div class="planning-new" data-planning-new>
-  <section class="panel-block">
-    <div class="panel-heading"><h3>Corridor</h3></div>
-    <label class="planning-new-name"><span>Project name</span><input type="text" data-planning-new-name required value="${esc(draft.name)}" /></label>
-    <div class="planning-corridor-fields">${fields}</div>
-  </section>
-  <div class="planning-layout">
+<div class="planning-total-bar">
+  <strong>Preview</strong>
+  <span>Total <strong data-planning-new-bar-total>${esc(total)}</strong></span>
+  <a class="text-button" href="#planning-summary">Summary</a>
+</div>
+<div class="planning-layout">
+  <div class="planning-main">
     <section class="panel-block" aria-label="Starting template">
-      <div class="panel-heading"><h3>Starting template</h3></div>
+      <div class="panel-heading"><h3>1 Starting template</h3></div>
       <p class="muted">You can switch any element on or off afterwards.</p>
       <div class="planning-template-options" role="radiogroup" aria-label="Starting template">
 ${options}
 ${blank}
       </div>
     </section>
-    <aside class="panel-block planning-summary" aria-label="Estimate preview">
-      <p class="eyebrow">Preview</p>
-      <div class="planning-new-preview" data-planning-new-preview>${renderNewPreviewBody(library, draft)}</div>
+    <section class="panel-block">
+      <div class="panel-heading"><h3>2 Corridor</h3></div>
+      <div class="planning-corridor-fields">${fields}</div>
       <p class="filter-validation-message" data-planning-new-error role="alert"${draft.error ? "" : " hidden"}>${esc(draft.error)}</p>
       <div class="planning-new-actions">
         <button type="button" class="primary-button" data-planning-create>Create project</button>
         ${project ? `<button type="button" class="secondary-button" data-planning-new-cancel>Cancel</button>` : ""}
       </div>
-      <div class="planning-new-preview" data-planning-new-details>${renderNewPreviewDetails(library, draft)}</div>
-      <p class="muted">Prices: ${esc(library.priceBasisLabel)}</p>
-    </aside>
+    </section>
   </div>
+  <aside class="panel-block planning-summary" id="planning-summary" aria-label="Estimate preview">
+    <p class="eyebrow">Preview</p>
+    <div class="planning-new-preview" data-planning-new-preview>${renderNewPreviewBody(library, draft)}</div>
+    <div class="planning-new-preview" data-planning-new-details>${renderNewPreviewDetails(library, draft)}</div>
+    <p class="muted">Prices: ${esc(library.priceBasisLabel)}</p>
+  </aside>
+</div>
 </div>
 </section>`;
 }

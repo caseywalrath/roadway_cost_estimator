@@ -202,49 +202,16 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
 </section>
 ```
 
-Empty state (no planning project yet) and the "New planning project" action render the same page skeleton as the finished project: header card, corridor panel, then two columns (templates on the left, a live preview on the right). Nothing changes position when the project is created; the preview becomes the alternative summary.
+Empty state (no planning project yet) and the "New planning project" action use the project page's skeleton: header card, then a left input column and a right sticky output column.
 
-```html
-<section class="panel-block planning-header">                       <!-- same card as the project header -->
-  <div><p class="eyebrow">Planning estimate</p><h2>New planning estimate</h2>
-    <p class="muted">Name it, set the corridor and choose a starting template. You can change anything afterwards.</p></div>
-  <div class="planning-header-actions">
-    <!-- Planning Actions menu. Disabled here: New planning project, Rename, Print, Download CSV/JSON, Delete.
-         Enabled: every saved project (none is "current"; the open one, if any, can be reopened) and Import JSON. -->
-  </div>
-</section>
-<div class="planning-new" data-planning-new>
-  <section class="panel-block">
-    <div class="panel-heading"><h3>Corridor</h3></div>
-    <label class="planning-new-name"><span>Project name</span><input data-planning-new-name required /></label>
-    <div class="planning-corridor-fields"> length, width, intersections (library defaults, then the chosen template's projectInputs) </div>
-  </section>
-  <div class="planning-layout">
-    <section class="panel-block" aria-label="Starting template">
-      <div class="panel-heading"><h3>Starting template</h3></div>
-      <p class="muted">You can switch any element on or off afterwards.</p>
-      <div class="planning-template-options" role="radiogroup" aria-label="Starting template">
-        <label class="checkbox-label planning-template-option"><input type="radio" name="planning-template" value="mill_overlay" checked />
-          <span><strong>Mill and overlay</strong><small class="muted">Resurface the roadway and bring curb ramps to ADA standard.</small></span></label>
-        … one per library template …
-        <label class="checkbox-label planning-template-option"><input type="radio" name="planning-template" value="" />
-          <span><strong>Blank</strong><small class="muted">No elements selected.</small></span></label>
-      </div>
-    </section>
-    <aside class="panel-block planning-summary" aria-label="Estimate preview">
-      <p class="eyebrow">Preview</p>
-      <div data-planning-new-preview> template name, its description, Total and Range </div>
-      <p class="filter-validation-message" data-planning-new-error role="alert" hidden></p>
-      <button type="button" class="primary-button" data-planning-create>Create project</button>
-      <button type="button" class="secondary-button" data-planning-new-cancel>Cancel</button>  <!-- only when a project exists -->
-      <div data-planning-new-details> Construction, Contingency, Design, Construction engineering; the elements the template includes with amounts </div>
-      <p class="muted">Prices: {basis}</p>
-    </aside>
-  </div>
-</div>
-```
+- Header: eyebrow "Planning estimate"; the project name is an input in the title position (`[data-planning-new-name]`), prefilled "{Template} estimate" ("New planning estimate" for Blank). It follows template changes until the planner types a different name; a blank name uses the default. Planning Actions as before (project-only actions disabled; saved projects and Import JSON enabled).
+- Left column (`.planning-main`): "1 Starting template" (template cards), then "2 Corridor" (length, width, intersections in one row; one column on phones) with "Create project" and, when a project is open, "Cancel" at the end.
+- Right column: output only. "Preview": template name and description, Total and Range, summary lines, included elements, price basis. No buttons.
+- Phones: the sticky total bar shows "Preview · Total" while scrolling.
 
-The preview is calculated with the same functions as the saved project (`createProject`, then `calculateAlternative` with the draft's corridor values), so its total equals the total shown after Create. It refreshes when the template or a corridor field changes. "Create project" sits above the long detail list so it stays on screen. On narrow screens the preview stacks below the template cards.
+Corridor fields that no included element reads are dimmed and show "Not used by this template" (create screen, from the template's elements) or "Not used by the elements in this alternative" (project page, from enabled elements; updates as elements change). They stay editable. A field counts as used when an element input inherits it or takes its default from it.
+
+On the project page the Corridor panel (corridor values, stage, budget) is the top of the left column, above the element groups.
 
 The template picker exists only here. After creation the header says which template the project started from, and later alternatives choose a template through "+ Alternative".
 

@@ -131,12 +131,38 @@ describe("creating and editing", () => {
     expect(q(root, "[data-summary='total']").textContent).toBe(totalText(expectedTotal("complete_street")));
   });
 
-  it("requires a project name", async () => {
+  it("names the project after its template, follows template changes, and uses the default when cleared", async () => {
     const { controller, root } = await open();
+    const name = q<HTMLInputElement>(root, "[data-planning-new-name]");
+    expect(name.value).toBe("Mill and overlay estimate");
+    const radio = q<HTMLInputElement>(root, "input[name='planning-template'][value='multi_use_path']");
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(name.value).toBe("Multi-use path estimate");
+    expect(q(root, "[data-corridor-field='roadwayWidthFt']").classList.contains("planning-corridor-field--unused")).toBe(true);
+    expect(q(root, "[data-corridor-field='lengthMiles']").classList.contains("planning-corridor-field--unused")).toBe(false);
+    setValue(name, "My path");
+    const other = q<HTMLInputElement>(root, "input[name='planning-template'][value='sidewalk_gap']");
+    other.checked = true;
+    other.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(name.value).toBe("My path");
+    setValue(name, "  ");
     q(root, "[data-planning-create]").click();
     await controller.flush();
-    expect(q(root, "[data-planning-new-error]").textContent).toBe("Enter a project name.");
-    expect(root.querySelector("[data-planning-new]")).not.toBeNull();
+    expect(q(root, "[data-planning-project-name]").textContent).toBe("Sidewalk gap estimate");
+  });
+
+  it("dims corridor values no included element uses, and updates as elements change", async () => {
+    const { controller, root } = await open();
+    await createStreet(root, controller, "sidewalk_gap", "Gap");
+    const width = q(root, "[data-corridor-field='roadwayWidthFt']");
+    expect(width.classList.contains("planning-corridor-field--unused")).toBe(true);
+    expect(q(width, "[data-corridor-unused]").textContent).toBe("Not used by the elements in this alternative");
+    const radio = q<HTMLInputElement>(root, "[data-element-toggle='mill_overlay']");
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(width.classList.contains("planning-corridor-field--unused")).toBe(false);
+    expect(q(width, "[data-corridor-unused]").hidden).toBe(true);
   });
 
   it("creates a blank project with only the no-base row selected", async () => {
