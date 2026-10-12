@@ -274,6 +274,18 @@ describe("unit-cost inputs in share files", () => {
     return project;
   };
 
+  it("keeps an alternative's template and accepts older files without one", () => {
+    const project = makeProject();
+    project.alternatives[0].templateId = "mill_overlay";
+    const result = parseShareFile(buildShareFile(project, { state: "CO", priceBasisLabel: "b" }, NOW), resolved);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.project.alternatives[0].templateId).toBe("mill_overlay");
+      expect(result.project.alternatives[1].templateId).toBeUndefined();
+      expect(result.issues).toEqual([]);
+    }
+  });
+
   it("round trips an edited unit cost with no issues", () => {
     const text = buildShareFile(withEdit(), { state: "CO", priceBasisLabel: "b" }, NOW);
     const result = parseShareFile(text, resolved);

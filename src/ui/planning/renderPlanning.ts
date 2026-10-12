@@ -1,7 +1,7 @@
 // Planning v2 string renderers. Markup and wording: docs/planning-v2-ui.md sections 1, 2 and 5.
 // Pure functions: no DOM access, no storage. The controller attaches events by data-* attributes.
 import { calculateAlternative, combinedMultiplier, countEditedUnitCosts, roundElementAmount } from "../../planning/calculate";
-import { createProject } from "../../planning/templates";
+import { alternativeTemplateId, createProject, type TemplateSwitchPlan } from "../../planning/templates";
 import type { PlanningProjectSummary } from "../../planning/storage";
 import type {
   AlternativeResult,
@@ -301,10 +301,16 @@ export function renderCorridorPanel(library: ResolvedLibrary, project: PlanningP
     .map((p) => renderCorridorField(library, p.key, project.inputs[p.key], "data-planning-project-input", used && !used.has(p.key) ? UNUSED_IN_PROJECT : ""))
     .join("");
   const stages = library.stages.map((s) => `<option value="${esc(s.id)}"${s.id === project.stageId ? " selected" : ""}>${esc(s.label)}</option>`).join("");
+  const alt = project.alternatives.find((a) => a.id === project.selectedAlternativeId);
+  const templateId = alternativeTemplateId(project, alt);
+  const templates =
+    library.templates.map((t) => `<option value="${esc(t.id)}"${t.id === templateId ? " selected" : ""}>${esc(t.label)}</option>`).join("") +
+    `<option value=""${library.templates.some((t) => t.id === templateId) ? "" : " selected"}>Blank (no elements)</option>`;
   return `<section class="panel-block">
   <div class="panel-heading"><h3>Corridor</h3></div>
   <div class="planning-corridor-fields">
     ${fields}
+    <label><span>Template</span><select data-planning-template>${templates}</select><small class="muted">Applies to <span class="planning-scope-name" data-summary="altName">${esc(alt?.name ?? "")}</span></small></label>
     <label><span>Project stage</span><select data-planning-stage>${stages}</select></label>
     <label><span>Budget (optional)</span><input type="text" inputmode="numeric" data-planning-budget placeholder="No budget" value="${project.budget === null ? "" : esc(formatEntered(project.budget))}" /><p class="filter-validation-message" role="alert" hidden></p></label>
   </div>
@@ -538,11 +544,11 @@ export function renderAlternativeButtons(project: PlanningProject, altTotals: Re
       return `<button type="button" class="app-view-tab${active ? " app-view-tab--active" : ""} planning-alt-button" data-planning-alt="${esc(alt.id)}" aria-pressed="${active}"><span data-alt-name="${esc(alt.id)}">${esc(alt.name)}</span><small data-alt-total="${esc(alt.id)}">${esc(formatTotalAmount(altTotals[alt.id] ?? 0))}</small></button>`;
     })
     .join("");
-  return `${buttons}<button type="button" class="secondary-button" data-planning-add-alt aria-expanded="false">+ Alternative</button>`;
+  return buttons;
 }
 
 function renderAddAlternativeForm(vm: PlanningViewModel): string {
-  const selected = vm.project.templateId ?? "";
+  const selected = alternativeTemplateId(vm.project, vm.project.alternatives.find((a) => a.id === vm.project.selectedAlternativeId)) ?? "";
   const options =
     `<option value=""${selected === "" ? " selected" : ""}>Blank (no elements)</option>` +
     vm.library.templates.map((t) => `<option value="${esc(t.id)}"${t.id === selected ? " selected" : ""}>${esc(t.label)}</option>`).join("");
@@ -555,9 +561,44 @@ function renderAddAlternativeForm(vm: PlanningViewModel): string {
 </div>`;
 }
 
+const SWITCH_LIST_LIMIT = 6;
+
+/** Confirmation text for a template switch that discards planner edits or corridor values. */
+export function templateSwitchMessage(plan: TemplateSwitchPlan, templateLabel: string, altName: string): string {
+  const lines = [`Switch ${altName} to ${templateLabel}?`, "", `This replaces the elements in ${altName} with those of the template.`];
+  if (plan.lostEdits.length > 0) {
+    const shown = plan.lostEdits.slice(0, SWITCH_LIST_LIMIT).map((edit) => `• ${edit}`);
+    const more = plan.lostEdits.length - SWITCH_LIST_LIMIT;
+    lines.push("", "Your changes to these elements will be lost:", ...shown, ...(more > 0 ? [`• and ${more} more`] : []));
+  }
+  if (plan.replacedInputs.length > 0) {
+    lines.push("", "Corridor values that will change:", ...plan.replacedInputs.map((i) => `• ${i.label}: ${formatPlain(i.from)} → ${formatPlain(i.to)}`));
+  }
+  lines.push("", "Other alternatives are not changed.");
+  return lines.join("\n");
+}
+
+/** Name, description and add/duplicate/delete for the selected alternative. Inputs live in the left column; the summary only shows outputs. */
+export function renderAlternativePanel(vm: PlanningViewModel): string {
+  const { project } = vm;
+  const alt = project.alternatives.find((a) => a.id === project.selectedAlternativeId);
+  return `<section class="panel-block planning-alternative" aria-label="Selected alternative">
+  <div class="panel-heading"><h3>Alternative</h3></div>
+  <div class="planning-alternative-fields">
+    <label><span>Name</span><input type="text" data-planning-alt-name value="${esc(alt?.name ?? "")}" /><p class="filter-validation-message" role="alert" hidden></p></label>
+    <label><span>Description</span><textarea rows="2" data-planning-alt-description placeholder="One line describing this alternative">${esc(alt?.description ?? "")}</textarea></label>
+  </div>
+  <div class="planning-alternative-actions">
+    <button type="button" class="secondary-button" data-planning-add-alt aria-expanded="false">+ Alternative</button>
+    <button type="button" class="text-button" data-planning-duplicate-alt>Duplicate</button>
+    <button type="button" class="text-button" data-planning-delete-alt${project.alternatives.length <= 1 ? " disabled" : ""}>Delete</button>
+  </div>
+  ${renderAddAlternativeForm(vm)}
+</section>`;
+}
+
 export function renderSummary(vm: PlanningViewModel): string {
   const { project, result } = vm;
-  const alt = project.alternatives.find((a) => a.id === project.selectedAlternativeId);
   const values = summaryValues(result.summary);
   const budget = budgetInfo(result.summary);
   const rate = (key: string, label: string, value: number) =>
@@ -565,10 +606,6 @@ export function renderSummary(vm: PlanningViewModel): string {
   return `<aside class="panel-block planning-summary" id="planning-summary" aria-label="Alternative summary">
   <p class="eyebrow">Alternatives</p>
   <div class="planning-alternatives" role="group" aria-label="Alternatives" data-planning-alternatives>${renderAlternativeButtons(project, vm.altTotals)}</div>
-  ${renderAddAlternativeForm(vm)}
-  <label><span>Name</span><input type="text" data-planning-alt-name value="${esc(alt?.name ?? "")}" /><p class="filter-validation-message" role="alert" hidden></p></label>
-  <label><span>Description</span><textarea rows="2" data-planning-alt-description placeholder="One line describing this alternative">${esc(alt?.description ?? "")}</textarea></label>
-  <div><button type="button" class="text-button" data-planning-duplicate-alt>Duplicate</button> <button type="button" class="text-button" data-planning-delete-alt${project.alternatives.length <= 1 ? " disabled" : ""}>Delete</button></div>
 
   <dl class="planning-summary-lines">
     <div><dt>Construction</dt><dd data-summary="construction">${esc(values.construction)}</dd></div>
@@ -599,6 +636,7 @@ ${renderTotalBar(vm)}
 <div class="planning-layout">
   <div class="planning-main">
   ${renderCorridorPanel(vm.library, vm.project, vm.result)}
+  ${renderAlternativePanel(vm)}
   <section class="panel-block" aria-label="Elements">
   ${renderOriginLegend()}
 ${renderElementGroups(vm)}

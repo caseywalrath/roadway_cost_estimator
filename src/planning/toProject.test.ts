@@ -236,7 +236,7 @@ describe("project fields", () => {
       updatedAt: NOW
     });
     expect(project.notes).toMatch(
-      /^Created from Planning estimate "Main St", Alternative A, on 2026-03-04\. Stage: Concept\. Unit prices: .+\. Planning total \$[\d,]+\.$/u
+      /^Created from Planning estimate "Main St", Alternative A, on 2026-03-04\. Stage: Planning Study\. Unit prices: .+\. Planning total \$[\d,]+\.$/u
     );
     expect(project.notes).toContain(library.priceBasisLabel);
     expect(project.planningOrigin).toEqual({

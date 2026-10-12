@@ -436,6 +436,55 @@ describe("alternatives", () => {
     expect(q<HTMLButtonElement>(root, "[data-planning-delete-alt]").disabled).toBe(true);
   });
 
+  it("switches the template without a prompt when nothing was edited, and updates the elements and total", async () => {
+    const { controller, root } = await open();
+    await createStreet(root, controller);
+    const confirm = vi.spyOn(window, "confirm");
+    setValue(q<HTMLSelectElement>(root, "[data-planning-template]"), "mill_overlay");
+    expect(confirm).not.toHaveBeenCalled();
+    expect(summaryTotal(root)).toBe(totalText(expectedTotal("mill_overlay")));
+    expect(q<HTMLSelectElement>(root, "[data-planning-template]").value).toBe("mill_overlay");
+    expect(q<HTMLInputElement>(root, "[data-element-toggle='mill_overlay']").checked).toBe(true);
+    expect(q<HTMLInputElement>(root, "[data-element-toggle='lighting']").checked).toBe(false);
+    confirm.mockRestore();
+  });
+
+  it("warns before a template switch discards edits, and keeps everything when cancelled", async () => {
+    const { controller, root } = await open();
+    await createStreet(root, controller);
+    const toggle = q<HTMLInputElement>(root, "[data-element-toggle='landscaping']");
+    toggle.checked = false;
+    toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    const before = summaryTotal(root);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    setValue(q<HTMLSelectElement>(root, "[data-planning-template]"), "sidewalk_gap");
+    expect(confirm).toHaveBeenCalledTimes(1);
+    const message = String(confirm.mock.calls[0][0]);
+    expect(message).toContain("Switch Alternative A to Sidewalk gap?");
+    expect(message).toContain("Landscaping / tree lawn (turned off)");
+    expect(message).toContain("Other alternatives are not changed.");
+    expect(summaryTotal(root)).toBe(before);
+    expect(q<HTMLSelectElement>(root, "[data-planning-template]").value).toBe("complete_street");
+    confirm.mockReturnValue(true);
+    setValue(q<HTMLSelectElement>(root, "[data-planning-template]"), "sidewalk_gap");
+    expect(summaryTotal(root)).toBe(totalText(expectedTotal("sidewalk_gap")));
+    expect(q<HTMLSelectElement>(root, "[data-planning-template]").value).toBe("sidewalk_gap");
+    confirm.mockRestore();
+  });
+
+  it("shows each alternative's own template and starts new alternatives from the selected one's", async () => {
+    const { controller, root } = await open();
+    await createStreet(root, controller);
+    q(root, "[data-planning-add-alt]").click();
+    q<HTMLSelectElement>(root, "[data-planning-add-alt-template]").value = "mill_overlay";
+    q(root, "[data-planning-add-alt-confirm]").click();
+    expect(q<HTMLSelectElement>(root, "[data-planning-template]").value).toBe("mill_overlay");
+    q(root, "[data-planning-add-alt]").click();
+    expect(q<HTMLSelectElement>(root, "[data-planning-add-alt-template]").value).toBe("mill_overlay");
+    (root.querySelectorAll("[data-planning-alt]")[0] as HTMLElement).click();
+    expect(q<HTMLSelectElement>(root, "[data-planning-template]").value).toBe("complete_street");
+  });
+
   it("closes the add form with Escape", async () => {
     const { controller, root } = await open();
     await createStreet(root, controller);

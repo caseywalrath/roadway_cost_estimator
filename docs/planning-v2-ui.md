@@ -59,7 +59,8 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
       <label><span>Corridor length (mi)</span><input type="text" inputmode="decimal" data-planning-project-input="lengthMiles" value="0.5" /></label>
       <label><span>Roadway width, curb to curb (ft)</span><input … data-planning-project-input="roadwayWidthFt" /></label>
       <label><span>Intersections</span><input … inputmode="numeric" data-planning-project-input="intersections" /></label>
-      <label><span>Project stage</span><select data-planning-stage><option value="concept">Concept</option>…</select></label>
+      <label><span>Template</span><select data-planning-template><option value="complete_street" selected>Complete street</option>…<option value="">Blank (no elements)</option></select><small class="muted">Applies to {alternative name}</small></label>
+      <label><span>Project stage</span><select data-planning-stage><option value="concept">Planning Study</option><option value="planning_study">Early Design</option><option value="final_design">Final Design</option></select></label>
       <label><span>Budget (optional)</span><input … inputmode="numeric" data-planning-budget placeholder="No budget" /></label>
     </div>
     <p class="muted">Elements use these values unless you change them in an element's inputs.</p>
@@ -167,19 +168,7 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
         <button type="button" class="app-view-tab app-view-tab--active planning-alt-button" data-planning-alt="{id}" aria-pressed="true">
           <span>Alternative A</span><small data-alt-total="{id}">$3,730,000</small></button>
         <button type="button" class="app-view-tab planning-alt-button" data-planning-alt="{id}" aria-pressed="false">…</button>
-        <button type="button" class="secondary-button" data-planning-add-alt aria-expanded="false">+ Alternative</button>
       </div>
-      <!-- Shown after "+ Alternative" -->
-      <div class="planning-add-alternative" data-planning-add-alt-form hidden>
-        <label><span>Start from</span><select data-planning-add-alt-template><option value="">Blank (no elements)</option><option value="complete_street" selected>Complete street</option>…</select></label>
-        <label><span>Name</span><input data-planning-add-alt-name value="Alternative B" /></label>
-        <button type="button" class="primary-button" data-planning-add-alt-confirm>Add alternative</button>
-        <button type="button" class="secondary-button" data-planning-add-alt-cancel>Cancel</button>
-      </div>
-      <label><span>Name</span><input data-planning-alt-name value="Alternative A" /></label>
-      <label><span>Description</span><textarea rows="2" data-planning-alt-description placeholder="One line describing this alternative"></textarea></label>
-      <div><button type="button" class="text-button" data-planning-duplicate-alt>Duplicate</button>
-           <button type="button" class="text-button" data-planning-delete-alt>Delete</button></div>
 
       <dl class="planning-summary-lines">
         <div><dt>Construction</dt><dd data-summary="construction">$2,310,000</dd></div>
@@ -213,7 +202,10 @@ Corridor fields that no included element reads are dimmed and show "Not used by 
 
 On the project page the Corridor panel (corridor values, stage, budget) is the top of the left column, above the element groups.
 
-The template picker exists only here. After creation the header says which template the project started from, and later alternatives choose a template through "+ Alternative".
+After creation the header says which template the project started from. The Template field in the Corridor panel (left of Project stage) switches the selected alternative to another template; the small line under it names the alternative it applies to. Each alternative stores its own `templateId` (older files fall back to the project's). The switch replaces the alternative's elements with the template's and moves corridor values the previous template set (for example Intersection safety sets intersections to 1) to the new template's. Corridor values the planner changed are kept unless the new template sets the same value. When the switch would discard planner edits (elements turned on or off, edited inputs, price overrides) or replace a corridor value the planner changed, a `window.confirm` lists up to six of them and says other alternatives are not changed; cancelling restores the previous selection. An unedited alternative switches without a prompt.
+
+### Left column and right column on the project page
+The right column shows outputs: alternative buttons, summary lines, total, range and budget. The Alternative panel sits in the left column between Corridor and Elements, because the elements below it belong to the selected alternative: Name, Description, "+ Alternative" (opens the add form below the actions), Duplicate and Delete. The design and construction-engineering percentages and "Create engineer Project" remain in the summary.
 
 ## 2. Wording
 
@@ -223,7 +215,7 @@ The template picker exists only here. After creation the header says which templ
 | Project menu actions | "New planning project", "Rename project", "Import JSON", "Delete project" |
 | Export actions (inside Planning Actions) | "Print summary", "Download CSV", "Download JSON" |
 | Header subline | "Started from {template}" or "Started from a blank project"; save status "Saving…", "Saved {h:mm AM}", "Not saved: {reason}" |
-| Corridor fields | "Corridor length (mi)", "Roadway width, curb to curb (ft)", "Intersections", "Project stage", "Budget (optional)" (placeholder "No budget") |
+| Corridor fields | "Corridor length (mi)", "Roadway width, curb to curb (ft)", "Intersections", "Template" (with "Applies to {alternative}"), "Project stage" (Planning Study, Early Design, Final Design), "Budget (optional)" (placeholder "No budget") |
 | Corridor hint | "Elements use these values unless you change them in an element's inputs." |
 | Group headings / hints | "Base treatment" / "Choose one"; "Corridor elements" / "Add any"; "Spot elements" / "Add any"; "Other costs" / "Enter amounts" |
 | Base hint | "The base treatment sets the allowance for minor items, traffic control and mobilization on every element." |
@@ -242,7 +234,7 @@ The template picker exists only here. After creation the header says which templ
 | Disclosure line | Active quantity inputs with units. Inputs in inches appear only when the element has exactly one (mill thickness); several unlabeled depths are left out. |
 | Option values | numbers as is; "yes"/"no" → "Yes"/"No"; other strings capitalized ("Asphalt", "Concrete") |
 | Summary lines | "Construction", "Contingency {n}%", "Design", "Construction engineering", "Right-of-way", "Utility relocation", "Total", "Range", "Budget", "{amount} remaining" / "{amount} over budget"; $0 other cost → "Not included" |
-| Alternatives | "Alternatives", "+ Alternative", "Start from", "Blank (no elements)", "Name", "Add alternative", "Cancel", "Description" (placeholder "One line describing this alternative"), "Duplicate", "Delete" |
+| Alternatives | Summary: "Alternatives". Left column: "Alternative", "Name", "Description" (placeholder "One line describing this alternative"), "+ Alternative", "Duplicate", "Delete"; add form: "Start from", "Blank (no elements)", "Name", "Add alternative", "Cancel" |
 | Narrow bar | "{Alt name}", "Total {amount}", "{amount} under budget" / "{amount} over budget", "Summary" |
 | Price basis | "Prices: {priceBasisLabel}" |
 | Empty state | Header "New planning estimate" / "Name it, set the corridor and choose a starting template. You can change anything afterwards."; "Corridor"; "Project name"; "Starting template" / "You can switch any element on or off afterwards."; "Blank" / "No elements selected."; "Preview"; "Create project"; "Cancel". Import is in Planning Actions. |
@@ -339,7 +331,7 @@ New classes:
 | `planning-inputs` | Grid of input fields in the disclosure (2–3 columns, 1 under 560 px) | Layout. |
 | `planning-components` | Component lines: label, quantity × price, amount right-aligned, source note on its own line | `summary-table` is a wide table (min 820 px; global tables are min 1180 px). |
 | `planning-summary` | Summary card; `position: sticky; top: 18px` on desktop (same offset as `search-panel`) | Layout. |
-| `planning-alternatives` | Wrapping flex row of alternative buttons and "+ Alternative" | Alternatives button row (named in the rule). `app-view-tabs` adds its own box and shadow. |
+| `planning-alternatives` | Wrapping flex row of alternative buttons | Alternatives button row (named in the rule). `app-view-tabs` adds its own box and shadow. |
 | `planning-alt-button` | Two-line layout (name, small total) added to `app-view-tab` | `app-view-tab` is single-line. Colors and active state stay from `app-view-tab`. |
 | `planning-add-alternative` | Inline grid for the add-alternative form | Layout. |
 | `planning-summary-lines` | `<dl>` rows: label left, amount right, `--line` dividers | Same reason as `planning-components`. |
@@ -371,7 +363,7 @@ Departures from the sketch:
 
 1. Amounts use full dollars (`$3,730,000`), not `$3.73M`. Reason in section 3.
 2. The `▸` disclosure is a full-width second line under each row showing a one-line input brief ("0.50 mi · 2 sides · 6 ft"), not an icon at the row end. A `<details>` summary cannot share one grid line with the toggle and dollar box without placing interactive controls inside `<summary>`, and the brief replaces the sketch's inline "6 ft" / "(24)" hints.
-3. The template picker is on the new-project screen, not in the corridor strip, because a template only applies at creation. The screen keeps the project page's skeleton (header, corridor, two columns) so creating a project does not rearrange the page. Later alternatives choose a template under "+ Alternative".
+3. The template cards are on the new-project screen; on the project page a Template select in the Corridor panel switches the selected alternative, with a confirmation when edits would be lost. The screen keeps the project page's skeleton (header, corridor, two columns) so creating a project does not rearrange the page. Later alternatives choose a template under "+ Alternative".
 4. Right-of-way and utility relocation are separate summary lines (sketch: one "ROW / utilities" line), so each entry is visible.
 5. Budget is entered in the corridor strip; the summary shows budget and remaining.
 6. The sketch's "Design 12%" and "CE 15%" are illustrative; defaults are the library's 10% and 10%.

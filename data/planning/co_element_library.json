@@ -10,8 +10,9 @@
     { "key": "intersections", "label": "Intersections", "unit": "count", "default": 4, "min": 0, "integer": true }
   ],
   "stages": [
-    { "id": "concept", "label": "Concept", "contingency": 0.30, "rangeLow": -0.25, "rangeHigh": 0.50 },
-    { "id": "planning_study", "label": "Planning study", "contingency": 0.25, "rangeLow": -0.20, "rangeHigh": 0.30 }
+    { "id": "concept", "label": "Planning Study", "contingency": 0.30, "rangeLow": -0.25, "rangeHigh": 0.50 },
+    { "id": "planning_study", "label": "Early Design", "contingency": 0.25, "rangeLow": -0.20, "rangeHigh": 0.30 },
+    { "id": "final_design", "label": "Final Design", "contingency": 0.15, "rangeLow": -0.10, "rangeHigh": 0.15 }
   ],
   "defaultStage": "concept",
   "engineering": { "design": 0.10, "constructionEngineering": 0.10 },

@@ -173,6 +173,29 @@ describe("renderPlanningView", () => {
     expect(over.querySelector("[data-summary='budgetRemaining']")?.textContent).toContain("over budget");
   });
 
+  it("offers a template choice left of the stage, with the stages in order", () => {
+    const labels = (selector: string) => [...root.querySelectorAll(`${selector} option`)].map((o) => o.textContent);
+    expect(labels("[data-planning-template]")).toEqual(["Mill and overlay", "Full reconstruction", "Complete street", "Sidewalk gap", "Multi-use path", "Intersection safety", "Blank (no elements)"]);
+    expect(root.querySelector<HTMLSelectElement>("[data-planning-template]")?.value).toBe("complete_street");
+    expect(labels("[data-planning-stage]")).toEqual(["Planning Study", "Early Design", "Final Design"]);
+    const fields = [...root.querySelectorAll(".planning-corridor-fields > label")];
+    const indexOf = (selector: string) => fields.findIndex((f) => f.querySelector(selector));
+    expect(indexOf("[data-planning-template]")).toBe(indexOf("[data-planning-stage]") - 1);
+    expect(root.querySelector("[data-planning-template]")?.closest("label")?.textContent).toContain("Applies to Alternative A");
+  });
+
+  it("keeps alternative inputs in the left column and only the tabs and outputs in the summary", () => {
+    const main = root.querySelector(".planning-main")!;
+    for (const selector of ["[data-planning-alt-name]", "[data-planning-alt-description]", "[data-planning-add-alt]", "[data-planning-add-alt-form]", "[data-planning-duplicate-alt]", "[data-planning-delete-alt]"]) {
+      expect(main.querySelector(selector), selector).not.toBeNull();
+      expect(root.querySelector(`.planning-summary ${selector}`), selector).toBeNull();
+    }
+    expect(root.querySelectorAll(".planning-summary [data-planning-alt]").length).toBe(1);
+    expect(main.querySelector("[data-planning-alt]")).toBeNull();
+    const order = [...main.children].map((c) => c.getAttribute("aria-label") ?? c.querySelector("h3")?.textContent);
+    expect(order.slice(0, 3)).toEqual(["Corridor", "Selected alternative", "Elements"]);
+  });
+
   it("marks the selected alternative with aria-pressed and disables Delete for one alternative", () => {
     const button = root.querySelector("[data-planning-alt='a1']")!;
     expect(button.getAttribute("aria-pressed")).toBe("true");

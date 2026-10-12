@@ -3550,12 +3550,17 @@ tbody tr:last-child td {
 .planning-unit-cost-box { display: grid; grid-template-columns: auto minmax(0, 11rem) auto; align-items: center; justify-content: start; gap: 6px; font-weight: 400; }
 .planning-unit-cost-box > input { text-align: right; font-variant-numeric: tabular-nums; }
 .planning-inputs > label { align-content: start; }
+.planning-corridor-fields > label { align-content: start; }
+.planning-view .planning-corridor-fields small .planning-scope-name { display: inline; }
 
 .planning-components { display: grid; gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
 .planning-components > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; border-top: 1px solid var(--line); padding-top: 8px; font-size: 0.86rem; }
 .planning-components > li > strong { grid-column: 2; grid-row: 1 / span 2; align-self: start; color: var(--heading); font-variant-numeric: tabular-nums; }
 .planning-components > li > small { grid-column: 1 / -1; }
 
+.planning-alternative-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 12px; margin: 12px 0; align-items: start; }
+.planning-alternative-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.planning-alternative .planning-add-alternative { margin-top: 12px; }
 .planning-summary { position: sticky; top: 18px; display: grid; gap: 12px; align-self: start; }
 .planning-alternatives { display: flex; flex-wrap: wrap; gap: 6px; }
 .planning-alt-button { display: grid; min-height: 46px; align-content: center; text-align: left; }
@@ -3606,6 +3611,7 @@ tbody tr:last-child td {
 @media (max-width: 559px) {
   .planning-template-options,
   .planning-add-alternative { grid-template-columns: minmax(0, 1fr); }
+  .planning-alternative-fields { grid-template-columns: minmax(0, 1fr); }
   .planning-inputs { grid-template-columns: minmax(0, 1fr); }
   .planning-main .planning-corridor-fields { grid-template-columns: minmax(0, 1fr); }
 }

@@ -78,7 +78,7 @@ describe("buildPlanningCsv format", () => {
     expect(rows.slice(1, 10)).toEqual([
       ["Project", "Main St"],
       ["State", project.state],
-      ["Stage", "Concept"],
+      ["Stage", "Planning Study"],
       ["Length (mi)", String(project.inputs.lengthMiles)],
       ["Roadway width (ft)", String(project.inputs.roadwayWidthFt)],
       ["Intersections", String(project.inputs.intersections)],

@@ -9,7 +9,7 @@ Pure TypeScript for the Colorado planner. No DOM in this folder; `storage.ts` is
 | `types.ts` | All shared types. |
 | `library.ts` | `validateLibrary(raw)`, `resolveLibrary(library, priceTable)`, `loadPlanningLibrary(fetchFn?)`, `elementInputValues(element, selection, projectInputs)`, `isInputActive(input, values)` |
 | `calculate.ts` | `evaluateQuantity(rule, values)`, `combinedMultiplier(factors)`, `calculateAlternative(library, project, alternativeId?)`, `roundElementAmount`, `roundTotalAmount`, `roundUnitPrice` |
-| `templates.ts` | `createProject(library, options)`, `createAlternative(library, templateId, options)` |
+| `templates.ts` | `createProject(library, options)`, `createAlternative(library, templateId, options)` (records `templateId` on the alternative), `alternativeTemplateId(project, alt)` (falls back to the project's), `planTemplateSwitch(project, library, altId, templateId)` (returns the switched project plus `lostEdits` and `replacedInputs` for a confirmation) |
 | `edit.ts` | Immutable edit helpers: `setBaseTreatment`, `setElementEnabled`, `setElementInput`, `resetElementInput`, `setElementOverride`, `addAlternative`, `duplicateAlternative`, `removeAlternative`, `renameAlternative`, `setProjectInput`, `setStage`, `setEngineering`, `setBudget` |
 | `shareFile.ts` | `buildShareFile(project, library, now)`, `parseShareFile(text, library)`, `importProjectCopy(project, options)` |
 | `exportCsv.ts` | `buildPlanningCsv(library, project, exportedAt)`, `planningCsvFilename(project)` |
@@ -63,7 +63,7 @@ A component whose `when` condition is false is skipped. A missing, negative, or 
 
 - Base group is select-one: `setBaseTreatment` enables the chosen base element and disables the others.
 - `setElementOverride(…, null)` restores the calculated amount. 0 is a valid override.
-- `addAlternative` creates from a template (or blank: base `base_none`, nothing else). `duplicateAlternative` copies selections. The last alternative cannot be removed.
+- `addAlternative` creates from a template (or blank: base `base_none`, nothing else). `duplicateAlternative` copies selections. The last alternative cannot be removed. Stages: ids `concept` (Planning Study), `planning_study` (Early Design) and `final_design` (Final Design); the ids predate the labels and are kept so saved projects keep their values.
 - Every edit helper returns a new project object and does not change `revision` or `updatedAt`; storage sets those on save.
 
 ## Share file (JSON)

@@ -21,7 +21,7 @@ import {
 import { buildPlanningCsv, planningCsvFilename } from "../../planning/exportCsv";
 import { buildShareFile, importProjectCopy, parseShareFile } from "../../planning/shareFile";
 import type { PlanningProjectSummary, PlanningStore, SavePlanningResult } from "../../planning/storage";
-import { createProject } from "../../planning/templates";
+import { alternativeTemplateId, createProject, planTemplateSwitch } from "../../planning/templates";
 import type {
   AlternativeResult,
   ElementResult,
@@ -52,6 +52,7 @@ import {
   unusedDraftInputs,
   usedCorridorInputs,
   renderNewPreviewBody,
+  templateSwitchMessage,
   renderNewPreviewDetails,
   renderNewProjectPanel,
   renderPlanningView,
@@ -1059,12 +1060,33 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     else if (t instanceof HTMLInputElement && t.dataset.planningAltName !== undefined) commitAltName(t);
     else if (t instanceof HTMLTextAreaElement && t.dataset.planningAltDescription !== undefined) commitAltDescription(t);
     else if (t instanceof HTMLSelectElement && t.dataset.planningStage !== undefined) apply(setStage(project, t.value), { rows: false });
+    else if (t instanceof HTMLSelectElement && t.dataset.planningTemplate !== undefined) commitTemplate(t);
     else handled = false;
     if (handled && isText && !t.hasAttribute("aria-invalid")) baselines.set(t, (t as HTMLInputElement).value);
     return handled;
   }
 
   // ---------- Alternatives ----------
+
+  /** Switches the selected alternative to another template, asking first when that discards the planner's edits. */
+  function commitTemplate(t: HTMLSelectElement): void {
+    const alt = selectedAlt();
+    if (!alt) return;
+    const templateId = t.value === "" ? null : t.value;
+    const plan = planTemplateSwitch(project!, library, alt.id, templateId);
+    if (plan.lostEdits.length > 0 || plan.replacedInputs.length > 0) {
+      const label = library.templates.find((x) => x.id === templateId)?.label ?? "a blank alternative";
+      if (!window.confirm(templateSwitchMessage(plan, label, alt.name))) {
+        t.value = alternativeTemplateId(project!, alt) ?? "";
+        return;
+      }
+    }
+    project = plan.project;
+    recalculate();
+    renderRoot();
+    focusSelector("[data-planning-template]");
+    scheduleSave();
+  }
 
   function nextAlternativeName(): string {
     const used = new Set(project!.alternatives.map((a) => a.name));
@@ -1084,7 +1106,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     const name = qs<HTMLInputElement>("[data-planning-add-alt-name]", form);
     if (name) name.value = addAltName;
     const template = qs<HTMLSelectElement>("[data-planning-add-alt-template]", form);
-    if (template) template.value = project!.templateId ?? "";
+    if (template) template.value = alternativeTemplateId(project!, selectedAlt()) ?? "";
     qs("[data-planning-add-alt]")?.setAttribute("aria-expanded", "true");
     template?.focus({ preventScroll: true });
   }

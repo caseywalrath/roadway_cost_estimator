@@ -201,6 +201,8 @@ export interface Alternative {
   id: string;
   name: string;
   description: string;
+  /** Template this alternative's elements started from or were last switched to. Absent in older files: use the project's template. */
+  templateId?: string | null;
   /** Keyed by element id. Elements with no entry are off with default inputs. */
   selections: Record<string, ElementSelection>;
 }

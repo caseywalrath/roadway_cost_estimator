@@ -43,6 +43,7 @@ All assembly costs are direct. The planner must apply the base-type factors on t
 | 2025 Q4 → 2026 escalation | 1.02 |
 | Concept stage | contingency 30%, range −25%/+50% (keep) |
 | Planning study stage | contingency 25%, range −20%/+30% (keep) |
+| Final design stage (added after Stop 3) | contingency 15%, range −10%/+15%. Judgment value, not derived from the FHU or CDOT data: it sits at the narrow end of AACE 18R-97 Class 3 (low −10% to −30%, high +10% to +30%) and keeps the F/A allowance (5.9%) plus a margin for unforeseen conditions. Review before relying on it. |
 | Design engineering | 10% (keep, editable) |
 | Construction engineering | 10% (keep, editable) |
 
@@ -359,6 +360,8 @@ NHCCI (unadjusted) recent values: 2023 Q4 3.1158; 2024 Q1 3.1913; Q2 3.1607; Q3 
 - Recommendation: 1.02. It covers the 8-quarter trend rate with a small allowance for Q3 seasonality and is easy to explain. Acceptable range 1.00–1.03.
 
 ## 6. Stage values
+
+Stage labels shown to planners: Planning Study (id `concept`, 30%, −25%/+50%), Early Design (id `planning_study`, 25%, −20%/+30%), Final Design (id `final_design`, 15%, −10%/+15%). The ids predate the rename and are unchanged so saved projects and share files keep their values.
 
 - The three FHU estimates show no contingency, design engineering or construction engineering lines in the imported data (`fhu_estimate_*_item_unit_costs.csv`). These percentages cannot be checked against them.
 - Colorado Blvd and West Colfax Ph 2 carry F/A Minor Contract Revisions (700-70010) of $400,000 and $900,000. Total F/A is 5.9% of non-F/A items in both. Old Hampden carries no F/A. F/A minor contract revisions act as a construction-phase contingency. CDOT Cost Data Book contracts carry no F/A items, so the measured factors exclude it and the stage contingency must cover it.

@@ -155,6 +155,7 @@ export function parseShareFile(text: string, library: ParseLibrary): ParseShareR
       id: a.id,
       name: cleanName(a.name),
       description: a.description == null ? "" : String(a.description),
+      ...(typeof a.templateId === "string" || a.templateId === null ? { templateId: a.templateId } : {}),
       selections
     });
   }
