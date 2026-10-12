@@ -3533,12 +3533,14 @@ tbody tr:last-child td {
 .planning-row-details[open] { background: var(--panel-alt); padding: 4px 10px 10px; }
 .planning-row-details > summary { display: flex; align-items: center; gap: 8px; padding: 2px 0; color: var(--text-muted); cursor: pointer; font-size: 0.82rem; list-style: none; }
 .planning-row-details > summary::-webkit-details-marker { display: none; }
+.planning-row-details > summary > span:not(.visually-hidden) { flex: 1 1 auto; min-width: 0; }
+.planning-row-details > summary::after { content: "Inputs"; order: 1; flex: 0 0 auto; color: var(--accent-dark); font-weight: 700; }
 .planning-row-details > summary::before {
-  content: ""; flex: 0 0 auto; width: 7px; height: 7px;
+  content: ""; order: 2; flex: 0 0 auto; width: 7px; height: 7px;
   border-right: 2px solid var(--accent-dark); border-bottom: 2px solid var(--accent-dark);
-  transform: translateY(-1px) rotate(-45deg); transition: transform 140ms ease;
+  transform: translateY(-2px) rotate(45deg); transition: transform 140ms ease;
 }
-.planning-row-details[open] > summary::before { transform: translateY(-2px) rotate(45deg); }
+.planning-row-details[open] > summary::before { transform: translateY(1px) rotate(-135deg); }
 
 .planning-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px 12px; margin: 8px 0; }
 .planning-inputs > details { grid-column: 1 / -1; }
