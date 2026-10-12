@@ -328,7 +328,7 @@ New classes:
 | `planning-row-label` | Label text for other-cost rows without a toggle, aligned with `checkbox-label` text | Matches checkbox rows that have a control. |
 | `planning-amount` | `$` prefix, dollar box, reset link and error stacked right-aligned | Element row part. |
 | `planning-amount-input` | 8.5 rem wide, right-aligned, `tabular-nums`, 36 px high | Global input is 100% wide and 42 px; `project-contingency-input` is too small for millions. |
-| `planning-row-details` | Disclosure summary as one muted line: the quantity brief on the left and, right-aligned under the dollar box, an "Inputs" label with a chevron (down when closed, up when open; same chevron drawing as `project-switcher`); indented body on `--panel-alt` | Element row part; `project-switcher` is a dropdown menu with a fixed 300 px summary. |
+| `planning-row-details` | Disclosure summary as one muted line: the quantity brief on the left and, right-aligned under the dollar box, a chevron (right-facing when closed, down-facing when open; same chevron drawing as `project-switcher`); indented body on `--panel-alt` | Element row part; `project-switcher` is a dropdown menu with a fixed 300 px summary. |
 | `planning-inputs` | Grid of input fields in the disclosure (2–3 columns, 1 under 560 px) | Layout. |
 | `planning-components` | Component lines: label, quantity × price, amount right-aligned, source note on its own line | `summary-table` is a wide table (min 820 px; global tables are min 1180 px). |
 | `planning-summary` | Summary card; `position: sticky; top: 18px` on desktop (same offset as `search-panel`) | Layout. |
