@@ -46,6 +46,8 @@ import {
   renderElementInputs,
   renderLoadError,
   renderLoading,
+  renderNewPreviewBody,
+  renderNewPreviewDetails,
   renderNewProjectPanel,
   renderPlanningView,
   renderProjectMenuItems,
@@ -390,7 +392,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       case "error":
         return renderLoadError(loadError);
       case "new":
-        return renderNewProjectPanel(library, draft, project !== null, notice);
+        return renderNewProjectPanel(library, draft, project, projects, notice);
       case "ready":
         return renderPlanningView(viewModel());
     }
@@ -542,7 +544,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
 
   function patchProjectMenu(): void {
     const list = qs("[data-planning-project-list]");
-    if (list && project) list.innerHTML = renderProjectMenuItems(projects, project);
+    if (list) list.innerHTML = renderProjectMenuItems(projects, project, phase !== "new");
   }
 
   /** Recalculates and patches the DOM after an edit; schedules a save when the model changed. */
@@ -715,6 +717,14 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       const parsed = parseNumber(field.value);
       if (parsed.ok && parsed.value !== null) draft.inputs[field.dataset.planningNewInput as ProjectInputKey] = parsed.value;
     }
+  }
+
+  /** Refreshes the preview beside the new-project form from the current draft. */
+  function patchNewPreview(): void {
+    const preview = qs("[data-planning-new-preview]");
+    if (preview) preview.innerHTML = renderNewPreviewBody(library, draft);
+    const details = qs("[data-planning-new-details]");
+    if (details) details.innerHTML = renderNewPreviewDetails(library, draft);
   }
 
   function showNewPanel(): void {
@@ -1156,6 +1166,10 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
         for (const field of qsa<HTMLInputElement>("[data-planning-new-input]")) {
           field.value = formatPlain(draft.inputs[field.dataset.planningNewInput as ProjectInputKey]);
         }
+        patchNewPreview();
+      } else if (t.matches("[data-planning-new-input]")) {
+        readDraft();
+        patchNewPreview();
       }
       return;
     }
@@ -1244,6 +1258,11 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       renderRoot();
       return;
     }
+    if ((el = hit("[data-planning-open-project]"))) {
+      closeMenus();
+      track(openProject(el.dataset.planningOpenProject ?? ""));
+      return;
+    }
     if (phase !== "ready") return;
 
     if ((el = hit("[data-element-reset]"))) {
@@ -1271,10 +1290,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       else openAddAlternative();
     } else if ((el = hit("[data-planning-duplicate-alt]"))) duplicateSelected();
     else if ((el = hit("[data-planning-delete-alt]"))) deleteSelected();
-    else if ((el = hit("[data-planning-open-project]"))) {
-      closeMenus();
-      track(openProject(el.dataset.planningOpenProject ?? ""));
-    } else if ((el = hit("[data-planning-new-project]"))) {
+    else if ((el = hit("[data-planning-new-project]"))) {
       closeMenus();
       showNewPanel();
     } else if ((el = hit("[data-planning-rename-project]"))) startRename();

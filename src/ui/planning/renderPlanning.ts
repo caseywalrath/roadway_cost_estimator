@@ -1,6 +1,7 @@
 // Planning v2 string renderers. Markup and wording: docs/planning-v2-ui.md sections 1, 2 and 5.
 // Pure functions: no DOM access, no storage. The controller attaches events by data-* attributes.
-import { combinedMultiplier, countEditedUnitCosts, roundElementAmount } from "../../planning/calculate";
+import { calculateAlternative, combinedMultiplier, countEditedUnitCosts, roundElementAmount } from "../../planning/calculate";
+import { createProject } from "../../planning/templates";
 import type { PlanningProjectSummary } from "../../planning/storage";
 import type {
   AlternativeResult,
@@ -216,8 +217,10 @@ export function projectMenuList(projects: PlanningProjectSummary[], project: Pla
   return merged.map((p) => (p.id === project.id ? { ...p, name: project.name } : p));
 }
 
-export function renderProjectMenuItems(projects: PlanningProjectSummary[], project: PlanningProject): string {
-  return renderProjectList(projectMenuList(projects, project), project.id);
+/** On the new-project screen nothing is "current", so every project, including the one still open, can be opened. */
+export function renderProjectMenuItems(projects: PlanningProjectSummary[], project: PlanningProject | null, current = true): string {
+  if (!project) return renderProjectList(projects, "");
+  return renderProjectList(projectMenuList(projects, project), current ? project.id : "");
 }
 
 export function renderTitle(project: PlanningProject, renaming: boolean, error = ""): string {
@@ -226,6 +229,31 @@ export function renderTitle(project: PlanningProject, renaming: boolean, error =
 <p class="filter-validation-message" data-planning-rename-error role="alert"${error ? "" : " hidden"}>${esc(error)}</p>
 <button type="button" class="primary-button" data-planning-rename-save>Save</button>
 <button type="button" class="secondary-button" data-planning-rename-cancel>Cancel</button>`;
+}
+
+/** The Planning Actions menu. On the new-project screen the actions that need an open project are disabled. */
+function renderActionsMenu(projectListHtml: string, isNewScreen: boolean): string {
+  const off = isNewScreen ? " disabled" : "";
+  return `<details class="project-switcher" data-planning-menu="actions">
+      <summary>Planning Actions</summary>
+      <div class="project-switcher-menu">
+        <div data-planning-project-list>${projectListHtml}</div>
+        <div class="project-switcher-actions">
+          <button type="button" data-planning-new-project${off}>New planning project</button>
+          <button type="button" data-planning-rename-project${off}>Rename project</button>
+          <button type="button" data-planning-import>Import JSON</button>
+          <input type="file" accept=".json,application/json" data-planning-import-input hidden />
+        </div>
+        <div class="project-switcher-actions">
+          <button type="button" data-planning-export="print"${off}>Print summary</button>
+          <button type="button" data-planning-export="csv"${off}>Download CSV</button>
+          <button type="button" data-planning-export="json"${off}>Download JSON</button>
+        </div>
+        <div class="project-switcher-actions">
+          <button type="button" class="project-switcher-danger" data-planning-delete-project${off}>Delete project</button>
+        </div>
+      </div>
+    </details>`;
 }
 
 export function renderHeader(vm: PlanningViewModel): string {
@@ -239,26 +267,7 @@ export function renderHeader(vm: PlanningViewModel): string {
     <p class="muted">Started from ${esc(started)} · <span data-planning-save-status role="status">${renderSaveStatus(vm.saveStatus)}</span></p>
   </div>
   <div class="planning-header-actions">
-    <details class="project-switcher" data-planning-menu="actions">
-      <summary>Planning Actions</summary>
-      <div class="project-switcher-menu">
-        <div data-planning-project-list>${renderProjectMenuItems(vm.projects, project)}</div>
-        <div class="project-switcher-actions">
-          <button type="button" data-planning-new-project>New planning project</button>
-          <button type="button" data-planning-rename-project>Rename project</button>
-          <button type="button" data-planning-import>Import JSON</button>
-          <input type="file" accept=".json,application/json" data-planning-import-input hidden />
-        </div>
-        <div class="project-switcher-actions">
-          <button type="button" data-planning-export="print">Print summary</button>
-          <button type="button" data-planning-export="csv">Download CSV</button>
-          <button type="button" data-planning-export="json">Download JSON</button>
-        </div>
-        <div class="project-switcher-actions">
-          <button type="button" class="project-switcher-danger" data-planning-delete-project>Delete project</button>
-        </div>
-      </div>
-    </details>
+${renderActionsMenu(renderProjectMenuItems(vm.projects, project), false)}
   </div>
 </section>`;
 }
@@ -580,7 +589,49 @@ ${renderSummary(vm)}
 
 // ---------- New-project panel ----------
 
-export function renderNewProjectPanel(library: ResolvedLibrary, draft: NewProjectDraft, hasProject: boolean, notice: Notice | null = null): string {
+/** The estimate a draft would create, calculated the same way as the saved project. */
+export function newProjectPreview(library: ResolvedLibrary, draft: NewProjectDraft): AlternativeResult {
+  const created = createProject(library, { id: "preview", name: "Preview", now: "2000-01-01T00:00:00.000Z", templateId: draft.templateId, alternativeId: "preview" });
+  return calculateAlternative(library, { ...created, inputs: draft.inputs });
+}
+
+/** Inner HTML of the top of the preview: template and total. Patched as the draft changes. */
+export function renderNewPreviewBody(library: ResolvedLibrary, draft: NewProjectDraft): string {
+  const template = library.templates.find((t) => t.id === draft.templateId);
+  const values = summaryValues(newProjectPreview(library, draft).summary);
+  return `<h3>${esc(template?.label ?? "Blank")}</h3>
+  <p class="muted">${esc(template?.description ?? "Start with no elements and add what you need.")}</p>
+  <div class="planning-total">
+    <span>Total</span><strong>${esc(values.total)}</strong>
+    <span class="muted">Range ${esc(values.range)}</span>
+  </div>`;
+}
+
+/** Inner HTML of the detail below the actions: summary lines and the elements the template includes. */
+export function renderNewPreviewDetails(library: ResolvedLibrary, draft: NewProjectDraft): string {
+  const result = newProjectPreview(library, draft);
+  const values = summaryValues(result.summary);
+  const included = result.elements.filter((e) => e.enabled && e.components.length > 0);
+  const list =
+    included.length === 0
+      ? `<p class="muted">No elements selected.</p>`
+      : `<ul class="planning-components">${included.map((e) => `<li><span>${esc(e.label)}</span><strong>${esc(formatElementAmount(e.amount))}</strong></li>`).join("")}</ul>`;
+  return `<dl class="planning-summary-lines">
+    <div><dt>Construction</dt><dd>${esc(values.construction)}</dd></div>
+    <div><dt>Contingency <span class="muted">${esc(values.contingencyRate)}</span></dt><dd>${esc(values.contingency)}</dd></div>
+    <div><dt>Design <span class="muted">${esc(formatPercent(result.summary.designRate))}</span></dt><dd>${esc(values.design)}</dd></div>
+    <div><dt>Construction engineering <span class="muted">${esc(formatPercent(result.summary.constructionEngineeringRate))}</span></dt><dd>${esc(values.constructionEngineering)}</dd></div>
+  </dl>
+  ${list}`;
+}
+
+export function renderNewProjectPanel(
+  library: ResolvedLibrary,
+  draft: NewProjectDraft,
+  project: PlanningProject | null,
+  projects: PlanningProjectSummary[],
+  notice: Notice | null = null
+): string {
   const options = library.templates
     .map(
       (t) => `<label class="checkbox-label planning-template-option"><input type="radio" name="planning-template" value="${esc(t.id)}"${draft.templateId === t.id ? " checked" : ""} />
@@ -591,23 +642,44 @@ export function renderNewProjectPanel(library: ResolvedLibrary, draft: NewProjec
       <span><strong>Blank</strong><small class="muted">No elements selected.</small></span></label>`;
   const fields = library.projectInputs.map((p) => renderCorridorField(library, p.key, draft.inputs[p.key], "data-planning-new-input")).join("");
   return `<section class="planning-view" data-planning-root>
+<section class="panel-block planning-header">
+  <div>
+    <p class="eyebrow">Planning estimate</p>
+    <h2>New planning estimate</h2>
+    <p class="muted">Name it, set the corridor and choose a starting template. You can change anything afterwards.</p>
+  </div>
+  <div class="planning-header-actions">
+${renderActionsMenu(renderProjectMenuItems(projects, project, false), true)}
+  </div>
+</section>
 ${renderNotice(notice)}
-<section class="panel-block planning-new" data-planning-new>
-  <div class="panel-heading"><p class="eyebrow">Planning estimate</p><h2>Start a planning estimate</h2></div>
-  <p class="muted">Pick a starting template. You can switch any element on or off afterwards.</p>
-  <label><span>Project name</span><input type="text" data-planning-new-name required value="${esc(draft.name)}" /></label>
-  <div class="planning-template-options" role="radiogroup" aria-label="Starting template">
+<div class="planning-new" data-planning-new>
+  <section class="panel-block">
+    <div class="panel-heading"><h3>Corridor</h3></div>
+    <label class="planning-new-name"><span>Project name</span><input type="text" data-planning-new-name required value="${esc(draft.name)}" /></label>
+    <div class="planning-corridor-fields">${fields}</div>
+  </section>
+  <div class="planning-layout">
+    <section class="panel-block" aria-label="Starting template">
+      <div class="panel-heading"><h3>Starting template</h3></div>
+      <p class="muted">You can switch any element on or off afterwards.</p>
+      <div class="planning-template-options" role="radiogroup" aria-label="Starting template">
 ${options}
 ${blank}
+      </div>
+    </section>
+    <aside class="panel-block planning-summary" aria-label="Estimate preview">
+      <p class="eyebrow">Preview</p>
+      <div class="planning-new-preview" data-planning-new-preview>${renderNewPreviewBody(library, draft)}</div>
+      <p class="filter-validation-message" data-planning-new-error role="alert"${draft.error ? "" : " hidden"}>${esc(draft.error)}</p>
+      <div class="planning-new-actions">
+        <button type="button" class="primary-button" data-planning-create>Create project</button>
+        ${project ? `<button type="button" class="secondary-button" data-planning-new-cancel>Cancel</button>` : ""}
+      </div>
+      <div class="planning-new-preview" data-planning-new-details>${renderNewPreviewDetails(library, draft)}</div>
+      <p class="muted">Prices: ${esc(library.priceBasisLabel)}</p>
+    </aside>
   </div>
-  <div class="planning-corridor-fields">${fields}</div>
-  <p class="filter-validation-message" data-planning-new-error role="alert"${draft.error ? "" : " hidden"}>${esc(draft.error)}</p>
-  <div>
-    <button type="button" class="primary-button" data-planning-create>Create project</button>
-    ${hasProject ? `<button type="button" class="secondary-button" data-planning-new-cancel>Cancel</button>` : ""}
-  </div>
-  <p class="muted">Or <button type="button" class="text-button" data-planning-import>import a planning JSON file</button>.</p>
-  <input type="file" accept=".json,application/json" data-planning-import-input hidden />
-</section>
+</div>
 </section>`;
 }

@@ -194,7 +194,7 @@ describe("renderPlanningView", () => {
   });
 
   it("carries no hard-coded color style anywhere in the output", () => {
-    const html = [renderPlanningView(makeVm(setBudget(complete, 1))), renderNewProjectPanel(library, { name: "", templateId: null, inputs: complete.inputs, error: "" }, true), renderLoadError("x")].join("");
+    const html = [renderPlanningView(makeVm(setBudget(complete, 1))), renderNewProjectPanel(library, { name: "", templateId: null, inputs: complete.inputs, error: "" }, complete, vm.projects), renderLoadError("x")].join("");
     const holder = document.createElement("div");
     holder.innerHTML = html;
     for (const el of holder.querySelectorAll("[style]")) {
@@ -207,24 +207,61 @@ describe("renderPlanningView", () => {
 
 describe("renderNewProjectPanel", () => {
   const draft = { name: "", templateId: "mill_overlay" as string | null, inputs: complete.inputs, error: "" };
+  const panelFor = (d = draft, project: PlanningProject | null = null) => {
+    const panel = document.createElement("div");
+    panel.innerHTML = renderNewProjectPanel(library, d, project, [{ id: "p1", name: "Main Street", updatedAt: "2026-01-01T00:00:00.000Z", revision: 1 }]);
+    return panel;
+  };
 
   it("lists each template plus Blank and prefills the corridor fields", () => {
-    const panel = document.createElement("div");
-    panel.innerHTML = renderNewProjectPanel(library, draft, false);
+    const panel = panelFor();
     const radios = panel.querySelectorAll<HTMLInputElement>("input[name='planning-template']");
     expect(radios.length).toBe(library.templates.length + 1);
     expect([...radios].find((r) => r.checked)?.value).toBe("mill_overlay");
-    expect(panel.querySelector("h2")?.textContent).toBe("Start a planning estimate");
+    expect(panel.querySelector("h2")?.textContent).toBe("New planning estimate");
     expect(panel.querySelectorAll("[data-planning-new-input]").length).toBe(3);
     expect(panel.querySelector("[data-planning-new-cancel]")).toBeNull();
     expect(panel.querySelector("[data-planning-create]")?.textContent).toBe("Create project");
   });
 
   it("shows Cancel when a project already exists and checks Blank for a null template", () => {
-    const panel = document.createElement("div");
-    panel.innerHTML = renderNewProjectPanel(library, { ...draft, templateId: null }, true);
+    const panel = panelFor({ ...draft, templateId: null }, complete);
     expect(panel.querySelector("[data-planning-new-cancel]")).not.toBeNull();
     expect(panel.querySelector<HTMLInputElement>("input[name='planning-template'][value='']")?.checked).toBe(true);
+  });
+
+  it("keeps the header and two-column layout of the finished project", () => {
+    const panel = panelFor();
+    expect(panel.querySelector(".planning-header [data-planning-menu='actions']")).not.toBeNull();
+    expect(panel.querySelector(".planning-layout > section[aria-label='Starting template']")).not.toBeNull();
+    expect(panel.querySelector(".planning-layout > aside.planning-summary")).not.toBeNull();
+    expect(panel.querySelector("[data-planning-new] [data-planning-new-name]")).not.toBeNull();
+  });
+
+  it("disables actions that need an open project, keeps Import and project switching, and has no current project", () => {
+    const panel = panelFor();
+    for (const selector of ["[data-planning-new-project]", "[data-planning-rename-project]", "[data-planning-export='print']", "[data-planning-export='csv']", "[data-planning-export='json']", "[data-planning-delete-project]"]) {
+      expect(panel.querySelector<HTMLButtonElement>(selector)?.disabled).toBe(true);
+    }
+    expect(panel.querySelector<HTMLButtonElement>("[data-planning-import]")?.disabled).toBe(false);
+    expect(panel.querySelector<HTMLButtonElement>("[data-planning-open-project='p1']")?.disabled).toBe(false);
+    expect(panel.querySelector("[data-planning-import-input]")).not.toBeNull();
+    expect(panel.querySelectorAll("[data-planning-import-input]").length).toBe(1);
+  });
+
+  it("previews the same total the created project will have", () => {
+    const panel = panelFor({ ...draft, templateId: "complete_street" });
+    const expected = formatTotalAmount(calculateAlternative(library, createProject(library, { id: "x", name: "x", now: "2026-01-01T00:00:00.000Z", templateId: "complete_street", alternativeId: "a" })).summary.total);
+    expect(panel.querySelector("[data-planning-new-preview] .planning-total strong")?.textContent).toBe(expected);
+    expect(panel.querySelector("[data-planning-new-preview] h3")?.textContent).toBe("Complete street");
+    expect(panel.querySelectorAll("[data-planning-new-details] .planning-components li").length).toBeGreaterThan(3);
+  });
+
+  it("previews a blank project as $0 with no elements", () => {
+    const panel = panelFor({ ...draft, templateId: null });
+    expect(panel.querySelector("[data-planning-new-preview] h3")?.textContent).toBe("Blank");
+    expect(panel.querySelector("[data-planning-new-preview] .planning-total strong")?.textContent).toBe("$0");
+    expect(panel.querySelector("[data-planning-new-details]")?.textContent).toContain("No elements selected.");
   });
 });
 

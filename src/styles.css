@@ -3580,7 +3580,11 @@ tbody tr:last-child td {
 .planning-template-option { align-items: start; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 10px 12px; cursor: pointer; }
 .planning-template-option:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .planning-template-option small { display: block; font-weight: 400; }
-.planning-new { display: grid; gap: 14px; max-width: 900px; }
+.planning-new { display: grid; gap: 16px; min-width: 0; }
+.planning-new-preview { display: grid; gap: 12px; }
+.planning-new-preview > h3, .planning-new-preview > p { margin: 0; }
+.planning-new-name { margin: 12px 0; }
+.planning-new-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 @media (max-width: 899px) {
   .planning-layout { grid-template-columns: minmax(0, 1fr); }

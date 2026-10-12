@@ -501,6 +501,50 @@ describe("persistence", () => {
   });
 });
 
+describe("new-project screen", () => {
+  const previewTotal = (root: HTMLElement) => q(root, "[data-planning-new-preview] .planning-total strong").textContent;
+
+  it("keeps the header and updates the preview when the template or corridor changes", async () => {
+    const { controller, root } = await open();
+    expect(root.querySelector(".planning-header [data-planning-menu='actions']")).not.toBeNull();
+    const initial = previewTotal(root);
+    const radio = q<HTMLInputElement>(root, "input[name='planning-template'][value='complete_street']");
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(previewTotal(root)).toBe(totalText(expectedTotal("complete_street")));
+    expect(previewTotal(root)).not.toBe(initial);
+    expect(q(root, "[data-planning-new-preview] h3").textContent).toBe("Complete street");
+    setValue(q<HTMLInputElement>(root, "[data-planning-new-input='lengthMiles']"), "2");
+    expect(previewTotal(root)).not.toBe(totalText(expectedTotal("complete_street")));
+    await controller.flush();
+  });
+
+  it("creates a project whose total equals the preview", async () => {
+    const { controller, root } = await open();
+    const radio = q<HTMLInputElement>(root, "input[name='planning-template'][value='complete_street']");
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change", { bubbles: true }));
+    setValue(q<HTMLInputElement>(root, "[data-planning-new-input='lengthMiles']"), "1.5");
+    const preview = previewTotal(root);
+    setValue(q<HTMLInputElement>(root, "[data-planning-new-name]"), "Preview match");
+    q(root, "[data-planning-create]").click();
+    await controller.flush();
+    expect(summaryTotal(root)).toBe(preview);
+  });
+
+  it("opens a saved project from the menu while creating another", async () => {
+    const { controller, root } = await open();
+    await createStreet(root, controller, "mill_overlay", "First");
+    q(root, "[data-planning-new-project]").click();
+    expect(q(root, "[data-planning-new]")).not.toBeNull();
+    expect(q<HTMLButtonElement>(root, "[data-planning-open-project='id-1']").disabled).toBe(false);
+    q(root, "[data-planning-open-project='id-1']").click();
+    await controller.flush();
+    expect(q(root, "[data-planning-project-name]").textContent).toBe("First");
+    expect(root.querySelector("[data-planning-new]")).toBeNull();
+  });
+});
+
 describe("project management", () => {
   it("creates a second project, switches back, renames and deletes", async () => {
     const { controller, root } = await open();

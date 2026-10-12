@@ -202,26 +202,49 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
 </section>
 ```
 
-Empty state (no planning project yet) and the "New planning project" action render the same panel in place of the header, corridor strip and layout:
+Empty state (no planning project yet) and the "New planning project" action render the same page skeleton as the finished project: header card, corridor panel, then two columns (templates on the left, a live preview on the right). Nothing changes position when the project is created; the preview becomes the alternative summary.
 
 ```html
-<section class="panel-block planning-new" data-planning-new>
-  <div class="panel-heading"><p class="eyebrow">Planning estimate</p><h2>Start a planning estimate</h2></div>
-  <p class="muted">Pick a starting template. You can switch any element on or off afterwards.</p>
-  <label><span>Project name</span><input data-planning-new-name required /></label>
-  <div class="planning-template-options" role="radiogroup" aria-label="Starting template">
-    <label class="checkbox-label planning-template-option"><input type="radio" name="planning-template" value="mill_overlay" checked />
-      <span><strong>Mill and overlay</strong><small class="muted">Resurface the roadway and bring curb ramps to ADA standard.</small></span></label>
-    … one per library template …
-    <label class="checkbox-label planning-template-option"><input type="radio" name="planning-template" value="" />
-      <span><strong>Blank</strong><small class="muted">No elements selected.</small></span></label>
+<section class="panel-block planning-header">                       <!-- same card as the project header -->
+  <div><p class="eyebrow">Planning estimate</p><h2>New planning estimate</h2>
+    <p class="muted">Name it, set the corridor and choose a starting template. You can change anything afterwards.</p></div>
+  <div class="planning-header-actions">
+    <!-- Planning Actions menu. Disabled here: New planning project, Rename, Print, Download CSV/JSON, Delete.
+         Enabled: every saved project (none is "current"; the open one, if any, can be reopened) and Import JSON. -->
   </div>
-  <div class="planning-corridor-fields"> length, width, intersections (prefilled from library defaults, then the chosen template's projectInputs) </div>
-  <button type="button" class="primary-button" data-planning-create>Create project</button>
-  <button type="button" class="secondary-button" data-planning-new-cancel>Cancel</button>  <!-- only when a project exists -->
-  <p class="muted">Or <button type="button" class="text-button" data-planning-import>import a planning JSON file</button>.</p>
 </section>
+<div class="planning-new" data-planning-new>
+  <section class="panel-block">
+    <div class="panel-heading"><h3>Corridor</h3></div>
+    <label class="planning-new-name"><span>Project name</span><input data-planning-new-name required /></label>
+    <div class="planning-corridor-fields"> length, width, intersections (library defaults, then the chosen template's projectInputs) </div>
+  </section>
+  <div class="planning-layout">
+    <section class="panel-block" aria-label="Starting template">
+      <div class="panel-heading"><h3>Starting template</h3></div>
+      <p class="muted">You can switch any element on or off afterwards.</p>
+      <div class="planning-template-options" role="radiogroup" aria-label="Starting template">
+        <label class="checkbox-label planning-template-option"><input type="radio" name="planning-template" value="mill_overlay" checked />
+          <span><strong>Mill and overlay</strong><small class="muted">Resurface the roadway and bring curb ramps to ADA standard.</small></span></label>
+        … one per library template …
+        <label class="checkbox-label planning-template-option"><input type="radio" name="planning-template" value="" />
+          <span><strong>Blank</strong><small class="muted">No elements selected.</small></span></label>
+      </div>
+    </section>
+    <aside class="panel-block planning-summary" aria-label="Estimate preview">
+      <p class="eyebrow">Preview</p>
+      <div data-planning-new-preview> template name, its description, Total and Range </div>
+      <p class="filter-validation-message" data-planning-new-error role="alert" hidden></p>
+      <button type="button" class="primary-button" data-planning-create>Create project</button>
+      <button type="button" class="secondary-button" data-planning-new-cancel>Cancel</button>  <!-- only when a project exists -->
+      <div data-planning-new-details> Construction, Contingency, Design, Construction engineering; the elements the template includes with amounts </div>
+      <p class="muted">Prices: {basis}</p>
+    </aside>
+  </div>
+</div>
 ```
+
+The preview is calculated with the same functions as the saved project (`createProject`, then `calculateAlternative` with the draft's corridor values), so its total equals the total shown after Create. It refreshes when the template or a corridor field changes. "Create project" sits above the long detail list so it stays on screen. On narrow screens the preview stacks below the template cards.
 
 The template picker exists only here. After creation the header says which template the project started from, and later alternatives choose a template through "+ Alternative".
 
@@ -255,7 +278,7 @@ The template picker exists only here. After creation the header says which templ
 | Alternatives | "Alternatives", "+ Alternative", "Start from", "Blank (no elements)", "Name", "Add alternative", "Cancel", "Description" (placeholder "One line describing this alternative"), "Duplicate", "Delete" |
 | Narrow bar | "{Alt name}", "Total {amount}", "{amount} under budget" / "{amount} over budget", "Summary" |
 | Price basis | "Prices: {priceBasisLabel}" |
-| Empty state | "Start a planning estimate"; "Pick a starting template. You can switch any element on or off afterwards."; "Project name"; "Blank" / "No elements selected."; "Create project"; "Cancel"; "Or import a planning JSON file." |
+| Empty state | Header "New planning estimate" / "Name it, set the corridor and choose a starting template. You can change anything afterwards."; "Corridor"; "Project name"; "Starting template" / "You can switch any element on or off afterwards."; "Blank" / "No elements selected."; "Preview"; "Create project"; "Cancel". Import is in Planning Actions. |
 | Confirms (`window.confirm`, as in the Project view) | "Delete {alt name}? This cannot be undone."; "Delete planning project {name}? This cannot be undone." |
 | Field errors | Dollar: "Enter a dollar amount of 0 or more, or leave it blank to use the calculated amount." Other-cost dollar: "Enter a dollar amount of 0 or more, or leave it blank." Number: "Enter a number of 0 or more." Integer: "Enter a whole number of 0 or more." Corridor field blank: "Enter a number of 0 or more." Percent: "Enter a percent from 0 to 100." Budget: "Enter a dollar amount, or leave it blank for no budget." Names: "Enter a project name." / "Enter a name for this alternative." |
 | Notices | Import OK: "Imported {name} as a new planning project." Import with dropped elements: "Imported {name}. {n} elements in the file are not in this library and were left out." Import failed: "Could not import {file}: {first issue message}" Save conflict: "This planning project was changed in another tab. Reload to see the latest version." + button "Reload project". Storage blocked: "Planning projects cannot be saved in this browser. Changes will be lost when the page closes." Library failure (replaces the view): "Planning prices could not be loaded. Reload the page to try again." + muted error text |
@@ -358,7 +381,7 @@ New classes:
 | `planning-total-bar` | Narrow-only sticky bar; `display: none` at 900 px and wider | No shared equivalent. |
 | `planning-template-options` | Grid of template cards (3 columns desktop, 1 narrow) | Layout. |
 | `planning-template-option` | Border, padding and selected outline (`:has(input:checked)` → `--accent` border) for a template card; used with `checkbox-label` | Card frame; `checkbox-label` provides only the control/text grid. |
-| `planning-new` | Spacing for the new-project panel | Layout. |
+| `planning-new`, `planning-new-name`, `planning-new-actions`, `planning-new-preview` | Spacing and grid for the new-project screen and its preview | Layout. |
 
 Reused classes and where: `panel-block` (header, corridor, elements, summary, new-project panel); `panel-heading` + `<h2>/<h3>` (header, corridor, new project); `eyebrow` (header, group headings, "Alternatives"); `primary-button` ("Create project", "Add alternative"); `secondary-button` ("+ Alternative", Cancel); `text-button` (reset, use corridor value, more inputs, duplicate, delete, summary link, import link); `muted` (hints, source notes, range); `checkbox-label` (toggle rows, radios, template cards); `visually-hidden` (disclosure prefix, announcer); `filter-validation-message` (field errors and failure notices); `project-switcher`, `project-switcher-menu`, `project-switcher-project`, `project-switcher-actions` (both header menus); `project-contingency-percent` + `project-contingency-input` (design and CE %); `app-view-tab`, `app-view-tab--active` (alternative buttons). `label-row` is used for label + inline hint pairs in the disclosure. `table-scroll` and `summary-table` are not used: Planning has no wide tables.
 
@@ -367,7 +390,7 @@ Reused classes and where: `panel-block` (header, corridor, elements, summary, ne
 | File | Contents | Data needed |
 |---|---|---|
 | `format.ts` | `formatElementAmount(n)`, `formatTotalAmount(n)`, `formatUnitPrice(n)`, `formatQuantity(q, unit)`, `unitLabel(unit)`, `formatPercent(rate)`, `formatEntered(n)`, `parseDollar(text) → {ok, value: number|null} | {ok:false}`, `parseNumber(text, {integer}) → …`, `parsePercent(text) → …`, `inputBrief(element, values)`, `optionLabel(value)`, `sourceNote(source)` | numbers, `ResolvedElement`, `PriceSource` |
-| `renderPlanning.ts` | Pure string renderers: `renderPlanningView(vm)`, `renderNewProjectPanel(library, draft, hasProject)`, `renderHeader(project, projects, saveStatus, library)`, `renderCorridorPanel(library, project)`, `renderTotalBar(alt, summary)`, `renderElementGroups(library, project, result, basePreview, openDetails)`, `renderElementRow(element, elementResult, selection, ctx)`, `renderOtherRow(element, selection)`, `renderElementInputs(element, elementResult, selection, projectInputs)`, `renderComponentLines(elementResult, summary)`, `renderResetSlot(elementResult)`, `renderSummary(library, project, result, altTotals, addAltOpen)`, `renderAlternativeButtons(project, altTotals)`, `renderLoadError(message)`; exported `escapeHtml` | `ResolvedLibrary`, `PlanningProject`, `AlternativeResult`, `Record<altId, number>` totals, `Record<elementId, number>` base preview, `Set` open details |
+| `renderPlanning.ts` | Pure string renderers: `renderPlanningView(vm)`, `renderNewProjectPanel(library, draft, project, projects, notice)`, `renderNewPreviewBody(library, draft)`, `renderNewPreviewDetails(library, draft)`, `newProjectPreview(library, draft)`, `renderHeader(project, projects, saveStatus, library)`, `renderCorridorPanel(library, project)`, `renderTotalBar(alt, summary)`, `renderElementGroups(library, project, result, basePreview, openDetails)`, `renderElementRow(element, elementResult, selection, ctx)`, `renderOtherRow(element, selection)`, `renderElementInputs(element, elementResult, selection, projectInputs)`, `renderComponentLines(elementResult, summary)`, `renderResetSlot(elementResult)`, `renderSummary(library, project, result, altTotals, addAltOpen)`, `renderAlternativeButtons(project, altTotals)`, `renderLoadError(message)`; exported `escapeHtml` | `ResolvedLibrary`, `PlanningProject`, `AlternativeResult`, `Record<altId, number>` totals, `Record<elementId, number>` base preview, `Set` open details |
 | `planningController.ts` | `mountPlanning(root, deps)` → `{ destroy() }`; `deps = { library, repository, now(), newId() }`; state; delegated `change`/`click`/`keydown`/`toggle` handlers; `recalculate()` (selected alternative, all alternative totals, base previews); `patchRows()`, `patchSummary()`, `patchAlternativeButtons()`, `rerender()` with focus capture/restore; `scheduleSave()`/`flushSave()`; import via `parseShareFile` + `importProjectCopy` | all of the above plus storage |
 | `format.test.ts`, `renderPlanning.test.ts`, `planningController.test.ts` | Unit tests; controller tests use `// @vitest-environment jsdom` | fixtures from `src/planning/fixtures` |
 
@@ -381,7 +404,7 @@ Departures from the sketch:
 
 1. Amounts use full dollars (`$3,730,000`), not `$3.73M`. Reason in section 3.
 2. The `▸` disclosure is a full-width second line under each row showing a one-line input brief ("0.50 mi · 2 sides · 6 ft"), not an icon at the row end. A `<details>` summary cannot share one grid line with the toggle and dollar box without placing interactive controls inside `<summary>`, and the brief replaces the sketch's inline "6 ft" / "(24)" hints.
-3. The template picker is in the new-project panel, not in the corridor strip, because a template only applies at creation. Later alternatives choose a template under "+ Alternative".
+3. The template picker is on the new-project screen, not in the corridor strip, because a template only applies at creation. The screen keeps the project page's skeleton (header, corridor, two columns) so creating a project does not rearrange the page. Later alternatives choose a template under "+ Alternative".
 4. Right-of-way and utility relocation are separate summary lines (sketch: one "ROW / utilities" line), so each entry is visible.
 5. Budget is entered in the corridor strip; the summary shows budget and remaining.
 6. The sketch's "Design 12%" and "CE 15%" are illustrative; defaults are the library's 10% and 10%.
