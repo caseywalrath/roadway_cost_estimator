@@ -597,6 +597,16 @@ export function renderAlternativePanel(vm: PlanningViewModel): string {
 </section>`;
 }
 
+/** Last panel of the left column: copies the selected alternative into an engineer Project. Absent when the host cannot create one. */
+export function renderHandoffPanel(vm: PlanningViewModel): string {
+  if (!vm.canCreateProject) return "";
+  return `<section class="panel-block planning-handoff" aria-label="Hand off to design">
+  <div class="panel-heading"><h3>Hand off to design</h3></div>
+  <p class="muted">Copies the selected alternative into a new Project as pay items and lump-sum lines. Later changes here do not update that Project.</p>
+  <div><button type="button" class="secondary-button" data-planning-create-project>Create engineer Project</button></div>
+</section>`;
+}
+
 export function renderSummary(vm: PlanningViewModel): string {
   const { project, result } = vm;
   const values = summaryValues(result.summary);
@@ -623,7 +633,6 @@ export function renderSummary(vm: PlanningViewModel): string {
   </div>
   <p class="muted">Prices: ${esc(vm.library.priceBasisLabel)}</p>
   <p class="muted" data-planning-edited-costs${editedCostsText(result) ? "" : " hidden"}>${esc(editedCostsText(result))}</p>
-  ${vm.canCreateProject ? `<div><button type="button" class="secondary-button" data-planning-create-project>Create engineer Project</button><p class="muted">Copies this alternative into a new Project as pay items and lump-sum lines. Later changes here do not update that Project.</p></div>` : ""}
   <p class="visually-hidden" aria-live="polite" data-planning-announce></p>
 </aside>`;
 }
@@ -641,6 +650,7 @@ ${renderTotalBar(vm)}
   ${renderOriginLegend()}
 ${renderElementGroups(vm)}
   </section>
+  ${renderHandoffPanel(vm)}
   </div>
 ${renderSummary(vm)}
 </div>

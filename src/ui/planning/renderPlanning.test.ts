@@ -196,6 +196,15 @@ describe("renderPlanningView", () => {
     expect(order.slice(0, 3)).toEqual(["Corridor", "Selected alternative", "Elements"]);
   });
 
+  it("puts Create engineer Project last in the left column and omits it when the host cannot create one", () => {
+    expect(root.querySelector("[data-planning-create-project]")).toBeNull();
+    const withHandoff = render(makeVm(complete, { canCreateProject: true }));
+    const main = withHandoff.querySelector(".planning-main")!;
+    expect(main.lastElementChild?.getAttribute("aria-label")).toBe("Hand off to design");
+    expect(main.lastElementChild?.querySelector("[data-planning-create-project]")?.textContent).toBe("Create engineer Project");
+    expect(withHandoff.querySelector(".planning-summary [data-planning-create-project]")).toBeNull();
+  });
+
   it("marks the selected alternative with aria-pressed and disables Delete for one alternative", () => {
     const button = root.querySelector("[data-planning-alt='a1']")!;
     expect(button.getAttribute("aria-pressed")).toBe("true");
