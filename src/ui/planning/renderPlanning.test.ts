@@ -64,6 +64,18 @@ describe("renderPlanningView", () => {
     expect(kinds).toEqual(["print", "csv", "json"]);
   });
 
+  it("marks bid-database elements as filled, allowance elements as hollow, and leaves other rows unmarked", () => {
+    const marker = (id: string) => root.querySelector(`[data-element-row="${id}"] .planning-origin`);
+    expect(marker("sidewalk")?.className).toContain("planning-origin--database");
+    expect(marker("reconstruction")?.className).toContain("planning-origin--database");
+    expect(marker("lighting")?.className).toContain("planning-origin--external");
+    expect(marker("signal")?.className).toContain("planning-origin--external");
+    expect(marker("lighting")?.getAttribute("aria-label")).toBe("External allowance");
+    expect(marker("base_none")).toBeNull();
+    expect(marker("right_of_way")).toBeNull();
+    expect(root.querySelector(".planning-origin-legend")).not.toBeNull();
+  });
+
   it("uses radios for the base group and checkboxes for corridor elements", () => {
     const radios = root.querySelectorAll<HTMLInputElement>("[data-planning-group='base'] input[type='radio']");
     expect(radios.length).toBe(4);

@@ -378,6 +378,31 @@ export function dollarBoxLabel(element: ResolvedElement, enabled: boolean): stri
   return `${element.label} amount in dollars${enabled ? "" : ", not included"}`;
 }
 
+/** "database": every pay item is bound to the CDOT bid database. "external": at least one component is a calibrated allowance. */
+export type PriceOrigin = "database" | "external";
+
+export function elementPriceOrigin(element: ResolvedElement): PriceOrigin | null {
+  if (element.components.length === 0) return null;
+  return element.components.some((c) => c.source.kind === "assembly") ? "external" : "database";
+}
+
+const ORIGIN_TEXT: Record<PriceOrigin, { short: string; long: string }> = {
+  database: { short: "Bid database price", long: "Priced from CDOT awarded-bid items in the project database." },
+  external: { short: "External allowance", long: "Allowance from the planning calibration report, built outside the project database. The pricing lines show its basis." }
+};
+
+function renderOriginMarker(element: ResolvedElement): string {
+  const origin = elementPriceOrigin(element);
+  if (!origin) return "";
+  const text = ORIGIN_TEXT[origin];
+  // U+2060 word joiner keeps the dot on the same line as the last word of the label.
+  return `\u2060<span class="planning-origin planning-origin--${origin}" role="img" aria-label="${esc(text.short)}" title="${esc(`${text.short}. ${text.long}`)}"></span>`;
+}
+
+function renderOriginLegend(): string {
+  return `<p class="muted planning-origin-legend"><span class="planning-origin planning-origin--database" aria-hidden="true"></span> ${esc(ORIGIN_TEXT.database.short)} <span class="planning-origin planning-origin--external" aria-hidden="true"></span> ${esc(ORIGIN_TEXT.external.short)}</p>`;
+}
+
 export interface RowContext {
   library: ResolvedLibrary;
   project: PlanningProject;
@@ -392,7 +417,7 @@ export function renderElementRow(element: ResolvedElement, er: ElementResult, se
   const toggle = isBase
     ? `<input type="radio" name="planning-base" value="${id}" data-element-toggle="${id}"${er.enabled ? " checked" : ""} />`
     : `<input type="checkbox" data-element-toggle="${id}"${er.enabled ? " checked" : ""} />`;
-  const label = `<label class="checkbox-label">${toggle}<span>${esc(element.label)}</span></label>`;
+  const label = `<label class="checkbox-label">${toggle}<span>${esc(element.label)}${renderOriginMarker(element)}</span></label>`;
   const rowClass = `planning-row${er.enabled ? "" : " planning-row--off"}`;
   if (element.components.length === 0) {
     return `<div class="${rowClass}" data-element-row="${id}">${label}<div class="planning-amount"><span class="muted planning-amount-note">Elements only</span></div></div>`;
@@ -521,6 +546,7 @@ ${renderCorridorPanel(vm.library, vm.project)}
 ${renderTotalBar(vm)}
 <div class="planning-layout">
   <section class="panel-block" aria-label="Elements">
+  ${renderOriginLegend()}
 ${renderElementGroups(vm)}
   </section>
 ${renderSummary(vm)}

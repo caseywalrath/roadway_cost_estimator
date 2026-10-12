@@ -228,6 +228,7 @@ The template picker exists only here. After creation the header says which templ
 | Base hint | "The base treatment sets the allowance for minor items, traffic control and mobilization on every element." |
 | No-base row | "No base treatment"; amount cell "Elements only" |
 | Dollar box aria-label | "{Element} amount in dollars"; when off: "{Element} amount in dollars, not included" |
+| Price-origin marker | Small circle after the element label on base, corridor and spot rows. Filled = every pay item comes from the CDOT bid database ("Bid database price"). Hollow = at least one component is a calibrated allowance ("External allowance"). Rows with no components (no base treatment, other costs) have no marker. A legend line sits above the groups. Tooltip and aria-label carry the text; shape, not color, carries the meaning. |
 | Reset | "Reset to calculated ${amount}" (aria-label "Reset {Element} to calculated amount ${amount}") |
 | Input hints | Inherited: "From corridor". Changed: text-button "Use corridor value ({value} {unit})". defaultFrom: "{multiply} per intersection" / "Use default ({value})". Plain default changed: "Use default ({value} {unit})" |
 | Advanced | "More inputs" |

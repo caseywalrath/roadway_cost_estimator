@@ -3516,6 +3516,12 @@ tbody tr:last-child td {
 
 .planning-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; border-top: 1px solid var(--line); padding: 10px 0; }
 .planning-row-label { color: var(--heading); font-size: 0.92rem; font-weight: 700; }
+.planning-view .planning-origin { display: inline-block; flex: 0 0 auto; width: 8px; height: 8px; margin-left: 6px; border: 1.5px solid var(--text-muted); border-radius: 50%; vertical-align: middle; }
+.planning-view .planning-origin--database { background: var(--text-muted); }
+.planning-view .planning-origin--external { background: transparent; }
+.planning-origin-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0 0 8px; font-size: 0.8rem; }
+.planning-view .planning-origin-legend > .planning-origin { margin-left: 0; }
+.planning-view .planning-origin-legend > .planning-origin:not(:first-child) { margin-left: 12px; }
 .planning-row--off .planning-amount-input { color: var(--text-muted); }
 
 .planning-amount { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 2px 4px; width: 9.75rem; color: var(--text-muted); }
