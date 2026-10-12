@@ -3532,6 +3532,7 @@ tbody tr:last-child td {
 
 .planning-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px 12px; margin: 8px 0; }
 .planning-inputs > details { grid-column: 1 / -1; }
+.planning-inputs > label { align-content: start; }
 
 .planning-components { display: grid; gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
 .planning-components > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; border-top: 1px solid var(--line); padding-top: 8px; font-size: 0.86rem; }
