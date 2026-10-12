@@ -3570,7 +3570,11 @@ tbody tr:last-child td {
 .planning-add-alternative[hidden] { display: none; }
 
 .planning-summary-lines { display: grid; margin: 0; }
-.planning-summary-lines > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding: 8px 0; }
+.planning-summary-lines > div { display: grid; grid-template-columns: minmax(0, 1fr) 3.6rem 6.5rem; align-items: center; column-gap: 8px; border-top: 1px solid var(--line); padding: 8px 0; }
+.planning-summary-lines dd:last-child { grid-column: 3; }
+.planning-summary-lines .planning-summary-rate { grid-column: 2; font-variant-numeric: tabular-nums; display: flex; justify-content: flex-end; color: var(--text-muted); font-size: 0.88rem; font-weight: 700; text-align: right; }
+.planning-summary-lines .project-contingency-percent { gap: 0; font-size: inherit; }
+.planning-summary-lines .project-contingency-input { width: 2.6rem; margin-right: -3px; padding-right: 1px; font-size: inherit; font-variant-numeric: tabular-nums; }
 .planning-summary-lines dt { margin: 0; color: var(--heading); font-weight: 700; }
 .planning-summary-lines dd { margin: 0; color: var(--heading); font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
 

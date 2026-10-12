@@ -609,9 +609,9 @@ export function renderSummary(vm: PlanningViewModel): string {
 
   <dl class="planning-summary-lines">
     <div><dt>Construction</dt><dd data-summary="construction">${esc(values.construction)}</dd></div>
-    <div><dt>Contingency <span class="muted" data-summary="contingencyRate">${esc(values.contingencyRate)}</span></dt><dd data-summary="contingency">${esc(values.contingency)}</dd></div>
-    <div><dt>Design ${rate("design", "Design percentage", result.summary.designRate)}</dt><dd data-summary="design">${esc(values.design)}</dd></div>
-    <div><dt>Construction engineering ${rate("constructionEngineering", "Construction engineering percentage", result.summary.constructionEngineeringRate)}</dt><dd data-summary="constructionEngineering">${esc(values.constructionEngineering)}</dd></div>
+    <div><dt>Contingency</dt><dd class="planning-summary-rate" title="Set by the project stage"><span data-summary="contingencyRate">${esc(values.contingencyRate)}</span></dd><dd data-summary="contingency">${esc(values.contingency)}</dd></div>
+    <div><dt>Design</dt><dd class="planning-summary-rate">${rate("design", "Design percentage", result.summary.designRate)}</dd><dd data-summary="design">${esc(values.design)}</dd></div>
+    <div><dt>Construction engineering</dt><dd class="planning-summary-rate">${rate("constructionEngineering", "Construction engineering percentage", result.summary.constructionEngineeringRate)}</dd><dd data-summary="constructionEngineering">${esc(values.constructionEngineering)}</dd></div>
     <div><dt>Right-of-way</dt><dd data-summary="rightOfWay">${esc(values.rightOfWay)}</dd></div>
     <div><dt>Utility relocation</dt><dd data-summary="utilityRelocation">${esc(values.utilityRelocation)}</dd></div>
   </dl>
@@ -678,9 +678,9 @@ export function renderNewPreviewDetails(library: ResolvedLibrary, draft: NewProj
       : `<ul class="planning-components">${included.map((e) => `<li><span>${esc(e.label)}</span><strong>${esc(formatElementAmount(e.amount))}</strong></li>`).join("")}</ul>`;
   return `<dl class="planning-summary-lines">
     <div><dt>Construction</dt><dd>${esc(values.construction)}</dd></div>
-    <div><dt>Contingency <span class="muted">${esc(values.contingencyRate)}</span></dt><dd>${esc(values.contingency)}</dd></div>
-    <div><dt>Design <span class="muted">${esc(formatPercent(result.summary.designRate))}</span></dt><dd>${esc(values.design)}</dd></div>
-    <div><dt>Construction engineering <span class="muted">${esc(formatPercent(result.summary.constructionEngineeringRate))}</span></dt><dd>${esc(values.constructionEngineering)}</dd></div>
+    <div><dt>Contingency</dt><dd class="planning-summary-rate"><span>${esc(values.contingencyRate)}</span></dd><dd>${esc(values.contingency)}</dd></div>
+    <div><dt>Design</dt><dd class="planning-summary-rate"><span>${esc(formatPercent(result.summary.designRate))}</span></dd><dd>${esc(values.design)}</dd></div>
+    <div><dt>Construction engineering</dt><dd class="planning-summary-rate"><span>${esc(formatPercent(result.summary.constructionEngineeringRate))}</span></dd><dd>${esc(values.constructionEngineering)}</dd></div>
   </dl>
   ${list}`;
 }
