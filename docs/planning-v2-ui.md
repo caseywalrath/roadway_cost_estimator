@@ -27,8 +27,8 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
       <p class="muted">Started from {template label | "a blank project"} · <span data-planning-save-status role="status">Saved {time}</span></p>
     </div>
     <div class="planning-header-actions">
-      <details class="project-switcher" data-planning-menu="project">
-        <summary>Planning projects</summary>
+      <details class="project-switcher" data-planning-menu="actions">
+        <summary>Planning Actions</summary>
         <div class="project-switcher-menu">
           <!-- up to 8 most recently updated; the current one is disabled -->
           <button type="button" class="project-switcher-project" data-planning-open-project="{id}">{name}</button>
@@ -36,19 +36,17 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
             <button type="button" data-planning-new-project>New planning project</button>
             <button type="button" data-planning-rename-project>Rename project</button>
             <button type="button" data-planning-import>Import JSON</button>
-            <button type="button" data-planning-delete-project>Delete project</button>
             <input type="file" accept=".json,application/json" data-planning-import-input hidden />
           </div>
+          <div class="project-switcher-actions">
+            <button type="button" data-planning-export="print">Print summary</button>
+            <button type="button" data-planning-export="csv">Download CSV</button>
+            <button type="button" data-planning-export="json">Download JSON</button>
+          </div>
+          <div class="project-switcher-actions">
+            <button type="button" class="project-switcher-danger" data-planning-delete-project>Delete project</button>
+          </div>
         </div>
-      </details>
-      <details class="project-switcher" data-planning-menu="export">
-        <summary>Export</summary>
-        <div class="project-switcher-menu"><div class="project-switcher-actions">
-          <!-- Phase 3: rendered disabled. Phase 4 enables them. -->
-          <button type="button" data-planning-export="print" disabled>Print summary</button>
-          <button type="button" data-planning-export="csv" disabled>Download CSV</button>
-          <button type="button" data-planning-export="json" disabled>Download JSON</button>
-        </div></div>
       </details>
     </div>
   </section>
@@ -220,9 +218,9 @@ The template picker exists only here. After creation the header says which templ
 
 | Place | Text |
 |---|---|
-| Header eyebrow / menus | "Planning estimate"; "Planning projects"; "Export" |
+| Header eyebrow / menus | "Planning estimate"; one menu, "Planning Actions" |
 | Project menu actions | "New planning project", "Rename project", "Import JSON", "Delete project" |
-| Export actions | "Print summary", "Download CSV", "Download JSON" |
+| Export actions (inside Planning Actions) | "Print summary", "Download CSV", "Download JSON" |
 | Header subline | "Started from {template}" or "Started from a blank project"; save status "Saving…", "Saved {h:mm AM}", "Not saved: {reason}" |
 | Corridor fields | "Corridor length (mi)", "Roadway width, curb to curb (ft)", "Intersections", "Project stage", "Budget (optional)" (placeholder "No budget") |
 | Corridor hint | "Elements use these values unless you change them in an element's inputs." |

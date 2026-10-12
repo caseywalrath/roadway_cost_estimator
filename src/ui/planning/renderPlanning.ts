@@ -232,26 +232,25 @@ export function renderHeader(vm: PlanningViewModel): string {
     <p class="muted">Started from ${esc(started)} · <span data-planning-save-status role="status">${renderSaveStatus(vm.saveStatus)}</span></p>
   </div>
   <div class="planning-header-actions">
-    <details class="project-switcher" data-planning-menu="project">
-      <summary>Planning projects</summary>
+    <details class="project-switcher" data-planning-menu="actions">
+      <summary>Planning Actions</summary>
       <div class="project-switcher-menu">
         <div data-planning-project-list>${renderProjectMenuItems(vm.projects, project)}</div>
         <div class="project-switcher-actions">
           <button type="button" data-planning-new-project>New planning project</button>
           <button type="button" data-planning-rename-project>Rename project</button>
           <button type="button" data-planning-import>Import JSON</button>
-          <button type="button" data-planning-delete-project>Delete project</button>
           <input type="file" accept=".json,application/json" data-planning-import-input hidden />
         </div>
+        <div class="project-switcher-actions">
+          <button type="button" data-planning-export="print">Print summary</button>
+          <button type="button" data-planning-export="csv">Download CSV</button>
+          <button type="button" data-planning-export="json">Download JSON</button>
+        </div>
+        <div class="project-switcher-actions">
+          <button type="button" class="project-switcher-danger" data-planning-delete-project>Delete project</button>
+        </div>
       </div>
-    </details>
-    <details class="project-switcher" data-planning-menu="export">
-      <summary>Export</summary>
-      <div class="project-switcher-menu"><div class="project-switcher-actions">
-        <button type="button" data-planning-export="print">Print summary</button>
-        <button type="button" data-planning-export="csv">Download CSV</button>
-        <button type="button" data-planning-export="json">Download JSON</button>
-      </div></div>
     </details>
   </div>
 </section>`;
