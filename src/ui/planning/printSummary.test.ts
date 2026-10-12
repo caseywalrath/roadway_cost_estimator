@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import rawLibrary from "../../../data/planning/co_element_library.json";
 import prices from "../../../public/data/states/co/planning_prices.json";
 import { calculateAlternative } from "../../planning/calculate";
-import { addAlternative, renameAlternative, setBudget, setElementOverride } from "../../planning/edit";
+import { addAlternative, renameAlternative, setBudget, setElementInput, setElementOverride } from "../../planning/edit";
 import { resolveLibrary, validateLibrary } from "../../planning/library";
 import { createProject } from "../../planning/templates";
 import type { PlanningProject, PriceTable } from "../../planning/types";
@@ -64,5 +64,14 @@ describe("renderPrintSummary", () => {
   it("uses singular intersection", () => {
     const one = { ...base, inputs: { ...base.inputs, intersections: 1 } };
     expect(render(one).root.textContent).toMatch(/ 1 intersection(?!s)/);
+  });
+});
+
+describe("edited unit costs in the print summary", () => {
+  it("notes edited unit costs by alternative, and stays silent otherwise", () => {
+    expect(render(base).root.textContent).not.toContain("Unit costs edited");
+    const edited = setElementInput(base, "a1", "lighting", "unitCost.assembly", 1300000);
+    expect(render(edited).root.textContent).toContain("Unit costs edited from library defaults: ");
+    expect(render(edited).root.textContent).toMatch(/\(1\)\./);
   });
 });

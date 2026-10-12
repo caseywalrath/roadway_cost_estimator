@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import libraryJson from "../../data/planning/co_element_library.json";
+import prices from "../../public/data/states/co/planning_prices.json";
+import { resolveLibrary } from "./library";
 import { buildShareFile, importProjectCopy, parseShareFile } from "./shareFile";
-import type { PlanningLibrary, PlanningProject } from "./types";
+import type { PlanningLibrary, PlanningProject, PriceTable } from "./types";
 
 const library = libraryJson as unknown as PlanningLibrary;
 const NOW = "2026-01-02T03:04:05.000Z";
@@ -261,5 +263,34 @@ describe("importProjectCopy", () => {
     copy.alternatives[0].selections.mill_overlay.enabled = false;
     copy.alternatives.pop();
     expect(original).toEqual(snapshot);
+  });
+});
+
+describe("unit-cost inputs in share files", () => {
+  const resolved = resolveLibrary(libraryJson as unknown as PlanningLibrary, prices as unknown as PriceTable).library;
+  const withEdit = (): PlanningProject => {
+    const project = makeProject();
+    project.alternatives[0].selections.lighting = { enabled: true, inputs: { "unitCost.assembly": 1300000 }, override: null };
+    return project;
+  };
+
+  it("round trips an edited unit cost with no issues", () => {
+    const text = buildShareFile(withEdit(), { state: "CO", priceBasisLabel: "b" }, NOW);
+    const result = parseShareFile(text, resolved);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.project.alternatives[0].selections.lighting.inputs["unitCost.assembly"]).toBe(1300000);
+      expect(result.issues).toEqual([]);
+    }
+  });
+
+  it("rejects a negative unit cost and drops it with an issue", () => {
+    const text = buildShareFile(withEdit(), { state: "CO", priceBasisLabel: "b" }, NOW).replace("1300000", "-5");
+    const result = parseShareFile(text, resolved);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.project.alternatives[0].selections.lighting.inputs["unitCost.assembly"]).toBeUndefined();
+      expect(result.issues.map((i) => i.code)).toContain("invalid_input_value");
+    }
   });
 });

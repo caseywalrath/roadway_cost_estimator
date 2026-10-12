@@ -114,6 +114,9 @@ export function validateLibrary(raw: unknown): ValidationResult {
   return issues.length > 0 ? { ok: false, issues } : { ok: true, value: raw as unknown as PlanningLibrary, issues: [] };
 }
 
+/** Input key for an assembly component's editable unit cost. */
+export const unitCostKey = (componentId: string): string => `unitCost.${componentId}`;
+
 export function resolveLibrary(library: PlanningLibrary, prices: PriceTable): { library: ResolvedLibrary; issues: PlanningIssue[] } {
   const issues: PlanningIssue[] = [];
   const resolve = (element: ElementDefinition, component: ComponentDefinition): ResolvedComponent => {
@@ -137,10 +140,22 @@ export function resolveLibrary(library: PlanningLibrary, prices: PriceTable): { 
     }
     return { ...component, displayUnit, unitPrice: item.price, source };
   };
-  const elements: ResolvedElement[] = library.elements.map((element) => ({
-    ...element,
-    components: element.components.map((component) => resolve(element, component))
-  }));
+  const elements: ResolvedElement[] = library.elements.map((element) => {
+    const components = element.components.map((component) => resolve(element, component));
+    // Every assembly component gets an editable unit-cost input whose default is the library unit cost.
+    const unitCostInputs: ElementInputDefinition[] = components
+      .filter((component) => component.source.kind === "assembly")
+      .map((component) => ({
+        key: unitCostKey(component.id),
+        label: component.label,
+        unit: component.displayUnit,
+        default: component.unitPrice,
+        min: 0,
+        unitCostFor: component.id,
+        ...(component.when ? { when: component.when } : {})
+      }));
+    return { ...element, inputs: [...element.inputs, ...unitCostInputs], components };
+  });
   return { library: { ...library, elements, priceBasisLabel: prices.basis.label }, issues };
 }
 

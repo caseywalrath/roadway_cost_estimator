@@ -4,7 +4,7 @@ import prices from "../../public/data/states/co/planning_prices.json";
 import rawLibrary from "../../data/planning/co_element_library.json";
 import { parseUserProjectV10, projectCostSummary } from "../projects/projectWorkspace";
 import { calculateAlternative } from "./calculate";
-import { setElementOverride, setEngineering, setProjectInput, setStage } from "./edit";
+import { setElementInput, setElementOverride, setEngineering, setProjectInput, setStage } from "./edit";
 import { resolveLibrary } from "./library";
 import { createProject } from "./templates";
 import { planningAlternativeToProject, type CatalogEntry, type ToProjectOptions } from "./toProject";
@@ -110,7 +110,7 @@ describe("line mapping", () => {
       unit: comp.unit,
       quantity: Math.round(comp.quantity * 10000) / 10000,
       preferredUnitCost: cents(comp.unitPrice),
-      notes: comp.source.kind === "assembly" ? `Planning assembly cost per ${comp.unit}. Basis: ${comp.source.basis}.` : ""
+      notes: comp.source.kind === "assembly" ? `Planning allowance cost per ${comp.unit}.` : ""
     });
   });
 
@@ -281,5 +281,16 @@ describe("project fields", () => {
     const line = project.lineItems.find((l) => l.description.startsWith("Mobilization allowance"))!;
     expect(Math.abs((line.preferredUnitCost ?? 0) - expected)).toBeLessThan(5);
     expect(project.lineItems.some((l) => l.quantity === 0.125)).toBe(true);
+  });
+});
+
+describe("edited unit costs", () => {
+  it("carry into the Project lines, reconcile, and note the edit", () => {
+    const planning = setElementInput(make("complete_street"), "a1", "lighting", "unitCost.assembly", 1300000);
+    const { project, difference } = planningAlternativeToProject(library, planning, "a1", makeOptions());
+    expect(Math.abs(difference)).toBeLessThan(1);
+    const line = project.lineItems.find((l) => l.group === "Corridor lighting")!;
+    expect(line.preferredUnitCost).toBe(1300000);
+    expect(line.notes).toBe("Planning allowance cost per MILE. Unit cost edited by the planner; library default $1120000.00.");
   });
 });

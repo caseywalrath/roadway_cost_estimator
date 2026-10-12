@@ -63,13 +63,13 @@ export function buildPlanningCsv(library: ResolvedLibrary, project: PlanningProj
           "Pay item",
           group,
           e.label,
-          c.source.kind === "item" ? c.source.code : "Assembly",
+          c.source.kind === "item" ? c.source.code : "Allowance",
           c.label,
           Math.round(c.quantity * 100) / 100,
           c.unit,
           roundUnitPrice(c.unitPrice),
           Math.round(c.amount),
-          `Direct cost before ×${summary.multiplier.toFixed(2)} allowance for minor items, traffic control and mobilization`
+          `Direct cost before ×${summary.multiplier.toFixed(2)} allowance for minor items, traffic control and mobilization${c.edited ? `; unit cost edited from ${roundUnitPrice(c.defaultUnitPrice)}` : ""}`
         );
       }
     }

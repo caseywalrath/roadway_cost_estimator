@@ -71,6 +71,17 @@ describe("resolveLibrary", () => {
     expect(ramps.source.kind).toBe("assembly");
   });
 
+  it("adds an editable unit-cost input to assembly elements only, defaulting to the library cost", () => {
+    const { library } = resolveLibrary(clone(), priceTable);
+    const lighting = library.elements.find((e) => e.id === "lighting")!;
+    const input = lighting.inputs.find((i) => i.unitCostFor)!;
+    expect(input).toMatchObject({ key: "unitCost.assembly", unit: "MILE", default: 1120000, min: 0, unitCostFor: "assembly" });
+    const buffered = library.elements.find((e) => e.id === "buffered_bike_lane")!;
+    expect(buffered.inputs.filter((i) => i.unitCostFor).map((i) => i.key)).toEqual(["unitCost.assembly", "unitCost.delineators"]);
+    expect(library.elements.find((e) => e.id === "sidewalk")!.inputs.some((i) => i.unitCostFor)).toBe(false);
+    expect(library.elements.find((e) => e.id === "reconstruction")!.inputs.some((i) => i.unitCostFor)).toBe(false);
+  });
+
   it("reports missing prices and unit mismatches with a price of 0", () => {
     const lib = clone();
     const table = JSON.parse(JSON.stringify(priceTable)) as PriceTable;

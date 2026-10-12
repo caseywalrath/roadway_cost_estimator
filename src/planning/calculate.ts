@@ -1,4 +1,4 @@
-import { elementInputValues } from "./library";
+import { elementInputValues, unitCostKey } from "./library";
 import type {
   AlternativeResult,
   ComponentResult,
@@ -62,6 +62,11 @@ export function evaluateQuantity(rule: QuantityRule, values: Record<string, Inpu
   return issues.length > 0 ? { quantity: 0, issues } : { quantity, issues };
 }
 
+/** Number of assembly unit costs the planner changed, counting enabled elements only. */
+export function countEditedUnitCosts(result: AlternativeResult): number {
+  return result.elements.filter((e) => e.enabled).reduce((sum, e) => sum + e.components.filter((c) => c.edited).length, 0);
+}
+
 export function calculateAlternative(
   library: ResolvedLibrary,
   project: PlanningProject,
@@ -101,13 +106,23 @@ export function calculateAlternative(
             issues.push({ ...issue, path: `${element.id}.${component.id}.${issue.path}` });
           }
         }
+        let unitPrice = component.unitPrice;
+        if (component.source.kind === "assembly") {
+          const entered = inputs[unitCostKey(component.id)];
+          if (entered !== undefined) {
+            if (typeof entered === "number" && Number.isFinite(entered) && entered >= 0) unitPrice = entered;
+            else if (enabled) issues.push({ code: "invalid_input", path: `${element.id}.${component.id}.unitCost`, message: `Unit cost for ${component.label} must be a number of 0 or more; using the default.` });
+          }
+        }
         components.push({
           id: component.id,
           label: component.label,
           quantity,
           unit: component.displayUnit,
-          unitPrice: component.unitPrice,
-          amount: quantity * component.unitPrice,
+          unitPrice,
+          defaultUnitPrice: component.unitPrice,
+          edited: unitPrice !== component.unitPrice,
+          amount: quantity * unitPrice,
           source: component.source
         });
       }

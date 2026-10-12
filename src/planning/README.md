@@ -22,11 +22,13 @@ Ids and timestamps are passed in (`options.id`, `options.now`, `options.newId()`
 
 - The library JSON is imported at build time from `data/planning/co_element_library.json`.
 - The price table is fetched at run time from `${import.meta.env.BASE_URL}data/states/co/planning_prices.json`. Tests import it from `public/data/states/co/planning_prices.json`.
-- `resolveLibrary` binds each item component to its price-table entry. A missing item or a unit mismatch produces an issue (`missing_price`, `unit_mismatch`) and a unit price of 0. Assembly components use `unitCost` with source `{ kind: "assembly" }`.
+- `resolveLibrary` binds each item component to its price-table entry. A missing item or a unit mismatch produces an issue (`missing_price`, `unit_mismatch`) and a unit price of 0. Assembly components use `unitCost` with source `{ kind: "assembly" }`. Each also gets a generated element input `unitCost.<componentId>` (`unitCostFor` set, `default` = the library `unitCost`, `min` 0, same `when` as the component), so the planner can edit the unit cost like any other input.
 
 ## Input values
 
 For an element, effective inputs are built in this order: library `default`, or the project input named by `inherit`, or `projectInput × multiply` from `defaultFrom`; then the planner's `selection.inputs` replace any key. An input whose `when` condition is false is left out of the effective values. A template's `inputs` are written into `selection.inputs`.
+
+Unit-cost inputs follow the same rules. `calculateAlternative` uses the effective `unitCost.<componentId>` value as the component's unit price. An invalid value (negative or not a number) falls back to the library cost and reports `invalid_input`. `ComponentResult` carries `defaultUnitPrice` and `edited`; `countEditedUnitCosts(result)` counts edits on enabled elements. Edits are stored per alternative in `selection.inputs`, so the share file format is unchanged (`formatVersion` stays 2).
 
 ## Quantity rules
 

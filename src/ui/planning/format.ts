@@ -119,11 +119,13 @@ export function optionLabel(value: InputValue): string {
   return value.length === 0 ? value : value[0].toUpperCase() + value.slice(1);
 }
 
-/** One-line summary of the active, non-advanced inputs for the disclosure line. */
+/** One-line summary of the active, non-advanced quantity inputs for the disclosure line. */
 export function inputBrief(element: ResolvedElement, values: Record<string, InputValue>): string {
   const parts: string[] = [];
+  // Several unlabeled depths ("6 in · 6 in · 12 in") are ambiguous; show an "in" value only when it is the one depth.
+  const inchInputs = element.inputs.filter((i) => !i.advanced && !i.unitCostFor && i.unit === "in" && i.key in values);
   for (const input of element.inputs) {
-    if (input.advanced || !(input.key in values)) continue;
+    if (input.advanced || input.unitCostFor || !(input.key in values)) continue;
     const value = values[input.key];
     const label = input.label.toLowerCase();
     if (input.options) {
@@ -133,6 +135,7 @@ export function inputBrief(element: ResolvedElement, values: Record<string, Inpu
       else parts.push(`${label}: ${value}`);
     } else if (typeof value === "number") {
       if (input.unit === "mi") parts.push(`${value.toFixed(2)} mi`);
+      else if (input.unit === "in" && inchInputs.length > 1) continue;
       else if (input.unit && input.unit !== "count") parts.push(`${formatPlain(value)} ${input.unit}`);
       else parts.push(`${formatPlain(value)} ${countLabel(label, value)}`);
     }
@@ -146,14 +149,19 @@ function countLabel(label: string, value: number): string {
 }
 
 /** Source note text and tooltip for a priced component. */
-export function sourceNote(source: PriceSource): { text: string; title: string } {
+export function sourceNote(source: PriceSource, edited = false): { text: string; title: string } {
   if (source.kind === "assembly") {
-    const basis = source.basis ? source.basis[0].toLowerCase() + source.basis.slice(1) : "";
-    return { text: basis ? `Assembly cost, ${basis}` : "Assembly cost", title: "" };
+    return { text: edited ? "Planning allowance, unit cost edited" : "Planning allowance", title: "" };
   }
   const pool = source.pool === "urban" ? "urban contracts" : "contracts statewide";
   return {
-    text: `CDOT ${source.code}, median of ${source.contracts} ${pool}`,
-    title: `Middle half of contract prices: ${formatUnitPrice(source.p25)}–${formatUnitPrice(source.p75)}`
+    text: `CDOT ${source.code} · ${source.contracts} ${source.contracts === 1 ? "bid" : "bids"}`,
+    title: `Median of ${source.contracts} ${pool}. Middle half of contract prices: ${formatUnitPrice(source.p25)}–${formatUnitPrice(source.p75)}`
   };
+}
+
+/** Suffix after a unit-cost box: "per mi", "each", "per SY". */
+export function perUnitLabel(unit: string): string {
+  const label = unitLabel(unit);
+  return label === "each" ? "each" : `per ${label}`;
 }

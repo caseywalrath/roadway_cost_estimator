@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   calculateAlternative,
   combinedMultiplier,
+  countEditedUnitCosts,
   evaluateQuantity,
   roundElementAmount,
   roundTotalAmount,
@@ -163,5 +164,52 @@ describe("calculateAlternative", () => {
 
   it("throws for an unknown alternative", () => {
     expect(() => calculateAlternative(lib, project({}), "nope")).toThrow(/nope/);
+  });
+});
+
+describe("assembly unit-cost edits", () => {
+  const costInput = { key: "unitCost.p", label: "p", unit: "X", default: 100, min: 0, unitCostFor: "p" };
+  const editable: ResolvedLibrary = {
+    ...lib,
+    elements: lib.elements.map((e) => (e.id === "post" ? { ...e, inputs: [...e.inputs, costInput] } : e))
+  };
+  const post = (inputs: Record<string, number | string>) => ({ base_none: on(), post: { enabled: true, inputs, override: null } });
+  const component = (inputs: Record<string, number | string>) => {
+    const result = calculateAlternative(editable, project(post(inputs)));
+    return { result, component: result.elements.find((e) => e.elementId === "post")!.components[0] };
+  };
+
+  it("uses the library cost when nothing is edited", () => {
+    const { component: c } = component({});
+    expect(c.unitPrice).toBe(100);
+    expect(c.defaultUnitPrice).toBe(100);
+    expect(c.edited).toBe(false);
+    expect(c.amount).toBe(1000);
+  });
+
+  it("uses an edited cost, flags it, and keeps the default for reference", () => {
+    const { result, component: c } = component({ "unitCost.p": 250 });
+    expect(c.unitPrice).toBe(250);
+    expect(c.defaultUnitPrice).toBe(100);
+    expect(c.edited).toBe(true);
+    expect(c.amount).toBe(2500);
+    expect(result.elements.find((e) => e.elementId === "post")!.direct).toBe(2500);
+    expect(countEditedUnitCosts(result)).toBe(1);
+  });
+
+  it("allows 0 and does not flag a value equal to the default", () => {
+    expect(component({ "unitCost.p": 0 }).component.amount).toBe(0);
+    expect(component({ "unitCost.p": 100 }).component.edited).toBe(false);
+  });
+
+  it("falls back to the default with an issue for an invalid value", () => {
+    const { result, component: c } = component({ "unitCost.p": -5 });
+    expect(c.unitPrice).toBe(100);
+    expect(result.issues.map((i) => i.code)).toContain("invalid_input");
+  });
+
+  it("does not count edits on elements that are off", () => {
+    const off = calculateAlternative(editable, project({ base_none: on(), post: { enabled: false, inputs: { "unitCost.p": 250 }, override: null } }));
+    expect(countEditedUnitCosts(off)).toBe(0);
   });
 });

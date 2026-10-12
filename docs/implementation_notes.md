@@ -271,6 +271,7 @@ Design points:
 - The planner controller survives `renderApp` redraws and re-mounts into `[data-planning-mount]`. Leaving the tab or switching states flushes pending saves.
 - Planning CSS uses the shared classes and `:root` tokens; Planning-only classes cover layout. Print uses a `body.planning-printing` class that hides everything except the inserted `.planning-print` markup.
 - The engineer Project handoff reconciles to the Planning total within $1 (see the mapping in the plan, section 5a).
+- Assembly unit costs are editable. `resolveLibrary` generates a `unitCost.<componentId>` input per assembly component; edits live in `selection.inputs` and flow through calculation, CSV, print and the Project handoff. Planner-facing text (element notes, source notes, tooltips) avoids calibration-report references, pool and median statistics and other data-build decisions; those stay in `docs/planning-v2-calibration.md`.
 
 ## Next Product Steps
 

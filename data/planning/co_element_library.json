@@ -53,7 +53,7 @@
         { "id": "planing", "label": "Removal of asphalt mat (planing)", "item": "co_cdot_202-00240", "quantity": { "kind": "area", "length": "lengthMiles", "width": "widthFt", "unit": "SY" } },
         { "id": "asphalt", "label": "Hot mix asphalt (Grading S) (100) (PG 64-22)", "item": "co_cdot_403-33841", "quantity": { "kind": "asphalt_tons", "length": "lengthMiles", "width": "widthFt", "thickness": "thicknessIn", "density": "densityLbCf", "materialFactor": "materialFactor", "unit": "TON" } }
       ],
-      "note": "Mill and replace the full roadway width. Tack, patching, manhole adjustments and restriping are carried in the minor-items factor."
+      "note": "Mill and replace the full roadway width. Tack, patching, manhole adjustments and restriping are included in the allowance."
     },
     {
       "id": "reconstruction",
@@ -97,7 +97,7 @@
         { "id": "base", "label": "Aggregate base course (Class 6)", "item": "co_cdot_304-06007", "quantity": { "kind": "volume", "length": "lengthMiles", "width": "widthFt", "depth": "baseDepthIn", "unit": "CY" } },
         { "id": "excavation", "label": "Unclassified excavation (complete in place)", "item": "co_cdot_203-00010", "quantity": { "kind": "volume", "length": "lengthMiles", "width": "widthFt", "depth": "excavationDepthIn", "unit": "CY" } }
       ],
-      "note": "Concrete Bikeway (6 Inch) has only 3 contracts; the 6 inch sidewalk item is used as the surface price."
+      "note": "Surface is priced as 6 inch concrete sidewalk."
     },
     {
       "id": "sidewalk",
@@ -191,7 +191,7 @@
       "components": [
         { "id": "assembly", "label": "Inlets, laterals and storm pipe allowance", "unitCost": 1450000, "unit": "MILE", "quantity": { "kind": "miles", "length": "lengthMiles" }, "basis": "Calibration report 4.3" }
       ],
-      "note": "Median of FHU municipal estimates per implied mile."
+      "note": "Inlets, laterals and storm pipe, as a planning allowance per mile."
     },
     {
       "id": "ada_ramps",

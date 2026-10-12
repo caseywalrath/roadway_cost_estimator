@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import prices from "../../public/data/states/co/planning_prices.json";
 import rawLibrary from "../../data/planning/co_element_library.json";
 import { calculateAlternative, roundElementAmount, roundTotalAmount } from "./calculate";
-import { setBudget, setElementEnabled, setElementOverride, renameAlternative, addAlternative } from "./edit";
+import { setBudget, setElementEnabled, setElementInput, setElementOverride, renameAlternative, addAlternative } from "./edit";
 import { buildPlanningCsv, planningCsvFilename } from "./exportCsv";
 import { resolveLibrary } from "./library";
 import { createProject } from "./templates";
@@ -238,5 +238,22 @@ describe("planningCsvFilename", () => {
     expect(planningCsvFilename(make(null, "  Main St  "))).toBe("Main St.planning.csv");
     expect(planningCsvFilename(make(null, "   "))).toBe("planning.planning.csv");
     expect(planningCsvFilename(make(null, ""))).toBe("planning.planning.csv");
+  });
+});
+
+describe("edited unit costs", () => {
+  it("uses the edited cost in the pay-item row and notes the default", () => {
+    const project = setElementInput(make("complete_street"), "a1", "lighting", "unitCost.assembly", 1300000);
+    const rows = parseCsv(buildPlanningCsv(library, project, EXPORTED));
+    const row = rows.find((r) => r[1] === "Pay item" && r[3] === "Corridor lighting")!;
+    expect(row[4]).toBe("Allowance");
+    expect(row[8]).toBe("1300000");
+    expect(row[10]).toContain("unit cost edited from 1120000");
+  });
+
+  it("adds no edit note when nothing is edited", () => {
+    const rows = parseCsv(buildPlanningCsv(library, make("complete_street"), EXPORTED));
+    const row = rows.find((r) => r[1] === "Pay item" && r[3] === "Corridor lighting")!;
+    expect(row[10]).not.toContain("edited");
   });
 });

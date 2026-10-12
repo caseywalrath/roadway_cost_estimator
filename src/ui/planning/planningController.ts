@@ -37,6 +37,7 @@ import { formatEntered, formatPlain, formatTotalAmount, inputBrief, parseDollar,
 import { renderPrintSummary } from "./printSummary";
 import {
   budgetInfo,
+  editedCostsText,
   groupSubtotalText,
   inputHint,
   inputSignature,
@@ -491,7 +492,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       const input = element.inputs.find((i) => i.key === key);
       if (!input || !(key in er.inputs)) continue;
       const value = er.inputs[key];
-      if (control !== active || control === committed) setValue(control, typeof value === "number" && !input.options ? formatPlain(value) : String(value));
+      if (control !== active || control === committed) setValue(control, typeof value === "number" && !input.options ? (input.unitCostFor ? formatEntered(value) : formatPlain(value)) : String(value));
     }
     for (const hint of qsa<HTMLElement>("[data-input-hint]", region)) {
       const input = element.inputs.find((i) => i.key === hint.dataset.inputHint);
@@ -525,6 +526,11 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       }
     }
     setText('[data-summary="altName"]', selectedAlt()?.name ?? "");
+    const editedText = editedCostsText(result);
+    for (const el of qsa("[data-planning-edited-costs]")) {
+      el.textContent = editedText;
+      el.hidden = editedText === "";
+    }
   }
 
   function patchAlternativeButtons(): void {

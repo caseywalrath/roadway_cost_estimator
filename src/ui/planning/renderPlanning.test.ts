@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import rawLibrary from "../../../data/planning/co_element_library.json";
 import prices from "../../../public/data/states/co/planning_prices.json";
 import { calculateAlternative } from "../../planning/calculate";
-import { setBudget, setElementOverride } from "../../planning/edit";
+import { setBudget, setElementInput, setElementOverride } from "../../planning/edit";
 import { resolveLibrary, validateLibrary } from "../../planning/library";
 import { createProject } from "../../planning/templates";
 import type { PlanningProject, PriceTable } from "../../planning/types";
@@ -107,9 +107,41 @@ describe("renderPlanningView", () => {
     const row = root.querySelector("[data-element-row='curb_gutter']")!;
     expect(row.querySelector("details.planning-row-details")).not.toBeNull();
     expect(row.querySelector("[data-element-brief]")?.textContent).toContain("0.50 mi");
-    expect(row.querySelector("[data-element-components]")?.textContent).toContain("allowance (minor items");
+    expect(row.querySelector("[data-element-components]")?.textContent).toContain("allowance for minor items, traffic control and mobilization");
     expect(row.querySelector("[data-element-components] small[title]")).not.toBeNull();
     expect(row.querySelector("[data-element-inputs] [data-input-key='lengthMiles']")).not.toBeNull();
+  });
+
+  it("groups assembly elements into Quantities and Unit costs, and leaves bid-database elements ungrouped", () => {
+    const lighting = root.querySelector("[data-element-inputs='lighting']")!;
+    expect(lighting.textContent).toContain("Quantities");
+    expect(lighting.querySelector(".planning-unit-costs")?.textContent).toContain("Unit costs");
+    const box = lighting.querySelector<HTMLInputElement>("[data-input-key='unitCost.assembly']")!;
+    expect(box.value).toBe("1,120,000");
+    expect(box.getAttribute("aria-label")).toBe("Street lighting, both sides at 200 ft, dollars per mi");
+    expect(lighting.querySelector(".planning-unit-cost-box")?.textContent).toContain("per mi");
+    expect(lighting.querySelector("[data-element-input-reset]")).toBeNull();
+    const reconstruction = root.querySelector("[data-element-inputs='reconstruction']")!;
+    expect(reconstruction.querySelector(".planning-unit-costs")).toBeNull();
+    expect(reconstruction.textContent).not.toContain("Quantities");
+  });
+
+  it("shows Edited and a reset to the default once a unit cost is changed", () => {
+    const edited = render(makeVm(setElementInput(complete, "a1", "lighting", "unitCost.assembly", 1300000)));
+    const region = edited.querySelector("[data-element-inputs='lighting']")!;
+    expect(region.querySelector<HTMLInputElement>("[data-input-key='unitCost.assembly']")?.value).toBe("1,300,000");
+    expect(region.querySelector("[data-element-input-reset='lighting']")?.textContent).toBe("Use default ($1,120,000)");
+    expect(region.textContent).toContain("Edited");
+    expect(edited.querySelector("[data-planning-edited-costs]")?.textContent).toBe("Includes 1 edited unit cost.");
+    expect(edited.querySelector("[data-planning-edited-costs]")?.hasAttribute("hidden")).toBe(false);
+    expect(root.querySelector("[data-planning-edited-costs]")?.hasAttribute("hidden")).toBe(true);
+  });
+
+  it("keeps internal data decisions out of the element panels", () => {
+    const text = root.querySelector("section[aria-label='Elements']")!.textContent ?? "";
+    for (const jargon of ["Calibration report", "calibration report", "FHU", "minor-items factor", "median of", "Assembly cost"]) {
+      expect(text).not.toContain(jargon);
+    }
   });
 
   it("shows no reset link until an amount is overridden, then shows the calculated amount", () => {

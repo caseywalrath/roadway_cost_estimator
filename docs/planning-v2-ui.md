@@ -104,6 +104,7 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
               <span data-element-brief="mill_overlay">0.50 mi · 40 ft · 2 in</span></summary>
             <p class="muted">{element.note}</p>
             <div class="planning-inputs" data-element-inputs="mill_overlay">
+              <!-- Elements with assembly components add <p class="eyebrow">Quantities</p> before these fields (see "Unit costs" below). -->
               <label><span>Length (mi)</span><input type="text" inputmode="decimal" data-element-input="mill_overlay" data-input-key="lengthMiles" value="0.5" />
                 <small class="muted">From corridor</small></label>       <!-- or: button.text-button "Use corridor value (0.5 mi)" -->
               <label><span>Sides</span><select data-element-input="sidewalk" data-input-key="sides"><option>1</option><option selected>2</option></select></label>
@@ -111,14 +112,24 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
                 <summary class="text-button">More inputs</summary>
                 <div class="planning-inputs"><label><span>Asphalt density (lb/cf)</span><input … data-input-key="densityLbCf" /></label>…</div>
               </details>
+              <!-- Only elements with assembly components. One row per component; the input key is unitCost.{componentId}. -->
+              <div class="planning-unit-costs">
+                <p class="eyebrow planning-inputs-heading">Unit costs</p>
+                <label class="planning-unit-cost"><span>Bike lane striping and symbols, both sides</span>
+                  <span class="planning-unit-cost-box"><span aria-hidden="true">$</span>
+                    <input type="text" inputmode="decimal" data-element-input="bike_lanes" data-input-key="unitCost.assembly" aria-label="Bike lane striping and symbols, both sides, dollars per mi" value="32,000" />
+                    <span class="muted">per mi</span></span>
+                  <div data-input-hint="unitCost.assembly" hidden></div>   <!-- when edited: "Edited" + text-button "Use default ($32,000)" -->
+                  <p class="filter-validation-message" role="alert" hidden></p></label>
+              </div>
             </div>
             <ul class="planning-components" data-element-components="mill_overlay">
               <li><span>Removal of asphalt mat (planing)</span>
                   <span>11,733 SY × $3.12</span><strong>$37,000</strong>
-                  <small class="muted" title="Middle half of contract prices: $2.40–$4.10">CDOT 202-00240, median of 19 urban contracts</small></li>
+                  <small class="muted" title="Median of 19 urban contracts. Middle half of contract prices: $2.40–$4.10">CDOT 202-00240 · 19 bids</small></li>
               <li><span>Bike lane striping and symbols, both sides</span><span>0.50 mi × $32,000.00</span><strong>$16,000</strong>
-                  <small class="muted">Assembly cost, calibration report 4.10</small></li>
-              <li><span>Items subtotal $327,000 × 1.86 allowance (minor items 56%, traffic control 8%, mobilization 7%)</span>
+                  <small class="muted">Planning allowance</small></li>
+              <li><span title="Minor items 56%, traffic control 8%, mobilization 7%">Items subtotal $327,000 × 1.86 allowance for minor items, traffic control and mobilization</span>
                   <strong>$610,000</strong></li>
             </ul>
           </details>
@@ -228,13 +239,17 @@ The template picker exists only here. After creation the header says which templ
 | Base hint | "The base treatment sets the allowance for minor items, traffic control and mobilization on every element." |
 | No-base row | "No base treatment"; amount cell "Elements only" |
 | Dollar box aria-label | "{Element} amount in dollars"; when off: "{Element} amount in dollars, not included" |
-| Price-origin marker | Small circle after the element label on base, corridor and spot rows. Filled = every pay item comes from the CDOT bid database ("Bid database price"). Hollow = at least one component is a calibrated allowance ("External allowance"). Rows with no components (no base treatment, other costs) have no marker. A legend line sits above the groups. Tooltip and aria-label carry the text; shape, not color, carries the meaning. |
+| Price-origin marker | Small circle after the element label on base, corridor and spot rows. Filled = every pay item comes from the CDOT bid database ("Bid database price"). Hollow = at least one component is a planning allowance ("External allowance"). Rows with no components (no base treatment, other costs) have no marker. A legend line sits above the groups. Tooltip and aria-label carry the text ("Priced from CDOT bid history." / "Planning allowance. You can edit its unit cost."); shape, not color, carries the meaning. |
+| Unit costs | Elements with assembly components show two labelled groups in the panel: "Quantities" (the usual inputs) and "Unit costs" (one `$` box per component, suffix "per mi", "each" or "per {unit}", aria-label "{component}, dollars per {unit}"). The box shows the library cost with thousands separators. When the value differs from the library cost the hint reads "Edited" plus text-button "Use default (${default})". A blank box restores the default; text that is not a number of 0 or more is rejected ("Enter a number of 0 or more."). Bid-database elements have no unit-cost boxes and no group headings. |
+| Edited-costs line | Under "Prices:" in the summary, "Includes {n} edited unit cost(s)."; hidden when n is 0. Counts enabled elements only. |
+| Print and CSV | Print: "Unit costs edited from library defaults: {alternative} ({n}), …" above the footer, only when any alternative has an edit. CSV: pay-item item column "Allowance" for assemblies; note "; unit cost edited from {default}" on edited rows. |
 | Reset | "Reset to calculated ${amount}" (aria-label "Reset {Element} to calculated amount ${amount}") |
 | Input hints | Inherited: "From corridor". Changed: text-button "Use corridor value ({value} {unit})". defaultFrom: "{multiply} per intersection" / "Use default ({value})". Plain default changed: "Use default ({value} {unit})" |
 | Advanced | "More inputs" |
 | Input brief (disclosure line) | Active non-advanced inputs joined with " · ": unit inputs as "{value} {unit}" ("0.50 mi", "6 ft"); count and numeric option inputs as "{value} {label lower-case}" ("24 ramps", "2 sides"); yes/no inputs as the label when "yes", omitted when "no" ("remove existing sidewalk"); other options as "{label lower-case}: {value}" ("new surface: concrete"). Elements without inputs: "Details" |
-| Component source | Item: "CDOT {code}, median of {n} urban contracts" or "CDOT {code}, median of {n} contracts statewide"; tooltip "Middle half of contract prices: ${p25}–${p75}". Assembly: "Assembly cost, {basis lower-cased first letter}" |
-| Allowance line | "Items subtotal ${direct} × {multiplier} allowance (minor items {m}%, traffic control {t}%, mobilization {b}%)" |
+| Component source | Item: "CDOT {code} · {n} bids" ("1 bid"); tooltip "Median of {n} urban contracts" or "Median of {n} contracts statewide", then "Middle half of contract prices: ${p25}–${p75}". Assembly: "Planning allowance", or "Planning allowance, unit cost edited". The calibration report reference is not shown to planners. |
+| Allowance line | "Items subtotal ${direct} × {multiplier} allowance for minor items, traffic control and mobilization"; tooltip "Minor items {m}%, traffic control {t}%, mobilization {b}%" |
+| Disclosure line | Active quantity inputs with units. Inputs in inches appear only when the element has exactly one (mill thickness); several unlabeled depths are left out. |
 | Option values | numbers as is; "yes"/"no" → "Yes"/"No"; other strings capitalized ("Asphalt", "Concrete") |
 | Summary lines | "Construction", "Contingency {n}%", "Design", "Construction engineering", "Right-of-way", "Utility relocation", "Total", "Range", "Budget", "{amount} remaining" / "{amount} over budget"; $0 other cost → "Not included" |
 | Alternatives | "Alternatives", "+ Alternative", "Start from", "Blank (no elements)", "Name", "Add alternative", "Cancel", "Description" (placeholder "One line describing this alternative"), "Duplicate", "Delete" |

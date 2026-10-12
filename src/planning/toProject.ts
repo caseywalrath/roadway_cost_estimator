@@ -151,7 +151,7 @@ export function planningAlternativeToProject(
           unit: component.unit,
           quantity,
           unitCost,
-          notes: `Planning assembly cost per ${component.unit}. Basis: ${component.source.basis}.`
+          notes: `Planning allowance cost per ${component.unit}.${component.edited ? ` Unit cost edited by the planner; library default $${component.defaultUnitPrice.toFixed(2)}.` : ""}`
         });
       }
       directTotal += cents((line.quantity ?? 0) * (line.preferredUnitCost ?? 0));

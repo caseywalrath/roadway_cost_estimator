@@ -121,10 +121,20 @@ describe("labels", () => {
     expect(inputBrief(element("reconstruction"), { lengthMiles: 1, widthFt: 40, existingSurface: "asphalt", newSurface: "concrete", baseDepthIn: 6, excavationDepthIn: 12 })).toContain("new surface: concrete");
   });
 
-  it("describes price sources", () => {
+  it("drops ambiguous unlabeled depths from the brief", () => {
+    const text = inputBrief(element("reconstruction"), { lengthMiles: 1, widthFt: 40, existingSurface: "asphalt", newSurface: "asphalt", asphaltThicknessIn: 6, baseDepthIn: 6, excavationDepthIn: 12 });
+    expect(text).toBe("1.00 mi · 40 ft · existing surface: asphalt · new surface: asphalt");
+  });
+
+  it("leaves unit-cost inputs out of the brief", () => {
+    expect(inputBrief(element("lighting"), { lengthMiles: 0.5, "unitCost.assembly": 1120000 })).toBe("0.50 mi");
+  });
+
+  it("describes price sources in planner terms", () => {
     const item: PriceSource = { kind: "item", itemId: "x", code: "202-00240", description: "d", contracts: 19, pool: "urban", p25: 2.4, p75: 4.1 };
-    expect(sourceNote(item)).toEqual({ text: "CDOT 202-00240, median of 19 urban contracts", title: "Middle half of contract prices: $2.40–$4.10" });
-    expect(sourceNote({ ...item, pool: "statewide", contracts: 7 }).text).toBe("CDOT 202-00240, median of 7 contracts statewide");
-    expect(sourceNote({ kind: "assembly", basis: "Calibration report 4.10" })).toEqual({ text: "Assembly cost, calibration report 4.10", title: "" });
+    expect(sourceNote(item)).toEqual({ text: "CDOT 202-00240 · 19 bids", title: "Median of 19 urban contracts. Middle half of contract prices: $2.40–$4.10" });
+    expect(sourceNote({ ...item, pool: "statewide", contracts: 1 }).text).toBe("CDOT 202-00240 · 1 bid");
+    expect(sourceNote({ kind: "assembly", basis: "Calibration report 4.10" })).toEqual({ text: "Planning allowance", title: "" });
+    expect(sourceNote({ kind: "assembly", basis: "x" }, true).text).toBe("Planning allowance, unit cost edited");
   });
 });

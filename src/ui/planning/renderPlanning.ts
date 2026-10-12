@@ -1,6 +1,6 @@
 // Planning v2 string renderers. Markup and wording: docs/planning-v2-ui.md sections 1, 2 and 5.
 // Pure functions: no DOM access, no storage. The controller attaches events by data-* attributes.
-import { combinedMultiplier, roundElementAmount } from "../../planning/calculate";
+import { combinedMultiplier, countEditedUnitCosts, roundElementAmount } from "../../planning/calculate";
 import type { PlanningProjectSummary } from "../../planning/storage";
 import type {
   AlternativeResult,
@@ -29,6 +29,7 @@ import {
   inputBrief,
   optionLabel,
   percentNumber,
+  perUnitLabel,
   sourceNote
 } from "./format";
 
@@ -144,6 +145,12 @@ export function summaryValues(summary: AlternativeSummary): Record<string, strin
     total: formatTotalAmount(summary.total),
     range: `${formatTotalAmount(summary.rangeLow)} – ${formatTotalAmount(summary.rangeHigh)}`
   };
+}
+
+/** Summary line about unit costs the planner edited; empty when none. */
+export function editedCostsText(result: AlternativeResult): string {
+  const count = countEditedUnitCosts(result);
+  return count === 0 ? "" : `Includes ${count} edited unit ${count === 1 ? "cost" : "costs"}.`;
 }
 
 export function saveStatusText(status: SaveStatus): string {
@@ -298,6 +305,11 @@ export function inputHint(element: ResolvedElement, input: ElementInputDefinitio
   const changed = selection?.inputs[input.key] !== undefined;
   const reset = (text: string) => `<button type="button" class="text-button" data-element-input-reset="${esc(element.id)}" data-input-key="${esc(input.key)}">${esc(text)}</button>`;
   const unit = input.unit && input.unit !== "count" ? ` ${input.unit}` : "";
+  if (input.unitCostFor) {
+    const base = input.default as number;
+    const edited = changed && selection?.inputs[input.key] !== base;
+    return edited ? `<small class="muted">Edited</small> ${reset(`Use default ($${formatEntered(base)})`)}` : "";
+  }
   if (input.inherit) {
     return changed ? reset(`Use corridor value (${formatPlain(projectInputs[input.inherit])}${unit})`) : `<small class="muted">From corridor</small>`;
   }
@@ -335,6 +347,13 @@ function renderInputField(element: ResolvedElement, input: ElementInputDefinitio
   return `<label><span>${esc(input.label + unitSuffix(input))}</span>${control}${renderHintSlot(element, input, selection, projectInputs)}<p class="filter-validation-message" role="alert" hidden></p></label>`;
 }
 
+function renderUnitCostField(element: ResolvedElement, input: ElementInputDefinition, value: InputValue, selection: ElementSelection | undefined, projectInputs: ProjectInputs): string {
+  const attrs = `data-element-input="${esc(element.id)}" data-input-key="${esc(input.key)}"`;
+  const text = typeof value === "number" ? formatEntered(value) : String(value);
+  const unit = perUnitLabel(input.unit ?? "");
+  return `<label class="planning-unit-cost"><span>${esc(input.label)}</span><span class="planning-unit-cost-box"><span aria-hidden="true">$</span><input type="text" inputmode="decimal" ${attrs} aria-label="${esc(`${input.label}, dollars ${unit}`)}" value="${esc(text)}" /><span class="muted">${esc(unit)}</span></span>${renderHintSlot(element, input, selection, projectInputs)}<p class="filter-validation-message" role="alert" hidden></p></label>`;
+}
+
 /** Inner HTML of an element's `[data-element-inputs]` region. */
 export function renderElementInputs(
   element: ResolvedElement,
@@ -345,12 +364,15 @@ export function renderElementInputs(
 ): string {
   const active = element.inputs.filter((i) => i.key in er.inputs);
   const field = (i: ElementInputDefinition) => renderInputField(element, i, er.inputs[i.key], selection, projectInputs);
-  const plain = active.filter((i) => !i.advanced).map(field).join("");
-  const advanced = active.filter((i) => i.advanced);
+  const plain = active.filter((i) => !i.advanced && !i.unitCostFor).map(field).join("");
+  const advanced = active.filter((i) => i.advanced && !i.unitCostFor);
+  const unitCosts = active.filter((i) => i.unitCostFor);
   const more = advanced.length === 0
     ? ""
     : `<details data-element-advanced="${esc(element.id)}"${advancedOpen ? " open" : ""}><summary class="text-button">More inputs</summary><div class="planning-inputs">${advanced.map(field).join("")}</div></details>`;
-  return plain + more;
+  if (unitCosts.length === 0) return plain + more;
+  const costs = unitCosts.map((i) => renderUnitCostField(element, i, er.inputs[i.key], selection, projectInputs)).join("");
+  return `<p class="eyebrow planning-inputs-heading">Quantities</p>${plain}${more}<div class="planning-unit-costs"><p class="eyebrow planning-inputs-heading">Unit costs</p>${costs}</div>`;
 }
 
 /** Inner HTML of an element's `[data-element-components]` list. */
@@ -358,12 +380,13 @@ export function renderComponentLines(element: ResolvedElement, er: ElementResult
   const factors = factorsFor(element, library, summary);
   const lines = er.components
     .map((c) => {
-      const note = sourceNote(c.source);
+      const note = sourceNote(c.source, c.edited);
       const title = note.title ? ` title="${esc(note.title)}"` : "";
       return `<li><span>${esc(c.label)}</span><span>${esc(formatQuantity(c.quantity, c.unit))} × ${esc(formatUnitPrice(c.unitPrice))}</span><strong>${esc(formatElementAmount(c.amount))}</strong><small class="muted"${title}>${esc(note.text)}</small></li>`;
     })
     .join("");
-  const allowance = `<li><span>Items subtotal ${esc(formatElementAmount(er.direct))} × ${esc(combinedMultiplier(factors).toFixed(2))} allowance (minor items ${esc(formatPercent(factors.minor))}, traffic control ${esc(formatPercent(factors.trafficControl))}, mobilization ${esc(formatPercent(factors.mobilization))})</span><strong>${esc(formatElementAmount(calculated))}</strong></li>`;
+  const factorTitle = `Minor items ${formatPercent(factors.minor)}, traffic control ${formatPercent(factors.trafficControl)}, mobilization ${formatPercent(factors.mobilization)}`;
+  const allowance = `<li><span title="${esc(factorTitle)}">Items subtotal ${esc(formatElementAmount(er.direct))} × ${esc(combinedMultiplier(factors).toFixed(2))} allowance for minor items, traffic control and mobilization</span><strong>${esc(formatElementAmount(calculated))}</strong></li>`;
   return lines + allowance;
 }
 
@@ -387,8 +410,8 @@ export function elementPriceOrigin(element: ResolvedElement): PriceOrigin | null
 }
 
 const ORIGIN_TEXT: Record<PriceOrigin, { short: string; long: string }> = {
-  database: { short: "Bid database price", long: "Priced from CDOT awarded-bid items in the project database." },
-  external: { short: "External allowance", long: "Allowance from the planning calibration report, built outside the project database. The pricing lines show its basis." }
+  database: { short: "Bid database price", long: "Priced from CDOT bid history." },
+  external: { short: "External allowance", long: "Planning allowance. You can edit its unit cost." }
 };
 
 function renderOriginMarker(element: ResolvedElement): string {
@@ -533,6 +556,7 @@ export function renderSummary(vm: PlanningViewModel): string {
     <span data-summary="budgetLine"${budget ? "" : " hidden"}>Budget <span data-summary="budgetValue">${esc(budget?.budgetText ?? "")}</span> · <strong class="${budget?.over ? "planning-budget--over" : "planning-budget--under"}" data-summary="budgetRemaining">${esc(budget?.remainingText ?? "")}</strong></span>
   </div>
   <p class="muted">Prices: ${esc(vm.library.priceBasisLabel)}</p>
+  <p class="muted" data-planning-edited-costs${editedCostsText(result) ? "" : " hidden"}>${esc(editedCostsText(result))}</p>
   ${vm.canCreateProject ? `<div><button type="button" class="secondary-button" data-planning-create-project>Create engineer Project</button><p class="muted">Copies this alternative into a new Project as pay items and lump-sum lines. Later changes here do not update that Project.</p></div>` : ""}
   <p class="visually-hidden" aria-live="polite" data-planning-announce></p>
 </aside>`;

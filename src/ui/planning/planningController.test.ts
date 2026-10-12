@@ -276,6 +276,37 @@ describe("creating and editing", () => {
     expect(length.value).toBe("1");
   });
 
+  it("edits an assembly unit cost, updates the totals, and resets to the default", async () => {
+    const { controller, root } = await open();
+    await createStreet(root, controller);
+    const before = summaryTotal(root);
+    const box = q<HTMLInputElement>(root, "[data-element-inputs='lighting'] [data-input-key='unitCost.assembly']");
+    expect(box.value).toBe("1,120,000");
+    expect(root.querySelector("[data-element-input-reset='lighting']")).toBeNull();
+    setValue(box, "$1,300,000");
+    expect(box.value).toBe("1,300,000");
+    expect(summaryTotal(root)).not.toBe(before);
+    expect(q(root, "[data-planning-edited-costs]").textContent).toBe("Includes 1 edited unit cost.");
+    expect(q(root, "[data-element-input-reset='lighting']").textContent).toBe("Use default ($1,120,000)");
+    q(root, "[data-element-input-reset='lighting']").click();
+    expect(box.value).toBe("1,120,000");
+    expect(summaryTotal(root)).toBe(before);
+    expect(q(root, "[data-planning-edited-costs]").hasAttribute("hidden")).toBe(true);
+  });
+
+  it("restores the default when a unit cost is cleared and rejects invalid text", async () => {
+    const { controller, root } = await open();
+    await createStreet(root, controller);
+    const box = q<HTMLInputElement>(root, "[data-element-inputs='lighting'] [data-input-key='unitCost.assembly']");
+    setValue(box, "-4");
+    expect(box.getAttribute("aria-invalid")).toBe("true");
+    setValue(box, "900000");
+    expect(q(root, "[data-planning-edited-costs]").textContent).toContain("1 edited");
+    setValue(box, "");
+    expect(box.value).toBe("1,120,000");
+    expect(q(root, "[data-planning-edited-costs]").hasAttribute("hidden")).toBe(true);
+  });
+
   it("rejects decimals in the intersections field", async () => {
     const { controller, root } = await open();
     await createStreet(root, controller);

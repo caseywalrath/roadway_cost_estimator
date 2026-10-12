@@ -1,5 +1,6 @@
 // Planning v2 print summary: a pure HTML string builder. Hidden on screen, shown by the print styles in styles.css.
 import type { AlternativeResult, ElementResult, PlanningProject, ResolvedLibrary } from "../../planning/types";
+import { countEditedUnitCosts } from "../../planning/calculate";
 import { formatElementAmount, inputBrief } from "./format";
 import { budgetInfo, summaryValues } from "./renderPlanning";
 
@@ -90,6 +91,15 @@ ${rows.join("\n")}
 </section>`;
 }
 
+/** "Unit costs edited from library defaults: Alternative A (2)." Empty when no alternative has edits. */
+function editedCostsNote(project: PlanningProject, results: AlternativeResult[]): string {
+  const parts = project.alternatives
+    .map((alt) => ({ name: alt.name, count: countEditedUnitCosts(results.find((r) => r.alternativeId === alt.id) ?? { elements: [] } as unknown as AlternativeResult) }))
+    .filter((entry) => entry.count > 0)
+    .map((entry) => `${entry.name} (${entry.count})`);
+  return parts.length === 0 ? "" : `<p class="muted">${esc(`Unit costs edited from library defaults: ${parts.join(", ")}.`)}</p>\n`;
+}
+
 export function renderPrintSummary(library: ResolvedLibrary, project: PlanningProject, results: AlternativeResult[], printedAt: string): string {
   const alt = project.alternatives.find((a) => a.id === project.selectedAlternativeId) ?? project.alternatives[0];
   const result = results.find((r) => r.alternativeId === alt?.id) ?? results[0];
@@ -117,6 +127,6 @@ ${summaryRows(result)}
 ${page}
 </section>
 ${project.alternatives.length > 1 ? comparison(project, results) : ""}
-<p class="muted">${esc(`Planning-level estimate for comparing alternatives. Not a design estimate. Unit prices: ${library.priceBasisLabel}.`)}</p>
+${editedCostsNote(project, results)}<p class="muted">${esc(`Planning-level estimate for comparing alternatives. Not a design estimate. Unit prices: ${library.priceBasisLabel}.`)}</p>
 </div>`;
 }

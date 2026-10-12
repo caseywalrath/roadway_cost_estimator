@@ -3542,6 +3542,13 @@ tbody tr:last-child td {
 
 .planning-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px 12px; margin: 8px 0; }
 .planning-inputs > details { grid-column: 1 / -1; }
+.planning-inputs > .planning-inputs-heading, .planning-unit-costs { grid-column: 1 / -1; }
+.planning-inputs-heading { margin: 4px 0 0; }
+.planning-unit-costs { display: grid; gap: 10px; margin-top: 6px; }
+.planning-unit-costs > .planning-inputs-heading { margin: 0; }
+.planning-unit-cost { align-content: start; }
+.planning-unit-cost-box { display: grid; grid-template-columns: auto minmax(0, 11rem) auto; align-items: center; justify-content: start; gap: 6px; font-weight: 400; }
+.planning-unit-cost-box > input { text-align: right; font-variant-numeric: tabular-nums; }
 .planning-inputs > label { align-content: start; }
 
 .planning-components { display: grid; gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
