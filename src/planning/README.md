@@ -51,7 +51,7 @@ A component whose `when` condition is false is skipped. A missing, negative, or 
 - Multiplier = (1 + minor) × (1 + trafficControl) × (1 + mobilization) for that base type. It applies to every base, corridor and spot element in the alternative.
 - Element: direct = Σ quantity × unit price; calculated = direct × multiplier; amount = override ?? calculated.
 - Construction = Σ amount of enabled base, corridor and spot elements.
-- Contingency = construction × stage contingency.
+- Contingency = construction × the project's `contingencyRate` when set (0 to 1), otherwise the stage contingency. `setStage` clears `contingencyRate`; `setContingency(project, null)` clears it directly. An out-of-range value is ignored with an `invalid_contingency` issue. The range still comes from the stage.
 - Design = (construction + contingency) × project design rate. Construction engineering = (construction + contingency) × project CE rate.
 - Right-of-way and utility relocation = the `override` of those "other" elements (null = 0). They are counted whether or not `enabled` is set.
 - Total = construction + contingency + design + construction engineering + right-of-way + utility relocation.
@@ -80,4 +80,4 @@ UTF-8 with BOM, CRLF. A Field/Value preamble (project, stage, corridor inputs, p
 
 ## Engineer Project handoff
 
-`planningAlternativeToProject` follows the mapping in `docs/planning-v2-implementation-plan.md` section 5a. Item components become catalog lines when the catalog has the item with the same unit; assembly components, overridden elements, allowances, engineering, right-of-way and utilities become custom lines. The Project uses native contingency at the stage rate; engineering lines are rate × construction and right-of-way and utility lines are shown net of contingency, so the Project total equals the Planning total within $1. The Project carries `planningOrigin`.
+`planningAlternativeToProject` follows the mapping in `docs/planning-v2-implementation-plan.md` section 5a. Item components become catalog lines when the catalog has the item with the same unit; assembly components, overridden elements, allowances, engineering, right-of-way and utilities become custom lines. The Project uses native contingency at the Planning contingency rate (the stage rate unless the planner edited it); engineering lines are rate × construction and right-of-way and utility lines are shown net of contingency, so the Project total equals the Planning total within $1. The Project carries `planningOrigin`.

@@ -218,6 +218,8 @@ export interface PlanningProject {
   templateId: string | null;
   inputs: ProjectInputs;
   stageId: string;
+  /** Contingency rate (0 to 1) set by the planner. Absent or null = the stage's rate. Changing the stage clears it. */
+  contingencyRate?: number | null;
   engineering: { design: number; constructionEngineering: number };
   /** null = no budget entered. */
   budget: number | null;

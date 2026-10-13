@@ -20,6 +20,7 @@ function makeProject(): PlanningProject {
     templateId: null,
     inputs: { lengthMiles: 1.5, roadwayWidthFt: 36, intersections: 6 },
     stageId: "planning_study",
+    contingencyRate: 0.2,
     engineering: { design: 0.12, constructionEngineering: 0.08 },
     budget: 2_500_000,
     alternatives: [

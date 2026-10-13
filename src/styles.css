@@ -3576,6 +3576,7 @@ tbody tr:last-child td {
 .planning-summary-lines .planning-summary-rate { grid-column: 2; font-variant-numeric: tabular-nums; display: flex; justify-content: flex-end; color: var(--text-muted); font-size: 0.88rem; font-weight: 700; text-align: right; }
 .planning-summary-lines .project-contingency-percent { gap: 0; font-size: inherit; }
 .planning-summary-lines .project-contingency-input { width: 2.6rem; margin-right: -3px; padding-right: 1px; font-size: inherit; font-variant-numeric: tabular-nums; }
+.planning-summary-lines .project-contingency-input:focus { margin-right: 0; }
 .planning-summary-lines dt { margin: 0; color: var(--heading); font-weight: 700; }
 .planning-summary-lines dd { margin: 0; color: var(--heading); font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
 

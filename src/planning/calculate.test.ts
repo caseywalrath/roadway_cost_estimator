@@ -132,6 +132,24 @@ describe("calculateAlternative", () => {
     expect(s.budgetRemaining).toBeCloseTo(540, 9);
   });
 
+  it("uses a contingency rate set by the planner in place of the stage rate, and reports it", () => {
+    const selections = { base_a: on(), post: on() };
+    const result = calculateAlternative(lib, { ...project(selections), contingencyRate: 0.2 });
+    expect(result.issues).toEqual([]);
+    expect(result.summary.contingencyRate).toBe(0.2);
+    expect(result.summary.contingency).toBeCloseTo(600, 9);
+    expect(result.summary.design).toBeCloseTo(360, 9);
+    expect(result.summary.total).toBeCloseTo(3000 + 600 + 360 + 360, 9);
+    expect(calculateAlternative(lib, { ...project(selections), contingencyRate: 0 }).summary.contingency).toBe(0);
+    expect(calculateAlternative(lib, { ...project(selections), contingencyRate: null }).summary.contingencyRate).toBe(0.1);
+  });
+
+  it("ignores an out-of-range contingency rate with an issue", () => {
+    const result = calculateAlternative(lib, { ...project({ base_a: on() }), contingencyRate: 1.5 });
+    expect(result.summary.contingencyRate).toBe(0.1);
+    expect(result.issues.map((i) => i.code)).toContain("invalid_contingency");
+  });
+
   it("counts a disabled element's ROW/utility amounts and leaves budget null", () => {
     const s = calculateAlternative(lib, project({ utility_relocation: { enabled: false, inputs: {}, override: 250 } })).summary;
     expect(s.utilityRelocation).toBe(250);

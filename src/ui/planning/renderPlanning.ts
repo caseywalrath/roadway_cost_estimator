@@ -619,7 +619,7 @@ export function renderSummary(vm: PlanningViewModel): string {
 
   <dl class="planning-summary-lines">
     <div><dt>Construction</dt><dd data-summary="construction">${esc(values.construction)}</dd></div>
-    <div><dt>Contingency</dt><dd class="planning-summary-rate" title="Set by the project stage"><span data-summary="contingencyRate">${esc(values.contingencyRate)}</span></dd><dd data-summary="contingency">${esc(values.contingency)}</dd></div>
+    <div><dt>Contingency</dt><dd class="planning-summary-rate" title="Starts at the project stage's rate. Changing the stage resets it.">${rate("contingency", "Contingency percentage", result.summary.contingencyRate)}</dd><dd data-summary="contingency">${esc(values.contingency)}</dd></div>
     <div><dt>Design</dt><dd class="planning-summary-rate">${rate("design", "Design percentage", result.summary.designRate)}</dd><dd data-summary="design">${esc(values.design)}</dd></div>
     <div><dt>Construction engineering</dt><dd class="planning-summary-rate">${rate("constructionEngineering", "Construction engineering percentage", result.summary.constructionEngineeringRate)}</dd><dd data-summary="constructionEngineering">${esc(values.constructionEngineering)}</dd></div>
     <div><dt>Right-of-way</dt><dd data-summary="rightOfWay">${esc(values.rightOfWay)}</dd></div>

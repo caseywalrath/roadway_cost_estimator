@@ -173,7 +173,7 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
       <dl class="planning-summary-lines">
         <div><dt>Construction</dt><dd data-summary="construction">$2,310,000</dd></div>
         <!-- Each row is a grid: label | rate (fixed 3.6rem, right-aligned) | amount (fixed 6.5rem). Rows without a rate leave the middle column empty. -->
-        <div><dt>Contingency</dt><dd class="planning-summary-rate" title="Set by the project stage"><span data-summary="contingencyRate">30%</span></dd><dd data-summary="contingency">$690,000</dd></div>
+        <div><dt>Contingency</dt><dd class="planning-summary-rate" title="Starts at the project stage's rate. Changing the stage resets it."><label class="project-contingency-percent"><input class="project-contingency-input" data-planning-rate="contingency" aria-label="Contingency percentage" value="30" /><span>%</span></label></dd><dd data-summary="contingency">$690,000</dd></div>
         <div><dt>Design</dt><dd class="planning-summary-rate"><label class="project-contingency-percent"><input class="project-contingency-input" data-planning-rate="design" aria-label="Design percentage" value="10" /><span>%</span></label></dd><dd data-summary="design">$300,000</dd></div>
         <div><dt>Construction engineering</dt><dd class="planning-summary-rate"><label class="project-contingency-percent">…data-planning-rate="constructionEngineering"…</label></dd><dd data-summary="constructionEngineering">$300,000</dd></div>
         <div><dt>Right-of-way</dt><dd data-summary="rightOfWay">Not included</dd></div>
@@ -234,7 +234,7 @@ The right column shows outputs: alternative buttons, summary lines, total, range
 | Allowance line | "Items subtotal ${direct} × {multiplier} allowance for minor items, traffic control and mobilization"; tooltip "Minor items {m}%, traffic control {t}%, mobilization {b}%" |
 | Disclosure line | Active quantity inputs with units. Inputs in inches appear only when the element has exactly one (mill thickness); several unlabeled depths are left out. |
 | Option values | numbers as is; "yes"/"no" → "Yes"/"No"; other strings capitalized ("Asphalt", "Concrete") |
-| Summary lines | "Construction", "Contingency" with its stage rate, "Design" and "Construction engineering" each with an editable rate, in one aligned rate column, "Construction engineering", "Right-of-way", "Utility relocation", "Total", "Range", "Budget", "{amount} remaining" / "{amount} over budget"; $0 other cost → "Not included" |
+| Summary lines | "Construction", "Contingency", "Design" and "Construction engineering" each with an editable rate (contingency starts at the stage rate; typing the stage rate, or choosing another stage, returns it to the stage rate), in one aligned rate column, "Construction engineering", "Right-of-way", "Utility relocation", "Total", "Range", "Budget", "{amount} remaining" / "{amount} over budget"; $0 other cost → "Not included" |
 | Alternatives | Summary: "Alternatives". Left column: "Alternative", "Name", "Description" (placeholder "One line describing this alternative"), "+ Alternative", "Duplicate", "Delete"; add form: "Start from", "Blank (no elements)", "Name", "Add alternative", "Cancel" |
 | Narrow bar | "{Alt name}", "Total {amount}", "{amount} under budget" / "{amount} over budget", "Summary" |
 | Price basis | "Prices: {priceBasisLabel}" |

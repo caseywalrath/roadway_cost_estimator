@@ -4,7 +4,7 @@ import rawLibrary from "../../data/planning/co_element_library.json";
 import { calculateAlternative } from "./calculate";
 import {
   addAlternative, duplicateAlternative, removeAlternative, renameAlternative, resetElementInput, selectAlternative,
-  setBaseTreatment, setBudget, setElementEnabled, setElementInput, setElementOverride, setEngineering, setProjectInput, setStage
+  setBaseTreatment, setBudget, setContingency, setElementEnabled, setElementInput, setElementOverride, setEngineering, setProjectInput, setStage
 } from "./edit";
 import { resolveLibrary } from "./library";
 import { createAlternative, createProject } from "./templates";
@@ -115,6 +115,9 @@ describe("edit helpers", () => {
   it("project-level setters", () => {
     const p = make(null);
     expect(setStage(p, "planning_study").stageId).toBe("planning_study");
+    expect(p.contingencyRate).toBeNull();
+    expect(setContingency(p, 0.2).contingencyRate).toBe(0.2);
+    expect(setStage(setContingency(p, 0.2), "planning_study").contingencyRate).toBeNull();
     expect(setEngineering(p, { design: 0.2 }).engineering).toEqual({ design: 0.2, constructionEngineering: 0.1 });
     expect(setBudget(p, 1000).budget).toBe(1000);
     expect(setBudget(setBudget(p, 1000), null).budget).toBeNull();

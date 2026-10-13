@@ -4,7 +4,7 @@ import prices from "../../public/data/states/co/planning_prices.json";
 import rawLibrary from "../../data/planning/co_element_library.json";
 import { parseUserProjectV10, projectCostSummary } from "../projects/projectWorkspace";
 import { calculateAlternative } from "./calculate";
-import { setElementInput, setElementOverride, setEngineering, setProjectInput, setStage } from "./edit";
+import { setContingency, setElementInput, setElementOverride, setEngineering, setProjectInput, setStage } from "./edit";
 import { resolveLibrary } from "./library";
 import { createProject } from "./templates";
 import { planningAlternativeToProject, type CatalogEntry, type ToProjectOptions } from "./toProject";
@@ -138,6 +138,13 @@ describe("line mapping", () => {
     for (const l of lines) {
       expect(l).toMatchObject({ lineItemType: "custom", unit: "LS", quantity: 1, costCategory: "construction", notes: "Planning factor for mill overlay" });
     }
+  });
+
+  it("uses a contingency rate set by the planner and still reconciles to the Planning total", () => {
+    const planning = setContingency(make("complete_street"), 0.2);
+    const { project, difference } = planningAlternativeToProject(library, planning, "a1", makeOptions());
+    expect(project.contingencyPercent).toBe(20);
+    expect(Math.abs(difference)).toBeLessThan(1);
   });
 
   it("sets contingencyPercent from the stage", () => {

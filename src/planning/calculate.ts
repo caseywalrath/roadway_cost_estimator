@@ -91,6 +91,15 @@ export function calculateAlternative(
     stage = library.stages.find((s) => s.id === library.defaultStage) ?? library.stages[0];
   }
 
+  let contingencyRate = stage.contingency;
+  if (project.contingencyRate !== undefined && project.contingencyRate !== null) {
+    if (Number.isFinite(project.contingencyRate) && project.contingencyRate >= 0 && project.contingencyRate <= 1) {
+      contingencyRate = project.contingencyRate;
+    } else {
+      issues.push({ code: "invalid_contingency", path: "contingencyRate", message: "Contingency must be between 0 and 1; using the stage rate." });
+    }
+  }
+
   const elements: ElementResult[] = library.elements
     .filter((element) => element.group !== "other")
     .map((element) => {
@@ -144,7 +153,7 @@ export function calculateAlternative(
     });
 
   const construction = elements.filter((e) => e.enabled).reduce((sum, e) => sum + e.amount, 0);
-  const contingency = construction * stage.contingency;
+  const contingency = construction * contingencyRate;
   const design = (construction + contingency) * project.engineering.design;
   const constructionEngineering = (construction + contingency) * project.engineering.constructionEngineering;
   const rightOfWay = selectionOf("right_of_way")?.override ?? 0;
@@ -160,7 +169,7 @@ export function calculateAlternative(
       factors,
       multiplier,
       construction,
-      contingencyRate: stage.contingency,
+      contingencyRate,
       contingency,
       designRate: project.engineering.design,
       design,

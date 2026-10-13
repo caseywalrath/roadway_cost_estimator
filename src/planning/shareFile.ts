@@ -193,6 +193,15 @@ export function parseShareFile(text: string, library: ParseLibrary): ParseShareR
   };
   const engineering = { design: rate("design"), constructionEngineering: rate("constructionEngineering") };
 
+  let contingencyRate: number | null = null;
+  if (p.contingencyRate !== undefined && p.contingencyRate !== null) {
+    if (isFiniteNumber(p.contingencyRate) && p.contingencyRate >= 0 && p.contingencyRate <= 1) {
+      contingencyRate = p.contingencyRate;
+    } else {
+      issue("invalid_contingency", "project.contingencyRate", "Contingency must be between 0 and 1; using the stage rate.");
+    }
+  }
+
   let budget: number | null = null;
   if (isFiniteNumber(p.budget) && p.budget >= 0) {
     budget = p.budget;
@@ -218,6 +227,7 @@ export function parseShareFile(text: string, library: ParseLibrary): ParseShareR
     templateId: typeof p.templateId === "string" ? p.templateId : null,
     inputs,
     stageId,
+    contingencyRate,
     engineering,
     budget,
     alternatives,

@@ -116,8 +116,14 @@ export function setProjectInput(project: PlanningProject, key: ProjectInputKey, 
   return { ...project, inputs: { ...project.inputs, [key]: value } };
 }
 
+/** Choosing a stage applies its contingency rate, so it clears any contingency the planner entered. */
 export function setStage(project: PlanningProject, stageId: string): PlanningProject {
-  return { ...project, stageId };
+  return { ...project, stageId, contingencyRate: null };
+}
+
+/** Overrides the stage's contingency rate (0 to 1). null returns to the stage rate. */
+export function setContingency(project: PlanningProject, rate: number | null): PlanningProject {
+  return { ...project, contingencyRate: rate };
 }
 
 export function setEngineering(project: PlanningProject, change: { design?: number; constructionEngineering?: number }): PlanningProject {

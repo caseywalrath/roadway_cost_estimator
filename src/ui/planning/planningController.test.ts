@@ -364,7 +364,26 @@ describe("creating and editing", () => {
     expect(q(root, "[data-planning-summary-error]").textContent).toBe("Enter a percent from 0 to 100.");
     const stage = q<HTMLSelectElement>(root, "[data-planning-stage]");
     setValue(stage, "planning_study");
-    expect(q(root, "aside [data-summary='contingencyRate']").textContent).toBe("25%");
+    expect(q<HTMLInputElement>(root, "aside [data-planning-rate='contingency']").value).toBe("25");
+  });
+
+  it("lets the planner edit contingency, returns to the stage rate when the stage rate is typed, and resets on a stage change", async () => {
+    const { controller, root } = await open();
+    await createStreet(root, controller);
+    const field = () => q<HTMLInputElement>(root, "aside [data-planning-rate='contingency']");
+    const stageDefault = totalText(expectedTotal("complete_street"));
+    expect(field().value).toBe("30");
+    setValue(field(), "20");
+    expect(summaryTotal(root)).not.toBe(stageDefault);
+    expect(q(root, "aside [data-summary='contingency']").textContent).not.toBe("");
+    setValue(field(), "30");
+    expect(summaryTotal(root)).toBe(stageDefault);
+    setValue(field(), "20");
+    setValue(q<HTMLSelectElement>(root, "[data-planning-stage]"), "planning_study");
+    expect(field().value).toBe("25");
+    setValue(field(), "150");
+    expect(field().getAttribute("aria-invalid")).toBe("true");
+    expect(q(root, "[data-planning-summary-error]").textContent).toBe("Enter a percent from 0 to 100.");
   });
 
   it("shows budget remaining with under and over classes", async () => {

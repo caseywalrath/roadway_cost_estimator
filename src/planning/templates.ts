@@ -42,6 +42,7 @@ export function createProject(
     templateId: options.templateId,
     inputs,
     stageId: library.defaultStage,
+    contingencyRate: null,
     engineering: { ...library.engineering },
     budget: null,
     alternatives: [createAlternative(library, options.templateId, { id: options.alternativeId, name: "Alternative A" })],

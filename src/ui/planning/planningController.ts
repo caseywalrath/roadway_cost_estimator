@@ -16,6 +16,7 @@ import {
   setElementOverride,
   setEngineering,
   setProjectInput,
+  setContingency,
   setStage
 } from "../../planning/edit";
 import { buildPlanningCsv, planningCsvFilename } from "../../planning/exportCsv";
@@ -534,6 +535,8 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       }
     }
     setText('[data-summary="altName"]', selectedAlt()?.name ?? "");
+    const contingency = qs<HTMLInputElement>('[data-planning-rate="contingency"]');
+    if (contingency && contingency !== activeElement()) contingency.value = percentNumber(result.summary.contingencyRate);
     const editedText = editedCostsText(result);
     for (const el of qsa("[data-planning-edited-costs]")) {
       el.textContent = editedText;
@@ -1013,7 +1016,8 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
   }
 
   function commitRate(t: HTMLInputElement): void {
-    const key = t.dataset.planningRate === "design" ? "design" : "constructionEngineering";
+    const rateKey = t.dataset.planningRate;
+    const key = rateKey === "design" ? "design" : "constructionEngineering";
     const error = errorFor(t);
     const parsed = parsePercent(t.value);
     if (!parsed.ok) {
@@ -1022,6 +1026,12 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     }
     clearInvalid(t, error);
     setValue(t, percentNumber(parsed.value));
+    if (rateKey === "contingency") {
+      const stage = library.stages.find((s) => s.id === project!.stageId) ?? library.stages.find((s) => s.id === library.defaultStage);
+      const matchesStage = stage !== undefined && Math.abs(stage.contingency - parsed.value) < 1e-9;
+      apply(setContingency(project!, matchesStage ? null : parsed.value), { rows: false });
+      return;
+    }
     apply(setEngineering(project!, { [key]: parsed.value }), { rows: false });
   }
 
