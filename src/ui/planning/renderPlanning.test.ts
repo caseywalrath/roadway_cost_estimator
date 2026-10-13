@@ -71,6 +71,8 @@ describe("renderPlanningView", () => {
     expect(marker("lighting")?.className).toContain("planning-origin--external");
     expect(marker("signal")?.className).toContain("planning-origin--external");
     expect(marker("lighting")?.getAttribute("aria-label")).toBe("External allowance");
+    expect(marker("lighting")?.getAttribute("title")).toBe("External allowance: a planning estimate, not from bid history. Its unit costs can be edited.");
+    expect(marker("sidewalk")?.getAttribute("title")).toBe("Bid database price, from CDOT contract history.");
     expect(marker("base_none")).toBeNull();
     expect(marker("right_of_way")).toBeNull();
     expect(root.querySelector(".planning-origin-legend")).not.toBeNull();

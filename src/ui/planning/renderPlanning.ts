@@ -444,9 +444,10 @@ export function elementPriceOrigin(element: ResolvedElement): PriceOrigin | null
   return element.components.some((c) => c.source.kind === "assembly") ? "external" : "database";
 }
 
-const ORIGIN_TEXT: Record<PriceOrigin, { short: string; long: string }> = {
-  database: { short: "Bid database price", long: "Priced from CDOT bid history." },
-  external: { short: "External allowance", long: "Planning allowance. You can edit its unit cost." }
+/** short: legend and aria-label. tip: the hover text, one sentence that does not repeat the label. */
+const ORIGIN_TEXT: Record<PriceOrigin, { short: string; tip: string }> = {
+  database: { short: "Bid database price", tip: "Bid database price, from CDOT contract history." },
+  external: { short: "External allowance", tip: "External allowance: a planning estimate, not from bid history. Its unit costs can be edited." }
 };
 
 function renderOriginMarker(element: ResolvedElement): string {
@@ -454,7 +455,7 @@ function renderOriginMarker(element: ResolvedElement): string {
   if (!origin) return "";
   const text = ORIGIN_TEXT[origin];
   // U+2060 word joiner keeps the dot on the same line as the last word of the label.
-  return `\u2060<span class="planning-origin planning-origin--${origin}" role="img" aria-label="${esc(text.short)}" title="${esc(`${text.short}. ${text.long}`)}"></span>`;
+  return `\u2060<span class="planning-origin planning-origin--${origin}" role="img" aria-label="${esc(text.short)}" title="${esc(text.tip)}"></span>`;
 }
 
 function renderOriginLegend(): string {
