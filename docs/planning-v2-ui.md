@@ -76,10 +76,11 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
 
   <div class="planning-layout">
     <!-- Element groups (≈65%) -->
-    <section class="panel-block" aria-label="Elements">
+    <div class="planning-groups" role="group" aria-label="Elements"> <!-- origin legend, then one panel-block per group -->
+    <section class="panel-block planning-group-box">
       <fieldset class="planning-group" data-planning-group="base">
         <legend class="planning-group-heading">
-          <span class="eyebrow">Base treatment</span><span class="muted">Choose one</span>
+          <h3>Base treatment</h3><span class="muted">Choose one</span>
           <strong data-group-subtotal="base">$1,420,000</strong>
         </legend>
         <p class="muted">The base treatment sets the allowance for minor items, traffic control and mobilization on every element.</p>
@@ -140,7 +141,7 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
       </fieldset>
 
       <fieldset class="planning-group" data-planning-group="corridor">  <!-- same for "spot" -->
-        <legend class="planning-group-heading"><span class="eyebrow">Corridor elements</span><span class="muted">Add any</span>
+        <legend class="planning-group-heading"><h3>Corridor elements</h3><span class="muted">Add any</span>
           <strong data-group-subtotal="corridor">$1,830,000</strong></legend>
         <div class="planning-row planning-row--off" data-element-row="curb_gutter">
           <label class="checkbox-label"><input type="checkbox" data-element-toggle="curb_gutter" /><span>Curb and gutter</span></label>
@@ -149,7 +150,7 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
       </fieldset>
 
       <fieldset class="planning-group" data-planning-group="other">
-        <legend class="planning-group-heading"><span class="eyebrow">Other costs</span><span class="muted">Enter amounts</span>
+        <legend class="planning-group-heading"><h3>Other costs</h3><span class="muted">Enter amounts</span>
           <strong data-group-subtotal="other">$100,000</strong></legend>
         <div class="planning-row" data-element-row="right_of_way">
           <span class="planning-row-label">Right-of-way</span>      <!-- no toggle, no details -->
@@ -160,6 +161,7 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
         <!-- utility_relocation: same -->
       </fieldset>
     </section>
+    </div>
 
     <!-- Summary (≈35%, sticky) -->
     <aside class="panel-block planning-summary" id="planning-summary" aria-label="Alternative summary">
@@ -321,7 +323,8 @@ New classes:
 | `planning-header-actions` | Flex row for the two menus | Layout. `project-header-actions` is Project-view layout and could change with it. |
 | `planning-corridor-fields` | Auto-fit grid of corridor fields (min 150 px) | Layout. No shared field grid exists. |
 | `planning-layout` | Two columns, `minmax(0, 1.85fr) minmax(320px, 1fr)`; one column under 900 px | Layout. `workspace-grid` has a fixed 290–420 px left column and is Explorer layout. |
-| `planning-group` | Resets fieldset border, padding and margin; spacing between groups | No shared fieldset rule; browser defaults otherwise. |
+| `planning-groups`, `planning-group-box` | Grid with a 16 px gap holding the origin legend and one `panel-block` per element group (Base treatment, Corridor elements, Spot elements, Other costs); 14 px box padding under 560 px | Layout. |
+| `planning-group` | Resets fieldset border, padding and margin | No shared fieldset rule; browser defaults otherwise. |
 | `planning-group-heading` | Legend as a flex row: eyebrow, hint, subtotal right-aligned | Layout of the legend. |
 | `planning-row` | Element row grid: `minmax(0,1fr) auto` with the disclosure on a second full-width line; divider in `--line` | Element row (named in the convention rule). |
 | `planning-row--off` | Dollar box text in `--text-muted` for unselected rows | Row state; no shared muted-input state. |

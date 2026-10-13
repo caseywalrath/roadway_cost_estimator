@@ -447,7 +447,7 @@ export function elementPriceOrigin(element: ResolvedElement): PriceOrigin | null
 /** short: legend and aria-label. tip: the hover text, one sentence that does not repeat the label. */
 const ORIGIN_TEXT: Record<PriceOrigin, { short: string; tip: string }> = {
   database: { short: "Bid database price", tip: "Bid database price, from CDOT contract history." },
-  external: { short: "External allowance", tip: "External allowance: a planning estimate, not from bid history. Its unit costs can be edited." }
+  external: { short: "External allowance", tip: "External planning estimate, not from bid history." }
 };
 
 function renderOriginMarker(element: ResolvedElement): string {
@@ -456,6 +456,14 @@ function renderOriginMarker(element: ResolvedElement): string {
   const text = ORIGIN_TEXT[origin];
   // U+2060 word joiner keeps the dot on the same line as the last word of the label.
   return `\u2060<span class="planning-origin planning-origin--${origin}" role="img" aria-label="${esc(text.short)}" title="${esc(text.tip)}"></span>`;
+}
+
+/** The label with the marker bound to its last word, so the dot never wraps onto a line of its own. */
+function renderLabelWithMarker(element: ResolvedElement): string {
+  const marker = renderOriginMarker(element);
+  if (!marker) return esc(element.label);
+  const split = element.label.lastIndexOf(" ") + 1;
+  return `${esc(element.label.slice(0, split))}<span class="planning-nowrap">${esc(element.label.slice(split))}${marker}</span>`;
 }
 
 function renderOriginLegend(): string {
@@ -476,7 +484,7 @@ export function renderElementRow(element: ResolvedElement, er: ElementResult, se
   const toggle = isBase
     ? `<input type="radio" name="planning-base" value="${id}" data-element-toggle="${id}"${er.enabled ? " checked" : ""} />`
     : `<input type="checkbox" data-element-toggle="${id}"${er.enabled ? " checked" : ""} />`;
-  const label = `<label class="checkbox-label">${toggle}<span>${esc(element.label)}${renderOriginMarker(element)}</span></label>`;
+  const label = `<label class="checkbox-label">${toggle}<span>${renderLabelWithMarker(element)}</span></label>`;
   const rowClass = `planning-row${er.enabled ? "" : " planning-row--off"}`;
   if (element.components.length === 0) {
     return `<div class="${rowClass}" data-element-row="${id}">${label}<div class="planning-amount"><span class="muted planning-amount-note">Elements only</span></div></div>`;
@@ -528,10 +536,12 @@ export function renderElementGroups(vm: PlanningViewModel): string {
         })
         .join("\n");
       const hint = group.id === "base" ? `\n  <p class="muted">${esc(BASE_HINT)}</p>` : "";
-      return `<fieldset class="planning-group" data-planning-group="${esc(group.id)}">
-  <legend class="planning-group-heading"><span class="eyebrow">${esc(group.label)}</span><span class="muted">${esc(GROUP_HINTS[group.selection] ?? "")}</span><strong data-group-subtotal="${esc(group.id)}">${esc(groupSubtotalText(group, vm.result))}</strong></legend>${hint}
+      return `<section class="panel-block planning-group-box">
+<fieldset class="planning-group" data-planning-group="${esc(group.id)}">
+  <legend class="planning-group-heading"><h3>${esc(group.label)}</h3><span class="muted">${esc(GROUP_HINTS[group.selection] ?? "")}</span><strong data-group-subtotal="${esc(group.id)}">${esc(groupSubtotalText(group, vm.result))}</strong></legend>${hint}
 ${rows}
-</fieldset>`;
+</fieldset>
+</section>`;
     })
     .join("\n");
 }
@@ -647,10 +657,10 @@ ${renderTotalBar(vm)}
   <div class="planning-main">
   ${renderCorridorPanel(vm.library, vm.project, vm.result)}
   ${renderAlternativePanel(vm)}
-  <section class="panel-block" aria-label="Elements">
+  <div class="planning-groups" role="group" aria-label="Elements">
   ${renderOriginLegend()}
 ${renderElementGroups(vm)}
-  </section>
+  </div>
   ${renderHandoffPanel(vm)}
   </div>
 ${renderSummary(vm)}

@@ -71,7 +71,7 @@ describe("renderPlanningView", () => {
     expect(marker("lighting")?.className).toContain("planning-origin--external");
     expect(marker("signal")?.className).toContain("planning-origin--external");
     expect(marker("lighting")?.getAttribute("aria-label")).toBe("External allowance");
-    expect(marker("lighting")?.getAttribute("title")).toBe("External allowance: a planning estimate, not from bid history. Its unit costs can be edited.");
+    expect(marker("lighting")?.getAttribute("title")).toBe("External planning estimate, not from bid history.");
     expect(marker("sidewalk")?.getAttribute("title")).toBe("Bid database price, from CDOT contract history.");
     expect(marker("base_none")).toBeNull();
     expect(marker("right_of_way")).toBeNull();
@@ -140,7 +140,7 @@ describe("renderPlanningView", () => {
   });
 
   it("keeps internal data decisions out of the element panels", () => {
-    const text = root.querySelector("section[aria-label='Elements']")!.textContent ?? "";
+    const text = root.querySelector(".planning-groups")!.textContent ?? "";
     for (const jargon of ["Calibration report", "calibration report", "FHU", "minor-items factor", "median of", "Assembly cost"]) {
       expect(text).not.toContain(jargon);
     }
@@ -196,6 +196,9 @@ describe("renderPlanningView", () => {
     expect(main.querySelector("[data-planning-alt]")).toBeNull();
     const order = [...main.children].map((c) => c.getAttribute("aria-label") ?? c.querySelector("h3")?.textContent);
     expect(order.slice(0, 3)).toEqual(["Corridor", "Selected alternative", "Elements"]);
+    const boxes = [...main.querySelectorAll(".planning-groups > .panel-block")].map((b) => b.querySelector("h3")?.textContent);
+    expect(boxes).toEqual(["Base treatment", "Corridor elements", "Spot elements", "Other costs"]);
+    expect(main.querySelector(".planning-groups > .planning-origin-legend")).not.toBeNull();
   });
 
   it("puts Create engineer Project last in the left column and omits it when the host cannot create one", () => {

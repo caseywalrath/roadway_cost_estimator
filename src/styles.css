@@ -3508,10 +3508,11 @@ tbody tr:last-child td {
 
 .planning-layout { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(320px, 1fr); gap: 16px; align-items: start; }
 
-.planning-group { min-width: 0; margin: 0 0 18px; border: 0; padding: 0; }
-.planning-group:last-child { margin-bottom: 0; }
+.planning-view .planning-nowrap { display: inline; white-space: nowrap; }
+.planning-groups { display: grid; gap: 16px; min-width: 0; }
+.planning-group { min-width: 0; margin: 0; border: 0; padding: 0; }
 .planning-group-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; width: 100%; margin-bottom: 4px; padding: 0; }
-.planning-group-heading > .eyebrow { margin: 0; }
+.planning-group-heading > h3 { margin: 0; color: var(--heading); font-size: 1.05rem; line-height: 1.2; }
 .planning-group-heading > strong { margin-left: auto; color: var(--heading); }
 
 .planning-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; border-top: 1px solid var(--line); padding: 10px 0; }
@@ -3519,7 +3520,7 @@ tbody tr:last-child td {
 .planning-view .planning-origin { display: inline-block; flex: 0 0 auto; width: 8px; height: 8px; margin-left: 6px; border: 1.5px solid var(--text-muted); border-radius: 50%; vertical-align: middle; }
 .planning-view .planning-origin--database { background: var(--text-muted); }
 .planning-view .planning-origin--external { background: transparent; }
-.planning-origin-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0 0 8px; font-size: 0.8rem; }
+.planning-origin-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0; font-size: 0.8rem; }
 .planning-view .planning-origin-legend > .planning-origin { margin-left: 0; }
 .planning-view .planning-origin-legend > .planning-origin:not(:first-child) { margin-left: 12px; }
 .planning-row--off .planning-amount-input { color: var(--text-muted); }
@@ -3618,6 +3619,7 @@ tbody tr:last-child td {
   .planning-template-options,
   .planning-add-alternative { grid-template-columns: minmax(0, 1fr); }
   .planning-alternative-fields { grid-template-columns: minmax(0, 1fr); }
+  .planning-group-box { padding: 14px; }
   .planning-inputs { grid-template-columns: minmax(0, 1fr); }
   .planning-main .planning-corridor-fields { grid-template-columns: minmax(0, 1fr); }
 }
