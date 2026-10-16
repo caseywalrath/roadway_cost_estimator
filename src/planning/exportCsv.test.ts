@@ -54,7 +54,7 @@ function parseCsv(text: string): string[][] {
 }
 
 const body = (csv: string) => csv.replace(/^﻿/u, "");
-const HEADER = ["Alternative", "Row type", "Group", "Element", "Item", "Description", "Quantity", "Unit", "Unit price", "Amount", "Note"];
+const HEADER = ["Alternative", "Row type", "Group", "Element", "Amount", "Note"];
 function tableRows(csv: string): string[][] {
   const rows = parseCsv(body(csv));
   const headerIndex = rows.findIndex((r) => r[0] === "Alternative");
@@ -119,39 +119,24 @@ describe("buildPlanningCsv totals", () => {
   });
 });
 
-describe("element and pay item rows", () => {
-  it("lists pay items under each enabled, non-overridden element only", () => {
+describe("element rows", () => {
+  it("lists enabled elements and omits pay item detail", () => {
     const project = make("complete_street");
     const result = calculateAlternative(library, project, "a1");
     const rows = tableRows(buildPlanningCsv(library, project, EXPORTED));
     const enabled = result.elements.filter((e) => e.enabled);
     expect(rows.filter((r) => r[1] === "Element").map((r) => r[3])).toEqual(enabled.map((e) => e.label));
-    const payItems = rows.filter((r) => r[1] === "Pay item");
-    expect(payItems.length).toBe(enabled.reduce((n, e) => n + e.components.length, 0));
-    for (const e of enabled) {
-      const own = payItems.filter((r) => r[3] === e.label);
-      expect(own).toHaveLength(e.components.length);
-      expect(own.map((r) => r[5])).toEqual(e.components.map((c) => c.label));
-    }
-    const first = payItems[0];
-    expect(first[10]).toMatch(/^Direct cost before ×\d+\.\d{2} allowance for minor items, traffic control and mobilization$/u);
+    expect(rows.some((r) => r[1] === "Pay item")).toBe(false);
   });
 
-  it("puts pay item rows directly after their element row", () => {
-    const rows = tableRows(buildPlanningCsv(library, make("complete_street"), EXPORTED));
-    const idx = rows.findIndex((r) => r[1] === "Pay item");
-    expect(rows[idx - 1][1]).toMatch(/^(Element|Pay item)$/u);
-    expect(rows[idx][3]).toBe(rows.slice(0, idx).reverse().find((r) => r[1] === "Element")?.[3]);
-  });
-
-  it("omits pay items and adds a note for an overridden element", () => {
+  it("omits pay item detail and adds a note for an overridden element", () => {
     let project = make("complete_street");
     const target = calculateAlternative(library, project, "a1").elements.find((e) => e.enabled && e.group === "corridor")!;
     project = setElementOverride(project, "a1", target.elementId, 123456);
     const rows = tableRows(buildPlanningCsv(library, project, EXPORTED));
     const element = rows.find((r) => r[1] === "Element" && r[3] === target.label)!;
-    expect(element[9]).toBe("123000");
-    expect(element[10]).toBe(`Entered amount; calculated ${roundElementAmount(target.calculated)}`);
+    expect(element[4]).toBe("123000");
+    expect(element[5]).toBe(`Entered amount; calculated ${roundElementAmount(target.calculated)}`);
     expect(rows.filter((r) => r[1] === "Pay item" && r[3] === target.label)).toHaveLength(0);
   });
 
@@ -163,14 +148,6 @@ describe("element and pay item rows", () => {
     expect(rows.some((r) => r[3] === target.label)).toBe(false);
   });
 
-  it("writes pay item numbers rounded", () => {
-    const rows = tableRows(buildPlanningCsv(library, make("mill_overlay"), EXPORTED));
-    for (const r of rows.filter((x) => x[1] === "Pay item")) {
-      expect(r[6]).toMatch(/^\d+(\.\d{1,2})?$/u);
-      expect(r[8]).toMatch(/^\d+(\.\d{1,2})?$/u);
-      expect(r[9]).toMatch(/^\d+$/u);
-    }
-  });
 });
 
 describe("budget rows", () => {
@@ -242,18 +219,19 @@ describe("planningCsvFilename", () => {
 });
 
 describe("edited unit costs", () => {
-  it("uses the edited cost in the pay-item row and notes the default", () => {
+  it("uses the edited cost in the element row and omits pay-item detail", () => {
     const project = setElementInput(make("complete_street"), "a1", "lighting", "unitCost.assembly", 1300000);
     const rows = parseCsv(buildPlanningCsv(library, project, EXPORTED));
-    const row = rows.find((r) => r[1] === "Pay item" && r[3] === "Corridor lighting")!;
-    expect(row[4]).toBe("Allowance");
-    expect(row[8]).toBe("1300000");
-    expect(row[10]).toContain("unit cost edited from 1120000");
+    const row = rows.find((r) => r[1] === "Element" && r[3] === "Corridor lighting")!;
+    const lighting = calculateAlternative(library, project, "a1").elements.find((element) => element.label === "Corridor lighting")!;
+    expect(row[4]).toBe(String(roundElementAmount(lighting.amount)));
+    expect(row[5]).toBe("");
+    expect(rows.some((r) => r[1] === "Pay item")).toBe(false);
   });
 
   it("adds no edit note when nothing is edited", () => {
     const rows = parseCsv(buildPlanningCsv(library, make("complete_street"), EXPORTED));
-    const row = rows.find((r) => r[1] === "Pay item" && r[3] === "Corridor lighting")!;
-    expect(row[10]).not.toContain("edited");
+    const row = rows.find((r) => r[1] === "Element" && r[3] === "Corridor lighting")!;
+    expect(row[5]).not.toContain("edited");
   });
 });

@@ -1,12 +1,12 @@
 // Planning v2 CSV export. Pure: builds the file text from a project; the caller handles download. Rules: src/planning/README.md.
-import { calculateAlternative, roundElementAmount, roundTotalAmount, roundUnitPrice } from "./calculate";
+import { calculateAlternative, roundElementAmount, roundTotalAmount } from "./calculate";
 import type { PlanningProject, ResolvedLibrary } from "./types";
 
 type Cell = string | number | null | undefined;
 
 const BOM = "﻿";
 const EOL = "\r\n";
-const HEADER = ["Alternative", "Row type", "Group", "Element", "Item", "Description", "Quantity", "Unit", "Unit price", "Amount", "Note"];
+const HEADER = ["Alternative", "Row type", "Group", "Element", "Amount", "Note"];
 const NOTE =
   "Planning-level estimate. Amounts are rounded as shown on screen: element and summary lines to $1,000, total and range to $10,000.";
 
@@ -48,33 +48,18 @@ export function buildPlanningCsv(library: ResolvedLibrary, project: PlanningProj
   for (const alt of project.alternatives) {
     const result = calculateAlternative(library, project, alt.id);
     const { summary } = result;
-    const row = (type: string, group: Cell, element: Cell, item: Cell, description: Cell, quantity: Cell, unit: Cell, unitPrice: Cell, amount: Cell, note: Cell) =>
-      lines.push(csvLine([alt.name, type, group, element, item, description, quantity, unit, unitPrice, amount, note]));
+    const row = (type: string, group: Cell, element: Cell, amount: Cell, note: Cell) =>
+      lines.push(csvLine([alt.name, type, group, element, amount, note]));
 
     // Right-of-way and utility relocation are not element results; they appear as Summary rows.
     for (const e of result.elements) {
       if (!e.enabled) continue;
       const group = groupLabel(e.group);
       const note = e.override !== null ? `Entered amount; calculated ${roundElementAmount(e.calculated)}` : "";
-      row("Element", group, e.label, "", "", "", "", "", roundElementAmount(e.amount), note);
-      if (e.override !== null) continue;
-      for (const c of e.components) {
-        row(
-          "Pay item",
-          group,
-          e.label,
-          c.source.kind === "item" ? c.source.code : "Allowance",
-          c.label,
-          Math.round(c.quantity * 100) / 100,
-          c.unit,
-          roundUnitPrice(c.unitPrice),
-          Math.round(c.amount),
-          `Direct cost before ×${summary.multiplier.toFixed(2)} allowance for minor items, traffic control and mobilization${c.edited ? `; unit cost edited from ${roundUnitPrice(c.defaultUnitPrice)}` : ""}`
-        );
-      }
+      row("Element", group, e.label, roundElementAmount(e.amount), note);
     }
 
-    const line = (label: string, amount: number | null) => row("Summary", "", label, "", "", "", "", "", amount, "");
+    const line = (label: string, amount: number | null) => row("Summary", "", label, amount, "");
     line("Construction", roundElementAmount(summary.construction));
     line(`Contingency (${percentText(summary.contingencyRate)})`, roundElementAmount(summary.contingency));
     line(`Design (${percentText(summary.designRate)})`, roundElementAmount(summary.design));

@@ -1,24 +1,14 @@
 import type { ItemPriceHistoryResult, ItemPriceHistoryRow } from "../matching/buildItemPriceHistoryResult";
 
 const columns: Array<[string, (row: ItemPriceHistoryRow) => string | number | null]> = [
-  ["State", (row) => row.summary.state],
-  ["Agency", (row) => row.source?.agencyName ?? row.summary.agencyId],
-  ["Report Series", (row) => row.summary.reportSeries],
-  ["Period Start", (row) => row.summary.periodStartDate],
-  ["Period End", (row) => row.summary.periodEndDate],
-  ["Period Label", (row) => row.summary.periodLabel],
+  ["Period", (row) => row.summary.periodLabel],
   ["Item No.", (row) => row.summary.agencyItemCode],
-  ["Agency Item ID", (row) => row.summary.agencyItemId],
   ["Item Description", (row) => row.summary.descriptionRaw],
   ["Total Quantity", (row) => row.summary.totalQuantity],
   ["Unit", (row) => row.summary.unitRaw],
   ["Published Average Unit Price", (row) => row.summary.publishedAverageUnitPrice],
   ["Total Bid", (row) => row.summary.totalBid],
-  ["Source Label", (row) => row.source?.sourceLabel ?? null],
-  ["Source URL", (row) => row.source?.sourceUrl ?? null],
-  ["Source File", (row) => row.source?.sourceFileName ?? null],
-  ["Source Page", (row) => row.summary.sourcePage],
-  ["Source Locator", (row) => row.summary.sourceLocator]
+  ["Source", (row) => row.source?.sourceLabel ?? null]
 ];
 
 export function buildItemPriceHistoryCsv(rows: ItemPriceHistoryRow[]): string {

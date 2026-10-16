@@ -1,4 +1,5 @@
 import type { AppData, EvidenceResult, EvidenceRow } from "../data/schema";
+import { getEvidenceLocationDisplayValues } from "../matching/projectLocation";
 
 interface CsvColumn {
   header: string;
@@ -6,50 +7,30 @@ interface CsvColumn {
 }
 
 const csvColumns: CsvColumn[] = [
-  { header: "State", value: (row) => row.contract?.state || null },
-  { header: "Agency item ID", value: (row) => row.agencyItemId || null },
-  { header: "Contract ID", value: (row) => row.contract?.officialContractId || null },
-  { header: "Project no.", value: (row) => row.contract?.projectNumber || null },
-  { header: "Project control no.", value: (row) => row.contract?.projectControlNumber || null },
-  { header: "Project / location", value: (row) => row.contract?.projectName || null },
-  { header: "Call order", value: (row) => row.contract?.callOrder || null },
-  { header: "Letting status", value: (row) => row.contract?.lettingStatus || null },
-  { header: "Route", value: (row) => row.contract?.route || null },
-  { header: "Work type", value: (row) => row.contract?.workType || null },
-  { header: "Contract period", value: (row) => row.contract?.contractPeriod || null },
-  { header: "DBE goal", value: (row) => row.contract?.dbeGoal || null },
-  { header: "District", value: (row) => row.project?.district || null },
+  { header: "Contract / project", value: (row) => [row.project?.projectNumber || "Not listed", row.project?.projectControlNumber ? `PCN ${row.project.projectControlNumber}` : ""].filter(Boolean).join(" • ") },
+  { header: "Location", value: (row) => getEvidenceLocationDisplayValues(row).join(" • ") || "Unknown project" },
+  { header: "District", value: (row) => row.project?.district || "Not listed" },
   { header: "Let date", value: (row) => row.project?.estimateLetDate || row.dateBasis || null },
-  { header: "Awarded vendor", value: (row) => row.contract?.awardedVendor || null },
-  { header: "Bid count", value: (row) => row.project?.bidCount ?? null },
+  { header: "Awarded vendor", value: (row) => row.project?.contractor || "Not listed" },
+  { header: "Bids", value: (row) => row.project?.bidCount ?? null },
   { header: "Quantity", value: (row) => row.quantity },
   { header: "Unit", value: (row) => row.unit || null },
   { header: "Item description", value: (row) => row.descriptionRaw || null },
-  { header: "Awarded bid unit price", value: (row) => row.awardedBidUnitPrice },
-  { header: "Average bid unit price", value: (row) => row.averageBidUnitPrice },
-  { header: "Engineer estimate unit price", value: (row) => row.engineerEstimateUnitPrice },
-  { header: "Source", value: (row) => row.source?.sourceLabel || null },
-  { header: "Project location raw", value: (row) => row.project?.projectLocationRaw || null },
-  { header: "Terrain", value: (row) => row.project?.terrain || null },
-  { header: "Awarded bid total", value: (row) => row.project?.awardedBidTotal ?? null },
-  { header: "Award index", value: (row) => row.project?.awardIndex ?? null },
-  { header: "Source ID", value: (row) => row.source?.sourceId || null },
-  {
-    header: "Bidder detail",
-    value: (row, data) => data
-      ? (data.bidsByContractId.get(row.contract?.contractId ?? "") ?? [])
-          .map((bid) => [bid.bidRank ?? "", bid.sourceVendorId, bid.bidderName, bid.percentOfLow ?? ""].join("|"))
-          .join(";") || null
-      : null
-  },
-  { header: "Observation IDs", value: (row) => row.observationIds.join(";") || null }
+  { header: "Awarded Price", value: (row) => row.awardedBidUnitPrice },
+  { header: "Average Price", value: (row) => row.averageBidUnitPrice },
+  { header: "Engineer Estimate", value: (row) => row.engineerEstimateUnitPrice },
+  { header: "Source", value: (row) => row.source?.sourceLabel || "Unknown source" }
 ];
 
 export function buildEvidenceCsv(result: EvidenceResult, rows: EvidenceRow[] = result.filteredRows, data?: AppData): string {
+  const visibleColumns = csvColumns.filter((column) =>
+    (column.header !== "District" || data?.stateConfig.capabilities.districtFilter !== false)
+    && (column.header !== "Engineer Estimate" || data?.stateConfig.capabilities.engineerEstimate !== false)
+  );
   const lines = [
-    csvColumns.map((column) => escapeCsvValue(column.header)).join(","),
+    visibleColumns.map((column) => escapeCsvValue(column.header)).join(","),
     ...rows.map((row) =>
-      csvColumns.map((column) => escapeCsvValue(column.value(row, data))).join(",")
+      visibleColumns.map((column) => escapeCsvValue(column.value(row, data))).join(",")
     )
   ];
 

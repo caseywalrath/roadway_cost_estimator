@@ -14,40 +14,26 @@ interface ProjectCsvColumn {
 }
 
 const projectCsvColumns: ProjectCsvColumn[] = [
-  { header: "State", value: (project) => project.state },
-  { header: "Project Name", value: (project) => project.name },
-  { header: "Project Location", value: (project) => project.location },
-  { header: "Project Notes", value: (project) => project.notes },
-  { header: "Line Number", value: (_project, _lineItem, lineNumber) => lineNumber },
-  { header: "Added Via", value: (_project, lineItem) => lineItem.importSource ? "Excel Import" : lineItem.lineItemType === "custom" ? "Manual" : "Roadway Costing Tool" },
   { header: "Group", value: (_project, lineItem) => lineItem.group },
-  { header: "Agency ID", value: (_project, lineItem) => lineItem.agencyId },
-  { header: "Agency Item ID", value: (_project, lineItem) => lineItem.agencyItemId },
+  { header: "Cost Category", value: (_project, lineItem) => (lineItem.costCategory ?? (lineItem.lineItemType === "custom" ? "other" : "construction")) === "construction" ? "Construction" : "Other" },
   { header: "Item Code", value: (_project, lineItem) => lineItem.itemCode },
   { header: "Description", value: (_project, lineItem) => lineItem.description },
-  { header: "Quantity", value: (_project, lineItem) => lineItem.quantity },
+  { header: "Unit Cost", value: (_project, lineItem) => lineItem.preferredUnitCost },
   { header: "Unit", value: (_project, lineItem) => lineItem.unit },
-  { header: "Preferred Unit Cost", value: (_project, lineItem) => lineItem.preferredUnitCost },
+  { header: "Quantity", value: (_project, lineItem) => lineItem.quantity },
   { header: "Total Item Cost", value: (_project, lineItem) => projectLineTotal(lineItem) },
-  { header: "Line Notes", value: (_project, lineItem) => lineItem.notes },
-  { header: "Evidence Row Count", value: (_project, lineItem) => lineItem.evidenceContext?.includedRowCount ?? 0 },
-  {
-    header: "Included Observation IDs",
-    value: (_project, lineItem) => lineItem.evidenceContext?.includedObservationIds.join(";") ?? ""
-  },
-  { header: "Created At", value: (_project, lineItem) => lineItem.createdAt },
-  { header: "Updated At", value: (_project, lineItem) => lineItem.updatedAt },
-  { header: "Item Type", value: (_project, lineItem) => lineItem.lineItemType === "custom" ? "Custom" : "Catalog" },
-  { header: "Cost Category", value: (_project, lineItem) => (lineItem.costCategory ?? (lineItem.lineItemType === "custom" ? "other" : "construction")) === "construction" ? "Construction" : "Other" },
-  { header: "Import File", value: (_project, lineItem) => lineItem.importSource?.fileName ?? "" },
-  { header: "Import Sheet", value: (_project, lineItem) => lineItem.importSource?.sheetName ?? "" },
-  { header: "Import Row", value: (_project, lineItem) => lineItem.importSource?.rowNumber ?? null }
+  { header: "Notes", value: (_project, lineItem) => lineItem.notes }
 ];
 
 export function buildProjectCsv(project: UserProject, sort: ProjectSort = DEFAULT_PROJECT_SORT): string {
   const lineItems = sortProjectLineItems(project.lineItems, sort);
   const summary = projectCostSummary(project);
   const lines = [
+    ["Project", project.name].map(escapeCsvValue).join(","),
+    ["State", project.state].map(escapeCsvValue).join(","),
+    ["Location", project.location].map(escapeCsvValue).join(","),
+    ["Notes", project.notes].map(escapeCsvValue).join(","),
+    "",
     projectCsvColumns.map((column) => escapeCsvValue(column.header)).join(","),
     ...lineItems.map((lineItem, index) =>
       projectCsvColumns

@@ -76,7 +76,7 @@ A component whose `when` condition is false is skipped. A missing, negative, or 
 
 ## CSV export
 
-UTF-8 with BOM, CRLF. A Field/Value preamble (project, stage, corridor inputs, price basis), a blank line, then one table: for each alternative, an Element row per included element, Pay item rows under each non-overridden element (direct cost before the allowance multiplier), and Summary rows. Amounts use the screen rounding. Text that starts with `=`, `+`, `-`, `@`, tab or CR gets a leading apostrophe.
+UTF-8 with BOM, CRLF. A Field/Value preamble (project, stage, corridor inputs, price basis), a blank line, then one six-column table: for each alternative, an Element row per included element and visible Summary rows. Pay item calculation detail is omitted from the reporting CSV. Amounts use the screen rounding. Text that starts with `=`, `+`, `-`, `@`, tab or CR gets a leading apostrophe.
 
 ## Engineer Project handoff
 
