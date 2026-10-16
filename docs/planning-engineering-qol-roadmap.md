@@ -37,6 +37,16 @@ This roadmap organizes the 13 requests in the order in which they can be specifi
 
 This order reflects implementation dependencies. The complex workstreams can be specified while the smaller phases are implemented.
 
+## Detailed implementation plans
+
+| Plan | Work packages | Implementation state |
+| --- | --- | --- |
+| [Explorer and Project interface](planning-engineering-qol-interface-plan.md) | UI-A #3/#6/#9/#12; UI-B #1; UI-C #2; UI-D #10 | UI-A through UI-C are ready. UI-D waits for the deferred inflation examples. |
+| [File workflows](planning-engineering-qol-file-workflows-plan.md) | File-A #8; File-B #7; File-C #4; File-D #5 | File-A and sample CSV preparation are ready. File-B's final columns need sample review; File-C and File-D need their specified interaction and data examples before save behavior is implemented. |
+| [Cost model and Planning templates](planning-engineering-qol-cost-planning-plan.md) | Cost-A #13; Planning-B #11 | Cost-A needs the listed product decisions. Planning-B needs a first scope and representative estimates for each template. |
+
+The Sol orchestrator owns shared state, schema, persistence, integration, and final verification. Assign Luna bounded inventory, isolated file edits, or focused verification with exclusive file ownership under `docs/agent_delegation_policy.md`. Implement UI-A, UI-B, and UI-C in that order because their UI files overlap. File-A and CSV sample preparation can proceed independently. Coordinate #5 and #13 because backup comparison must recognize the Project schema version that exists when it ships. The Planning template discovery can proceed alongside these packages.
+
 ## Phased implementation plan: defined work
 
 ### Phase 1 — Small interface improvements (#3, #6, #9, #12)
@@ -77,7 +87,7 @@ Reuse the existing item identity matcher, duplicate-target checks, atomic save, 
 
 ### JSON backup comparison and collaboration (#5)
 
-**Recommended first scope:** Project backup JSON for a file with the same Project ID. Validate the file first, then show changes to Project metadata and lines. Match stable line-item IDs before using catalog/custom identity as a fallback. Group results as **Added**, **Removed**, **Changed**, and **Unchanged**. For a changed line, show both values and let the engineer keep the current line, use the backup line, or add a separate line where that is valid. Save accepted changes atomically with a revision check and a recovery snapshot. A different Project ID should still default to importing a copy; it must not silently merge by name.
+**Recommended first scope:** Project backup JSON for a file with the same Project ID. Validate the file first, then show changes to Project metadata and lines. Match stable line-item IDs; when IDs differ, catalog/custom identity may suggest a pairing that requires engineer confirmation. Group results as **Added**, **Removed**, **Changed**, and **Unchanged**. For a changed line, show both values and let the engineer keep the current line, use the backup line, or add a separate line where that is valid. Save accepted changes atomically with a revision check and a recovery snapshot. A different Project ID should still default to importing a copy; it must not silently merge by name.
 
 The current backup does not contain a shared base snapshot, so a two-file comparison cannot reliably determine which person changed a field first. Do not promise automatic three-way merging until a common ancestor or source history is stored. Treat deletion as an explicit choice, never an automatic effect of a missing line.
 
