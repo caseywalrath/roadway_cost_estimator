@@ -1,6 +1,6 @@
 # File workflow implementation plan: reports, reimport, and Project backups
 
-**Status:** #8 and the export inventory for #7 are ready to implement. #4 and #5 have technical paths below but require the stated review gates before their save behavior is finalized. This plan expands the [quality-of-life roadmap](planning-engineering-qol-roadmap.md) at repository commit `f9145a9`.
+**Status:** File-A #8 is implemented on `codex/file-workflow-qol`. Four [File-B sample CSVs](file-workflow-samples/README.md) are prepared for review before column removal. File-C #4 and File-D #5 have [interaction sketches](file-workflow-review-gates.md) and require the stated representative-file review before merge save behavior is finalized. This plan expands the [quality-of-life roadmap](planning-engineering-qol-roadmap.md) at repository commit `f9145a9`.
 
 ## Existing boundaries to preserve
 

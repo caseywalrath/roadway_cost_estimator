@@ -66,7 +66,7 @@ export interface ExcelImportControllerOptions {
   onReady?: (draft: ExcelImportReadyDraft) => void;
   onCommit?: (draft: ExcelImportReadyDraft) => Promise<string | void> | string | void;
   onCommitted?: (draft: ExcelImportReadyDraft) => void;
-  onDownloadReport?: (draft: ExcelImportReadyDraft) => void;
+  onDownloadReport?: (draft: ExcelImportReadyDraft, committed: boolean) => void;
   workerFactory?: () => WorkerLike;
 }
 
@@ -282,7 +282,7 @@ export class ExcelImportController {
       this.refreshExistingItemPlan();
     }));
     wizard.querySelector<HTMLButtonElement>("[data-excel-import-download-report]")?.addEventListener("click", () => {
-      if (this.readyDraft) this.options.onDownloadReport?.(this.readyDraft);
+      if (this.readyDraft) this.options.onDownloadReport?.(this.readyDraft, this.view.commitStatus === "committed");
     });
   }
 

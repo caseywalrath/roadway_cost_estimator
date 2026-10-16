@@ -1653,7 +1653,7 @@ export async function renderApp(
         cleanupProjectSession();
         onStateChange(project.state, "project");
       },
-      onDownloadReport: (draft) => downloadExcelImportReport(draft)
+      onDownloadReport: (draft, committed) => downloadExcelImportReport(draft, committed)
     });
     excelImportController = controller;
     activeView = "project";

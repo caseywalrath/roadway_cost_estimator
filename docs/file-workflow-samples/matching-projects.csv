@@ -1,0 +1,3 @@
+Contract / project,Location,District,Let date,Awarded vendor,Bids,Quantity,Unit,Item description,Awarded Price,Average Price,Engineer Estimate,Source
+NH 0010(00)17,"US 36 near Boulder",1,2025-04-17,Example Construction LLC,4,1250,CY,"Concrete pavement",142.5,148.2,155.0,CDOT Bid Tab 2025-04-17
+SH 119 Resurfacing,"SH 119 from 9th St to 15th St",Statewide / unassigned,2024-09-12,Example Paving Co.,2,800,TON,"'=Formula-like asphalt mix",96.25,101.5,104.0,CDOT Bid Tab 2024-09-12

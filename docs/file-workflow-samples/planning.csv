@@ -1,0 +1,24 @@
+﻿Field,Value
+Project,Main Street Corridor
+State,CO
+Stage,Planning Study
+Length (mi),0.5
+Roadway width (ft),36
+Intersections,3
+Price basis,CDOT planning bid database
+Exported,2026-10-16T12:00:00Z
+Note,"Planning-level estimate. Amounts are rounded as shown on screen."
+
+Alternative,Row type,Group,Element,Amount,Note
+Alternative A,Element,Base roadway,Mill and overlay,420000,
+Alternative A,Element,Drainage,Storm sewer,185000,
+Alternative A,Element,Traffic,Traffic control,95000,"Entered amount; calculated 91000"
+Alternative A,Summary,,Construction,700000,
+Alternative A,Summary,,"Contingency (20%)",140000,
+Alternative A,Summary,,"Design (10%)",84000,
+Alternative A,Summary,,"Construction engineering (10%)",84000,
+Alternative A,Summary,,Right-of-way,25000,
+Alternative A,Summary,,Utility relocation,30000,
+Alternative A,Summary,,Total,1063000,
+Alternative A,Summary,,Range low,850000,
+Alternative A,Summary,,Range high,1280000,

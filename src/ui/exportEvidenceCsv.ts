@@ -96,7 +96,8 @@ function escapeCsvValue(value: string | number | null): string {
     return "";
   }
 
-  const text = String(value);
+  let text = String(value);
+  if (typeof value === "string" && /^[=+\-@\t\r]/u.test(text) && !/^-[0-9]+(?:\.[0-9]+)?$/u.test(text)) text = `'${text}`;
 
   if (/[",\r\n]/.test(text)) {
     return `"${text.replace(/"/g, '""')}"`;

@@ -179,8 +179,8 @@ describe("Excel import wizard", () => {
     root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")!.click();
     await new Promise((resolve) => window.setTimeout(resolve, 0));
     expect(committedDraft!.existingItemPlan!.updates[0]).toMatchObject({ lineItemId: official.lineItemId, quantity: 2, preferredUnitCost: 100, notes: "Keep these notes" });
-    expect(buildExcelImportReportCsv(committedDraft!)).toContain("updated-existing");
-    expect(buildExcelImportReportCsv(committedDraft!)).toContain("existing-item-skipped");
+    expect(buildExcelImportReportCsv(committedDraft!, true)).toContain("Updated");
+    expect(buildExcelImportReportCsv(committedDraft!, true)).toContain("Kept the existing Project item");
     expect(root.textContent).toContain("1 item was updated in Existing estimate");
     expect(project.lineItems[0].quantity).toBe(1);
   });
@@ -759,10 +759,10 @@ describe("Excel import wizard", () => {
     expect(root.textContent).not.toContain("No Project data is written during preview");
     expect(ready).toBe(1);
     expect(draft).not.toBeNull();
-    expect(buildExcelImportReportCsv(draft!)).toContain("file,sheet,original row");
+    expect(buildExcelImportReportCsv(draft!)).toContain("Sheet,Row,Item Code,Description,Outcome,Quantity,Unit Cost,Reason");
     expect(buildExcelImportReportCsv({
       ...draft!,
-      rows: draft!.rows.map((row, index) => index === 0 ? { ...row, values: { ...row.values, description: "=SUM(A1)" } } : row)
+      resolvedRows: draft!.resolvedRows.map((row, index) => index === 0 && row.lineItem ? { ...row, lineItem: { ...row.lineItem, description: "=SUM(A1)" } } : row)
     })).toContain("'=SUM(A1)");
     root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")?.click();
     root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")?.click();
@@ -772,7 +772,7 @@ describe("Excel import wizard", () => {
     expect(controller.viewModel.commitStatus).toBe("committed");
     expect(root.textContent).toContain("2 items were added to Demo Project.");
     expect(root.querySelectorAll("[data-excel-import-cancel]")).toHaveLength(1);
-    expect(root.querySelector<HTMLButtonElement>("[data-excel-import-download-report]")?.textContent).toContain("Download skipped-row report");
+    expect(root.querySelector<HTMLButtonElement>("[data-excel-import-download-report]")?.textContent).toContain("Download import status report");
 
   });
 

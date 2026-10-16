@@ -41,7 +41,8 @@ export function downloadItemPriceHistoryCsv(result: ItemPriceHistoryResult): voi
 
 function csvValue(value: string | number | null): string {
   if (value === null || value === undefined) return "";
-  const text = String(value);
+  let text = String(value);
+  if (typeof value === "string" && /^[=+\-@\t\r]/u.test(text) && !/^-[0-9]+(?:\.[0-9]+)?$/u.test(text)) text = `'${text}`;
   return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 

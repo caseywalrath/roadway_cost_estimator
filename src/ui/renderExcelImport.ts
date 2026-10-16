@@ -471,7 +471,7 @@ function renderResultStage(view: ExcelImportViewModel): string {
   const disabled = view.commitStatus === "committing" ? "disabled" : "";
   const commitDisabled = view.commitStatus === "committing" || summary.importedCount === 0 || summary.existingItemPlan?.errors.length ? "disabled" : "";
   if (view.commitStatus === "committed") {
-    return `<div class="excel-import-stage" data-excel-import-stage="result"><div class="excel-import-result excel-import-result--success" role="status" aria-live="polite"><h3>${importOperationText(summary, true)} ${summary.updatedCount ? "in" : "to"} ${escapeHtml(summary.destinationLabel)}.</h3><p>${summary.skippedCount ? `${summary.skippedCount} spreadsheet row${summary.skippedCount === 1 ? " was" : "s were"} skipped.` : "The import is complete."}</p></div>${summary.skippedCount ? `<div class="excel-import-actions"><button type="button" class="secondary-button" data-excel-import-download-report>Download skipped-row report</button></div>` : ""}</div>`;
+    return `<div class="excel-import-stage" data-excel-import-stage="result"><div class="excel-import-result excel-import-result--success" role="status" aria-live="polite"><h3>${importOperationText(summary, true)} ${summary.updatedCount ? "in" : "to"} ${escapeHtml(summary.destinationLabel)}.</h3><p>${summary.skippedCount ? `${summary.skippedCount} spreadsheet row${summary.skippedCount === 1 ? " was" : "s were"} skipped.` : "The import is complete."}</p></div><div class="excel-import-actions"><button type="button" class="secondary-button" data-excel-import-download-report>Download import status report</button></div></div>`;
   }
   const failure = view.commitStatus === "failed";
   return `<div class="excel-import-stage" data-excel-import-stage="result">
@@ -485,6 +485,7 @@ function renderResultStage(view: ExcelImportViewModel): string {
     ${failure ? "" : renderSkippedRows(summary)}
     <div class="excel-import-actions">
       <button type="button" class="secondary-button" data-excel-import-back="review" ${disabled}>Back to review</button>
+      <button type="button" class="secondary-button" data-excel-import-download-report>Download review preview</button>
       <button type="button" class="primary-button" data-excel-import-commit ${commitDisabled}>${view.commitStatus === "committing" ? "Importing items…" : failure ? "Try import again" : summary.updatedCount ? importOperationText(summary) : summary.importedCount ? `Import ${summary.importedCount} item${summary.importedCount === 1 ? "" : "s"}` : "No items to import"}</button>
     </div>
   </div>`;
@@ -561,7 +562,7 @@ function renderSkippedRows(summary: ExcelImportConfirmationSummary): string {
     if (label.includes("prepared")) return "Items that could not be imported";
     return "Other excluded rows";
   };
-  return `<details class="excel-import-skipped-summary"><summary>Skipped rows (${summary.skippedCount})</summary><ul>${summary.skippedReasons.map((reason) => `<li><strong>${reason.count}</strong> ${escapeHtml(compactReason(reason.label))}</li>`).join("")}</ul><button type="button" class="secondary-button" data-excel-import-download-report>Download skipped-row report</button></details>`;
+  return `<details class="excel-import-skipped-summary"><summary>Skipped rows (${summary.skippedCount})</summary><ul>${summary.skippedReasons.map((reason) => `<li><strong>${reason.count}</strong> ${escapeHtml(compactReason(reason.label))}</li>`).join("")}</ul></details>`;
 }
 
 function formatMoney(value: number): string {
