@@ -9,7 +9,8 @@ export function renderItemPriceHistory(
   stateConfig: StateConfig,
   inflationAdjustmentEnabled: boolean,
   annualInflationAdjustedPriceSet: AnnualInflationAdjustedPriceSet | null,
-  showEditButton = false
+  showEditButton = false,
+  adjacentItems: { previous: { id: string; code: string; description: string } | null; next: { id: string; code: string; description: string } | null } | null = null
 ): string {
   if (!stateConfig.capabilities.periodPriceHistory || !result.query.itemCode) return "";
   const title = stateConfig.periodPriceHistoryTitle ?? "Item Price History";
@@ -22,6 +23,10 @@ export function renderItemPriceHistory(
           <p class="eyebrow">${escapeHtml(title)}</p>
           <h3>${escapeHtml(result.query.description || result.query.itemCode)}</h3>
           <p class="query-line">${queryLine}</p>
+          ${adjacentItems ? `<div class="adjacent-item-controls" aria-label="Selected item ${escapeHtml(result.query.itemCode)}: ${escapeHtml(result.query.description)}. Adjacent catalog items" tabindex="-1">
+            <button type="button" data-adjacent-item-id="${escapeHtml(adjacentItems.previous?.id ?? "")}" aria-label="${escapeHtml(adjacentItems.previous ? `Previous item ${adjacentItems.previous.code}: ${adjacentItems.previous.description}` : "No previous item")}" ${adjacentItems.previous ? "" : "disabled"}>← Previous</button>
+            <button type="button" data-adjacent-item-id="${escapeHtml(adjacentItems.next?.id ?? "")}" aria-label="${escapeHtml(adjacentItems.next ? `Next item ${adjacentItems.next.code}: ${adjacentItems.next.description}` : "No next item")}" ${adjacentItems.next ? "" : "disabled"}>Next →</button>
+          </div>` : ""}
         </div>
         <div class="matching-projects-actions">
           <button type="button" id="download-item-price-history-csv" class="secondary-button matching-projects-export-button" ${result.filteredRows.length === 0 ? "disabled" : ""}>Download CSV</button>

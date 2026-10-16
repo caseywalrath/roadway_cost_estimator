@@ -1,6 +1,6 @@
 # Interface implementation plan: Explorer and Project
 
-**Status:** ready to implement #3, #6, #9, #12, #1, and #2. Inflation item #10 requires the deferred example review before its final UI change. This plan expands the [quality-of-life roadmap](planning-engineering-qol-roadmap.md) at repository commit `f9145a9`.
+**Status:** implemented on `codex/explorer-interface-qol`. The supplied inflation screenshots have been reviewed. This plan expands the [quality-of-life roadmap](planning-engineering-qol-roadmap.md) at repository commit `f9145a9`.
 
 ## Delivery order and file ownership
 
@@ -59,6 +59,8 @@ This is a bounded Luna implementation candidate if Luna exclusively owns `src/ui
 **Checks:** First/last boundaries, duplicate-looking codes with distinct identities, a division transition, a neighbor with a different unit, and a Project-origin start. Returning to the original code through arrows does not restore the old Update context. No filter value from the previous item suppresses the new item's evidence.
 
 ### UI-D — Inflation calculation and display (#10)
+
+**Screenshot audit (2026-10-16):** The latest loaded target is 2025 Q4 (NHCCI 3.234373117). The 2024 Q4 source-to-target factor is approximately 1.000534249. In screenshot 1, FSA007A-037 on 2024-11-21 has a source awarded unit price of $115.00, which adjusts to about $115.06 and previously displayed as the same rounded $115; NH0504-911 on 2022-04-07 has a source awarded price of $103.80, which adjusts to about $131.37 and was visibly shown as $131. In screenshot 2, STA0853-087 on 2024-12-19 has a source awarded price of $525.00, which adjusts to about $525.28 and previously showed no second line; CO14A-004 on 2024-10-24 has a source average price of $413.40, which adjusts to about $413.62 and was shown as $413 ($414). These observations follow the loaded index and rounding rules; no calculation defect was found. The implementation displays an explicitly labeled adjusted amount whenever one is available, even when the displayed amounts match, and labels unavailable adjustment data. The source-to-target quarters are available in the adjusted value's tooltip.
 
 The current source quarter comes from `project.estimateLetDate` or the observation date basis. The target is the latest loaded positive NHCCI quarter. An adjusted row value is unavailable if its source quarter lacks an index. The table currently hides a second price line when original and adjusted values round to the same whole dollar.
 

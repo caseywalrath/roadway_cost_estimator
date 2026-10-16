@@ -54,7 +54,8 @@ export function renderAddToProjectPanel(
   result: EvidenceResult,
   activeProject: UserProject | null,
   pendingDuplicateLine: PendingDuplicateProjectLine | null,
-  projectLineNotice: string | null
+  projectLineNotice: string | null,
+  sourceLine: ProjectLineItem | null = null
 ): string {
   if (!result.query.itemCode) return "";
   if (!activeProject) {
@@ -76,9 +77,10 @@ export function renderAddToProjectPanel(
         <div class="add-project-title">
           <div class="step-heading add-project-step-heading" aria-label="Step 4 Add Item to Project">
             <span class="step-number" aria-hidden="true">4</span>
-            <h3>Add Item to Project</h3>
+            <h3>${sourceLine ? "Update Project Item" : "Add Item to Project"}</h3>
           </div>
           <p class="query-line">${escapeHtml(projectLabel(activeProject))} | ${escapeHtml(activeProject.location.trim() || "Location not specified")}</p>
+          ${sourceLine ? `<p class="query-line">Editing ${escapeHtml(sourceLine.itemCode)} — ${escapeHtml(sourceLine.description)}</p>` : ""}
         </div>
         <button type="button" class="secondary-button project-tab-shortcut" data-app-view="project">View Project</button>
       </div>
@@ -86,11 +88,11 @@ export function renderAddToProjectPanel(
       ${renderProjectGroupDatalist(activeProject)}
       <form id="add-project-item-form" class="add-project-form">
         <input type="hidden" name="costSource" value="manual" />
-        <label class="add-project-group-field"><span>Group</span><input name="group" list="${escapeHtml(projectGroupListId(activeProject))}" autocomplete="off" /></label>
-        <label class="add-project-cost-field"><span>Unit cost</span><input name="preferredUnitCost" type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" required /></label>
-        <label><span>Quantity</span><input name="quantity" type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" required /></label>
-        <label class="add-project-notes-field"><span>Line notes</span><textarea name="notes" rows="2"></textarea></label>
-        <button type="submit" class="primary-button add-project-submit">Add to Project</button>
+        <label class="add-project-group-field"><span>Group</span><input name="group" list="${escapeHtml(projectGroupListId(activeProject))}" autocomplete="off" value="${escapeHtml(sourceLine?.group ?? "")}" /></label>
+        <label class="add-project-cost-field"><span>Unit cost</span><input name="preferredUnitCost" type="text" inputmode="decimal" value="${sourceLine?.preferredUnitCost ?? ""}" ${sourceLine ? "" : "required"} /></label>
+        <label><span>Quantity</span><input name="quantity" type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" value="${sourceLine?.quantity ?? ""}" ${sourceLine ? "" : "required"} /></label>
+        <label class="add-project-notes-field"><span>Line notes</span><textarea name="notes" rows="2">${escapeHtml(sourceLine?.notes ?? "")}</textarea></label>
+        <button type="submit" class="primary-button add-project-submit">${sourceLine ? "Update Item" : "Add to Project"}</button>
       </form>
     </section>
   `;
@@ -211,7 +213,7 @@ function renderProjectActions(
           <button type="button" data-edit-active-project ${!activeProject || readOnly ? "disabled" : ""}>Edit Active Project</button>
           <button type="button" data-open-project-manager ${subview === "manager" ? "disabled" : ""}>Manage Projects</button>
           <button type="button" id="download-project-csv" ${!activeProject || activeProject.lineItems.length === 0 ? "disabled" : ""}>Export CSV</button>
-          <button type="button" data-backup-project="${activeProject ? escapeHtml(activeProject.projectId) : ""}" ${!activeProject ? "disabled" : ""}>Export Project Backup</button>
+          <button type="button" data-backup-project="${activeProject ? escapeHtml(activeProject.projectId) : ""}" ${!activeProject ? "disabled" : ""}>Download Project Backup</button>
           <button type="button" data-import-project>Import Project Backup</button>
           <button type="button" data-start-excel-import>Import From Excel</button>
           <input type="file" accept=".json,.rce-project.json,application/json" data-project-import-input hidden />
@@ -360,7 +362,7 @@ function renderProjectLineRow(lineItem: ProjectLineItem, readOnly: boolean, grou
     <td class="project-line-description-cell">${descriptionEditable
       ? renderProjectLineInput(lineItem, "description", "Description", "project-line-text-input", disabled)
       : `${escapeHtml(lineItem.description)}${readOnly ? "" : renderDescriptionOverrideButton(lineItem)}`}</td>
-    <td>${renderProjectLineInput(lineItem, "preferredUnitCost", "Unit Cost", "project-line-number-input", disabled, "decimal")}</td>
+    <td><span class="project-line-currency"><span aria-hidden="true" data-currency-prefix>$</span>${renderProjectLineInput(lineItem, "preferredUnitCost", "Unit Cost", "project-line-number-input project-line-cost-input", disabled, "decimal")}</span></td>
     <td>${custom ? renderProjectLineInput(lineItem, "unit", "Unit", "project-line-unit-input", disabled) : escapeHtml(lineItem.unit)}</td>
     <td>${renderProjectLineInput(lineItem, "quantity", "Quantity", "project-line-number-input", disabled, "decimal")}</td>
     <td data-project-line-total-id="${escapeHtml(lineItem.lineItemId)}">${formatCurrency(projectLineTotal(lineItem))}</td>

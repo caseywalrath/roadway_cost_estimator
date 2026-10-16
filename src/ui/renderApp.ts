@@ -182,6 +182,9 @@ export async function renderApp(
   let pendingResultsTableScroll: ResultsTableScrollPosition | null = null;
   let evidenceFilterDebounceTimer: number | null = null;
   let pendingDuplicateLine: PendingDuplicateProjectLine | null = null;
+  let projectOrigin: { projectId: string; lineItemId: string; agencyItemId: string } | null = null;
+  const sortedAgencyItems = [...data.agencyItems]
+    .sort((left, right) => left.itemCode.localeCompare(right.itemCode, undefined, { numeric: true, sensitivity: "base" }) || left.agencyItemId.localeCompare(right.agencyItemId));
   let projectLineNotice: string | null = null;
   let projectLineNoticeToken = 0;
   const dismissedCatalogMatchByLineId = new Map<string, string>();
@@ -223,11 +226,26 @@ export async function renderApp(
       : null;
     const visibleExcludedCount = result.filteredRows.length - includedRows.length;
     const activeProject = getActiveProject(projectState, data.stateConfig.code);
+    if (projectOrigin && projectOrigin.projectId !== activeProject?.projectId) projectOrigin = null;
+    const sourceLine = activeProject && projectOrigin?.projectId === activeProject.projectId
+      ? activeProject.lineItems.find((line) => line.lineItemId === projectOrigin?.lineItemId && line.agencyItemId === result.query.agencyItemId) ?? null
+      : null;
+    const orderedAgencyItems = sortedAgencyItems.filter((item) => item.agencyId === result.query.agencyId);
+    const selectedItemIndex = orderedAgencyItems.findIndex((item) => item.agencyItemId === result.query.agencyItemId);
+    const adjacentItem = (index: number) => {
+      const item = orderedAgencyItems[index];
+      return item ? { id: item.agencyItemId, code: item.itemCode, description: item.officialDescription } : null;
+    };
+    const adjacentItems = selectedItemIndex < 0 ? null : {
+      previous: adjacentItem(selectedItemIndex - 1),
+      next: adjacentItem(selectedItemIndex + 1)
+    };
     const addToProjectPanelHtml = renderAddToProjectPanel(
       result,
       activeProject,
       pendingDuplicateLine,
-      projectLineNotice
+      projectLineNotice,
+      sourceLine
     );
 
     root.innerHTML = `
@@ -275,7 +293,8 @@ export async function renderApp(
                 inflationAdjustedPriceSet,
                 addToProjectPanelHtml,
                 itemPriceHistoryResult,
-                annualInflationAdjustedPriceSet
+                annualInflationAdjustedPriceSet,
+                adjacentItems
               )}
             </section>
           ` : activeView === "planning"
@@ -385,7 +404,10 @@ export async function renderApp(
 
     form?.addEventListener("submit", (event) => {
       event.preventDefault();
-      query = readQueryFromForm(form, query);
+      cancelEvidenceFilterUpdate();
+      const nextQuery = readQueryFromForm(form, query);
+      if (nextQuery.agencyItemId !== query.agencyItemId) projectOrigin = null;
+      query = nextQuery;
       evidenceFilters = createDefaultEvidenceFilters(query);
       evidenceSort = createDefaultEvidenceSort();
       itemPriceHistoryFilters = createDefaultItemPriceHistoryFilters();
@@ -396,6 +418,35 @@ export async function renderApp(
       evidenceFiltersExpanded = true;
       itemSearchCollapsed = Boolean(query.itemCode);
       render();
+    });
+
+    root.querySelectorAll<HTMLButtonElement>("[data-adjacent-item-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const item = orderedAgencyItems.find((candidate) => candidate.agencyItemId === button.dataset.adjacentItemId);
+        if (!item) return;
+        cancelEvidenceFilterUpdate();
+        projectOrigin = null;
+        pendingDuplicateLine = null;
+        query = {
+          ...emptyQuery,
+          agencyId: item.agencyId,
+          agencyItemId: item.agencyItemId,
+          itemCode: item.itemCode,
+          description: item.officialDescription,
+          unit: item.officialUnit
+        };
+        evidenceFilters = createDefaultEvidenceFilters(query);
+        evidenceSort = createDefaultEvidenceSort();
+        itemPriceHistoryFilters = createDefaultItemPriceHistoryFilters();
+        itemPriceHistorySort = createDefaultItemPriceHistorySort();
+        excludedSummaryRowIds = new Set<string>();
+        selectedBidderDetailKey = null;
+        selectedSourceProjectId = null;
+        evidenceFiltersExpanded = true;
+        itemSearchCollapsed = true;
+        render();
+        root.querySelector<HTMLElement>(".adjacent-item-controls")?.focus();
+      });
     });
 
     root.querySelector<HTMLButtonElement>("#toggle-evidence-filters")?.addEventListener("click", () => {
@@ -411,7 +462,8 @@ export async function renderApp(
       }
 
       if (control instanceof HTMLInputElement) {
-        control.addEventListener("input", () => scheduleEvidenceFilterUpdate(evidenceFiltersForm, 300));
+        const manuallyTypedRange = ["quantityMin", "quantityMax", "priceMin", "priceMax"].includes(control.name);
+        control.addEventListener("input", () => scheduleEvidenceFilterUpdate(evidenceFiltersForm, manuallyTypedRange ? 700 : 300));
         control.addEventListener("blur", () => applyEvidenceFiltersFromForm(evidenceFiltersForm, false));
       } else {
         control.addEventListener("change", () => applyEvidenceFiltersFromForm(evidenceFiltersForm));
@@ -461,6 +513,8 @@ export async function renderApp(
     });
 
     root.querySelector<HTMLButtonElement>("#clear-query")?.addEventListener("click", () => {
+      cancelEvidenceFilterUpdate();
+      projectOrigin = null;
       query = { ...emptyQuery };
       evidenceFilters = createDefaultEvidenceFilters(query);
       evidenceSort = createDefaultEvidenceSort();
@@ -735,12 +789,27 @@ export async function renderApp(
       const quantityInput = addForm.elements.namedItem("quantity") as HTMLInputElement | null;
       const preferredUnitCostInput = addForm.elements.namedItem("preferredUnitCost") as HTMLInputElement | null;
       const notesInput = addForm.elements.namedItem("notes") as HTMLTextAreaElement | null;
-      const quantity = readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero.");
-      const preferredUnitCost = readRequiredPositiveNumber(preferredUnitCostInput, "Enter a unit cost greater than zero.");
-
-      if (quantity === null || preferredUnitCost === null || !result.query.itemCode) {
+      const originProject = projectOrigin?.projectId === activeProject.projectId ? activeProject : null;
+      const originLine = originProject?.lineItems.find((line) => line.lineItemId === projectOrigin?.lineItemId && line.agencyItemId === result.query.agencyItemId) ?? null;
+      if (projectOrigin && !originLine) {
+        projectStorageWarning = "The source Project line changed or was removed. Reopen it from the Project table.";
+        projectOrigin = null;
+        render();
         return;
       }
+      const quantity = originLine
+        ? readNullableProjectNumber(quantityInput)
+        : { value: readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero."), valid: true };
+      const preferredUnitCost = originLine
+        ? readNullableProjectCurrency(preferredUnitCostInput)
+        : { value: readRequiredPositiveCurrency(preferredUnitCostInput, "Enter a unit cost greater than zero."), valid: true };
+      if (!quantity.valid || !preferredUnitCost.valid) {
+        const invalidInput = !quantity.valid ? quantityInput : preferredUnitCostInput;
+        invalidInput?.setCustomValidity("Enter a non-negative number or leave this field blank.");
+        invalidInput?.reportValidity();
+        return;
+      }
+      if (!result.query.itemCode || (!originLine && (quantity.value === null || preferredUnitCost.value === null))) return;
 
       const costSource = costSourceInput?.value === "quick_fill" ? "quick_fill" : "manual";
       const lineItem = createCatalogProjectLineItem({
@@ -751,8 +820,8 @@ export async function renderApp(
         description: result.interpretedDescription,
         unit: result.query.unit,
         group: groupInput?.value ?? "",
-        quantity,
-        preferredUnitCost,
+        quantity: quantity.value,
+        preferredUnitCost: preferredUnitCost.value,
         notes: notesInput?.value ?? "",
         evidenceContext: buildProjectEvidenceContext(
           result,
@@ -764,6 +833,24 @@ export async function renderApp(
           costSource
         )
       });
+      if (originLine) {
+        if (projectReadOnly || !editCoordinator.owns(activeProject.projectId) || activeProject.status !== "active") {
+          projectStorageWarning = "This Project cannot be edited in this browser tab.";
+          render();
+          return;
+        }
+        const updated: ProjectLineItem = {
+          ...originLine,
+          group: lineItem.group,
+          quantity: lineItem.quantity,
+          preferredUnitCost: lineItem.preferredUnitCost,
+          notes: lineItem.notes,
+          evidenceContext: lineItem.evidenceContext
+        };
+        showProjectLineNotice(`${updated.itemCode} updated in Project.`);
+        persistProjectState(replaceProjectLineItem(projectState, activeProject.projectId, originLine.lineItemId, updated), true);
+        return;
+      }
       const matchingLineIds = findDuplicateCatalogLineItemIds(activeProject, lineItem.agencyItemId);
 
       if (matchingLineIds.length > 0) {
@@ -836,7 +923,13 @@ export async function renderApp(
     }, delay);
   }
 
+  function cancelEvidenceFilterUpdate(): void {
+    if (evidenceFilterDebounceTimer !== null) window.clearTimeout(evidenceFilterDebounceTimer);
+    evidenceFilterDebounceTimer = null;
+  }
+
   function applyEvidenceFiltersFromForm(form: HTMLFormElement, preserveFocus = true): void {
+    cancelEvidenceFilterUpdate();
     const validationMessage = validateEvidenceFilterRanges(form);
     const validationElement = form.querySelector<HTMLElement>("#evidence-filter-validation");
     if (validationMessage) {
@@ -1087,6 +1180,8 @@ export async function renderApp(
         const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId) ?? null;
         if (!lineItem || lineItem.lineItemType !== "catalog") return;
 
+        cancelEvidenceFilterUpdate();
+        projectOrigin = { projectId: activeProject!.projectId, lineItemId, agencyItemId: lineItem.agencyItemId };
         query = createFreshCatalogExplorerQuery(emptyQuery, lineItem);
         evidenceFilters = createDefaultEvidenceFilters(query);
         evidenceSort = createDefaultEvidenceSort();
@@ -1155,7 +1250,7 @@ export async function renderApp(
         const costCategoryInput = row.querySelector<HTMLSelectElement>('[data-project-line-field="costCategory"]');
 
         const quantityResult = readNullableProjectNumber(quantityInput);
-        const preferredUnitCostResult = readNullableProjectNumber(preferredUnitCostInput);
+        const preferredUnitCostResult = readNullableProjectCurrency(preferredUnitCostInput);
         if (!quantityResult.valid || !preferredUnitCostResult.valid) {
           if (validate) {
             const invalidInput = !quantityResult.valid ? quantityInput : preferredUnitCostInput;
@@ -1197,6 +1292,10 @@ export async function renderApp(
         updateProjectTotalsInDom(row, lineItemId);
       };
       input.addEventListener("input", () => {
+        if (input.dataset.projectLineField === "preferredUnitCost" && input instanceof HTMLInputElement) {
+          const prefix = input.closest(".project-line-currency")?.querySelector<HTMLElement>("[data-currency-prefix]");
+          if (prefix) prefix.hidden = input.value.trimStart().startsWith("$");
+        }
         if (input.dataset.projectLineField === "itemCode") {
           dismissedCatalogMatchByLineId.delete(input.dataset.projectLineId ?? "");
         }
@@ -1437,6 +1536,7 @@ export async function renderApp(
     if (!(await flushPendingProjectSave())) return;
     const project = projectState.projects.find((candidate) => candidate.projectId === projectId && candidate.status === "active");
     if (!project) return;
+    projectOrigin = null;
     projectState = setActiveProject(projectState, project.projectId, project.state);
     await projectRepository.setActiveProjectId(project.state, project.projectId);
     if (project.state !== data.stateConfig.code) {
@@ -1846,6 +1946,18 @@ function readRequiredPositiveNumber(input: HTMLInputElement | null, message: str
   return value;
 }
 
+function readRequiredPositiveCurrency(input: HTMLInputElement | null, message: string): number | null {
+  if (!input) return null;
+  input.setCustomValidity("");
+  const value = parseProjectCurrency(input.value);
+  if (value === null || value <= 0) {
+    input.setCustomValidity(message);
+    input.reportValidity();
+    return null;
+  }
+  return value;
+}
+
 function validateEvidenceFilterRanges(form: HTMLFormElement): string | null {
   const minimumDateInput = form.elements.namedItem("letDateMin") as HTMLInputElement | null;
   const maximumDateInput = form.elements.namedItem("letDateMax") as HTMLInputElement | null;
@@ -1907,6 +2019,21 @@ function readNullableProjectNumber(input: HTMLInputElement | null): { value: num
   const rawValue = input?.value.trim() ?? "";
   if (!rawValue) return { value: null, valid: true };
   const value = readOptionalFormNumber(rawValue);
+  return { value, valid: value !== null };
+}
+
+function parseProjectCurrency(raw: string): number | null {
+  const value = raw.trim();
+  if (!value) return null;
+  if (!/^\$?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/.test(value)) return null;
+  const parsed = Number(value.replace(/[$,]/g, ""));
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function readNullableProjectCurrency(input: HTMLInputElement | null): { value: number | null; valid: boolean } {
+  const raw = input?.value.trim() ?? "";
+  if (!raw) return { value: null, valid: true };
+  const value = parseProjectCurrency(raw);
   return { value, valid: value !== null };
 }
 

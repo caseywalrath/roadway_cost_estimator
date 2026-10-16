@@ -64,7 +64,7 @@ describe("Project workspace v10", () => {
     expect(html).toContain("Project Actions");
     expect(html).toContain("Export CSV");
     expect(html).not.toContain("Export Project CSV");
-    expect(html).toContain("Export Project Backup");
+    expect(html).toContain("Download Project Backup");
     expect(html).toContain("Import Project Backup");
     expect(html).not.toContain('name="state"');
     expect(html).not.toContain('id="project-name"');

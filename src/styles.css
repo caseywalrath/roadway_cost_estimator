@@ -521,6 +521,14 @@ textarea {
   white-space: nowrap;
 }
 
+.summary-table .summary-table__median {
+  background: #eaf2f3;
+}
+
+.summary-table th.summary-table__median {
+  color: var(--accent-dark);
+}
+
 .summary-table__empty {
   color: var(--text-muted);
   font-weight: 700;
@@ -1733,7 +1741,7 @@ table {
 }
 
 .project-line-table {
-  min-width: 1160px;
+  min-width: 1190px;
 }
 
 .project-line-table th:nth-child(1),
@@ -1769,8 +1777,14 @@ table {
 
 .project-line-table th:nth-child(5),
 .project-line-table td:nth-child(5) {
-  width: 92px;
-  min-width: 92px;
+  width: 122px;
+  min-width: 122px;
+}
+
+.project-line-currency {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .project-line-table th:nth-child(6),
@@ -2051,6 +2065,31 @@ th {
   width: 76px;
   min-width: 76px;
   text-align: left;
+}
+
+.project-line-cost-input {
+  width: 99px;
+  min-width: 99px;
+}
+
+.adjacent-item-controls {
+  display: flex;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.adjacent-item-controls button {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--accent-dark);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.adjacent-item-controls button:disabled {
+  color: var(--text-muted);
+  cursor: default;
 }
 
 .project-line-notes-input {

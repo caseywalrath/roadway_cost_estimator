@@ -41,7 +41,7 @@ This order reflects implementation dependencies. The complex workstreams can be 
 
 | Plan | Work packages | Implementation state |
 | --- | --- | --- |
-| [Explorer and Project interface](planning-engineering-qol-interface-plan.md) | UI-A #3/#6/#9/#12; UI-B #1; UI-C #2; UI-D #10 | UI-A through UI-C are ready. UI-D waits for the deferred inflation examples. |
+| [Explorer and Project interface](planning-engineering-qol-interface-plan.md) | UI-A #3/#6/#9/#12; UI-B #1; UI-C #2; UI-D #10 | Implemented on `codex/explorer-interface-qol`; the supplied inflation examples were audited. |
 | [File workflows](planning-engineering-qol-file-workflows-plan.md) | File-A #8; File-B #7; File-C #4; File-D #5 | File-A and sample CSV preparation are ready. File-B's final columns need sample review; File-C and File-D need their specified interaction and data examples before save behavior is implemented. |
 | [Cost model and Planning templates](planning-engineering-qol-cost-planning-plan.md) | Cost-A #13; Planning-B #11 | Cost-A needs the listed product decisions. Planning-B needs a first scope and representative estimates for each template. |
 
@@ -117,4 +117,4 @@ Treat these as two separate template specifications, not just two new names in t
 4. **#5:** Build Project backup comparison first. Planning share-file comparison is a separate follow-on.
 5. **#13:** Percentage bases contain fixed lines only. Percentage-on-percentage calculations are excluded.
 
-The deferred inflation screenshots and representative export/workbook/backup examples should be collected when their implementation phases begin. They are not prerequisites for Phase 1.
+The inflation screenshots were reviewed during interface implementation. Representative export, workbook, and backup examples should be collected when their file-workflow phases begin.
