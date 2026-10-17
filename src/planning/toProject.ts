@@ -1,6 +1,6 @@
 // Converts one Planning v2 alternative into an engineer Project. Mapping: docs/planning-v2-implementation-plan.md section 5a.
 import type { ProjectLineItem, UserProject } from "../projects/projectWorkspace";
-import { projectCostSummary } from "../projects/projectWorkspace";
+import { createPercentageProjectLineItem, projectCostSummary } from "../projects/projectWorkspace";
 import { calculateAlternative, roundTotalAmount } from "./calculate";
 import type { PlanningProject, ResolvedLibrary } from "./types";
 
@@ -187,7 +187,23 @@ export function planningAlternativeToProject(
   }
 
   const k = summary.contingencyRate;
-  const C = summary.construction;
+  if (k > 0 && constructionTotal() > 0) {
+    lineItems.push({
+      ...createPercentageProjectLineItem(
+        planning.state,
+        "construction",
+        "Construction contingency",
+        k * 100,
+        { kind: "construction_fixed" },
+        "contingency"
+      ),
+      lineItemId: newId("line"),
+      group: GROUP_ALLOWANCES,
+      notes: `Planning stage contingency: ${pct(k)}% of fixed construction costs.`,
+      createdAt: now,
+      updatedAt: now
+    });
+  }
   const otherLine = (description: string, amount: number, notes: string) => {
     const unitCost = cents(amount);
     if (unitCost === 0) return;
@@ -204,16 +220,15 @@ export function planningAlternativeToProject(
     });
   };
   const engineeringNote = (rate: number) =>
-    `Planning: ${pct(rate)}% of construction plus contingency. The Project contingency is applied to this line, so it shows ${pct(rate)}% of construction.`;
-  if (summary.designRate > 0) otherLine("Design engineering", summary.designRate * C, engineeringNote(summary.designRate));
+    `Planning: ${pct(rate)}% of construction plus contingency, saved as a fixed amount at handoff.`;
+  if (summary.designRate > 0) otherLine("Design engineering", summary.design, engineeringNote(summary.designRate));
   if (summary.constructionEngineeringRate > 0) {
-    otherLine("Construction engineering", summary.constructionEngineeringRate * C, engineeringNote(summary.constructionEngineeringRate));
+    otherLine("Construction engineering", summary.constructionEngineering, engineeringNote(summary.constructionEngineeringRate));
   }
-  const netNote = (entered: number) =>
-    `Planning entered ${dollars(entered)}. Shown net of the ${pct(k)}% Project contingency so the Project total matches Planning.`;
-  if (summary.rightOfWay > 0) otherLine("Right-of-way", summary.rightOfWay / (1 + k), netNote(summary.rightOfWay));
+  const enteredNote = (entered: number) => `Planning entered ${dollars(entered)}; saved as a fixed amount at handoff.`;
+  if (summary.rightOfWay > 0) otherLine("Right-of-way", summary.rightOfWay, enteredNote(summary.rightOfWay));
   if (summary.utilityRelocation > 0) {
-    otherLine("Utility relocation", summary.utilityRelocation / (1 + k), netNote(summary.utilityRelocation));
+    otherLine("Utility relocation", summary.utilityRelocation, enteredNote(summary.utilityRelocation));
   }
 
   const stage = library.stages.find((s) => s.id === planning.stageId) ?? library.stages.find((s) => s.id === library.defaultStage);
@@ -231,7 +246,7 @@ export function planningAlternativeToProject(
     revision: 0,
     lastBackupAt: null,
     lastBackupRevision: null,
-    contingencyPercent: Math.round(k * 100 * 1000) / 1000,
+    contingencyPercent: 0,
     createdAt: now,
     updatedAt: now,
     lineItems,

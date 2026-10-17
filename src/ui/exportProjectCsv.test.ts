@@ -24,9 +24,9 @@ describe("Project CSV export", () => {
     expect(output[6]).toBe("Construction,Other,SOFT,Soft costs,25,LS,2,50,");
     expect(output.some((row) => row.includes("Agency ID"))).toBe(false);
     const summaryStart = output.indexOf("Project Cost Summary,Value");
-    expect(output.slice(summaryStart, summaryStart + 6)).toEqual([
+    expect(output.slice(summaryStart, summaryStart + 5)).toEqual([
       "Project Cost Summary,Value", "Construction Costs,0", "Other costs,50",
-      "Contingency percentage,0", "Contingencies,0", "Total Project Cost,50"
+      "Contingencies,0", "Total Project Cost,50"
     ]);
   });
 

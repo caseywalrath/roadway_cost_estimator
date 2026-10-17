@@ -4,7 +4,7 @@ import {
   createEmptyProjectWorkspaceState,
   isLegacyPlaceholderProject,
   migrateLegacyWorkspace,
-  parseUserProjectV10,
+  parseUserProjectV11,
   removeProjectFromState,
   type LegacyMigrationResult,
   type ProjectWorkspaceState,
@@ -184,7 +184,7 @@ class IndexedDbProjectRepository implements ProjectRepository {
     return {
       schemaVersion: PROJECT_WORKSPACE_SCHEMA_VERSION,
       activeProjectIdByState: sanitizeActiveProjectIds(settings?.activeProjectIdByState ?? {}, projects),
-      projects: projects.map((project) => parseUserProjectV10(project)).filter((project): project is UserProject => project !== null)
+      projects: projects.map((project) => parseUserProjectV11(project)).filter((project): project is UserProject => project !== null)
     };
   }
 
@@ -345,7 +345,7 @@ class IndexedDbProjectRepository implements ProjectRepository {
     await transactionDone(transaction);
     return revisions
       .map((revision) => {
-        const project = parseUserProjectV10(revision.project);
+        const project = parseUserProjectV11(revision.project);
         return project ? { ...revision, project } : null;
       })
       .filter((revision): revision is ProjectRevision => revision !== null)
@@ -356,7 +356,7 @@ class IndexedDbProjectRepository implements ProjectRepository {
     const transaction = this.database.transaction("projects", "readonly");
     const project = await requestResult<UserProject | undefined>(transaction.objectStore("projects").get(projectId));
     await transactionDone(transaction);
-    return project ? parseUserProjectV10(project) : null;
+    return project ? parseUserProjectV11(project) : null;
   }
 
   private async getSettings(): Promise<WorkspaceSettingsRecord | undefined> {
@@ -517,7 +517,7 @@ function buildImportedProject(
   };
   const ids = new Set(saved.lineItems.map((line) => line.lineItemId));
   if (ids.size !== saved.lineItems.length || saved.lineItems.some((line) => line.state !== current.state)
-    || !parseUserProjectV10(saved)) throw new Error("Imported items do not form a valid Project.");
+    || !parseUserProjectV11(saved)) throw new Error("Imported items do not form a valid Project.");
   return saved;
 }
 

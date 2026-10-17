@@ -36,6 +36,7 @@ export function planExistingItems(
   const accepted = rows.filter((row) => row.lineItem && (row.outcome === "imported" || row.outcome === "imported-incomplete"));
   const existing = new Map<string, ProjectLineItem[]>();
   for (const line of project?.lineItems ?? []) {
+    if (line.pricingMode === "percentage") continue;
     const key = existingItemKey(line);
     existing.set(key, [...(existing.get(key) ?? []), line]);
   }

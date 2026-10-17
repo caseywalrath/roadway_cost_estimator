@@ -1,6 +1,7 @@
 import type { EvidenceResult, StateConfig } from "../data/schema";
 import {
   DEFAULT_PROJECT_SORT,
+  calculateProject,
   projectConstructionCost,
   projectContingencyCost,
   projectLineTotal,
@@ -135,6 +136,7 @@ export function renderProjectWorkspace(
           <div>
             <p class="eyebrow">Project Items</p>
             <button type="button" class="secondary-button project-add-item-button" data-add-custom-project-line ${readOnly ? "disabled" : ""}>+Add Item</button>
+            <button type="button" class="secondary-button project-add-item-button" data-add-percentage-project-line ${readOnly ? "disabled" : ""}>+Add Percentage</button>
           </div>
           ${renderProjectCostSummary(project, readOnly)}
         </div>
@@ -298,9 +300,10 @@ function renderDuplicateProjectLinePanel(project: UserProject, pendingDuplicateL
 }
 
 function renderProjectLineTable(project: UserProject, readOnly: boolean, projectSort: ProjectSort): string {
-  const sortedLineItems = sortProjectLineItems(project.lineItems, projectSort);
+  const sortedLineItems = sortProjectLineItems(project.lineItems, projectSort, project);
   const groupListId = projectGroupListId(project);
-  return `<div class="table-scroll-shell project-table-shell">${renderProjectGroupDatalist(project)}<div class="table-scroll" tabindex="0" aria-label="Project item table"><table class="project-line-table"><thead><tr>${PROJECT_SORTABLE_COLUMNS.map((column) => renderProjectSortableHeader(column, projectSort)).join("")}<th>Remove</th></tr></thead><tbody>${sortedLineItems.map((lineItem) => renderProjectLineRow(lineItem, readOnly, groupListId)).join("")}</tbody></table></div></div>`;
+  const calculation = calculateProject(project);
+  return `<div class="table-scroll-shell project-table-shell">${renderProjectGroupDatalist(project)}<div class="table-scroll" tabindex="0" aria-label="Project item table"><table class="project-line-table"><thead><tr>${PROJECT_SORTABLE_COLUMNS.map((column) => renderProjectSortableHeader(column, projectSort)).join("")}<th>Remove</th></tr></thead><tbody>${sortedLineItems.map((lineItem) => renderProjectLineRow(lineItem, project, calculation, readOnly, groupListId)).join("")}</tbody></table></div></div>`;
 }
 
 function renderProjectCostSummary(project: UserProject, readOnly: boolean): string {
@@ -319,8 +322,7 @@ function renderProjectCostSummary(project: UserProject, readOnly: boolean): stri
           <span>Contingencies</span>
           <div class="project-contingency-value">
             <label class="project-contingency-percent">
-              <input type="text" inputmode="decimal" class="project-contingency-input" data-project-contingency-percent aria-label="Contingency percentage" value="${escapeHtml(formatNumber(project.contingencyPercent))}" ${readOnly ? "disabled" : ""} />
-              <span>%</span>
+              <span>From contingency items</span>
             </label>
             <strong data-project-contingency-cost>${formatCurrency(projectContingencyCost(project))}</strong>
           </div>
@@ -350,8 +352,9 @@ function renderProjectSortableHeader(column: { key: ProjectSortKey; label: strin
   `;
 }
 
-function renderProjectLineRow(lineItem: ProjectLineItem, readOnly: boolean, groupListId: string): string {
+function renderProjectLineRow(lineItem: ProjectLineItem, project: UserProject, calculation: ReturnType<typeof calculateProject>, readOnly: boolean, groupListId: string): string {
   const custom = lineItem.lineItemType === "custom";
+  if (lineItem.pricingMode === "percentage") return renderPercentageLineRow(lineItem, project, calculation, readOnly, groupListId);
   const catalog = lineItem.lineItemType === "catalog";
   const descriptionEditable = custom || lineItem.descriptionOverrideEnabled;
   const disabled = readOnly ? "disabled" : "";
@@ -365,9 +368,41 @@ function renderProjectLineRow(lineItem: ProjectLineItem, readOnly: boolean, grou
     <td><span class="project-line-currency"><span aria-hidden="true" data-currency-prefix>$</span>${renderProjectLineInput(lineItem, "preferredUnitCost", "Unit Cost", "project-line-number-input project-line-cost-input", disabled, "decimal")}</span></td>
     <td>${custom ? renderProjectLineInput(lineItem, "unit", "Unit", "project-line-unit-input", disabled) : escapeHtml(lineItem.unit)}</td>
     <td>${renderProjectLineInput(lineItem, "quantity", "Quantity", "project-line-number-input", disabled, "decimal")}</td>
-    <td data-project-line-total-id="${escapeHtml(lineItem.lineItemId)}">${formatCurrency(projectLineTotal(lineItem))}</td>
-    <td>${renderProjectLineInput(lineItem, "notes", "Notes", "project-line-notes-input", disabled)}</td>
+    <td data-project-line-total-id="${escapeHtml(lineItem.lineItemId)}">${formatCurrency(calculation.amountByLineId[lineItem.lineItemId] ?? 0)}</td>
+    <td>${renderProjectLineInput(lineItem, "notes", "Notes", "project-line-notes-input", disabled)}${custom ? `<select data-project-fixed-role="${escapeHtml(lineItem.lineItemId)}" aria-label="Cost role" ${disabled}><option value="standard" ${lineItem.costRole !== "contingency" ? "selected" : ""}>Standard cost</option><option value="contingency" ${lineItem.costRole === "contingency" ? "selected" : ""}>Contingency</option></select>` : ""}</td>
     <td><button type="button" class="project-line-remove-button" data-remove-project-line-id="${escapeHtml(lineItem.lineItemId)}" aria-label="Remove ${escapeHtml(lineItem.itemCode || "custom item")} from project" title="Remove line" ${disabled}>${trashIcon()}</button></td>
+  </tr>`;
+}
+
+function renderPercentageLineRow(line: ProjectLineItem, project: UserProject, calculation: ReturnType<typeof calculateProject>, readOnly: boolean, groupListId: string): string {
+  const disabled = readOnly ? "disabled" : "";
+  const base = line.percentageBase ?? { kind: "construction_fixed" as const };
+  const baseValue = base.kind === "group" ? `group:${base.group}` : base.kind;
+  const fixed = project.lineItems.filter((item) => item.pricingMode !== "percentage");
+  const groups = projectGroupSuggestions({ ...project, lineItems: fixed });
+  if (base.kind === "group" && !groups.some((group) => group.toLocaleLowerCase() === base.group.toLocaleLowerCase())) groups.push(base.group);
+  const options = [
+    ["all_fixed", "All fixed costs"], ["construction_fixed", "Construction fixed costs"], ["other_fixed", "Other fixed costs"],
+    ...groups.map((group) => [`group:${group}`, `Group: ${group}`]), ["selected_lines", "Selected fixed lines"]
+  ];
+  const selectedIds = new Set(base.kind === "selected_lines" ? base.lineItemIds : []);
+  return `<tr class="project-line-row--custom project-line-row--percentage">
+    <td>${renderProjectLineInput(line, "group", "Group", "project-line-group-input", disabled, "text", groupListId)}</td>
+    <td>${renderProjectCostCategorySelect(line, disabled)}</td>
+    <td>—</td>
+    <td>${renderProjectLineInput(line, "description", "Description", "project-line-text-input", disabled)}</td>
+    <td><span class="muted">Calculated</span></td>
+    <td>%</td>
+    <td><input type="text" inputmode="decimal" class="project-line-number-input" data-project-percentage-rate="${escapeHtml(line.lineItemId)}" aria-label="Percentage rate" value="${escapeHtml(String(line.percentageRate ?? 0))}" ${disabled} /></td>
+    <td data-project-line-total-id="${escapeHtml(line.lineItemId)}">${formatCurrency(calculation.amountByLineId[line.lineItemId] ?? 0)}</td>
+    <td class="project-percentage-details">
+      <select data-project-percentage-base="${escapeHtml(line.lineItemId)}" aria-label="Percentage base" ${disabled}>${options.map(([value, label]) => `<option value="${escapeHtml(value)}" ${value === baseValue ? "selected" : ""}>${escapeHtml(label)}</option>`).join("")}</select>
+      ${base.kind === "selected_lines" ? `<details><summary>Select fixed items</summary>${fixed.map((item) => `<label><input type="checkbox" data-project-percentage-selected="${escapeHtml(line.lineItemId)}" value="${escapeHtml(item.lineItemId)}" ${selectedIds.has(item.lineItemId) ? "checked" : ""} ${disabled} />${escapeHtml(item.description || item.itemCode || "Unnamed item")}</label>`).join("")}</details>` : ""}
+      <select data-project-percentage-role="${escapeHtml(line.lineItemId)}" aria-label="Percentage role" ${disabled}><option value="standard" ${line.costRole !== "contingency" ? "selected" : ""}>Standard cost</option><option value="contingency" ${line.costRole === "contingency" ? "selected" : ""}>Contingency</option></select>
+      ${renderProjectLineInput(line, "notes", "Notes", "project-line-notes-input", disabled)}
+      <small data-project-percentage-detail="${escapeHtml(line.lineItemId)}">Base ${formatCurrency(calculation.baseByLineId[line.lineItemId] ?? 0)}${calculation.warningsByLineId[line.lineItemId] ? ` · ${escapeHtml(calculation.warningsByLineId[line.lineItemId])}` : ""}</small>
+    </td>
+    <td><button type="button" class="project-line-remove-button" data-remove-project-line-id="${escapeHtml(line.lineItemId)}" aria-label="Remove percentage item" title="Remove line" ${disabled}>${trashIcon()}</button></td>
   </tr>`;
 }
 

@@ -1,33 +1,36 @@
 import {
   DEFAULT_PROJECT_SORT,
-  projectCostSummary,
-  projectLineTotal,
+  calculateProject,
   sortProjectLineItems,
   type ProjectLineItem,
+  type ProjectCalculation,
   type ProjectSort,
   type UserProject
 } from "../projects/projectWorkspace";
 
 interface ProjectCsvColumn {
   header: string;
-  value: (project: UserProject, lineItem: ProjectLineItem, lineNumber: number) => string | number | null;
+  value: (project: UserProject, lineItem: ProjectLineItem, lineNumber: number, calculation: ProjectCalculation) => string | number | null;
 }
 
 const projectCsvColumns: ProjectCsvColumn[] = [
   { header: "Group", value: (_project, lineItem) => lineItem.group },
-  { header: "Cost Category", value: (_project, lineItem) => (lineItem.costCategory ?? (lineItem.lineItemType === "custom" ? "other" : "construction")) === "construction" ? "Construction" : "Other" },
+  { header: "Cost Category", value: (_project, lineItem) => lineItem.costRole === "contingency" ? "Contingency" : lineItem.costCategory === "construction" ? "Construction" : "Other" },
   { header: "Item Code", value: (_project, lineItem) => lineItem.itemCode },
   { header: "Description", value: (_project, lineItem) => lineItem.description },
-  { header: "Unit Cost", value: (_project, lineItem) => lineItem.preferredUnitCost },
+  { header: "Unit Cost", value: (_project, lineItem) => lineItem.pricingMode === "percentage" ? null : lineItem.preferredUnitCost },
   { header: "Unit", value: (_project, lineItem) => lineItem.unit },
-  { header: "Quantity", value: (_project, lineItem) => lineItem.quantity },
-  { header: "Total Item Cost", value: (_project, lineItem) => projectLineTotal(lineItem) },
-  { header: "Notes", value: (_project, lineItem) => lineItem.notes }
+  { header: "Quantity", value: (_project, lineItem) => lineItem.pricingMode === "percentage" ? lineItem.percentageRate ?? null : lineItem.quantity },
+  { header: "Total Item Cost", value: (_project, lineItem, _number, calculation) => calculation.amountByLineId[lineItem.lineItemId] ?? 0 },
+  { header: "Notes", value: (_project, lineItem) => lineItem.pricingMode === "percentage"
+    ? `${lineItem.percentageBase?.kind === "group" ? `Base: Group ${lineItem.percentageBase.group}` : lineItem.percentageBase?.kind === "selected_lines" ? `Base: ${lineItem.percentageBase.lineItemIds.length} selected fixed items` : `Base: ${lineItem.percentageBase?.kind.replace(/_/g, " ") ?? "unspecified"}`}${lineItem.notes ? `; ${lineItem.notes}` : ""}`
+    : lineItem.notes }
 ];
 
 export function buildProjectCsv(project: UserProject, sort: ProjectSort = DEFAULT_PROJECT_SORT): string {
-  const lineItems = sortProjectLineItems(project.lineItems, sort);
-  const summary = projectCostSummary(project);
+  const lineItems = sortProjectLineItems(project.lineItems, sort, project);
+  const calculation = calculateProject(project);
+  const summary = calculation.summary;
   const lines = [
     ["Project", project.name].map(escapeCsvValue).join(","),
     ["State", project.state].map(escapeCsvValue).join(","),
@@ -37,14 +40,13 @@ export function buildProjectCsv(project: UserProject, sort: ProjectSort = DEFAUL
     projectCsvColumns.map((column) => escapeCsvValue(column.header)).join(","),
     ...lineItems.map((lineItem, index) =>
       projectCsvColumns
-        .map((column) => escapeCsvValue(column.value(project, lineItem, index + 1)))
+        .map((column) => escapeCsvValue(column.value(project, lineItem, index + 1, calculation)))
         .join(",")
     ),
     "",
     ["Project Cost Summary", "Value"].map(escapeCsvValue).join(","),
     ["Construction Costs", summary.constructionCost].map(escapeCsvValue).join(","),
     ["Other costs", summary.otherCost].map(escapeCsvValue).join(","),
-    ["Contingency percentage", summary.contingencyPercent].map(escapeCsvValue).join(","),
     ["Contingencies", summary.contingencyCost].map(escapeCsvValue).join(","),
     ["Total Project Cost", summary.totalProjectCost].map(escapeCsvValue).join(","),
     ...(project.planningOrigin

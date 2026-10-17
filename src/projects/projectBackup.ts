@@ -4,6 +4,7 @@ import {
   projectCostSummary,
   parseUserProjectV9,
   parseUserProjectV10,
+  parseUserProjectV11,
   type ProjectCostSummary,
   type UserProject
 } from "./projectWorkspace";
@@ -43,14 +44,17 @@ export function parseProjectBackup(value: unknown): ProjectBackupFile | null {
       && value.projectSchemaVersion !== 7
       && value.projectSchemaVersion !== 8
       && value.projectSchemaVersion !== 9
+      && value.projectSchemaVersion !== 10
       && value.projectSchemaVersion !== PROJECT_WORKSPACE_SCHEMA_VERSION)
     || typeof value.exportedAt !== "string"
     || typeof value.revision !== "number") {
     return null;
   }
   const project = value.projectSchemaVersion === PROJECT_WORKSPACE_SCHEMA_VERSION
-    ? parseUserProjectV10(value.project)
-    : parseUserProjectV9(value.project);
+    ? parseUserProjectV11(value.project)
+    : value.projectSchemaVersion === 10
+      ? parseUserProjectV10(value.project)
+      : parseUserProjectV9(value.project);
   return project && value.revision === project.revision
     ? {
         ...value,
@@ -63,6 +67,7 @@ export function parseProjectBackup(value: unknown): ProjectBackupFile | null {
 
 export function createImportedCopy(project: UserProject): UserProject {
   const now = new Date().toISOString();
+  const newIds = new Map(project.lineItems.map((line) => [line.lineItemId, createId("line")]));
   return {
     ...structuredClone(project),
     projectId: createId("project"),
@@ -76,7 +81,8 @@ export function createImportedCopy(project: UserProject): UserProject {
     updatedAt: now,
     lineItems: project.lineItems.map((lineItem) => ({
       ...structuredClone(lineItem),
-      lineItemId: createId("line"),
+      lineItemId: newIds.get(lineItem.lineItemId)!,
+      ...(lineItem.percentageBase?.kind === "selected_lines" ? { percentageBase: { kind: "selected_lines" as const, lineItemIds: lineItem.percentageBase.lineItemIds.map((id) => newIds.get(id) ?? id) } } : {}),
       createdAt: now,
       updatedAt: now
     }))

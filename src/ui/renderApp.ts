@@ -29,11 +29,13 @@ import type {
 import {
   addProject,
   addProjectLineItem,
+  calculateProject,
   createDefaultProjectSort,
   createId,
   createUserProject,
   createCatalogProjectLineItem,
   createCustomProjectLineItem,
+  createPercentageProjectLineItem,
   duplicateUserProject,
   enableProjectLineDescriptionOverride,
   findExactProjectCatalogItem,
@@ -43,7 +45,6 @@ import {
   projectConstructionCost,
   projectContingencyCost,
   projectGroupSuggestions,
-  projectLineTotal,
   projectOtherCost,
   projectTotal,
   removeProjectLineItem,
@@ -51,7 +52,6 @@ import {
   replaceProject,
   replaceProjectLineItem,
   setActiveProject,
-  updateProjectContingencyPercent,
   updateProjectLineItem
 } from "../projects/projectWorkspace";
 import { createImportedCopy, downloadProjectBackup, readProjectBackupFile } from "../projects/projectBackup";
@@ -1148,17 +1148,23 @@ export async function renderApp(
     });
 
     const updateProjectCostSummaryInDom = (project: UserProject): void => {
-      rootElement.querySelector<HTMLElement>("[data-project-construction-cost]")!.textContent = formatProjectCurrency(projectConstructionCost(project));
-      rootElement.querySelector<HTMLElement>("[data-project-other-cost]")!.textContent = formatProjectCurrency(projectOtherCost(project));
-      rootElement.querySelector<HTMLElement>("[data-project-contingency-cost]")!.textContent = formatProjectCurrency(projectContingencyCost(project));
-      rootElement.querySelector<HTMLElement>("[data-project-total]")!.textContent = formatProjectCurrency(projectTotal(project));
+      const calculation = calculateProject(project);
+      rootElement.querySelector<HTMLElement>("[data-project-construction-cost]")!.textContent = formatProjectCurrency(calculation.summary.constructionCost);
+      rootElement.querySelector<HTMLElement>("[data-project-other-cost]")!.textContent = formatProjectCurrency(calculation.summary.otherCost);
+      rootElement.querySelector<HTMLElement>("[data-project-contingency-cost]")!.textContent = formatProjectCurrency(calculation.summary.contingencyCost);
+      rootElement.querySelector<HTMLElement>("[data-project-total]")!.textContent = formatProjectCurrency(calculation.summary.totalProjectCost);
+      for (const line of project.lineItems) {
+        const total = rootElement.querySelector<HTMLElement>(`[data-project-line-total-id="${line.lineItemId}"]`);
+        if (total) total.textContent = formatProjectCurrency(calculation.amountByLineId[line.lineItemId] ?? 0);
+        const detail = rootElement.querySelector<HTMLElement>(`[data-project-percentage-detail="${line.lineItemId}"]`);
+        if (detail) detail.textContent = `Base ${formatProjectCurrency(calculation.baseByLineId[line.lineItemId] ?? 0)}${calculation.warningsByLineId[line.lineItemId] ? ` · ${calculation.warningsByLineId[line.lineItemId]}` : ""}`;
+      }
     };
 
     const updateProjectTotalsInDom = (row: HTMLTableRowElement, lineItemId: string): void => {
       const activeProject = getActiveProject(projectState, data.stateConfig.code);
       const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId);
       if (!activeProject || !lineItem) return;
-      row.querySelector<HTMLElement>(`[data-project-line-total-id="${lineItemId}"]`)!.textContent = formatProjectCurrency(projectLineTotal(lineItem));
       updateProjectCostSummaryInDom(activeProject);
     };
 
@@ -1169,6 +1175,16 @@ export async function renderApp(
         const lineItem = createCustomProjectLineItem(data.stateConfig.code);
         pendingFocus = { projectLineId: lineItem.lineItemId, field: "itemCode" };
         persistProjectState(addProjectLineItem(projectState, activeProject.projectId, lineItem), true);
+      });
+    });
+
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-add-percentage-project-line]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const activeProject = getActiveProject(projectState, data.stateConfig.code);
+        if (!activeProject || projectReadOnly) return;
+        const line = createPercentageProjectLineItem(data.stateConfig.code, "construction", "", 0, { kind: "construction_fixed" });
+        pendingFocus = { projectLineId: line.lineItemId, field: "description" };
+        persistProjectState(addProjectLineItem(projectState, activeProject.projectId, line), true);
       });
     });
 
@@ -1315,39 +1331,64 @@ export async function renderApp(
       });
     });
 
-    const contingencyInput = rootElement.querySelector<HTMLInputElement>("[data-project-contingency-percent]");
-    if (contingencyInput) {
-      const updateContingency = (validate: boolean): void => {
-        const activeProject = getActiveProject(projectState, data.stateConfig.code);
-        if (!activeProject || projectReadOnly) return;
-
-        const rawValue = contingencyInput.value.trim();
-        const value = readOptionalFormNumber(rawValue);
-        if (rawValue && value === null) {
-          if (validate) {
-            contingencyInput.setCustomValidity("Enter a non-negative percentage.");
-            contingencyInput.reportValidity();
-          }
+    rootElement.querySelectorAll<HTMLInputElement>("[data-project-percentage-rate]").forEach((input) => {
+      const update = (validate: boolean) => {
+        const project = getActiveProject(projectState, data.stateConfig.code);
+        if (!project || projectReadOnly) return;
+        const rate = readOptionalFormNumber(input.value.trim());
+        if (rate === null) {
+          if (validate) { input.setCustomValidity("Enter a nonnegative percentage."); input.reportValidity(); }
           return;
         }
-
-        contingencyInput.setCustomValidity("");
-        const nextState = updateProjectContingencyPercent(projectState, activeProject.projectId, value ?? 0);
-        persistProjectState(nextState, false);
-        const nextProject = getActiveProject(projectState, data.stateConfig.code);
-        if (nextProject) updateProjectCostSummaryInDom(nextProject);
+        input.setCustomValidity("");
+        persistProjectState(updateProjectLineItem(projectState, project.projectId, input.dataset.projectPercentageRate ?? "", { percentageRate: rate }), false);
+        const updated = getActiveProject(projectState, data.stateConfig.code);
+        if (updated) updateProjectCostSummaryInDom(updated);
       };
-
-      contingencyInput.addEventListener("input", () => updateContingency(false));
-      contingencyInput.addEventListener("blur", () => {
-        updateContingency(true);
-        const activeProject = getActiveProject(projectState, data.stateConfig.code);
-        if (activeProject) {
-          contingencyInput.value = formatDecimalInput(activeProject.contingencyPercent);
-        }
+      input.addEventListener("input", () => update(false));
+      input.addEventListener("blur", () => {
+        update(true);
+        const project = getActiveProject(projectState, data.stateConfig.code);
+        const savedLine = project?.lineItems.find((line) => line.lineItemId === input.dataset.projectPercentageRate);
+        if (savedLine?.pricingMode === "percentage") input.value = String(savedLine.percentageRate ?? 0);
         void queueProjectSave();
       });
-    }
+    });
+    rootElement.querySelectorAll<HTMLSelectElement>("[data-project-percentage-base]").forEach((select) => {
+      select.addEventListener("change", () => {
+        const project = getActiveProject(projectState, data.stateConfig.code);
+        if (!project || projectReadOnly) return;
+        const value = select.value;
+        const base = value.startsWith("group:")
+          ? { kind: "group" as const, group: value.slice(6) }
+          : value === "selected_lines"
+            ? { kind: "selected_lines" as const, lineItemIds: [] }
+            : { kind: value as "all_fixed" | "construction_fixed" | "other_fixed" };
+        persistProjectState(updateProjectLineItem(projectState, project.projectId, select.dataset.projectPercentageBase ?? "", { percentageBase: base }), true);
+      });
+    });
+    rootElement.querySelectorAll<HTMLInputElement>("[data-project-percentage-selected]").forEach((checkbox) => {
+      checkbox.addEventListener("change", () => {
+        const project = getActiveProject(projectState, data.stateConfig.code);
+        const id = checkbox.dataset.projectPercentageSelected ?? "";
+        if (!project || projectReadOnly) return;
+        const selected = [...rootElement.querySelectorAll<HTMLInputElement>("[data-project-percentage-selected]")]
+          .filter((item) => item.dataset.projectPercentageSelected === id && item.checked).map((item) => item.value);
+        persistProjectState(updateProjectLineItem(projectState, project.projectId, id, { percentageBase: { kind: "selected_lines", lineItemIds: selected } }), false);
+        updateProjectCostSummaryInDom(getActiveProject(projectState, data.stateConfig.code)!);
+        void queueProjectSave();
+      });
+    });
+    rootElement.querySelectorAll<HTMLSelectElement>("[data-project-percentage-role], [data-project-fixed-role]").forEach((select) => {
+      select.addEventListener("change", () => {
+        const project = getActiveProject(projectState, data.stateConfig.code);
+        if (!project || projectReadOnly) return;
+        const id = select.dataset.projectPercentageRole ?? select.dataset.projectFixedRole ?? "";
+        persistProjectState(updateProjectLineItem(projectState, project.projectId, id, { costRole: select.value === "contingency" ? "contingency" : "standard" }), false);
+        updateProjectCostSummaryInDom(getActiveProject(projectState, data.stateConfig.code)!);
+        void queueProjectSave();
+      });
+    });
 
     rootElement.querySelectorAll<HTMLButtonElement>("[data-remove-project-line-id]").forEach((button) => {
       button.addEventListener("click", async () => {
@@ -1358,6 +1399,8 @@ export async function renderApp(
           return;
         }
 
+        const dependent = activeProject.lineItems.find((line) => line.pricingMode === "percentage" && line.percentageBase?.kind === "selected_lines" && line.percentageBase.lineItemIds.includes(lineItemId));
+        if (dependent) { window.alert(`Reassign the percentage base for ${dependent.description || "the percentage item"} before removing this item.`); return; }
         if (!window.confirm("Remove this project line? This cannot be undone.")) {
           return;
         }

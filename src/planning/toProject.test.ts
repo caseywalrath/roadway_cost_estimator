@@ -2,7 +2,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import prices from "../../public/data/states/co/planning_prices.json";
 import rawLibrary from "../../data/planning/co_element_library.json";
-import { parseUserProjectV10, projectCostSummary } from "../projects/projectWorkspace";
+import { parseUserProjectV11, projectCostSummary } from "../projects/projectWorkspace";
 import { calculateAlternative } from "./calculate";
 import { setContingency, setElementInput, setElementOverride, setEngineering, setProjectInput, setStage } from "./edit";
 import { resolveLibrary } from "./library";
@@ -127,7 +127,7 @@ describe("line mapping", () => {
     const planning = make("mill_overlay");
     const { summary } = calculateAlternative(library, planning, "a1");
     const { project } = planningAlternativeToProject(library, planning, "a1", makeOptions());
-    const lines = project.lineItems.filter((l) => l.group === "Allowances");
+    const lines = project.lineItems.filter((l) => l.group === "Allowances" && l.pricingMode !== "percentage");
     const p = (x: number) => String(Math.round(x * 100 * 1000) / 1000);
     expect(lines.map((l) => l.description)).toEqual([
       `Minor items allowance (${p(summary.factors.minor)}% of listed items)`,
@@ -143,33 +143,39 @@ describe("line mapping", () => {
   it("uses a contingency rate set by the planner and still reconciles to the Planning total", () => {
     const planning = setContingency(make("complete_street"), 0.2);
     const { project, difference } = planningAlternativeToProject(library, planning, "a1", makeOptions());
-    expect(project.contingencyPercent).toBe(20);
+    expect(project.contingencyPercent).toBe(0);
+    expect(project.lineItems.find((l) => l.costRole === "contingency")).toMatchObject({
+      description: "Construction contingency",
+      pricingMode: "percentage",
+      percentageRate: 20,
+      percentageBase: { kind: "construction_fixed" }
+    });
     expect(Math.abs(difference)).toBeLessThan(1);
   });
 
-  it("sets contingencyPercent from the stage", () => {
+  it("creates a percentage contingency line from the stage", () => {
     for (const stage of library.stages) {
       const planning = setStage(make("mill_overlay"), stage.id);
       const { project } = planningAlternativeToProject(library, planning, "a1", makeOptions());
-      expect(project.contingencyPercent).toBe(Math.round(stage.contingency * 100 * 1000) / 1000);
+      expect(project.contingencyPercent).toBe(0);
+      expect(project.lineItems.find((l) => l.costRole === "contingency")?.percentageRate).toBe(Math.round(stage.contingency * 100 * 1000) / 1000);
     }
-    expect(planningAlternativeToProject(library, make("mill_overlay"), "a1", makeOptions()).project.contingencyPercent).toBe(30);
+    expect(planningAlternativeToProject(library, make("mill_overlay"), "a1", makeOptions()).project.lineItems.find((l) => l.costRole === "contingency")?.percentageRate).toBe(30);
   });
 
-  it("nets ROW and utilities of contingency to the cent and notes the entered amount", () => {
+  it("saves ROW and utilities as fixed full amounts and notes the entered amount", () => {
     let planning = make("mill_overlay");
     planning = setElementOverride(planning, "a1", "right_of_way", 253_456);
     planning = setElementOverride(planning, "a1", "utility_relocation", 100_000);
     const { project } = planningAlternativeToProject(library, planning, "a1", makeOptions());
-    const k = 0.3;
     const row = project.lineItems.find((l) => l.description === "Right-of-way")!;
     const util = project.lineItems.find((l) => l.description === "Utility relocation")!;
-    expect(row.preferredUnitCost).toBe(cents(253_456 / (1 + k)));
+    expect(row.preferredUnitCost).toBe(253_456);
     expect(row).toMatchObject({ costCategory: "other", group: "Engineering and other costs", unit: "LS", quantity: 1 });
     expect(row.notes).toBe(
-      "Planning entered $253,456. Shown net of the 30% Project contingency so the Project total matches Planning."
+      "Planning entered $253,456; saved as a fixed amount at handoff."
     );
-    expect(util.preferredUnitCost).toBe(cents(100_000 / (1 + k)));
+    expect(util.preferredUnitCost).toBe(100_000);
   });
 
   it("omits ROW and utility lines when zero, and engineering lines when the rate is zero", () => {
@@ -180,20 +186,26 @@ describe("line mapping", () => {
     const names = base.lineItems.filter((l) => l.costCategory === "other").map((l) => l.description);
     expect(names).toEqual(["Design engineering", "Construction engineering"]);
     expect(base.lineItems.find((l) => l.description === "Design engineering")!.notes).toBe(
-      "Planning: 10% of construction plus contingency. The Project contingency is applied to this line, so it shows 10% of construction."
+      "Planning: 10% of construction plus contingency, saved as a fixed amount at handoff."
     );
+    const { summary } = calculateAlternative(library, make("mill_overlay"), "a1");
+    expect(base.lineItems.find((l) => l.description === "Design engineering")!.preferredUnitCost).toBe(cents(summary.design));
+    expect(base.lineItems.find((l) => l.description === "Construction engineering")!.preferredUnitCost).toBe(cents(summary.constructionEngineering));
   });
 
   it("skips zero-quantity components and never emits zero-amount lines", () => {
     const { project } = planningAlternativeToProject(library, make("complete_street"), "a1", makeOptions());
-    for (const l of project.lineItems) expect((l.quantity ?? 0) * (l.preferredUnitCost ?? 0)).toBeGreaterThan(0);
+    for (const l of project.lineItems.filter((line) => line.pricingMode !== "percentage")) {
+      expect((l.quantity ?? 0) * (l.preferredUnitCost ?? 0)).toBeGreaterThan(0);
+    }
     let planning = make("mill_overlay");
     for (const e of calculateAlternative(library, planning, "a1").elements.filter((x) => x.enabled)) {
       planning = setElementOverride(planning, "a1", e.elementId, 0);
     }
     const zero = planningAlternativeToProject(library, planning, "a1", makeOptions()).project;
-    expect(zero.lineItems.filter((l) => l.group === "Allowances")).toHaveLength(0);
-    expect(zero.lineItems.filter((l) => l.costCategory === "construction")).toHaveLength(0);
+    expect(zero.lineItems.filter((l) => l.group === "Allowances" && l.pricingMode !== "percentage")).toHaveLength(0);
+    expect(zero.lineItems.filter((l) => l.costCategory === "construction" && l.pricingMode !== "percentage")).toHaveLength(0);
+    expect(zero.lineItems.filter((l) => l.pricingMode === "percentage")).toHaveLength(0);
   });
 });
 
@@ -259,11 +271,11 @@ describe("project fields", () => {
     expect(difference).toBe(projectTotal - planningTotal);
   });
 
-  it("survives a JSON round trip through the v10 parser", () => {
+  it("survives a JSON round trip through the v11 parser", () => {
     let planning = setElementOverride(make("complete_street"), "a1", "right_of_way", 250_000);
     planning = setElementOverride(planning, "a1", "sidewalk", 99_999.99);
     const { project } = planningAlternativeToProject(library, planning, "a1", makeOptions());
-    expect(parseUserProjectV10(JSON.parse(JSON.stringify(project)))).toEqual(project);
+    expect(parseUserProjectV11(JSON.parse(JSON.stringify(project)))).toEqual(project);
   });
 
   it("is deterministic and draws ids from newId", () => {

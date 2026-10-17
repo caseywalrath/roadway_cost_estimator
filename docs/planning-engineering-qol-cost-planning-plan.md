@@ -1,6 +1,6 @@
 # Cost model and Planning template implementation plan
 
-**Status:** detailed design proposal. Percentage items (#13) need the product decisions below before the schema is changed. Roundabout and Interstate templates (#11) need engineer-defined scope and price calibration. This plan expands the [quality-of-life roadmap](planning-engineering-qol-roadmap.md) at repository commit `f9145a9`.
+**Status:** Cost-A percentage items are implemented on `codex/percentage-project-items` using the recommended decisions below. Planning-B roundabout and Interstate templates still need engineer-defined scope and price calibration. This plan expands the [quality-of-life roadmap](planning-engineering-qol-roadmap.md) at repository commit `f9145a9`.
 
 ## Cost-A — Percentage-based Project items (#13)
 
@@ -36,13 +36,13 @@ Keep numeric calculations at full precision and round only at display/export bou
 
 Use focused pure calculation, migration, backup, import, and handoff checks under `src/projects/` and `src/planning/`. A broad UI test that merely repeats formulas is unnecessary; inspect the editor visually at desktop and narrow widths. Run typecheck and the relevant UI build per `codex.md`.
 
-### Decisions required before Cost-A implementation
+### Decisions applied in Cost-A
 
-1. **Fixed-dollar contingency:** Recommended **yes**. Role and pricing mode would be separate on both fixed and percentage custom lines, so a fixed custom line can count in Contingencies. If accepted, extend the proposed line model, subtotals, and migration checks accordingly.
-2. **Selected-line deletion:** Recommended block the deletion until the engineer removes or reassigns the dependent percentage base. This is safer than silently shrinking the base.
-3. **Group base behavior:** Recommended live membership by normalized Group name. Editing a fixed line's Group may change a percentage base; the UI should show the affected calculated amount before saving. A Group that becomes empty should display a warning.
-4. **Rate limits and labels:** Confirm whether rates above 100% are valid for non-contingency fees and whether a contingency label can be used on Other Costs. Validation and field help must follow this decision.
-5. **Planning engineering costs:** Recommended fixed snapshot amounts at handoff. Live engineering percentages in the engineer Project would require an additional dependency model that the current fixed-only rule does not support when their base includes contingency.
+1. **Fixed-dollar contingency:** Allowed through a separate contingency role on custom fixed lines.
+2. **Selected-line deletion:** Blocked until the engineer removes or reassigns the dependent percentage base.
+3. **Group base behavior:** Live membership by normalized Group name. Calculated amounts update as fixed-line Groups change; empty bases display a warning.
+4. **Rate limits and labels:** Any finite nonnegative rate is allowed, including above 100%; a contingency may have either Construction or Other category because its role places it in the Contingencies subtotal.
+5. **Planning engineering costs:** Fixed snapshot amounts at handoff. Planning contingency alone becomes a live percentage line in the Project.
 
 The Sol orchestrator owns these product decisions and the schema/calculation design. Luna can inventory every `projectLineTotal`/`projectCostSummary` call site, extract legacy backup fixtures, execute focused suites, and review migration results read-only. Any implementation delegation needs exclusive file ownership; `projectWorkspace.ts`, `projectRepository.ts`, `renderApp.ts`, and shared CSS remain Sol integration files.
 

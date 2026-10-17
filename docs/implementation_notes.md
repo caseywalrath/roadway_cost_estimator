@@ -275,6 +275,8 @@ Design points:
 
 ## Next Product Steps
 
+Project schema v11 uses one calculation over fixed and percentage lines. Percentage bases contain fixed lines only; they may select all fixed costs, a cost category, a live Group, or explicit fixed-line IDs. `costRole=contingency` moves either a fixed or percentage custom line into the Contingencies summary without double counting. Existing v10 global contingency rates migrate to an explicit percentage line based on all fixed costs. Planning handoff creates a Construction-based contingency percentage line and fixed engineering/right-of-way/utility amounts. Project CSV and backup summaries use calculated line amounts; older backup versions remain readable.
+
 Current sequencing lives in `project_roadmap.md`.
 
 Near-term development should harden the exact-code evidence browser and review the browser-local Project and `.xlsx` import workflows with roadway engineers before adding private hosted data or non-exact matching.

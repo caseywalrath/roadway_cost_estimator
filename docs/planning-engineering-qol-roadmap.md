@@ -42,8 +42,8 @@ This order reflects implementation dependencies. The complex workstreams can be 
 | Plan | Work packages | Implementation state |
 | --- | --- | --- |
 | [Explorer and Project interface](planning-engineering-qol-interface-plan.md) | UI-A #3/#6/#9/#12; UI-B #1; UI-C #2; UI-D #10 | Implemented on `codex/explorer-interface-qol`; the supplied inflation examples were audited. |
-| [File workflows](planning-engineering-qol-file-workflows-plan.md) | File-A #8; File-B #7; File-C #4; File-D #5 | File-A is implemented on `codex/file-workflow-qol`. File-B samples and File-C/D interaction sketches are ready for review; export column removal and merge save behavior await those review gates. |
-| [Cost model and Planning templates](planning-engineering-qol-cost-planning-plan.md) | Cost-A #13; Planning-B #11 | Cost-A needs the listed product decisions. Planning-B needs a first scope and representative estimates for each template. |
+| [File workflows](planning-engineering-qol-file-workflows-plan.md) | File-A #8; File-B #7; File-C #4; File-D #5 | File-A and the approved File-B CSV layouts are implemented. File-C and File-D remain. |
+| [Cost model and Planning templates](planning-engineering-qol-cost-planning-plan.md) | Cost-A #13; Planning-B #11 | Cost-A is implemented on `codex/percentage-project-items`; Planning-B needs a first scope and representative estimates for each template. |
 
 The Sol orchestrator owns shared state, schema, persistence, integration, and final verification. Assign Luna bounded inventory, isolated file edits, or focused verification with exclusive file ownership under `docs/agent_delegation_policy.md`. Implement UI-A, UI-B, and UI-C in that order because their UI files overlap. File-A and CSV sample preparation can proceed independently. Coordinate #5 and #13 because backup comparison must recognize the Project schema version that exists when it ships. The Planning template discovery can proceed alongside these packages.
 

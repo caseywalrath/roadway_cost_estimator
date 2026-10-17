@@ -1797,6 +1797,35 @@ table {
   min-width: 180px;
 }
 
+.project-percentage-details {
+  min-width: 220px !important;
+}
+
+.project-percentage-details select,
+.project-line-table [data-project-fixed-role] {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.project-percentage-details small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+}
+
+.project-percentage-details details {
+  max-height: 180px;
+  overflow: auto;
+  margin-top: 5px;
+}
+
+.project-percentage-details details label {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  text-transform: none;
+}
+
 .project-line-table tbody tr:nth-child(even) td {
   background: #f4f6f8;
 }

@@ -1,5 +1,5 @@
 import type { AgencyItemRecord, StateConfig } from "../data/schema";
-import { projectLineTotal, type ProjectWorkspaceState, type UserProject } from "../projects/projectWorkspace";
+import { calculateProject, projectLineTotal, type ProjectWorkspaceState, type UserProject } from "../projects/projectWorkspace";
 import { detectWorkbookLayouts } from "../projects/excelImport/detectLayout";
 import { matchRows } from "../projects/excelImport/matchRows";
 import { parseRows, validateMapping } from "../projects/excelImport/parseRows";
@@ -865,18 +865,25 @@ export class ExcelImportController {
     const effectiveLines = [...plan.additions, ...plan.updates];
     const constructionCost = effectiveLines.filter((line) => line.costCategory === "construction").reduce((total, line) => total + projectLineTotal(line), 0);
     const otherCost = effectiveLines.filter((line) => line.costCategory === "other").reduce((total, line) => total + projectLineTotal(line), 0);
-    const currentConstruction = project?.lineItems.filter((line) => line.costCategory === "construction").reduce((total, line) => total + projectLineTotal(line), 0) ?? 0;
-    const currentOther = project?.lineItems.filter((line) => line.costCategory === "other").reduce((total, line) => total + projectLineTotal(line), 0) ?? 0;
+    const currentSummary = project ? calculateProject(project).summary : null;
+    const updateMap = new Map(plan.updates.map((line) => [line.lineItemId, line]));
+    const projectedProject = project ? { ...project, lineItems: [...project.lineItems.map((line) => updateMap.get(line.lineItemId) ?? line), ...plan.additions] } : null;
+    const projectedSummary = projectedProject ? calculateProject(projectedProject).summary : null;
+    const currentConstruction = currentSummary?.constructionCost ?? 0;
+    const currentOther = currentSummary?.otherCost ?? 0;
     return {
       existingItemsDetailsOpen: this.existingItemsDetailsOpen,
       existingItemPlan: plan,
       existingItemAction: this.existingItemAction,
       addedCount: plan.additions.length,
       updatedCount: plan.updates.length,
-      constructionDelta: plan.constructionDelta,
-      otherDelta: plan.otherDelta,
-      projectedConstructionCost: currentConstruction + plan.constructionDelta,
-      projectedOtherCost: currentOther + plan.otherDelta,
+      constructionDelta: projectedSummary ? projectedSummary.constructionCost - currentConstruction : plan.constructionDelta,
+      otherDelta: projectedSummary ? projectedSummary.otherCost - currentOther : plan.otherDelta,
+      projectedConstructionCost: projectedSummary?.constructionCost ?? currentConstruction + plan.constructionDelta,
+      projectedOtherCost: projectedSummary?.otherCost ?? currentOther + plan.otherDelta,
+      projectedContingencyCost: projectedSummary?.contingencyCost ?? 0,
+      projectedTotalCost: projectedSummary?.totalProjectCost ?? constructionCost + otherCost,
+      totalDelta: projectedSummary ? projectedSummary.totalProjectCost - (currentSummary?.totalProjectCost ?? 0) : constructionCost + otherCost,
       destinationLabel: draft.destinationProjectMode === "active"
         ? this.options.activeProject?.name ?? "the current Project"
         : draft.newProjectName,

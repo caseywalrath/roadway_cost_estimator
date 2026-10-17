@@ -26,6 +26,9 @@ export interface ExcelImportConfirmationSummary {
   otherDelta?: number;
   projectedConstructionCost?: number;
   projectedOtherCost?: number;
+  projectedContingencyCost?: number;
+  projectedTotalCost?: number;
+  totalDelta?: number;
   destinationLabel: string;
   keepsExistingItems: boolean;
   importedCount: number;
@@ -542,12 +545,14 @@ function renderExistingItems(summary: ExcelImportConfirmationSummary, busy: bool
 function renderCostSummary(summary: ExcelImportConfirmationSummary): string {
   const construction = summary.keepsExistingItems ? summary.projectedConstructionCost ?? summary.constructionCost : summary.constructionCost;
   const other = summary.keepsExistingItems ? summary.projectedOtherCost ?? summary.otherCost : summary.otherCost;
+  const contingency = summary.projectedContingencyCost ?? 0;
+  const total = summary.projectedTotalCost ?? construction + other;
   const comparison = summary.sourceTotalComparison;
   const comparisonText = comparison
     ? `Spreadsheet total comparison: ${formatMoney(comparison.recalculatedMinusSource)} difference across ${comparison.comparedItemCount} compared items.`
     : "No spreadsheet cost comparison available.";
-  return `<section class="excel-import-confirmation-costs" aria-labelledby="excel-import-confirmation-costs-title"><div class="excel-import-cost-heading"><h4 id="excel-import-confirmation-costs-title">Project costs after import</h4><strong>${formatMoney(construction + other)}</strong><small>Before contingency</small></div>
-    <details><summary>Cost breakdown</summary><dl><div><dt>Construction Costs</dt><dd>${formatMoney(construction)}</dd></div>${other !== 0 ? `<div><dt>Other Costs</dt><dd>${formatMoney(other)}</dd></div>` : ""}${summary.keepsExistingItems ? `<div><dt>Change from import</dt><dd>${formatMoney((summary.constructionDelta ?? summary.constructionCost) + (summary.otherDelta ?? summary.otherCost))}</dd></div>` : ""}</dl><p class="muted">${escapeHtml(comparisonText)}</p></details></section>`;
+  return `<section class="excel-import-confirmation-costs" aria-labelledby="excel-import-confirmation-costs-title"><div class="excel-import-cost-heading"><h4 id="excel-import-confirmation-costs-title">Project costs after import</h4><strong>${formatMoney(total)}</strong></div>
+    <details><summary>Cost breakdown</summary><dl><div><dt>Construction Costs</dt><dd>${formatMoney(construction)}</dd></div>${other !== 0 ? `<div><dt>Other Costs</dt><dd>${formatMoney(other)}</dd></div>` : ""}${contingency !== 0 ? `<div><dt>Contingencies</dt><dd>${formatMoney(contingency)}</dd></div>` : ""}${summary.keepsExistingItems ? `<div><dt>Change from import</dt><dd>${formatMoney(summary.totalDelta ?? (summary.constructionDelta ?? summary.constructionCost) + (summary.otherDelta ?? summary.otherCost))}</dd></div>` : ""}</dl><p class="muted">${escapeHtml(comparisonText)}</p></details></section>`;
 }
 
 function renderSkippedRows(summary: ExcelImportConfirmationSummary): string {
