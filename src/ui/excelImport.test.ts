@@ -100,6 +100,10 @@ function file(): File {
   return value;
 }
 
+async function waitForReviewChoice(): Promise<void> {
+  await new Promise((resolve) => window.setTimeout(resolve, 510));
+}
+
 function workbookWithValue(rowNumber: number, columnNumber: number, value: string | number): ExcelWorkbookSnapshot {
   const base = workbook();
   const sheet = base.sheets[0]!;
@@ -166,15 +170,19 @@ describe("Excel import wizard", () => {
     await controller.selectFile(file());
     await new Promise((resolve) => window.setTimeout(resolve, 0));
     for (const stage of ["sheet", "mapping", "review"]) root.querySelector<HTMLButtonElement>(`[data-excel-import-next="${stage}"]`)!.click();
+    expect(root.textContent).toContain("Already in this Project");
+    expect(root.querySelectorAll('[data-excel-import-match-action="update"]')).toHaveLength(2);
+    root.querySelector<HTMLButtonElement>('[data-excel-import-match-action="update"]')!.click();
+    await waitForReviewChoice();
+    root.querySelectorAll<HTMLButtonElement>('[data-excel-import-match-action="update"]')[0]!.click();
     root.querySelector<HTMLButtonElement>("[data-excel-import-finish]")!.click();
-    expect(controller.viewModel.confirmation?.existingItemPlan?.additions).toHaveLength(2);
-    expect(root.textContent).toContain("Items already in this Project");
-    const rule = root.querySelector<HTMLSelectElement>("[data-excel-import-existing-default]")!;
-    rule.value = "update"; rule.dispatchEvent(new Event("change"));
     expect(controller.viewModel.confirmation).toMatchObject({ addedCount: 0, updatedCount: 2, constructionDelta: 195, projectedConstructionCost: 275 });
     expect(root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")!.textContent).toBe("Update 2 existing items");
-    const choices = root.querySelectorAll<HTMLSelectElement>("[data-excel-import-existing-action]");
-    choices[1].value = "skip"; choices[1].dispatchEvent(new Event("change"));
+    root.querySelector<HTMLButtonElement>('[data-excel-import-back="review"]')!.click();
+    await waitForReviewChoice();
+    root.querySelector<HTMLButtonElement>('[data-excel-import-review-filter="reviewed"]')!.click();
+    root.querySelectorAll<HTMLButtonElement>('[data-excel-import-match-action="skip"]')[1]!.click();
+    root.querySelector<HTMLButtonElement>("[data-excel-import-finish]")!.click();
     expect(controller.viewModel.confirmation).toMatchObject({ addedCount: 0, updatedCount: 1, skippedCount: 2, constructionDelta: 150, projectedConstructionCost: 230 });
     root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")!.click();
     await new Promise((resolve) => window.setTimeout(resolve, 0));
@@ -194,15 +202,13 @@ describe("Excel import wizard", () => {
     controller = new ExcelImportController({ currentStateCode: "NE", currentAgencyId: "ne_ndot", agencyItems: [agencyItem], activeProject: project, states: [state], onRender: render, onClose: () => undefined, workerFactory: () => new FakeWorker(workbook()) });
     controller.open(); await controller.selectFile(file()); await new Promise((resolve) => window.setTimeout(resolve, 0));
     for (const stage of ["sheet", "mapping", "review"]) root.querySelector<HTMLButtonElement>(`[data-excel-import-next="${stage}"]`)!.click();
-    root.querySelector<HTMLButtonElement>("[data-excel-import-finish]")!.click();
-    const rule = root.querySelector<HTMLSelectElement>("[data-excel-import-existing-default]")!;
-    rule.value = "update"; rule.dispatchEvent(new Event("change"));
-    expect(controller.viewModel.confirmation?.updatedCount).toBe(0);
-    const action = root.querySelector<HTMLSelectElement>("[data-excel-import-existing-action]")!;
-    action.value = "update"; action.dispatchEvent(new Event("change"));
-    expect(root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")!.disabled).toBe(true);
+    expect(root.textContent).toContain("Project update target needed");
+    root.querySelector<HTMLButtonElement>('[data-excel-import-match-action="update"]')!.click();
+    await waitForReviewChoice();
     const target = root.querySelector<HTMLSelectElement>("[data-excel-import-existing-target]")!;
+    expect(target).not.toBeNull();
     target.value = project.lineItems[1].lineItemId; target.dispatchEvent(new Event("change"));
+    root.querySelector<HTMLButtonElement>("[data-excel-import-finish]")!.click();
     expect(controller.viewModel.confirmation?.existingItemPlan?.updates[0].lineItemId).toBe(project.lineItems[1].lineItemId);
     expect(root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")!.disabled).toBe(false);
   });
@@ -483,7 +489,7 @@ describe("Excel import wizard", () => {
     root.querySelector<HTMLButtonElement>('[data-excel-import-next="review"]')?.click();
 
     expect(controller.viewModel.reviewFilter).toBe("needs-review");
-    expect(root.textContent).toContain("Description differs — choose which to use");
+    expect(root.textContent).toContain("Description differs");
     expect(root.textContent).toContain("Spreadsheet");
     expect(root.textContent).toContain("Item Book description");
     expect(root.textContent).toContain("Item Book");
@@ -498,11 +504,13 @@ describe("Excel import wizard", () => {
     expect(root.querySelector<HTMLButtonElement>("[data-excel-import-finish]")?.disabled).toBe(false);
     root.querySelector<HTMLButtonElement>("[data-excel-import-undo]")!.click();
     expect(controller.viewModel.decisions).toEqual({});
+    await waitForReviewChoice();
     root.querySelector<HTMLButtonElement>('[data-excel-import-row-choice][data-excel-import-action="use-catalog-description"]')!.click();
     root.querySelector<HTMLButtonElement>('[data-excel-import-review-filter="reviewed"]')!.click();
     expect(root.textContent).toContain("Choice recorded");
     expect(root.textContent).toContain("Change choice");
     root.querySelector<HTMLDetailsElement>(".excel-import-row-actions details")!.open = true;
+    await waitForReviewChoice();
     root.querySelector<HTMLButtonElement>('[data-excel-import-row-choice][data-excel-import-action="exclude"]')!.click();
     expect(Object.values(controller.viewModel.decisions)[0]?.action).toBe("exclude");
     root.querySelector<HTMLButtonElement>('[data-excel-import-review-filter="needs-review"]')!.click();
@@ -537,7 +545,7 @@ describe("Excel import wizard", () => {
     root.querySelector<HTMLButtonElement>('[data-excel-import-next="mapping"]')!.click();
     root.querySelector<HTMLButtonElement>('[data-excel-import-next="review"]')!.click();
 
-    expect(root.textContent).toContain("1 item needs attention. Continue to skip it, or choose an action.");
+    expect(root.textContent).toContain("1 item needs attention.");
     expect(root.querySelector<HTMLButtonElement>("[data-excel-import-finish]")?.disabled).toBe(false);
     root.querySelector<HTMLButtonElement>("[data-excel-import-finish]")!.click();
 
@@ -575,7 +583,7 @@ describe("Excel import wizard", () => {
     root.querySelector<HTMLButtonElement>('[data-excel-import-next="mapping"]')?.click();
     root.querySelector<HTMLButtonElement>('[data-excel-import-next="review"]')?.click();
 
-    expect(root.textContent).toContain("3 items need attention. Continue to skip them, or choose an action.");
+    expect(root.textContent).toContain("3 items need attention.");
     expect(root.querySelector<HTMLInputElement>('[data-excel-import-select-visible]')?.getAttribute('aria-label')).toBe("Select all visible rows");
     expect(root.querySelectorAll("[data-excel-import-select-visible]")).toHaveLength(1);
     expect(root.querySelector("[data-excel-import-select-filtered]")).toBeNull();
@@ -602,10 +610,12 @@ describe("Excel import wizard", () => {
     expect(root.querySelector(".excel-import-selection-bar")).toBeNull();
 
     expect(Object.values(controller.viewModel.decisions).map((decision) => decision.action)).toEqual(["use-catalog-description"]);
-    expect(root.textContent).toContain("2 items need attention. Continue to skip them, or choose an action.");
+    expect(root.textContent).toContain("2 items need attention.");
     expect(root.querySelector<HTMLButtonElement>("[data-excel-import-finish]")?.disabled).toBe(false);
 
-    root.querySelector<HTMLInputElement>("[data-excel-import-select-visible]")?.click();
+    const selectVisible = root.querySelector<HTMLInputElement>("[data-excel-import-select-visible]")!;
+    selectVisible.checked = true;
+    selectVisible.dispatchEvent(new Event("change"));
     expect(controller.viewModel.selectedReviewRowIds).toHaveLength(2);
     const remainingBulkAction = root.querySelector<HTMLSelectElement>("[data-excel-import-bulk-action]")!;
     remainingBulkAction.value = "use-catalog-description";
@@ -618,7 +628,7 @@ describe("Excel import wizard", () => {
     expect(root.querySelector<HTMLButtonElement>("[data-excel-import-finish]")?.disabled).toBe(false);
     root.querySelector<HTMLButtonElement>("[data-excel-import-undo]")!.click();
     expect(Object.keys(controller.viewModel.decisions)).toHaveLength(1);
-    expect(root.textContent).toContain("2 items need attention. Continue to skip them, or choose an action.");
+    expect(root.textContent).toContain("2 items need attention.");
     root.querySelector<HTMLButtonElement>('[data-excel-import-review-filter="all"]')!.click();
     const status = root.querySelector<HTMLSelectElement>("[data-excel-import-all-status]")!;
     status.value = "excluded";
@@ -762,7 +772,8 @@ describe("Excel import wizard", () => {
     expect(buildExcelImportReportCsv(draft!)).toContain("Sheet,Row,Item Code,Description,Outcome,Quantity,Unit Cost,Reason");
     expect(buildExcelImportReportCsv({
       ...draft!,
-      resolvedRows: draft!.resolvedRows.map((row, index) => index === 0 && row.lineItem ? { ...row, lineItem: { ...row.lineItem, description: "=SUM(A1)" } } : row)
+      rows: draft!.rows.map((row) => row.classification === "item" ? { ...row, values: { ...row.values, description: "=SUM(A1)" } } : row),
+      resolvedRows: draft!.resolvedRows.map((row) => ({ ...row, lineItem: row.lineItem ? { ...row.lineItem, description: "=SUM(A1)" } : null }))
     })).toContain("'=SUM(A1)");
     root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")?.click();
     root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")?.click();

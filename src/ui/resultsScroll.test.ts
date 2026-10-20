@@ -5,6 +5,8 @@ import { captureResultsTableScroll, restoreResultsTableScroll } from "./resultsS
 
 describe("results scroll preservation", () => {
   it("preserves page position and horizontal table position after the table is replaced", () => {
+    // jsdom leaves scrollingElement null; browsers expose the document scroller.
+    Object.defineProperty(document, "scrollingElement", { configurable: true, value: document.documentElement });
     const root = document.createElement("div");
     root.innerHTML = `<div class="table-scroll--sticky-results"></div>`;
     const original = root.querySelector<HTMLElement>(".table-scroll--sticky-results");

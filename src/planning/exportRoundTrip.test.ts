@@ -57,7 +57,7 @@ function parseCsv(text: string): string[][] {
 }
 
 const body = (csv: string) => csv.replace(/^﻿/u, "");
-/** Table rows only (after the "Alternative" header). Column 0 = alternative, 1 = row type, 3 = element/label, 9 = amount. */
+/** Table rows only (after the "Alternative" header). Column 0 = alternative, 1 = row type, 3 = element/label, 4 = amount. */
 function tableRows(csv: string): string[][] {
   const rows = parseCsv(body(csv));
   const headerIndex = rows.findIndex((r) => r[0] === "Alternative");
@@ -65,7 +65,7 @@ function tableRows(csv: string): string[][] {
 }
 const summaryRow = (rows: string[][], alt: string, label: string) =>
   rows.find((r) => r[0] === alt && r[1] === "Summary" && r[3] === label);
-const summaryAmount = (rows: string[][], alt: string, label: string) => summaryRow(rows, alt, label)?.[9];
+const summaryAmount = (rows: string[][], alt: string, label: string) => summaryRow(rows, alt, label)?.[4];
 
 /** Parses the number out of on-screen money text: "$3,730,000" -> 3730000, "-$1,000" -> -1000. */
 const screenNumber = (text: string) => Number(text.replace(/[$,]/g, ""));
@@ -137,8 +137,8 @@ describe("Planning CSV matches on-screen totals", () => {
           for (const e of enabled) {
             const row = elementRows.find((r) => r[3] === e.label)!;
             const screen = screenNumber(formatElementAmount(e.amount));
-            expect(Number(row[9])).toBe(screen);
-            csvSum += Number(row[9]);
+            expect(Number(row[4])).toBe(screen);
+            csvSum += Number(row[4]);
             screenSum += screen;
           }
           expect(csvSum).toBe(screenSum);
@@ -147,7 +147,7 @@ describe("Planning CSV matches on-screen totals", () => {
         // The sidewalk override is entered on the selected alternative and must show as written.
         if (variant.label === "variant" && library.elements.some((e) => e.id === "sidewalk")) {
           const row = tableRows(buildPlanningCsv(library, project, EXPORTED)).find((r) => r[0] === "Alternative A" && r[1] === "Element" && r[3] === library.elements.find((e) => e.id === "sidewalk")!.label);
-          expect(row?.[9]).toBe(String(SIDEWALK_OVERRIDE));
+          expect(row?.[4]).toBe(String(SIDEWALK_OVERRIDE));
         }
       });
     }

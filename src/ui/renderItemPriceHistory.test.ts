@@ -46,7 +46,7 @@ describe("renderItemPriceHistory", () => {
 
   it("uses the published period label without repeating the report series in each row", () => {
     const html = renderItemPriceHistory(result, config, false, null, false);
-    expect(html).toContain("<tbody><tr><td>2025</td>");
+    expect(html).toContain('<tbody><tr><td class="item-price-history-column--period">2025</td>');
   });
 
   it("uses the sticky-results scroll region for long history tables", () => {

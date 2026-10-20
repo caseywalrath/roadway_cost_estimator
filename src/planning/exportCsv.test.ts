@@ -61,7 +61,7 @@ function tableRows(csv: string): string[][] {
   return rows.slice(headerIndex + 1);
 }
 const summaryAmount = (rows: string[][], alt: string, label: string) =>
-  rows.find((r) => r[0] === alt && r[1] === "Summary" && r[3] === label)?.[9];
+  rows.find((r) => r[0] === alt && r[1] === "Summary" && r[3] === label)?.[4];
 
 describe("buildPlanningCsv format", () => {
   it("starts with a BOM, uses CRLF, and ends with CRLF", () => {
