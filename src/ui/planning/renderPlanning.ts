@@ -239,20 +239,19 @@ function renderActionsMenu(projectListHtml: string, isNewScreen: boolean): strin
       <div class="project-switcher-menu">
         <div data-planning-project-list>${projectListHtml}</div>
         <div class="project-switcher-actions">
-          <button type="button" data-planning-new-project${off}>New planning project</button>
-          <button type="button" data-planning-rename-project${off}>Rename project</button>
+          <button type="button" data-planning-new-project${off}>New Planning Project</button>
+          <button type="button" data-planning-rename-project${off}>Rename Planning Project</button>
+        </div>
+        <div class="project-switcher-actions">
           <button type="button" data-planning-import>Import Planning Backup</button>
-          <small class="muted">.json backup file</small>
           <input type="file" accept=".json,application/json" data-planning-import-input hidden />
         </div>
         <div class="project-switcher-actions">
-          <button type="button" data-planning-export="print"${off}>Print summary</button>
-          <button type="button" data-planning-export="csv"${off}>Download CSV</button>
+          <button type="button" data-planning-export="csv"${off}>Download Planning CSV</button>
           <button type="button" data-planning-export="json"${off}>Download Planning Backup</button>
-          <small class="muted">.json backup file</small>
         </div>
         <div class="project-switcher-actions">
-          <button type="button" class="project-switcher-danger" data-planning-delete-project${off}>Delete project</button>
+          <button type="button" class="project-switcher-danger" data-planning-delete-project${off}>Delete Planning Project</button>
         </div>
       </div>
     </details>`;

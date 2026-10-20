@@ -4,7 +4,7 @@ import {
   createEmptyProjectWorkspaceState,
   isLegacyPlaceholderProject,
   migrateLegacyWorkspace,
-  parseUserProjectV11,
+  parseUserProjectV12,
   removeProjectFromState,
   type LegacyMigrationResult,
   type ProjectWorkspaceState,
@@ -72,6 +72,8 @@ export interface ProjectRepository {
     expectedRevision: number,
     reason?: string
   ): Promise<UserProject>;
+  /** Save a complete reviewed backup merge with a recoverable pre-merge revision. */
+  applyBackupMerge(merged: UserProject, expectedRevision: number, reason?: string): Promise<UserProject>;
   deleteProject(projectId: string): Promise<void>;
   recordBackup(projectId: string, revision: number): Promise<UserProject>;
   setActiveProjectId(stateCode: string, projectId: string | null): Promise<void>;
@@ -184,7 +186,7 @@ class IndexedDbProjectRepository implements ProjectRepository {
     return {
       schemaVersion: PROJECT_WORKSPACE_SCHEMA_VERSION,
       activeProjectIdByState: sanitizeActiveProjectIds(settings?.activeProjectIdByState ?? {}, projects),
-      projects: projects.map((project) => parseUserProjectV11(project)).filter((project): project is UserProject => project !== null)
+      projects: projects.map((project) => parseUserProjectV12(project)).filter((project): project is UserProject => project !== null)
     };
   }
 
@@ -275,6 +277,52 @@ class IndexedDbProjectRepository implements ProjectRepository {
     return saved;
   }
 
+  async applyBackupMerge(
+    merged: UserProject,
+    expectedRevision: number,
+    reason = "Before Project backup import"
+  ): Promise<UserProject> {
+    const transaction = this.database.transaction(["projects", "revisions"], "readwrite");
+    const projectStore = transaction.objectStore("projects");
+    const revisionStore = transaction.objectStore("revisions");
+    const current = await requestResult<UserProject | undefined>(projectStore.get(merged.projectId));
+    if (!current || current.revision !== expectedRevision) {
+      transaction.abort();
+      throw new ProjectConflictError();
+    }
+    if (current.status !== "active") {
+      transaction.abort();
+      throw new Error("Only an active Project can receive a backup merge.");
+    }
+    const now = new Date().toISOString();
+    let saved: UserProject;
+    try {
+      saved = buildBackupMergedProject(current, merged, now);
+    } catch (error) {
+      transaction.abort();
+      throw error;
+    }
+    const snapshot: ProjectRevision = {
+      projectId: current.projectId,
+      revision: current.revision,
+      createdAt: now,
+      reason,
+      project: structuredClone(current)
+    };
+    revisionStore.put(snapshot);
+    projectStore.put(saved);
+    const existingRevisions = await requestResult<ProjectRevision[]>(revisionStore.index("projectId").getAll(current.projectId));
+    const revisionsByKey = new Map(existingRevisions.map((revision) => [revision.revision, revision]));
+    revisionsByKey.set(snapshot.revision, snapshot);
+    for (const revision of [...revisionsByKey.values()]
+      .sort((left, right) => right.revision - left.revision)
+      .slice(MAX_REVISIONS_PER_PROJECT)) {
+      revisionStore.delete([revision.projectId, revision.revision]);
+    }
+    await transactionDone(transaction);
+    return saved;
+  }
+
   async deleteProject(projectId: string): Promise<void> {
     const transaction = this.database.transaction(["projects", "revisions", "settings"], "readwrite");
     const projectStore = transaction.objectStore("projects");
@@ -345,7 +393,7 @@ class IndexedDbProjectRepository implements ProjectRepository {
     await transactionDone(transaction);
     return revisions
       .map((revision) => {
-        const project = parseUserProjectV11(revision.project);
+        const project = parseUserProjectV12(revision.project);
         return project ? { ...revision, project } : null;
       })
       .filter((revision): revision is ProjectRevision => revision !== null)
@@ -356,7 +404,7 @@ class IndexedDbProjectRepository implements ProjectRepository {
     const transaction = this.database.transaction("projects", "readonly");
     const project = await requestResult<UserProject | undefined>(transaction.objectStore("projects").get(projectId));
     await transactionDone(transaction);
-    return project ? parseUserProjectV11(project) : null;
+    return project ? parseUserProjectV12(project) : null;
   }
 
   private async getSettings(): Promise<WorkspaceSettingsRecord | undefined> {
@@ -471,6 +519,30 @@ class MemoryProjectRepository implements ProjectRepository {
     this.state.projects = this.state.projects.map((candidate) => candidate.projectId === saved.projectId ? saved : candidate);
     return structuredClone(saved);
   }
+  async applyBackupMerge(
+    merged: UserProject,
+    expectedRevision: number,
+    reason = "Before Project backup import"
+  ): Promise<UserProject> {
+    const current = this.state.projects.find((candidate) => candidate.projectId === merged.projectId);
+    if (!current || current.revision !== expectedRevision) throw new ProjectConflictError();
+    if (current.status !== "active") throw new Error("Only an active Project can receive a backup merge.");
+    const now = new Date().toISOString();
+    const saved = buildBackupMergedProject(current, merged, now);
+    const snapshot: ProjectRevision = {
+      projectId: current.projectId,
+      revision: current.revision,
+      createdAt: now,
+      reason,
+      project: structuredClone(current)
+    };
+    const retained = this.revisions.filter((revision) => revision.projectId === current.projectId && revision.revision !== current.revision);
+    retained.push(snapshot);
+    retained.sort((left, right) => right.revision - left.revision);
+    this.revisions = [...this.revisions.filter((revision) => revision.projectId !== current.projectId), ...retained.slice(0, MAX_REVISIONS_PER_PROJECT)];
+    this.state.projects = this.state.projects.map((candidate) => candidate.projectId === saved.projectId ? saved : candidate);
+    return structuredClone(saved);
+  }
   async deleteProject(projectId: string): Promise<void> {
     const project = this.state.projects.find((candidate) => candidate.projectId === projectId);
     if (!project || project.status !== "archived") throw new Error("Only archived Projects can be permanently deleted.");
@@ -517,7 +589,31 @@ function buildImportedProject(
   };
   const ids = new Set(saved.lineItems.map((line) => line.lineItemId));
   if (ids.size !== saved.lineItems.length || saved.lineItems.some((line) => line.state !== current.state)
-    || !parseUserProjectV11(saved)) throw new Error("Imported items do not form a valid Project.");
+    || !parseUserProjectV12(saved)) throw new Error("Imported items do not form a valid Project.");
+  return saved;
+}
+
+function buildBackupMergedProject(current: UserProject, merged: UserProject, now: string): UserProject {
+  const saved: UserProject = {
+    ...structuredClone(merged),
+    projectId: current.projectId,
+    state: current.state,
+    status: current.status,
+    archivedAt: current.archivedAt,
+    createdAt: current.createdAt,
+    lastBackupAt: current.lastBackupAt,
+    lastBackupRevision: current.lastBackupRevision,
+    revision: current.revision + 1,
+    updatedAt: now
+  };
+  const ids = new Set(saved.lineItems.map((line) => line.lineItemId));
+  const parsed = parseUserProjectV12(saved);
+  if (merged.projectId !== current.projectId || merged.state !== current.state
+    || ids.size !== saved.lineItems.length
+    || saved.lineItems.some((line) => line.state !== current.state)
+    || !parsed || parsed.lineItems.length !== saved.lineItems.length) {
+    throw new Error("The reviewed backup merge does not form a valid Project.");
+  }
   return saved;
 }
 

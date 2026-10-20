@@ -5,6 +5,7 @@ import {
   parseUserProjectV9,
   parseUserProjectV10,
   parseUserProjectV11,
+  parseUserProjectV12,
   type ProjectCostSummary,
   type UserProject
 } from "./projectWorkspace";
@@ -45,13 +46,16 @@ export function parseProjectBackup(value: unknown): ProjectBackupFile | null {
       && value.projectSchemaVersion !== 8
       && value.projectSchemaVersion !== 9
       && value.projectSchemaVersion !== 10
+      && value.projectSchemaVersion !== 11
       && value.projectSchemaVersion !== PROJECT_WORKSPACE_SCHEMA_VERSION)
     || typeof value.exportedAt !== "string"
     || typeof value.revision !== "number") {
     return null;
   }
   const project = value.projectSchemaVersion === PROJECT_WORKSPACE_SCHEMA_VERSION
-    ? parseUserProjectV11(value.project)
+    ? parseUserProjectV12(value.project)
+    : value.projectSchemaVersion === 11
+      ? parseUserProjectV11(value.project)
     : value.projectSchemaVersion === 10
       ? parseUserProjectV10(value.project)
       : parseUserProjectV9(value.project);
@@ -85,7 +89,16 @@ export function createImportedCopy(project: UserProject): UserProject {
       ...(lineItem.percentageBase?.kind === "selected_lines" ? { percentageBase: { kind: "selected_lines" as const, lineItemIds: lineItem.percentageBase.lineItemIds.map((id) => newIds.get(id) ?? id) } } : {}),
       createdAt: now,
       updatedAt: now
-    }))
+    })),
+    ...(project.excelImportSources ? {
+      excelImportSources: project.excelImportSources.map((source) => ({
+        ...structuredClone(source),
+        rows: source.rows.map((row) => ({
+          ...structuredClone(row),
+          lineItemIds: row.lineItemIds.map((id) => newIds.get(id) ?? id)
+        }))
+      }))
+    } : {})
   };
 }
 

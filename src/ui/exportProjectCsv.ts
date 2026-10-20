@@ -15,7 +15,7 @@ interface ProjectCsvColumn {
 
 const projectCsvColumns: ProjectCsvColumn[] = [
   { header: "Group", value: (_project, lineItem) => lineItem.group },
-  { header: "Cost Category", value: (_project, lineItem) => lineItem.costRole === "contingency" ? "Contingency" : lineItem.costCategory === "construction" ? "Construction" : "Other" },
+  { header: "Cost Category", value: (_project, lineItem) => lineItem.costCategory === "contingency" || lineItem.costRole === "contingency" ? "Contingency" : lineItem.costCategory === "construction" ? "Construction" : "Other" },
   { header: "Item Code", value: (_project, lineItem) => lineItem.itemCode },
   { header: "Description", value: (_project, lineItem) => lineItem.description },
   { header: "Unit Cost", value: (_project, lineItem) => lineItem.pricingMode === "percentage" ? null : lineItem.preferredUnitCost },

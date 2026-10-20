@@ -306,7 +306,7 @@ function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): strin
   const nextDirection = isActive && sort.direction === "asc" ? "descending" : "ascending";
   const columnClass = [
     column.key === "projectNumber" ? "evidence-project-header" : "",
-    ["district", "bidCount", "quantity"].includes(column.key) ? `evidence-column--${column.key}` : ""
+    ["district", "bidCount", "quantity", "awardedBidUnitPrice", "averageBidUnitPrice", "engineerEstimateUnitPrice"].includes(column.key) ? `evidence-column--${column.key}` : ""
   ].filter(Boolean).map((className) => ` ${className}`).join("");
   const ariaLabel = column.ariaLabel ?? column.label;
 
@@ -553,7 +553,7 @@ function renderInflationAdjustmentNote(
   return `
     <p class="summary-adjustment-note">
       Inflation Adjustment is on. Awarded bid, average bid, and engineer estimate unit prices are adjusted with FHWA NHCCI to ${escapeHtml(summary.targetPeriod.periodLabel)}.
-      Matching Projects shows the original price first and the adjusted price beneath it. Small changes can look equal after rounding; some quarters decrease. CSV export remains unchanged.${missingNote}
+      Adjusted prices replace the source prices in Matching Projects. Focus or hover on a value to see its source price and adjustment period. Some quarters decrease, and small changes can look equal after rounding. CSV export remains unchanged.${missingNote}
     </p>
   `;
 }
@@ -563,10 +563,20 @@ function renderUnitPrice(value: number | null, adjustedValue: number | null, adj
     return "Not listed";
   }
 
-  if (adjustedValue === null) return `${formatCurrency(value)}${adjustmentEnabled ? `<div class="adjusted-price-line adjusted-price-line--unavailable" title="Required FHWA NHCCI index data is unavailable${sourcePeriod ? ` for ${escapeHtml(sourcePeriod)}` : ""}">Adjustment unavailable</div>` : ""}`;
-  const sameDisplayedValue = formatCurrency(value) === formatCurrency(adjustedValue);
+  if (adjustedValue === null) {
+    if (!adjustmentEnabled) return formatCurrency(value);
+    const reason = !targetPeriod
+      ? "No FHWA NHCCI target index is available. The source price is unchanged."
+      : !sourcePeriod
+        ? "A valid source quarter could not be determined. The source price is unchanged."
+        : `No FHWA NHCCI index is available for ${sourcePeriod}. Newer data may not yet be indexed. The source price is unchanged.`;
+    return `${formatCurrency(value)}<span class="adjusted-price-line adjusted-price-line--unavailable" tabindex="0" title="${escapeHtml(reason)}" aria-label="Not adjusted. ${escapeHtml(reason)}">Not adjusted</span>`;
+  }
+
+  if (!adjustmentEnabled) return formatCurrency(value);
   const periodDetail = sourcePeriod && targetPeriod ? ` from ${sourcePeriod} to ${targetPeriod}` : "";
-  return `${formatCurrency(value)}<div class="adjusted-price-line" title="FHWA NHCCI adjustment${escapeHtml(periodDetail)} applied${sameDisplayedValue ? "; unchanged at displayed precision" : ""}">Adjusted: ${formatCurrency(adjustedValue)}</div>`;
+  const originalDetail = `Original price ${formatCurrency(value)}. FHWA NHCCI adjustment${periodDetail} applied.`;
+  return `<span class="adjusted-price-value" tabindex="0" title="${escapeHtml(originalDetail)}" aria-label="Adjusted price ${formatCurrency(adjustedValue)}. ${escapeHtml(originalDetail)}">${formatCurrency(adjustedValue)}</span>`;
 }
 
 function renderEmptyTableMessage(): string {

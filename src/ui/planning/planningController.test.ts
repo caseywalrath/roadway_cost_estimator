@@ -726,24 +726,6 @@ describe("project management", () => {
     expect(downloads[0].text).toContain("Main Street");
   });
 
-  it("prints the summary and cleans up after printing", async () => {
-    const print = vi.fn(() => {
-      expect(document.body.querySelector(".planning-print")).not.toBeNull();
-      expect(document.body.classList.contains("planning-printing")).toBe(true);
-    });
-    const { controller, root } = await open({ print });
-    await createStreet(root, controller);
-    q(root, "[data-planning-export='print']").click();
-    expect(print).toHaveBeenCalledTimes(1);
-    expect(document.body.querySelectorAll(".planning-print").length).toBe(1);
-    expect(document.body.querySelector(".planning-print h1")?.textContent).toBe("Main Street");
-    q(root, "[data-planning-export='print']").click();
-    expect(document.body.querySelectorAll(".planning-print").length).toBe(1);
-    window.dispatchEvent(new Event("afterprint"));
-    expect(document.body.querySelector(".planning-print")).toBeNull();
-    expect(document.body.classList.contains("planning-printing")).toBe(false);
-  });
-
   it("hides Create engineer Project when the host supplies no handoff", async () => {
     const { controller, root } = await open();
     await createStreet(root, controller);
@@ -773,15 +755,6 @@ describe("project management", () => {
     expect(root.textContent).toContain("Could not create the engineer Project: storage full");
   });
 
-  it("removes the print markup on unmount", async () => {
-    const { controller, root } = await open({ print: () => undefined });
-    await createStreet(root, controller);
-    q(root, "[data-planning-export='print']").click();
-    expect(document.body.querySelector(".planning-print")).not.toBeNull();
-    controller.unmount();
-    expect(document.body.querySelector(".planning-print")).toBeNull();
-    expect(document.body.classList.contains("planning-printing")).toBe(false);
-  });
 });
 
 interface StoreControl {

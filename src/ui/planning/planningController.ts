@@ -22,6 +22,7 @@ import {
 import { buildPlanningCsv, planningCsvFilename } from "../../planning/exportCsv";
 import { buildShareFile, importProjectCopy, parseShareFile } from "../../planning/shareFile";
 import type { PlanningProjectSummary, PlanningStore, SavePlanningResult } from "../../planning/storage";
+import { requestActionConfirmation } from "../actionConfirmation";
 import { alternativeTemplateId, createProject, planTemplateSwitch } from "../../planning/templates";
 import type {
   AlternativeResult,
@@ -35,7 +36,6 @@ import type {
   ResolvedLibrary
 } from "../../planning/types";
 import { formatEntered, formatPlain, formatTotalAmount, inputBrief, parseDollar, parseNumber, parsePercent, percentNumber } from "./format";
-import { renderPrintSummary } from "./printSummary";
 import {
   budgetInfo,
   editedCostsText,
@@ -80,8 +80,6 @@ export interface PlanningControllerDeps {
   saveDelayMs?: number;
   /** JSON and CSV export. Default: Blob + anchor click. */
   download?: (filename: string, text: string, mimeType: string) => void;
-  /** Opens the print dialog. Default: window.print(). */
-  print?: () => void;
   /** Creates and opens an engineer Project from one alternative. Absent = the button is hidden. */
   createEngineerProject?: (library: ResolvedLibrary, project: PlanningProject, alternativeId: string) => Promise<void>;
 }
@@ -169,7 +167,6 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
 export function createPlanningController(deps: PlanningControllerDeps): PlanningController {
   const saveDelay = deps.saveDelayMs ?? 500;
   const download = deps.download ?? defaultDownload;
-  const print = deps.print ?? (() => window.print());
 
   let container: HTMLElement | null = null;
   let phase: Phase = "idle";
@@ -814,10 +811,16 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     renderRoot();
   }
 
-  async function deleteCurrentProject(): Promise<void> {
+  async function deleteCurrentProject(trigger?: HTMLElement): Promise<void> {
     if (!project) return;
     const { id, name } = project;
-    if (!window.confirm(`Delete planning project ${name}? This cannot be undone.`)) return;
+    if (!(await requestActionConfirmation(trigger ?? document.activeElement as HTMLElement | null, {
+      title: `Delete ${name}?`,
+      message: "This Planning project and its alternatives will be permanently deleted.",
+      confirmLabel: "Delete project",
+      tone: "destructive",
+      placement: "modal"
+    }))) return;
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = null;
     await (inFlight ?? Promise.resolve());
@@ -898,31 +901,6 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     download(planningCsvFilename(project), buildPlanningCsv(library, project, deps.now()), "text/csv;charset=utf-8");
   }
 
-  // ---------- Print ----------
-
-  let cleanupPrint: (() => void) | null = null;
-
-  /** Removes the print markup and the body class. Safe to call more than once. */
-  function removePrintMarkup(): void {
-    if (cleanupPrint) cleanupPrint();
-    cleanupPrint = null;
-    for (const el of document.body.querySelectorAll(".planning-print")) el.remove();
-    document.body.classList.remove("planning-printing");
-  }
-
-  function printSummary(): void {
-    if (!project) return;
-    closeMenus();
-    removePrintMarkup();
-    const results = project.alternatives.map((alt) => calculateAlternative(library, project!, alt.id));
-    document.body.insertAdjacentHTML("beforeend", renderPrintSummary(library, project, results, deps.now()));
-    document.body.classList.add("planning-printing");
-    const onAfterPrint = () => removePrintMarkup();
-    window.addEventListener("afterprint", onAfterPrint, { once: true });
-    cleanupPrint = () => window.removeEventListener("afterprint", onAfterPrint);
-    print();
-  }
-
   async function createEngineerProject(): Promise<void> {
     if (!project || !deps.createEngineerProject) return;
     try {
@@ -934,8 +912,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
   }
 
   function exportFrom(kind: string): void {
-    if (kind === "print") printSummary();
-    else if (kind === "csv") exportCsv();
+    if (kind === "csv") exportCsv();
     else exportJson();
   }
 
@@ -1070,7 +1047,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     else if (t instanceof HTMLInputElement && t.dataset.planningAltName !== undefined) commitAltName(t);
     else if (t instanceof HTMLTextAreaElement && t.dataset.planningAltDescription !== undefined) commitAltDescription(t);
     else if (t instanceof HTMLSelectElement && t.dataset.planningStage !== undefined) apply(setStage(project, t.value), { rows: false });
-    else if (t instanceof HTMLSelectElement && t.dataset.planningTemplate !== undefined) commitTemplate(t);
+    else if (t instanceof HTMLSelectElement && t.dataset.planningTemplate !== undefined) void commitTemplate(t);
     else handled = false;
     if (handled && isText && !t.hasAttribute("aria-invalid")) baselines.set(t, (t as HTMLInputElement).value);
     return handled;
@@ -1079,14 +1056,19 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
   // ---------- Alternatives ----------
 
   /** Switches the selected alternative to another template, asking first when that discards the planner's edits. */
-  function commitTemplate(t: HTMLSelectElement): void {
+  async function commitTemplate(t: HTMLSelectElement): Promise<void> {
     const alt = selectedAlt();
     if (!alt) return;
     const templateId = t.value === "" ? null : t.value;
     const plan = planTemplateSwitch(project!, library, alt.id, templateId);
     if (plan.lostEdits.length > 0 || plan.replacedInputs.length > 0) {
       const label = library.templates.find((x) => x.id === templateId)?.label ?? "a blank alternative";
-      if (!window.confirm(templateSwitchMessage(plan, label, alt.name))) {
+      if (!(await requestActionConfirmation(t, {
+        title: "Change this alternative's template?",
+        message: templateSwitchMessage(plan, label, alt.name),
+        confirmLabel: "Change template",
+        tone: "destructive"
+      }))) {
         t.value = alternativeTemplateId(project!, alt) ?? "";
         return;
       }
@@ -1160,10 +1142,16 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     scheduleSave();
   }
 
-  function deleteSelected(): void {
+  async function deleteSelected(trigger?: HTMLElement): Promise<void> {
     const alt = selectedAlt();
     if (!alt || project!.alternatives.length <= 1) return;
-    if (!window.confirm(`Delete ${alt.name}? This cannot be undone.`)) return;
+    if (!(await requestActionConfirmation(trigger ?? document.activeElement as HTMLElement | null, {
+      title: `Delete ${alt.name}?`,
+      message: "This alternative will be permanently removed from the Planning project.",
+      confirmLabel: "Delete alternative",
+      tone: "destructive",
+      placement: "modal"
+    }))) return;
     project = removeAlternative(project!, alt.id);
     recalculate();
     renderRoot();
@@ -1354,7 +1342,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
       if (addAltOpen) closeAddAlternative(false);
       else openAddAlternative();
     } else if ((el = hit("[data-planning-duplicate-alt]"))) duplicateSelected();
-    else if ((el = hit("[data-planning-delete-alt]"))) deleteSelected();
+    else if ((el = hit("[data-planning-delete-alt]"))) track(deleteSelected(el));
     else if ((el = hit("[data-planning-new-project]"))) {
       closeMenus();
       showNewPanel();
@@ -1363,7 +1351,7 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     else if ((el = hit("[data-planning-rename-cancel]"))) finishRename(false);
     else if ((el = hit("[data-planning-delete-project]"))) {
       closeMenus();
-      track(deleteCurrentProject());
+      track(deleteCurrentProject(el));
     } else if ((el = hit("[data-planning-export]"))) exportFrom(el.dataset.planningExport ?? "");
     else if ((el = hit("[data-planning-reload]"))) track(reloadSaved());
     else if ((el = hit("[data-planning-create-project]"))) track(createEngineerProject());
@@ -1448,7 +1436,6 @@ export function createPlanningController(deps: PlanningControllerDeps): Planning
     container.removeEventListener("toggle", onToggle, true);
     container = null;
     lastFocused = null;
-    removePrintMarkup();
     if (dirty) void track(saveNow());
   }
 

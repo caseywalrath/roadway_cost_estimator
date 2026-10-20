@@ -852,7 +852,7 @@ describe("Project backup format", () => {
     project.lineItems = [custom, contingency];
     const parsed = parseProjectBackup(JSON.parse(JSON.stringify(buildProjectBackup(project))) as unknown);
     expect(parsed?.project).toEqual(project);
-    expect(parsed?.projectSchemaVersion).toBe(11);
+    expect(parsed?.projectSchemaVersion).toBe(12);
     expect(parsed?.project.lineItems[0].importSource?.sourceRange).toBe("B11:H11");
     expect(parsed?.summary).toEqual({
       constructionCost: 0,
@@ -873,7 +873,7 @@ describe("Project backup format", () => {
     const backup = buildProjectBackup(project);
     const legacyBackup = { ...backup, projectSchemaVersion: 4 };
     const parsed = parseProjectBackup(legacyBackup);
-    expect(parsed?.projectSchemaVersion).toBe(11);
+    expect(parsed?.projectSchemaVersion).toBe(12);
     expect(parsed?.project).toEqual(project);
     expect(parsed?.summary.totalProjectCost).toBe(0);
   });
@@ -890,7 +890,7 @@ describe("Project backup format", () => {
     };
     const parsed = parseProjectBackup({ ...backup, projectSchemaVersion: 5, project: legacyProject });
 
-    expect(parsed?.projectSchemaVersion).toBe(11);
+    expect(parsed?.projectSchemaVersion).toBe(12);
     expect(parsed?.project.lineItems[0].group).toBe("");
   });
 
@@ -905,17 +905,17 @@ describe("Project backup format", () => {
       project: legacyProject
     });
 
-    expect(parsed?.projectSchemaVersion).toBe(11);
+    expect(parsed?.projectSchemaVersion).toBe(12);
     expect(parsed?.project.contingencyPercent).toBe(0);
     expect(parsed?.summary.totalProjectCost).toBe(0);
   });
 
-  it.each([4, 5, 6, 7, 8, 9, 10] as const)("accepts v%s Project backups and exports schema v11", (schemaVersion) => {
+  it.each([4, 5, 6, 7, 8, 9, 10, 11] as const)("accepts v%s Project backups and exports schema v12", (schemaVersion) => {
     const project = createUserProject(`Legacy v${schemaVersion}`, "CO");
     const backup = buildProjectBackup(project);
     const parsed = parseProjectBackup({ ...backup, projectSchemaVersion: schemaVersion });
 
-    expect(parsed?.projectSchemaVersion).toBe(11);
+    expect(parsed?.projectSchemaVersion).toBe(12);
     expect(parsed?.project.projectId).toBe(project.projectId);
   });
 

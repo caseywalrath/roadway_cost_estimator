@@ -59,9 +59,9 @@ describe("renderPlanningView", () => {
     expect(root.textContent).toContain(`Prices: ${library.priceBasisLabel}`);
   });
 
-  it("offers print, CSV and JSON export in that order", () => {
+  it("offers CSV and backup downloads in that order without a print action", () => {
     const kinds = [...root.querySelectorAll<HTMLElement>("[data-planning-export]")].map((b) => b.dataset.planningExport);
-    expect(kinds).toEqual(["print", "csv", "json"]);
+    expect(kinds).toEqual(["csv", "json"]);
   });
 
   it("marks bid-database elements as filled, allowance elements as hollow, and leaves other rows unmarked", () => {
@@ -280,7 +280,7 @@ describe("renderNewProjectPanel", () => {
 
   it("disables actions that need an open project, keeps Import and project switching, and has no current project", () => {
     const panel = panelFor();
-    for (const selector of ["[data-planning-new-project]", "[data-planning-rename-project]", "[data-planning-export='print']", "[data-planning-export='csv']", "[data-planning-export='json']", "[data-planning-delete-project]"]) {
+    for (const selector of ["[data-planning-new-project]", "[data-planning-rename-project]", "[data-planning-export='csv']", "[data-planning-export='json']", "[data-planning-delete-project]"]) {
       expect(panel.querySelector<HTMLButtonElement>(selector)?.disabled).toBe(true);
     }
     expect(panel.querySelector<HTMLButtonElement>("[data-planning-import]")?.disabled).toBe(false);

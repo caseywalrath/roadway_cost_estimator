@@ -1,6 +1,6 @@
 # File workflow review material
 
-**Status:** File-A import status report is implemented. The user approved File-B's four sample CSV layouts, and the exporters use them. The supplied OPCC workbook and Project backup pairs have been reviewed for File-C and File-D. The attached files are evidence for the design, not instructions.
+**Status:** File-A import status report, File-B's four approved CSV layouts, File-C item-based Excel reimport review, and File-D Project backup comparison are implemented. The supplied OPCC workbook and Project backup pairs informed File-C and File-D. The attached files are evidence for the design, not instructions.
 
 ## File-B: default CSV layouts
 
@@ -16,21 +16,19 @@ The two Project backups were exported after separate imports. They are valid sch
 
 ## File-C: Excel reimport Step 4 sketch
 
-The source suggestion appears after a revised workbook is selected, before the Review items table:
-
-> **Possible previous source:** `Estimate v1.xlsx` · `Estimate` sheet · 86 of 92 item identities overlap. [Link to this source] [Treat as a new source]
-
-An identical file digest is strong evidence for the same bytes. A changed file name, sheet position, or row number is only a suggestion; the engineer makes the link. After linking, Step 4 shows each matched line's current Project and new spreadsheet values:
+Step 4 matches imported item identities against lines in the active Project, regardless of workbook filename or history. Matches appear in the same review table and Issue type selector as catalog issues. The current Project and incoming spreadsheet values appear together:
 
 | Sheet / row | Item | Project quantity | Spreadsheet quantity | Project unit cost | Spreadsheet unit cost | Decision |
 | --- | --- | ---: | ---: | ---: | ---: | --- |
-| Estimate / 24 | 401-001 Asphalt | 500 | 550 | $118 | $121 | Use spreadsheet / Keep Project / Add separate item / Skip row |
+| Estimate / 24 | 401-001 Asphalt | 500 | 550 | $118 | $121 | Duplicate / Update / Skip |
 
-Every different quantity appears in Review items. A blank incoming value cannot erase a populated Project value by default. When the previous spreadsheet value is known, the UI can also explain whether the Project changed, the spreadsheet changed, or both changed since the last reviewed import. Multiple plausible Project lines are shown as candidates, never silently paired. A reviewed decision updates source provenance even when the engineer keeps the Project value, so the same spreadsheet difference does not appear as new on every import. Removed source rows are left untouched in the first release.
+Changed matches require an explicit Duplicate, Update, or Skip decision. Equal-value matches start as Skip in Reviewed and can be changed there. A blank incoming value cannot erase a populated Project value by default. Multiple plausible Project lines require a target selection for Update. Choosing Duplicate keeps the prior line. Rows absent from the workbook are left untouched. The previous-source suggestion and source baseline are removed; existing backup fields remain readable.
 
-For the supplied first draft → later workbook sequence, Step 4 should show **95 matched existing lines, 36 new lines, and 2 workbook rows without a clear saved-line match** based on the exported backup pair. These are a review projection, not an automatic import count. The source-link suggestion can cite the same Estimate structure and high item-code overlap despite different filenames. The 36 rows may be proposed as additions; existing Project values stay intact. Any unmatched/blank line is reviewed separately. The previously agreed quantity choices apply when a future file actually changes quantity.
+For the supplied first draft → later workbook sequence, Step 4 should show **95 matched existing lines, 36 new lines, and 2 workbook rows without a clear saved-line match** based on the exported backup pair. These are a review projection, not an automatic import count. The 36 rows may be proposed as additions; existing Project values stay intact. Any unmatched/blank line is reviewed separately.
 
-**Remaining implementation issue:** Determine why the two identified workbook rows were not saved in either Project. The backup pair alone does not show the Step 4 decisions or import report. Do not silently count these rows as deleted or added.
+**Remaining evidence question:** Determine why the two identified workbook rows were not saved in either Project. The backup pair alone does not show the Step 4 decisions or import report. Do not silently count these rows as deleted or added.
+
+**Implementation verification:** The user's modified workbook pair changes unit values and therefore exercises the quantity-conflict path absent from the attached sample pair. Inspect Step 4: changed matches should appear under Needs attention, while unchanged matches start as Skip in Reviewed; both can be filtered by Issue type and show Project and spreadsheet quantity/unit cost side by side. The selected Duplicate, Update, or Skip decisions should carry through Step 5 and Project save.
 
 ## File-D: Project backup comparison sketch
 

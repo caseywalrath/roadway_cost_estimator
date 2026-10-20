@@ -2,7 +2,7 @@ import { projectLineTotal, type ProjectLineItem, type UserProject } from "../pro
 import type { ResolvedImportRow } from "./types";
 
 export type ExistingItemAction = "add" | "update" | "skip";
-export interface ExistingItemChoice { action: ExistingItemAction; targetLineItemId?: string }
+export interface ExistingItemChoice { action: ExistingItemAction; targetLineItemId?: string; automaticallySkipped?: boolean }
 export interface ExistingItemMatch {
   rowId: string;
   incoming: ProjectLineItem;
@@ -31,9 +31,9 @@ export function existingItemKey(line: ProjectLineItem): string {
 
 export function planExistingItems(
   rows: ResolvedImportRow[], project: UserProject | null,
-  defaultAction: ExistingItemAction = "add", choices: Record<string, ExistingItemChoice> = {}
+  defaultAction: ExistingItemAction = "add", choices: Record<string, ExistingItemChoice> = {}, ignoredRowIds: Set<string> = new Set()
 ): ExistingItemPlan {
-  const accepted = rows.filter((row) => row.lineItem && (row.outcome === "imported" || row.outcome === "imported-incomplete"));
+  const accepted = rows.filter((row) => !ignoredRowIds.has(row.rowId) && row.lineItem && (row.outcome === "imported" || row.outcome === "imported-incomplete"));
   const existing = new Map<string, ProjectLineItem[]>();
   for (const line of project?.lineItems ?? []) {
     if (line.pricingMode === "percentage") continue;
@@ -49,7 +49,7 @@ export function planExistingItems(
   const usedTargets = new Set<string>();
   const addDelta = (line: ProjectLineItem, amount: number) => {
     if (line.costCategory === "construction") plan.constructionDelta += amount;
-    else plan.otherDelta += amount;
+    else if (line.costCategory === "other") plan.otherDelta += amount;
   };
   for (const row of accepted) {
     const incoming = row.lineItem!;

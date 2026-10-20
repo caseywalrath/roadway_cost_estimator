@@ -33,18 +33,19 @@ All markup comes from string templates with `escapeHtml`. Amounts, item codes an
           <!-- up to 8 most recently updated; the current one is disabled -->
           <button type="button" class="project-switcher-project" data-planning-open-project="{id}">{name}</button>
           <div class="project-switcher-actions">
-            <button type="button" data-planning-new-project>New planning project</button>
-            <button type="button" data-planning-rename-project>Rename project</button>
-            <button type="button" data-planning-import>Import JSON</button>
+            <button type="button" data-planning-new-project>New Planning Project</button>
+            <button type="button" data-planning-rename-project>Rename Planning Project</button>
+          </div>
+          <div class="project-switcher-actions">
+            <button type="button" data-planning-import>Import Planning Backup</button>
             <input type="file" accept=".json,application/json" data-planning-import-input hidden />
           </div>
           <div class="project-switcher-actions">
-            <button type="button" data-planning-export="print">Print summary</button>
-            <button type="button" data-planning-export="csv">Download CSV</button>
-            <button type="button" data-planning-export="json">Download JSON</button>
+            <button type="button" data-planning-export="csv">Download Planning CSV</button>
+            <button type="button" data-planning-export="json">Download Planning Backup</button>
           </div>
           <div class="project-switcher-actions">
-            <button type="button" class="project-switcher-danger" data-planning-delete-project>Delete project</button>
+            <button type="button" class="project-switcher-danger" data-planning-delete-project>Delete Planning Project</button>
           </div>
         </div>
       </details>
@@ -215,8 +216,8 @@ The right column shows outputs: alternative buttons, summary lines, total, range
 | Place | Text |
 |---|---|
 | Header eyebrow / menus | "Planning estimate"; one menu, "Planning Actions" |
-| Project menu actions | "New planning project", "Rename project", "Import JSON", "Delete project" |
-| Export actions (inside Planning Actions) | "Print summary", "Download CSV", "Download JSON" |
+| Project menu actions | "New Planning Project", "Rename Planning Project", "Import Planning Backup", "Delete Planning Project" |
+| Export actions (inside Planning Actions) | "Download Planning CSV", "Download Planning Backup" |
 | Header subline | "Started from {template}" or "Started from a blank project"; save status "Saving…", "Saved {h:mm AM}", "Not saved: {reason}" |
 | Corridor fields | "Corridor length (mi)", "Roadway width, curb to curb (ft)", "Intersections", "Template" (with "Applies to {alternative}"), "Project stage" (Planning Study, Early Design, Final Design), "Budget (optional)" (placeholder "No budget") |
 | Corridor hint | "Elements use these values unless you change them in an element's inputs." |
@@ -227,7 +228,7 @@ The right column shows outputs: alternative buttons, summary lines, total, range
 | Price-origin marker | Small circle after the element label on base, corridor and spot rows. Filled = every pay item comes from the CDOT bid database ("Bid database price"). Hollow = at least one component is a planning allowance ("External allowance"). Rows with no components (no base treatment, other costs) have no marker. A legend line sits above the groups. The aria-label is the legend text; the hover text is one sentence that does not repeat the label ("Bid database price, from CDOT contract history." / "External allowance: a planning estimate, not from bid history. Its unit costs can be edited."); shape, not color, carries the meaning. |
 | Unit costs | Elements with assembly components show two labelled groups in the panel: "Quantities" (the usual inputs) and "Unit costs" (one `$` box per component, suffix "per mi", "each" or "per {unit}", aria-label "{component}, dollars per {unit}"). The box shows the library cost with thousands separators. When the value differs from the library cost the hint reads "Edited" plus text-button "Use default (${default})". A blank box restores the default; text that is not a number of 0 or more is rejected ("Enter a number of 0 or more."). Bid-database elements have no unit-cost boxes and no group headings. |
 | Edited-costs line | Under "Prices:" in the summary, "Includes {n} edited unit cost(s)."; hidden when n is 0. Counts enabled elements only. |
-| Print and CSV | Print: "Unit costs edited from library defaults: {alternative} ({n}), …" above the footer, only when any alternative has an edit. CSV: pay-item item column "Allowance" for assemblies; note "; unit cost edited from {default}" on edited rows. |
+| CSV | Pay-item item column "Allowance" for assemblies; note "; unit cost edited from {default}" on edited rows. |
 | Reset | "Reset to calculated ${amount}" (aria-label "Reset {Element} to calculated amount ${amount}") |
 | Input hints | Inherited: "From corridor". Changed: text-button "Use corridor value ({value} {unit})". defaultFrom: "{multiply} per intersection" / "Use default ({value})". Plain default changed: "Use default ({value} {unit})" |
 | Advanced | "More inputs" |
@@ -261,7 +262,7 @@ No review states, evidence filters, confidence labels, caveat blocks, or calcula
 | Rates | percent, no decimals unless needed (max 1) | `30%`, `12.5%` |
 | Multiplier | 2 decimals | `× 1.86` |
 
-Decision: full dollars everywhere (`$23,340,000`), not `$23.34M`. Reasons: (1) the dollar boxes are full-dollar fields and the summary adds them, so one format avoids converting in your head; (2) the Project view, CSV and print summary show full dollars, and Phase 4 requires exported totals to match the screen to the dollar; (3) `$X.XXM` cannot show totals under $1M cleanly (`$0.69M`). The 35% summary column and the 390 px bar both fit `$23,340,000`. Rounding uses `roundElementAmount` / `roundTotalAmount` from `calculate.ts`; budget remaining is rounded after subtraction at full precision. Displayed summary lines can differ from the displayed total by up to $10,000 per line because each is rounded separately; this is accepted.
+Decision: full dollars everywhere (`$23,340,000`), not `$23.34M`. Reasons: (1) the dollar boxes are full-dollar fields and the summary adds them, so one format avoids converting in your head; (2) the Project view and CSV show full dollars, and exported totals should match the screen to the dollar; (3) `$X.XXM` cannot show totals under $1M cleanly (`$0.69M`). The 35% summary column and the 390 px bar both fit `$23,340,000`. Rounding uses `roundElementAmount` / `roundTotalAmount` from `calculate.ts`; budget remaining is rounded after subtraction at full precision. Displayed summary lines can differ from the displayed total by up to $10,000 per line because each is rounded separately; this is accepted.
 
 Decision: unselected rows show their calculated amount in muted text in the same dollar box, so the planner sees what switching on would add. For unselected base treatments the controller shows the amount that row would have if selected (its own allowance factors), computed by running `calculateAlternative` on a copy with that base chosen. Unselected rows are not counted in group subtotals or the summary.
 

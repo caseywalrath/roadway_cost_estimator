@@ -1,13 +1,13 @@
 # File workflow implementation plan: reports, reimport, and Project backups
 
-**Status:** File-A #8 is implemented. The user approved all four [File-B sample CSVs](file-workflow-samples/README.md), and the exporters now use those layouts. The supplied OPCC workbook and backup pairs have been reviewed for File-C #4 and File-D #5; findings and remaining save decisions are in [file-workflow-review-gates.md](file-workflow-review-gates.md). This plan expands the [quality-of-life roadmap](planning-engineering-qol-roadmap.md) at repository commit `f9145a9`.
+**Status:** File-A #8, File-B #7, File-C #4, and File-D #5 are implemented. The File-C acceptance check with the user's quantity-modified workbook pair remains. The user approved all four [File-B sample CSVs](file-workflow-samples/README.md), and the exporters use those layouts. The supplied OPCC workbook and backup pairs informed File-C #4 and File-D #5; findings are in [file-workflow-review-gates.md](file-workflow-review-gates.md). This plan expands the [quality-of-life roadmap](planning-engineering-qol-roadmap.md) at repository commit `f9145a9`.
 
 ## Existing boundaries to preserve
 
 - Project CSV, Matching Projects CSV, Nebraska price history CSV, and Planning CSV are human-facing exports. Project and Planning JSON are full recovery/share formats. Simplifying a CSV must not remove information from JSON.
 - Excel source parsing and Step 4 review are detached from Project persistence. `src/projects/projectRepository.ts` applies the accepted import atomically with a revision check and a pre-import recovery snapshot.
 - Imported lines already store original spreadsheet code, description, unit, quantity, unit cost, and total, plus filename, sheet, row, and a per-import ID. The per-import ID changes on every selection and cannot establish workbook lineage.
-- Project backups contain full Project and line IDs. A same-ID backup currently offers whole-Project COPY/REPLACE; a different ID imports as a new Project. Planning share JSON has a separate format and always imports a copy.
+- Project backups contain full Project and line IDs. Project Backup import now offers a three-step review wizard for an existing Project or a complete new Project copy. Planning share JSON has a separate format and always imports a copy.
 
 ## File-A — Concise import status report (#8)
 
@@ -43,29 +43,29 @@
 
 ### Source and row identity
 
-1. At first import, assign a stable workbook-source ID within the destination Project. Save it with each imported line, together with the accepted source values. On a later file selection, calculate a content digest to recognize an identical file and show a *possible previous source* when filename, sheet/table structure, and item identities overlap. The digest detects identical bytes; a changed file needs the other signals and an explicit engineer link to the earlier source. The supplied pair has changed bytes and filenames but an identical sheet/table shape and 97 shared item rows.
-2. Match a revised row first to a previously imported source row when source ID, sheet, and a nonblank row identity agree; use a physical row coordinate only as corroborating evidence. Then use exact catalog or custom identity plus Group/category as candidates when rows moved. Never auto-pick among multiple candidates. A changed Group, category, or code must be reviewed rather than silently treated as the same line. Blank rows in the supplied shorter workbook retain physical coordinates and must not be mistaken for removed Project lines.
-3. Keep the prior imported source values separate from current Project values. Preserve the Project line ID, evidence context, creation time, and local edits through an accepted update. The source history should include the last reviewed source values even when the engineer chooses **Keep Project**; otherwise the next reimport cannot distinguish a new spreadsheet change from a previously reviewed one.
+1. Preserve per-line workbook provenance: file basename, worksheet, physical source row/range, original identity and numeric values, import timestamp, and applied decisions. Existing project-level Excel source records may remain in stored Projects and backups so older files remain readable, but the current workflow does not assign new source IDs, calculate previous-source candidates, or create/update source records.
+2. Match imported rows to current Project lines by exact catalog or custom identity plus Group and cost category. Never auto-pick among multiple candidates. A changed Group, category, or code must be reviewed rather than silently treated as the same line. Blank rows retain physical coordinates and must not be mistaken for removed Project lines.
+3. Preserve the Project line ID, evidence context, creation time, and local edits through an accepted Update. Per-line provenance remains attached to the resulting line; workbook rows that are absent from a later import do not delete Project lines.
 
 ### Three-value comparison and Step 4 decisions
 
-For each field, let **B** be the last reviewed spreadsheet value, **P** the current Project value, and **N** the new spreadsheet value. Blank and explicit zero are distinct.
+For each matched row, compare the current Project value **P** with the incoming spreadsheet value **N**. Blank and explicit zero are distinct.
 
 | Comparison | Default for ordinary fields | Quantity rule |
 | --- | --- | --- |
-| `N = B`, `P ≠ B` | Keep the Project edit. | Review the differing Project and spreadsheet quantities; default to Keep Project. |
-| `P = B`, `N ≠ B` | Use the new spreadsheet value when identity is unambiguous. | Send to **Review items** for an explicit choice. |
-| `P = N`, both changed from `B` | Keep the common value and refresh source provenance. | No Project/spreadsheet quantity discrepancy remains. |
-| `P ≠ B`, `N ≠ B`, `P ≠ N` | Review a conflict. | Review a conflict. |
-| No reliable `B` or ambiguous target | Review; default to preserving the Project. | Review. |
+| Project state | Default for ordinary fields | Quantity rule |
+| --- | --- | --- |
+| `P = N` | Classify as **Project unchanged**; default to Skip and show it in Reviewed, where Duplicate or Update remains available. | No quantity discrepancy remains. |
+| `P ≠ N` | Classify as **Project changed** and require an explicit choice. | Show both values; blank and zero remain distinct. |
+| Multiple possible targets or no clear Update target | Classify as **Project needs target** and require target selection before Update. | Do not update until the target is explicit. |
 
-Step 4 must display the current Project and incoming spreadsheet quantities and unit costs for a matched item. Every differing matched quantity receives **Use spreadsheet**, **Keep Project**, **Add as separate item**, and **Skip row** choices. Unit-cost conflicts receive explicit choices. Bulk choices may be offered only over visible rows with the same valid options, following the existing shared-action pattern. A blank incoming quantity or unit cost never erases a populated Project value without an explicit choice. Step 5 then reports add/update/skip counts, changed totals, and unresolved rows, without introducing new decisions.
+Step 4 displays current Project and incoming spreadsheet quantities and unit costs for every existing-item match in one review table. The Issue type selector includes **Project changed**, **Project unchanged**, and **Project needs target**, alongside the existing row-issue groups. Changed matches require a **Duplicate**, **Update**, or **Skip** button choice. Unchanged matches default to Skip in Reviewed and remain editable. A header checkbox selects visible rows on the current page, and one bulk-action dropdown applies a shared action to selected rows. A blank incoming quantity or unit cost never erases a populated Project value without an explicit choice. Step 5 reports add/update/skip counts, changed totals, and recorded item decisions without editable controls.
 
-Reuse `planExistingItems()` for final target validation and `applyProjectImport()` for the atomic transaction, extending them where field-level decisions require it. Reparse and revalidate the draft against the Project revision just before save. Unresolved or conflicting rows remain excluded with reasons; a failed save retains the draft.
+Reuse `planExistingItems()` for final target validation and `applyProjectImport()` for the atomic transaction. Reparse and revalidate the draft against the Project revision just before save. Unresolved or conflicting rows remain excluded with reasons; a failed save retains the draft. Update only the explicitly selected current Project line and retain per-line import provenance.
 
-**Cases to check:** same file twice; changed filename with same source; revised quantity only; revised unit cost only; both Project and file changed; blank versus zero; sheet reorder; row reorder; duplicate item identities; different Groups/categories; removed source row; concurrent Project edit; backup round trip of source lineage. Removed source rows remain untouched in the first release.
+**Cases to check:** same file twice; revised quantity only; revised unit cost only; blank versus zero; duplicate item identities; different Groups/categories; Project changed/unchanged/needs-target classifications; one bulk selection across filtered rows; removed source row; concurrent Project edit; backup round trip with legacy source records. Removed source rows remain untouched.
 
-**Design gate:** The supplied OPCC pair confirms 36 added rows in the full version, with shared item values unchanged. Use this as the first draft → later additions case, not as evidence of quantity or price conflict handling. The Step 4 sketch and field decision table are updated with these facts. Source linking remains explicit. Quantity conflicts still require their own verification during implementation because this pair contains none.
+**Design gate:** The supplied OPCC pair confirms 36 added rows in the full version, with shared item values unchanged. Use this as the first draft → later additions case, not as evidence of quantity or price conflict handling. The Step 4 sketch and field decision table use the single-table Project changed/unchanged/needs-target model. Previous-source linking is removed from the current workflow while legacy backup readability remains required.
 
 ## File-D — Compare Project backup JSON before import (#5)
 

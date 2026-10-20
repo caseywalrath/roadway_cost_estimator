@@ -6,7 +6,7 @@ import type {
   SearchQuery
 } from "../data/schema";
 
-export const PROJECT_WORKSPACE_SCHEMA_VERSION = 11;
+export const PROJECT_WORKSPACE_SCHEMA_VERSION = 12;
 export const LEGACY_PROJECT_WORKSPACE_KEYS = [
   "roadway-cost-estimator:projects:v3",
   "roadway-cost-estimator:projects:v2",
@@ -16,7 +16,7 @@ export const LEGACY_PROJECT_WORKSPACE_KEYS = [
 export type ProjectStatus = "active" | "archived";
 
 export interface ProjectWorkspaceState {
-  schemaVersion: 11;
+  schemaVersion: 12;
   activeProjectIdByState: Record<string, string | null>;
   projects: UserProject[];
 }
@@ -36,6 +36,8 @@ export interface UserProject {
   createdAt: string;
   updatedAt: string;
   lineItems: ProjectLineItem[];
+  /** Excel source history used to compare later imports into this Project. */
+  excelImportSources?: ProjectExcelImportSource[];
   /** Set when the Project was created from a Planning estimate. Absent on all other Projects. */
   planningOrigin?: ProjectPlanningOrigin;
 }
@@ -85,7 +87,7 @@ export interface ProjectLineItem {
 }
 
 export type ProjectLineItemType = "catalog" | "custom";
-export type ProjectCostCategory = "construction" | "other";
+export type ProjectCostCategory = "construction" | "other" | "contingency";
 export type ProjectPercentageBase =
   | { kind: "all_fixed" | "construction_fixed" | "other_fixed" }
   | { kind: "group"; group: string }
@@ -114,6 +116,48 @@ export interface ProjectLineImportSource {
     total: number | null;
   };
   decisions: string[];
+}
+
+export interface ProjectExcelImportSource {
+  sourceId: string;
+  fileName: string;
+  /** SHA-256 digest of the exact workbook bytes, when SubtleCrypto is available. */
+  digest: string | null;
+  /** Stable worksheet and mapped-header signature used to suggest similar sources. */
+  mappingSignature: string;
+  sheetName: string;
+  lastReviewedAt: string;
+  rows: ProjectExcelImportSourceRow[];
+}
+
+export interface ProjectExcelImportSourceRow {
+  identityKey: string;
+  sheetName: string;
+  rowNumber: number;
+  sourceRange: string;
+  values: {
+    itemCode: string;
+    description: string;
+    unit: string;
+    quantity: number | null;
+    unitCost: number | null;
+    total: number | null;
+    group: string;
+    costCategory: ProjectCostCategory;
+    notes: string;
+  };
+  /** Project values at the time this source row was last reviewed. */
+  projectValues: {
+    itemCode: string;
+    description: string;
+    unit: string;
+    quantity: number | null;
+    unitCost: number | null;
+    group: string;
+    costCategory: ProjectCostCategory;
+  } | null;
+  /** Project lines previously linked to this source row. Missing IDs are retained as history. */
+  lineItemIds: string[];
 }
 
 export type ProjectSortKey =
@@ -310,6 +354,7 @@ export function createPercentageProjectLineItem(
   return {
     ...line,
     description,
+    costCategory: role === "contingency" ? "contingency" : costCategory,
     pricingMode: "percentage",
     percentageRate: rate,
     percentageBase: base,
@@ -411,6 +456,9 @@ export function updateProjectLineItem(
   const project = state.projects.find((candidate) => candidate.projectId === projectId);
   if (!project) return state;
   const target = project.lineItems.find((line) => line.lineItemId === lineItemId);
+  const nextCategory = fields.costCategory ?? (fields.costRole === "contingency" ? "contingency"
+    : fields.costRole === "standard" && target?.costCategory === "contingency" ? "construction" : undefined);
+  if (nextCategory !== undefined) fields = { ...fields, costCategory: nextCategory, costRole: nextCategory === "contingency" ? "contingency" : "standard" };
   if (target?.pricingMode === "percentage") {
     if (fields.percentageRate !== undefined && (!Number.isFinite(fields.percentageRate) || fields.percentageRate < 0)) return state;
     if (fields.percentageBase && (!parsePercentageBase(fields.percentageBase) || !validatePercentageBases(project.lineItems.map((line) => line.lineItemId === lineItemId ? { ...line, percentageBase: fields.percentageBase } : line)))) return state;
@@ -445,6 +493,47 @@ export function updateProjectLineItem(
       }
       return { ...lineItem, ...allowedFields, ...(fields.costRole !== undefined ? { costRole: fields.costRole } : {}), updatedAt: now };
     }),
+    updatedAt: now
+  });
+}
+
+export function setProjectLinePricingMode(
+  state: ProjectWorkspaceState,
+  projectId: string,
+  lineItemId: string,
+  mode: "fixed" | "percentage"
+): ProjectWorkspaceState {
+  const project = state.projects.find((candidate) => candidate.projectId === projectId);
+  const line = project?.lineItems.find((candidate) => candidate.lineItemId === lineItemId);
+  if (!project || !line || line.lineItemType !== "custom") return state;
+  if ((line.pricingMode ?? "fixed") === mode) return state;
+  if (mode === "percentage" && project.lineItems.some((item) =>
+    item.pricingMode === "percentage" && item.percentageBase?.kind === "selected_lines" && item.percentageBase.lineItemIds.includes(lineItemId)
+  )) return state;
+  const now = currentTimestamp();
+  return updateProject(state, projectId, {
+    ...project,
+    lineItems: project.lineItems.map((item) => item.lineItemId !== lineItemId ? item : mode === "percentage"
+      ? {
+          ...item,
+          pricingMode: "percentage" as const,
+          percentageRate: 0,
+          percentageBase: { kind: "construction_fixed" as const },
+          preferredUnitCost: null,
+          quantity: null,
+          unit: "%",
+          updatedAt: now
+        }
+      : {
+          ...item,
+          pricingMode: "fixed" as const,
+          percentageRate: undefined,
+          percentageBase: undefined,
+          preferredUnitCost: null,
+          quantity: null,
+          unit: "",
+          updatedAt: now
+        }),
     updatedAt: now
   });
 }
@@ -496,15 +585,14 @@ export function calculateProject(project: UserProject): ProjectCalculation {
     const base = line.percentageBase;
     let eligible: ProjectLineItem[] = [];
     if (base?.kind === "all_fixed") eligible = fixed;
-    else if (base?.kind === "construction_fixed") eligible = fixed.filter((item) => item.costCategory === "construction");
-    else if (base?.kind === "other_fixed") eligible = fixed.filter((item) => item.costCategory === "other");
+    else if (base?.kind === "construction_fixed") eligible = fixed.filter((item) => item.costCategory === "construction" && item.costRole !== "contingency");
+    else if (base?.kind === "other_fixed") eligible = fixed.filter((item) => item.costCategory === "other" && item.costRole !== "contingency");
     else if (base?.kind === "group") eligible = fixed.filter((item) => item.group.trim().toLocaleLowerCase() === base.group.trim().toLocaleLowerCase());
     else if (base?.kind === "selected_lines") {
       const selected = new Set(base.lineItemIds);
       eligible = fixed.filter((item) => selected.has(item.lineItemId));
       if (eligible.length !== selected.size) warningsByLineId[line.lineItemId] = "A selected fixed item is missing.";
     }
-    if (eligible.length === 0 && !warningsByLineId[line.lineItemId]) warningsByLineId[line.lineItemId] = "This percentage base has no fixed items.";
     const baseAmount = fixedSum(eligible);
     baseByLineId[line.lineItemId] = baseAmount;
     amountByLineId[line.lineItemId] = baseAmount * (line.percentageRate ?? 0) / 100;
@@ -514,7 +602,7 @@ export function calculateProject(project: UserProject): ProjectCalculation {
   let contingencyCost = 0;
   for (const line of project.lineItems) {
     const amount = amountByLineId[line.lineItemId] ?? 0;
-    if (line.costRole === "contingency") contingencyCost += amount;
+    if (line.costCategory === "contingency" || line.costRole === "contingency") contingencyCost += amount;
     else if (line.costCategory === "construction") constructionCost += amount;
     else otherCost += amount;
   }
@@ -633,11 +721,22 @@ export function removeProjectLineItem(
 ): ProjectWorkspaceState {
   const project = state.projects.find((candidate) => candidate.projectId === projectId);
   if (!project) return state;
-  if (project.lineItems.some((line) => line.pricingMode === "percentage" && line.percentageBase?.kind === "selected_lines" && line.percentageBase.lineItemIds.includes(lineItemId))) return state;
+  if (!project.lineItems.some((lineItem) => lineItem.lineItemId === lineItemId)) return state;
+  const now = currentTimestamp();
   return updateProject(state, projectId, {
     ...project,
-    lineItems: project.lineItems.filter((lineItem) => lineItem.lineItemId !== lineItemId),
-    updatedAt: currentTimestamp()
+    lineItems: project.lineItems
+      .filter((lineItem) => lineItem.lineItemId !== lineItemId)
+      .map((lineItem) => {
+        const base = lineItem.percentageBase;
+        if (lineItem.pricingMode !== "percentage" || base?.kind !== "selected_lines" || !base.lineItemIds.includes(lineItemId)) return lineItem;
+        return {
+          ...lineItem,
+          percentageBase: { kind: "selected_lines" as const, lineItemIds: base.lineItemIds.filter((id) => id !== lineItemId) },
+          updatedAt: now
+        };
+      }),
+    updatedAt: now
   });
 }
 
@@ -661,7 +760,16 @@ export function duplicateUserProject(project: UserProject): UserProject {
       ...(lineItem.percentageBase?.kind === "selected_lines" ? { percentageBase: { kind: "selected_lines" as const, lineItemIds: lineItem.percentageBase.lineItemIds.map((id) => newIds.get(id) ?? id) } } : {}),
       createdAt: now,
       updatedAt: now
-    }))
+    })),
+    ...(project.excelImportSources ? {
+      excelImportSources: project.excelImportSources.map((source) => ({
+        ...structuredClone(source),
+        rows: source.rows.map((row) => ({
+          ...structuredClone(row),
+          lineItemIds: row.lineItemIds.map((id) => newIds.get(id) ?? id)
+        }))
+      }))
+    } : {})
   };
 }
 
@@ -714,6 +822,10 @@ export function parseUserProjectV10(value: unknown): UserProject | null {
 
 export function parseUserProjectV11(value: unknown): UserProject | null {
   return parseUserProject(value, 11);
+}
+
+export function parseUserProjectV12(value: unknown): UserProject | null {
+  return parseUserProject(value, 12);
 }
 
 export function migrateLegacyWorkspace(value: unknown, schemaVersion: 1 | 2 | 3): LegacyMigrationResult {
@@ -781,7 +893,7 @@ function updateProject(state: ProjectWorkspaceState, projectId: string, nextProj
   };
 }
 
-function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11): UserProject | null {
+function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12): UserProject | null {
   if (!isRecord(value) || typeof value.projectId !== "string" || !value.projectId.trim()) return null;
   if (schemaVersion >= 4) {
     if (value.status !== "active" && value.status !== "archived") return null;
@@ -790,16 +902,39 @@ function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 |
     if (value.lastBackupRevision !== null && !isNonNegativeInteger(value.lastBackupRevision)) return null;
   }
   const rawLineItems = Array.isArray(value.lineItems) ? value.lineItems : [];
-  const lineItems = rawLineItems
+  let lineItems = rawLineItems
     .map((lineItem) => parseProjectLineItem(lineItem, schemaVersion))
     .filter((lineItem): lineItem is ProjectLineItem => lineItem !== null);
   if (lineItems.length !== rawLineItems.length) return null;
+  const legacyCategoryContingencies = new Set(rawLineItems.flatMap((rawLine) =>
+    isRecord(rawLine) && rawLine.costRole === "contingency" && rawLine.pricingMode !== "percentage"
+      && (rawLine.costCategory === "construction" || rawLine.costCategory === "other")
+      ? [rawLine.costCategory] : []
+  ));
+  if (legacyCategoryContingencies.size) {
+    lineItems = lineItems.map((line) => {
+      if (line.pricingMode !== "percentage") return line;
+      const category = line.percentageBase?.kind === "construction_fixed" ? "construction"
+        : line.percentageBase?.kind === "other_fixed" ? "other" : null;
+      if (!category || !legacyCategoryContingencies.has(category)) return line;
+      const lineItemIds = lineItems.flatMap((candidate, index) => {
+        const raw = rawLineItems[index];
+        return candidate.pricingMode !== "percentage" && isRecord(raw) && raw.costCategory === category
+          ? [candidate.lineItemId] : [];
+      });
+      return { ...line, percentageBase: { kind: "selected_lines" as const, lineItemIds } };
+    });
+  }
 
   const state = schemaVersion >= 3 ? stringValue(value.state) : "CO";
   if (!state) return null;
   const revision = schemaVersion >= 4 ? positiveInteger(value.revision) : 0;
   const status = schemaVersion >= 4 && value.status === "archived" ? "archived" : "active";
   const planningOrigin = schemaVersion >= 10 ? parseProjectPlanningOrigin(value.planningOrigin) : null;
+  const excelImportSources = schemaVersion >= 12
+    ? parseProjectExcelImportSources(value.excelImportSources)
+    : null;
+  if (schemaVersion >= 12 && value.excelImportSources !== undefined && !excelImportSources) return null;
   const legacyContingency = normalizeProjectContingencyPercent(value.contingencyPercent);
   if (legacyContingency > 0) {
     const migrationLine = createPercentageProjectLineItem(state, "construction", "Project contingency", legacyContingency, { kind: "all_fixed" }, "contingency");
@@ -826,7 +961,97 @@ function parseUserProject(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 |
     createdAt: stringValue(value.createdAt) || currentTimestamp(),
     updatedAt: stringValue(value.updatedAt) || currentTimestamp(),
     lineItems,
+    ...(excelImportSources ? { excelImportSources } : {}),
     ...(planningOrigin ? { planningOrigin } : {})
+  };
+}
+
+function parseProjectExcelImportSources(value: unknown): ProjectExcelImportSource[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) return null;
+  const sources = value.map(parseProjectExcelImportSource);
+  return sources.every((source): source is ProjectExcelImportSource => source !== null) ? sources : null;
+}
+
+function parseProjectExcelImportSource(value: unknown): ProjectExcelImportSource | null {
+  if (!isRecord(value)
+    || !isNonEmptyString(value.sourceId)
+    || !isNonEmptyBasename(value.fileName)
+    || (value.digest !== null && (typeof value.digest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(value.digest)))
+    || !isNonEmptyString(value.mappingSignature)
+    || !isNonEmptyString(value.sheetName)
+    || !isNonEmptyString(value.lastReviewedAt)
+    || !Array.isArray(value.rows)) return null;
+  const rows = value.rows.map(parseProjectExcelImportSourceRow);
+  if (rows.some((row) => row === null)) return null;
+  return {
+    sourceId: value.sourceId,
+    fileName: value.fileName,
+    digest: value.digest,
+    mappingSignature: value.mappingSignature,
+    sheetName: value.sheetName,
+    lastReviewedAt: value.lastReviewedAt,
+    rows: rows as ProjectExcelImportSourceRow[]
+  };
+}
+
+function parseProjectExcelImportSourceRow(value: unknown): ProjectExcelImportSourceRow | null {
+  if (!isRecord(value) || !isNonEmptyString(value.identityKey)
+    || !isNonEmptyString(value.sheetName) || !isNonNegativeInteger(value.rowNumber) || value.rowNumber < 1
+    || !isNonEmptyString(value.sourceRange)
+    || !isRecord(value.values)
+    || !isNonEmptyString(value.values.itemCode, true)
+    || !isNonEmptyString(value.values.description, true)
+    || !isNonEmptyString(value.values.unit, true)
+    || !isNullableStoredNumber(value.values.quantity)
+    || !isNullableStoredNumber(value.values.unitCost)
+    || !isNullableStoredNumber(value.values.total)
+    || !isNonEmptyString(value.values.group, true)
+    || (value.values.costCategory !== "construction" && value.values.costCategory !== "other" && value.values.costCategory !== "contingency")
+    || !isNonEmptyString(value.values.notes, true)
+    || value.projectValues === undefined
+    || (value.projectValues !== null && !parseProjectExcelImportProjectValues(value.projectValues))
+    || !Array.isArray(value.lineItemIds)
+    || value.lineItemIds.some((id) => !isNonEmptyString(id))) return null;
+  return {
+    identityKey: value.identityKey,
+    sheetName: value.sheetName,
+    rowNumber: value.rowNumber,
+    sourceRange: value.sourceRange,
+    values: {
+      itemCode: value.values.itemCode,
+      description: value.values.description,
+      unit: value.values.unit,
+      quantity: value.values.quantity,
+      unitCost: value.values.unitCost,
+      total: value.values.total,
+      group: value.values.group,
+      costCategory: value.values.costCategory,
+      notes: value.values.notes
+    },
+    projectValues: value.projectValues === null ? null : parseProjectExcelImportProjectValues(value.projectValues),
+    lineItemIds: [...new Set(value.lineItemIds)]
+  };
+}
+
+function parseProjectExcelImportProjectValues(value: unknown): ProjectExcelImportSourceRow["projectValues"] | null {
+  if (value === null) return null;
+  if (!isRecord(value)
+    || !isNonEmptyString(value.itemCode, true)
+    || !isNonEmptyString(value.description, true)
+    || !isNonEmptyString(value.unit, true)
+    || !isNullableStoredNumber(value.quantity)
+    || !isNullableStoredNumber(value.unitCost)
+    || !isNonEmptyString(value.group, true)
+    || (value.costCategory !== "construction" && value.costCategory !== "other" && value.costCategory !== "contingency")) return null;
+  return {
+    itemCode: value.itemCode,
+    description: value.description,
+    unit: value.unit,
+    quantity: value.quantity,
+    unitCost: value.unitCost,
+    group: value.group,
+    costCategory: value.costCategory
   };
 }
 
@@ -839,7 +1064,7 @@ function parseProjectPlanningOrigin(value: unknown): ProjectPlanningOrigin | nul
   return { planningProjectId, planningProjectName, alternativeId, alternativeName, createdAt, planningTotal };
 }
 
-function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11): ProjectLineItem | null {
+function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12): ProjectLineItem | null {
   if (!isRecord(value) || typeof value.lineItemId !== "string" || !value.lineItemId.trim()) return null;
   const legacyExplorer = value.lineItemType === undefined || value.lineItemType === "explorer";
   const lineItemType = value.lineItemType === "custom"
@@ -861,8 +1086,9 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
   if (schemaVersion >= 10
     && value.costCategory !== undefined
     && value.costCategory !== "construction"
-    && value.costCategory !== "other") return null;
-  const costCategory = normalizeProjectCostCategory(
+    && value.costCategory !== "other"
+    && value.costCategory !== "contingency") return null;
+  const storedCostCategory = normalizeProjectCostCategory(
     value.costCategory,
     lineItemType === "catalog" ? "construction" : "other"
   );
@@ -882,6 +1108,8 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
   if (pricingMode === "percentage" && (typeof percentageRate !== "number" || !Number.isFinite(percentageRate) || percentageRate < 0 || !percentageBase)) return null;
   const costRole = schemaVersion >= 11 && value.costRole === "contingency" ? "contingency" : "standard";
   if (schemaVersion >= 11 && value.costRole !== undefined && value.costRole !== "contingency" && value.costRole !== "standard") return null;
+  const costCategory = costRole === "contingency" ? "contingency" : storedCostCategory;
+  const normalizedCostRole = costCategory === "contingency" ? "contingency" : costRole;
   if (lineItemType === "catalog") {
     const evidenceContext = value.evidenceContext === null || value.evidenceContext === undefined
       ? null
@@ -894,7 +1122,7 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
       lineItemType,
       costCategory,
       ...(value.pricingMode !== undefined ? { pricingMode } : {}),
-      ...(value.costRole !== undefined ? { costRole } : {}),
+      ...(value.costRole !== undefined ? { costRole: normalizedCostRole } : {}),
       ...(importSource ? { importSource } : {}),
       state,
       agencyId,
@@ -917,7 +1145,7 @@ function parseProjectLineItem(value: unknown, schemaVersion: 1 | 2 | 3 | 4 | 5 |
     lineItemType,
     costCategory,
     ...(value.pricingMode !== undefined ? { pricingMode } : {}),
-    ...(value.costRole !== undefined ? { costRole } : {}),
+    ...(value.costRole !== undefined ? { costRole: normalizedCostRole } : {}),
     ...(pricingMode === "percentage" ? { percentageRate: percentageRate as number, percentageBase: percentageBase as ProjectPercentageBase } : {}),
     ...(importSource ? { importSource } : {}),
     state,
@@ -1096,7 +1324,7 @@ function normalizeProjectLineItemFields(fields: ProjectLineItemEditableFields): 
 }
 
 function normalizeProjectCostCategory(value: unknown, fallback: ProjectCostCategory): ProjectCostCategory {
-  return value === "construction" || value === "other" ? value : fallback;
+  return value === "construction" || value === "other" || value === "contingency" ? value : fallback;
 }
 
 function projectLineCostCategory(lineItem: ProjectLineItem): ProjectCostCategory {
