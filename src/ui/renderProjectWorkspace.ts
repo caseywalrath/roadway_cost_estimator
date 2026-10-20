@@ -134,15 +134,14 @@ export function renderProjectWorkspace(
       </section>
 
       ${!project && !workspaceEditor ? `<section class="panel-block project-empty-workspace"><button type="button" class="primary-button" data-start-new-project>New Project</button></section>` : ""}
-      ${project && workspaceEditor?.mode !== "create" ? `<section class="panel-block project-lines-panel">
+      ${project && workspaceEditor?.mode !== "create" ? `<section class="panel-block project-lines-panel${project.lineItems.length ? " project-lines-panel--populated" : ""}">
         <div class="panel-heading project-lines-heading">
           <div>
             <p class="eyebrow">Project Items</p>
-            ${project.lineItems.length === 0 ? `<button type="button" class="secondary-button project-add-item-button" data-add-custom-project-line ${readOnly ? "disabled" : ""}>+Add Item</button>` : ""}
           </div>
           ${renderProjectCostSummary(project, readOnly)}
         </div>
-        ${project.lineItems.length === 0 ? "" : renderProjectLineTable(project, readOnly, projectSort)}
+        ${project.lineItems.length === 0 ? renderProjectAddItemButton(readOnly, true) : renderProjectLineTable(project, readOnly, projectSort)}
       </section>` : ""}
     </section>
   `;
@@ -308,7 +307,11 @@ function renderProjectLineTable(project: UserProject, readOnly: boolean, project
   const sortedLineItems = sortProjectLineItems(project.lineItems, projectSort, project);
   const groupListId = projectGroupListId(project);
   const calculation = calculateProject(project);
-  return `<div class="table-scroll-shell project-table-shell">${renderProjectGroupDatalist(project)}<div class="table-scroll table-scroll--sticky-results" tabindex="0" aria-label="Project item table"><table class="project-line-table"><thead><tr>${PROJECT_SORTABLE_COLUMNS.map((column) => renderProjectSortableHeader(column, projectSort)).join("")}<th>Remove</th></tr></thead><tbody>${sortedLineItems.map((lineItem) => renderProjectLineRow(lineItem, project, calculation, readOnly, groupListId)).join("")}</tbody></table></div><button type="button" class="primary-button project-add-item-dock" data-add-custom-project-line aria-label="Add item to Project" title="Add item to Project" ${readOnly ? "disabled" : ""} hidden><span aria-hidden="true">+</span><span class="project-add-item-dock__label" aria-hidden="true">Project Item</span></button></div>`;
+  return `<div class="table-scroll-shell project-table-shell">${renderProjectGroupDatalist(project)}<div class="table-scroll table-scroll--sticky-results" tabindex="0" aria-label="Project item table"><table class="project-line-table"><thead><tr>${PROJECT_SORTABLE_COLUMNS.map((column) => renderProjectSortableHeader(column, projectSort)).join("")}<th scope="col" aria-label="Remove item"></th></tr></thead><tbody>${sortedLineItems.map((lineItem) => renderProjectLineRow(lineItem, project, calculation, readOnly, groupListId)).join("")}</tbody></table></div>${renderProjectAddItemButton(readOnly, false)}</div>`;
+}
+
+function renderProjectAddItemButton(readOnly: boolean, empty: boolean): string {
+  return `<button type="button" class="primary-button project-add-item-dock${empty ? " project-add-item-dock--empty" : ""}" data-add-custom-project-line aria-label="Add item to Project" title="Add item to Project" ${readOnly ? "disabled" : ""} ${empty ? "" : "hidden"}><span aria-hidden="true">+</span><span class="project-add-item-dock__label" aria-hidden="true">Project Item</span></button>`;
 }
 
 function renderProjectCostSummary(project: UserProject, readOnly: boolean): string {

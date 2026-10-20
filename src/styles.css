@@ -395,12 +395,6 @@ textarea {
   min-width: 0;
 }
 
-.project-add-item-button {
-  min-height: 34px;
-  margin-top: 10px;
-  padding: 6px 12px;
-}
-
 .project-tab-shortcut {
   min-height: 36px;
   padding: 6px 12px;
@@ -946,6 +940,18 @@ input[readonly] {
 .project-lines-panel {
   display: grid;
   gap: 14px;
+}
+
+.panel-block.project-lines-panel {
+  padding-inline: 0;
+}
+
+.panel-block.project-lines-panel--populated {
+  padding-bottom: 58px;
+}
+
+.project-lines-heading {
+  margin-inline: 18px;
 }
 
 .project-metadata-inline-form {
@@ -1929,20 +1935,13 @@ table {
   min-width: 1190px;
 }
 
-@media (min-width: 1320px) {
-  /* Let sticky project headings follow document scrolling when the table fits
-     the page; the horizontal scroller remains available at narrower widths. */
-  .project-table-shell > .table-scroll {
-    overflow: visible;
-  }
+.project-table-shell::before,
+.project-table-shell::after {
+  display: none;
+}
 
-  .project-line-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 6;
-    background: #e8eef4;
-    box-shadow: 0 1px 0 var(--line-strong);
-  }
+.project-table-shell > .table-scroll {
+  box-sizing: border-box;
 }
 
 .project-line-table th:nth-child(1),
@@ -1976,6 +1975,12 @@ table {
   box-shadow: 0 2px 5px rgba(23, 42, 59, 0.2);
   white-space: nowrap;
   transition: width 160ms ease, padding 160ms ease, background-color 120ms ease;
+}
+
+.project-add-item-dock--empty {
+  position: static;
+  justify-self: start;
+  margin-inline: 18px;
 }
 
 .project-add-item-dock > span:first-child {
@@ -2253,7 +2258,7 @@ table {
 }
 
 .project-line-table td {
-  padding: 5px 8px;
+  padding: 5px 5px;
   vertical-align: middle;
 }
 
@@ -2287,7 +2292,20 @@ th {
 }
 
 .project-line-table th:last-child {
-  padding: 10px 11px;
+  box-sizing: border-box;
+  width: 42px;
+  min-width: 42px;
+  max-width: 42px;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.project-line-table td:last-child {
+  box-sizing: border-box;
+  width: 42px;
+  min-width: 42px;
+  max-width: 42px;
+  padding: 5px 2px;
 }
 
 .evidence-project-header,
@@ -2353,6 +2371,11 @@ th {
   letter-spacing: 0;
   text-align: left;
   text-transform: inherit;
+}
+
+.project-line-table .table-sort-button {
+  gap: 5px;
+  padding-inline: 6px;
 }
 
 .matching-projects-table .table-sort-button {
@@ -2563,8 +2586,9 @@ th {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
   border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;

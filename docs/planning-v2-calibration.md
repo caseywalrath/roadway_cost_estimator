@@ -1,6 +1,6 @@
 # Planning v2 calibration report (Colorado)
 
-Status: Phase 1 deliverable for tasks 1c and 1d. Prepared 2026-10-09. For review at Stop 1.
+Status (2026-10-20): Phase 1 calibration record, prepared 2026-10-09. The user accepted the original factor, assembly, stage, and 1.02 escalation values at STOP 1. The later Final Design stage is a judgment value and still merits engineer review before relying on it for estimates.
 Scope: mobilization, traffic-control and minor-item factors by base type; assembly costs for multi-item elements; 2026 escalation; stage values; FHU benchmarks.
 Scripts (not in repository): session scratchpad `calib/factors.py`, `calib/fhu.py`, `calib/assemblies.py`, `calib/verify_mob.py`.
 
@@ -41,9 +41,9 @@ All assembly costs are direct. The planner must apply the base-type factors on t
 | Item | Recommendation |
 |---|---|
 | 2025 Q4 → 2026 escalation | 1.02 |
-| Concept stage | contingency 30%, range −25%/+50% (keep) |
-| Planning study stage | contingency 25%, range −20%/+30% (keep) |
-| Final design stage (added after Stop 3) | contingency 15%, range −10%/+15%. Judgment value, not derived from the FHU or CDOT data: it sits at the narrow end of AACE 18R-97 Class 3 (low −10% to −30%, high +10% to +30%) and keeps the F/A allowance (5.9%) plus a margin for unforeseen conditions. Review before relying on it. |
+| Planning Study (id `concept`) | contingency 30%, range −25%/+50% (accepted) |
+| Early Design (id `planning_study`) | contingency 25%, range −20%/+30% (accepted) |
+| Final Design (id `final_design`; added after STOP 3) | contingency 15%, range −10%/+15%. Judgment value, not derived from the FHU or CDOT data: it sits at the narrow end of AACE 18R-97 Class 3 (low −10% to −30%, high +10% to +30%) and keeps the F/A allowance (5.9%) plus a margin for unforeseen conditions. Review before relying on it. |
 | Design engineering | 10% (keep, editable) |
 | Construction engineering | 10% (keep, editable) |
 
@@ -199,7 +199,7 @@ Basis: engineer estimate (FHU estimates) or average bid (FHU bid tabs), from `pu
 |---|---|---|
 | mill_overlay | mob 0.07, TC 0.08, minor 0.56 | Urban window n = 8 meets the threshold. mob 0.069 → 0.07; TC 0.085 → 0.08 (exact 0.0846). Statewide (n = 60) gives 0.08 / 0.08 / 0.48; the all-years urban set (n = 13) gives 0.07 / 0.09 / 0.52. All within ±0.01 for mob and TC. Combined 1.80. |
 | reconstruction | mob 0.10, TC 0.12, minor 0.55 | Urban n = 5 is below 8; statewide window n = 29 is used for mob (0.104) and TC (0.119). Statewide minor net is 0.42, but urban CDOT (0.76, n = 5), and the three FHU urban estimates (0.55, 0.95, 1.26) are higher; pooled urban CDOT + FHU estimates (n = 8) median is 0.80. The statewide dollar-weighted value is 0.556. Recommended 0.55 is a judgment value between the statewide median and the urban evidence. Combined 1.91. |
-| path | mob 0.10, TC 0.05, minor 0.35 | Zero CDOT path contracts in the data (the four contracts with bikeway items are interstate or highway projects classified as other). mob: similar to small concrete-flatwork contracts (elements_only 0.07 statewide, 0.11 urban). TC: an off-street path needs traffic control only at road crossings; 0.05 is below every measured base type. minor: elements_only statewide net 0.33, rounded up for grading, erosion control, signing and crossing work. Combined 1.56. Review at Stop 1. |
+| path | mob 0.10, TC 0.05, minor 0.35 | Zero CDOT path contracts in the data (the four contracts with bikeway items are interstate or highway projects classified as other). mob: similar to small concrete-flatwork contracts (elements_only 0.07 statewide, 0.11 urban). TC: an off-street path needs traffic control only at road crossings; 0.05 is below every measured base type. minor: elements_only statewide net 0.33, rounded up for grading, erosion control, signing and crossing work. Combined 1.56. Accepted at STOP 1 as a judgment value because there were no comparable path contracts. |
 | elements_only | mob 0.11, TC 0.16, minor 0.46 | Urban window n = 22. Values are medians: 0.110, 0.157, 0.459. Small contracts (median $1.23M) carry higher mob and TC percentages. Dollar-weighted values are much lower (0.08 / 0.10 / 0.29); the median is used because planner elements-only projects are also small. Combined 1.88. |
 
 ## 4. Assemblies
@@ -365,8 +365,8 @@ Stage labels shown to planners: Planning Study (id `concept`, 30%, −25%/+50%),
 
 - The three FHU estimates show no contingency, design engineering or construction engineering lines in the imported data (`fhu_estimate_*_item_unit_costs.csv`). These percentages cannot be checked against them.
 - Colorado Blvd and West Colfax Ph 2 carry F/A Minor Contract Revisions (700-70010) of $400,000 and $900,000. Total F/A is 5.9% of non-F/A items in both. Old Hampden carries no F/A. F/A minor contract revisions act as a construction-phase contingency. CDOT Cost Data Book contracts carry no F/A items, so the measured factors exclude it and the stage contingency must cover it.
-- Proposed values compared with AACE 18R-97 class ranges (general reference): Class 5 (concept) low −20% to −50%, high +30% to +100%; Class 4 (study) low −15% to −30%, high +20% to +50%. The proposed bands (Concept −25%/+50%; Planning study −20%/+30%) are inside these ranges at the narrow end.
-- Contingency 30% (Concept) and 25% (Planning study) exceed the FHU F/A allowance (5.9%) by a margin appropriate for scope not yet defined. No change recommended.
+- Accepted original values compared with AACE 18R-97 class ranges (general reference): Class 5 (concept) low −20% to −50%, high +30% to +100%; Class 4 (study) low −15% to −30%, high +20% to +50%. The Planning Study band (−25%/+50%) and Early Design band (−20%/+30%) are inside these ranges at the narrow end.
+- Contingency 30% (Planning Study) and 25% (Early Design) exceed the FHU F/A allowance (5.9%) by a margin appropriate for scope not yet defined.
 - Design 10% and CE 10%: no FHU evidence available in the data. Keep as editable defaults. Note: municipal federal-aid projects in Colorado frequently carry CE above 10%; the planner should keep the field visible.
 
 ## 7. FHU benchmarks
@@ -384,7 +384,7 @@ Caveats:
 - Old Hampden is short, intersection- and streetscape-heavy (shelters, furniture, plantings, signal rebuild); its per-mile figure is not a corridor rate.
 - Colorado Blvd's implied 1.11 miles is consistent with the named limits (about 1 mile). Sidewalk quantity (11,924 SY) implies about 10 ft width if both sides are rebuilt.
 - West Colfax Ph 2 includes 157 light poles, about 6 signals and $0.70M of irrigation.
-- The user may supply actual corridor lengths at Stop 1 to replace these implied values.
+- Actual corridor lengths for these reference projects were not supplied at STOP 1. Replacing the implied lengths would improve this optional benchmark; it does not block the accepted library values.
 - The task brief lists "West Colfax Ph 1" among the FHU estimates. The data contains a West Colfax Phase 2 estimate (2026-01-23) and a West Colfax Phase 1 bid tab (2024-10-03). This report uses Phase 2 as the estimate.
 
 ## 8. Verification
@@ -459,7 +459,7 @@ All-in = direct × combined multiplier. Corridor and spot elements are shown wit
 | Median refuge island | 1 | 23,000 | 43,000 |
 | Bus stop upgrade | 2 | 14,000 | 27,000 |
 
-### 10.4 Template totals: 1 mile, 40 ft, 4 intersections, Concept stage
+### 10.4 Template totals: 1 mile, 40 ft, 4 intersections, Planning Study stage (`concept` id)
 
 Total = construction × 1.30 contingency × 1.20 engineering. Range −25% / +50%.
 

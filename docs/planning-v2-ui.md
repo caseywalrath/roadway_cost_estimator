@@ -1,6 +1,6 @@
 # Planning v2 UI design (task 3a)
 
-Status: design note for STOP 2 review. Implements Phase 3 of `docs/planning-v2-implementation-plan.md`. Data and calculation API: `src/planning/README.md`.
+Status (2026-10-20): Implemented Planning v2 UI design record. STOP 2 was accepted; later changes to the create screen, stage labels, template switching, alternative panel, editable contingency, and Actions menu are recorded below and in the [implementation completion log](planning-v2-implementation-plan.md#10-completion-log). The markup sketches in this document show the original design, so `src/ui/planning/` is authoritative for exact current structure. Data and calculation API: `src/planning/README.md`.
 
 Reference screenshots of the existing Project view (1440 px and 390 px) were taken before writing this note. Planning matches them in these ways:
 
@@ -360,9 +360,9 @@ Reused classes and where: `panel-block` (header, corridor, elements, summary, ne
 
 `renderApp.ts` gets a third tab, "Planning", and an empty `<div data-planning-mount>`; `main.ts` loads the library on first visit and calls `mountPlanning` (orchestrator edits). The library load error replaces the view with `renderLoadError`.
 
-## 7. Check against the approved sketch and convention rule
+## 7. Implemented layout and departures from the original sketch
 
-Re-read against Phase 3: shared classes reused, tokens only, no blanket element rules, new classes listed with reasons above. Layout matches the sketch: header with project and export menus, corridor strip, grouped element rows (radio/checkbox, label, dollar box, disclosure), sticky summary at about 35% with alternative buttons, description, construction, contingency, design, CE, ROW, utilities, total, range, budget; narrow total bar above elements and full summary after.
+The Phase 3 implementation reused shared classes and tokens without blanket element rules. The current header has one Planning Actions menu. The Corridor, Alternatives, Elements, and handoff panels occupy the left column; the sticky summary occupies the right. Alternatives use a left-column panel rather than summary buttons. Grouped element rows retain their radio/checkbox, label, dollar box, and disclosure. The summary retains construction, contingency, design, CE, ROW, utilities, total, range, and budget. At narrow widths, the compact total bar precedes the elements and the full summary follows them.
 
 Departures from the sketch:
 
@@ -374,10 +374,10 @@ Departures from the sketch:
 6. The sketch's "Design 12%" and "CE 15%" are illustrative; defaults are the library's 10% and 10%.
 7. "No base treatment" is a fourth radio row (from the library), shown without a dollar box.
 
-## 8. Orchestrator decisions (before STOP 2)
+## 8. Accepted implementation decisions (originally before STOP 2)
 
 1. Full dollars everywhere (no `$M`).
 2. Unselected rows show their calculated amount greyed.
 3. Summary lines (construction, contingency, design, CE, ROW, utilities, budget remaining) display to the nearest $1,000; the foregrounded total and the range display to the nearest $10,000.
-4. Reuse of other screens' classes (`project-switcher`, `project-contingency-*`, `checkbox-label`, `visually-hidden`, `filter-validation-message`, `app-view-tab`) is accepted for visual consistency; listed for STOP 2 review.
+4. Reuse of other screens' classes (`project-switcher`, `project-contingency-*`, `checkbox-label`, `visually-hidden`, `filter-validation-message`, `app-view-tab`) was accepted for visual consistency at STOP 2.
 5. Controller lifetime: the app re-renders its whole root with `innerHTML`, which destroys the Planning mount node. Planning state therefore lives in a controller created once per app session: `createPlanningController(deps)` → `{ mount(container), unmount(), flush() }`. `mount` renders from current state (loading the library and store on first call); `unmount` detaches listeners; `flush` saves pending changes. `renderApp.ts` calls `mount` after each render while the Planning tab is active (orchestrator edit).

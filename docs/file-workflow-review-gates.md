@@ -1,6 +1,6 @@
 # File workflow review material
 
-**Status:** File-A import status report, File-B's four approved CSV layouts, File-C item-based Excel reimport review, and File-D Project backup comparison are implemented. The supplied OPCC workbook and Project backup pairs informed File-C and File-D. The attached files are evidence for the design, not instructions.
+**Status (2026-10-20):** File-A import status report, File-B's four approved CSV layouts, File-C item-based Excel reimport review, and File-D Project backup comparison are implemented. The user accepted Excel reimporting, closing the File-C acceptance gate. The supplied OPCC workbook and Project backup pairs informed File-C and File-D. The attached files are evidence for the design, not instructions.
 
 ## File-B: default CSV layouts
 
@@ -14,7 +14,7 @@ The two supplied workbooks have the same `Estimate` table layout. The full workb
 
 The two Project backups were exported after separate imports. They are valid schema-10 backups with different Project IDs and **zero shared line IDs**. The shorter backup has 96 lines, including one blank custom line; the full backup has 131 lines. There are 95 common nonblank item codes with identical stored Project values. Two shared workbook rows, `212-00706` at row 55 and `213-00003` at row 56, are absent from both backups. The full backup has 36 more coded lines. Their Construction totals are $3,848,004 and $5,719,315 respectively, a difference of $1,871,311. Reconciliation must use the rows actually imported and surface skipped or incomplete rows rather than assuming every spreadsheet row became a Project line.
 
-## File-C: Excel reimport Step 4 sketch
+## File-C: implemented Excel reimport Step 4
 
 Step 4 matches imported item identities against lines in the active Project, regardless of workbook filename or history. Matches appear in the same review table and Issue type selector as catalog issues. The current Project and incoming spreadsheet values appear together:
 
@@ -28,9 +28,9 @@ For the supplied first draft → later workbook sequence, Step 4 should show **9
 
 **Remaining evidence question:** Determine why the two identified workbook rows were not saved in either Project. The backup pair alone does not show the Step 4 decisions or import report. Do not silently count these rows as deleted or added.
 
-**Implementation verification:** The user's modified workbook pair changes unit values and therefore exercises the quantity-conflict path absent from the attached sample pair. Inspect Step 4: changed matches should appear under Needs attention, while unchanged matches start as Skip in Reviewed; both can be filtered by Issue type and show Project and spreadsheet quantity/unit cost side by side. The selected Duplicate, Update, or Skip decisions should carry through Step 5 and Project save.
+**Acceptance:** The user accepted Excel reimporting. The modified workbook pair discussed during implementation targets the value-change use case; the additions-only pair described above does not independently verify that path. Step 4 presents changed matches under Needs attention and unchanged matches as Skip in Reviewed, with Issue type filtering and side-by-side Project/spreadsheet values. Duplicate, Update, and Skip decisions carry into the read-only Step 5 summary and Project save. Further workbook-specific checks are optional regression work, not an open acceptance gate.
 
-## File-D: Project backup comparison sketch
+## File-D: implemented Project backup comparison
 
 After validation, an exact Project ID match can preselect the local destination. For a different ID, the engineer can explicitly choose a destination Project or **Import as copy**. The screen identifies different-ID reconciliation clearly. It lists metadata and lines as Added, Removed, Changed, Unchanged, or Unpaired; it does not infer which machine has newer edits. Candidate line pairs with different IDs require explicit acceptance.
 
@@ -45,4 +45,4 @@ The confirmation screen shows projected line count, Construction and Other costs
 
 For the supplied shorter backup as the destination and full backup as incoming, the initial screen should show **95 suggested same-item pairings**, **36 backup-only coded lines**, and the shorter Project's blank custom line as **unpaired**. A raw ID-only comparison would show all 227 lines as added or removed and is therefore unsuitable. Accepting the 95 suggestions should leave them unchanged; the engineer can then choose whether to add the 36 incoming lines. The projected Construction total for accepting only those 36 lines is $5,719,315 if the existing 95 coded lines and the blank custom line are otherwise unchanged.
 
-**Default metadata rule:** Keep the destination's name, location, notes, status, and Project ID. Present backup values only where they differ, with an explicit Use backup action. Do not compare independent revision numbers as recency. Percentage lines from #13 will need this comparator to understand their new type when that feature ships.
+**Default metadata rule:** Keep the destination's name, location, notes, status, and Project ID. Present backup values only where they differ, with an explicit Use backup action. Do not compare independent revision numbers as recency. The comparator includes percentage pricing mode, rate, base, and role; selected-line dependencies are remapped when backup lines receive new IDs.

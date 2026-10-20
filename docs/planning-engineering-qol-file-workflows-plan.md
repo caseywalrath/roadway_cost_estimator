@@ -1,6 +1,8 @@
 # File workflow implementation plan: reports, reimport, and Project backups
 
-**Status:** File-A #8, File-B #7, File-C #4, and File-D #5 are implemented. The File-C acceptance check with the user's quantity-modified workbook pair remains. The user approved all four [File-B sample CSVs](file-workflow-samples/README.md), and the exporters use those layouts. The supplied OPCC workbook and backup pairs informed File-C #4 and File-D #5; findings are in [file-workflow-review-gates.md](file-workflow-review-gates.md). This plan expands the [quality-of-life roadmap](planning-engineering-qol-roadmap.md) at repository commit `f9145a9`.
+**Status (2026-10-20):** File-A #8, File-B #7, File-C #4, and File-D #5 are implemented. The user approved all four [File-B sample CSVs](file-workflow-samples/README.md) and has accepted Excel reimporting; the File-C acceptance gate is closed. The supplied OPCC workbook and backup pairs informed File-C and File-D, with evidence limits recorded in [file-workflow-review-gates.md](file-workflow-review-gates.md). Planning share JSON comparison remains separate, deferred work. This plan originally expanded the [quality-of-life roadmap](planning-engineering-qol-roadmap.md) at repository commit `f9145a9`.
+
+The numbered steps below record the implementation contract and are complete for Project workflows except where a limit is stated. The older source-linking design is superseded by active-Project item matching in Step 4.
 
 ## Existing boundaries to preserve
 
@@ -15,8 +17,8 @@
 
 1. Define one small report model before CSV serialization: source sheet/row, item code, description, outcome, final quantity, final unit cost, and one plain-language reason when not imported. Distinguish **Imported**, **Updated**, and **Not imported**. Do not put internal IDs, raw source ranges, issue codes, or duplicate original/final field sets in the default report.
 2. Include all actual item candidates, including excluded or unresolved potential items. Omit blank cells, headings, repeated headers, and ordinary subtotal rows from the line list; a short count of those rows may follow the main list. Keep source sheet and row so an engineer can find a rejected item.
-3. Before final save, label the file and outcomes as a **review preview**: “Will import,” “Will update,” and “Will not import.” After successful save, create the **import status report** from the committed plan/result and use past-tense outcomes. A failed save must not produce a success report. Keep the ready draft for retry as the current controller does.
-4. Show a report download after a successful import even when no items were skipped. The current result screen shows a “skipped-row report” only when skips exist; that condition must change. Keep detailed row issues accessible in Step 4; expose a separate diagnostic CSV only if a concrete troubleshooting need remains.
+3. Before final save, label the file and outcomes as a **review preview**: “Will import,” “Will update,” and “Will not import.” After successful save, create the **import status report** from the committed plan/result and use past-tense outcomes. A failed save must not produce a success report. Keep the ready draft for retry.
+4. Show a report download after a successful import even when no items were skipped. The former “skipped-row report” condition was removed. Keep detailed row issues accessible in Step 4; expose a separate diagnostic CSV only if a concrete troubleshooting need remains.
 
 **Acceptance:** A mixed workbook produces a concise list of imported, updated, and not-imported items with correct sheet/row and reasons. A zero-skip import still offers the status report. A failed transaction yields preview wording and retry, never a false success claim. Preserve CSV quoting and formula-safe text.
 
@@ -24,7 +26,7 @@
 
 **Files:** `src/ui/exportProjectCsv.ts`, `exportEvidenceCsv.ts`, `exportItemPriceHistoryCsv.ts`, `src/planning/exportCsv.ts`, their focused test files, and the menu copy that names each download.
 
-| Surface | Current shape | Proposed default contract for sample review |
+| Surface | Previous shape | Implemented default CSV contract |
 | --- | --- | --- |
 | Project | 25 line columns plus a two-column summary | One short Project header; line table in screen order: Group, Cost Category, Item Code, Description, Unit Cost, Unit, Quantity, Total Item Cost, Notes; then the visible Project cost summary. Remove internal agency/observation IDs, timestamps, and import locators from the default CSV. |
 | Matching Projects | 30 columns, including internal IDs and encoded bidder detail | Export only the visible table columns: Contract/project, Location, optional District, Let date, Awarded vendor, optional Bids, Quantity, Unit, Item description, Awarded Price, Average Price, optional Engineer Estimate, Source. Use the selected state's capability flags as the table does. |
@@ -32,10 +34,10 @@
 | Planning | 11 table columns plus metadata and Pay item rows | Keep visible project/stage/price-basis context once, alternative element rows, and the visible summary totals. Remove Pay item detail from the default file. A separate calculation-detail export requires an engineer use case. |
 
 1. Generate one example of each proposed CSV and compare it with the corresponding screen before changing the export contract. Keep a simple source label or link when it is visible; do not reintroduce hidden IDs for convenience. Preserve the active Project sort and state-specific evidence capabilities.
-2. Use one explicit CSV cell encoder per export. Project, Planning, and the current import report already prefix formula-like text; Matching Projects and Nebraska history currently only quote it. Add formula-safe text handling there while revising those exports. Keep numeric values as numbers and preserve CRLF/BOM behavior where already relied upon.
+2. Use one explicit CSV cell encoder per export. Project, Planning, and the import report already prefixed formula-like text; Matching Projects and Nebraska history gained formula-safe text handling during this change. Keep numeric values as numbers and preserve CRLF/BOM behavior where already relied upon.
 3. Update focused export expectations and user workflow documentation. Confirm sums and row counts against the screen. Treat removed columns as a versioned reporting change for any spreadsheet process that reads the old CSV layout. JSON backup/share parsers and payloads stay lossless.
 
-**Review gate:** Show the four sample files to an engineer or the user before deleting old columns. The agreed default is simple user-facing data; a detailed export is added only for a demonstrated task.
+**Review gate complete:** The user approved all four sample layouts before the old columns were removed. The default is simple user-facing data; a detailed export requires a demonstrated task.
 
 ## File-C — Revised Excel workbook reconciliation (#4)
 
@@ -53,8 +55,6 @@ For each matched row, compare the current Project value **P** with the incoming 
 
 | Comparison | Default for ordinary fields | Quantity rule |
 | --- | --- | --- |
-| Project state | Default for ordinary fields | Quantity rule |
-| --- | --- | --- |
 | `P = N` | Classify as **Project unchanged**; default to Skip and show it in Reviewed, where Duplicate or Update remains available. | No quantity discrepancy remains. |
 | `P ≠ N` | Classify as **Project changed** and require an explicit choice. | Show both values; blank and zero remain distinct. |
 | Multiple possible targets or no clear Update target | Classify as **Project needs target** and require target selection before Update. | Do not update until the target is explicit. |
@@ -65,7 +65,7 @@ Reuse `planExistingItems()` for final target validation and `applyProjectImport(
 
 **Cases to check:** same file twice; revised quantity only; revised unit cost only; blank versus zero; duplicate item identities; different Groups/categories; Project changed/unchanged/needs-target classifications; one bulk selection across filtered rows; removed source row; concurrent Project edit; backup round trip with legacy source records. Removed source rows remain untouched.
 
-**Design gate:** The supplied OPCC pair confirms 36 added rows in the full version, with shared item values unchanged. Use this as the first draft → later additions case, not as evidence of quantity or price conflict handling. The Step 4 sketch and field decision table use the single-table Project changed/unchanged/needs-target model. Previous-source linking is removed from the current workflow while legacy backup readability remains required.
+**Acceptance complete:** The supplied OPCC pair confirms 36 added rows in the full version, with shared item values unchanged. It documents the first draft → later additions case but does not itself exercise quantity or price conflicts. The user accepted the implemented Step 4 reimport workflow, including changed/unchanged/needs-target review. Previous-source linking was removed; legacy backup readability remains supported. The two workbook rows absent from both supplied backups remain a narrow source-evidence question, not an open File-C acceptance gate.
 
 ## File-D — Compare Project backup JSON before import (#5)
 
@@ -81,7 +81,7 @@ Reuse `planExistingItems()` for final target validation and `applyProjectImport(
 
 **Cases to check:** same-ID backup with one changed line, new line, missing line, metadata difference, duplicate catalog identity, different-ID backups from separate imports, a blank custom line, stale local revision, malformed backup, older supported schema, Project with Planning origin, and an import that fails during save. Confirm the pre-merge snapshot can restore the prior Project.
 
-**Design gate:** The supplied pair has different Project IDs and zero shared line IDs despite 95 semantically matching coded lines. A same-ID-only wizard cannot serve the engineer's illustrated collaboration case. Before a cross-Project save action, show the suggested line pairings for explicit acceptance and confirm whether the destination Project's name/location/notes should remain unchanged by default. If percentage lines (#13) are implemented first, this comparison must understand their new line type; if #5 ships first, extend the comparator when the Project schema changes.
+**Design gate complete:** The supplied pair has different Project IDs and zero shared line IDs despite 95 semantically matching coded lines. The implemented wizard proposes different-ID line pairings for explicit acceptance, retains destination metadata by default, and compares percentage line fields. Planning share JSON uses a different schema and still imports as a copy; its comparison workflow is separate deferred scope.
 
 ## Sol and Luna handoff for this plan
 

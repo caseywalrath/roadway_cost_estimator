@@ -277,7 +277,7 @@ Project line table columns:
 - Total item cost
 - Cost category
 - Notes
-- Remove
+- An unlabeled remove-icon column
 
 How to use it:
 
@@ -289,7 +289,8 @@ How to use it:
 - The Archived filter provides Restore and permanent delete actions. Permanent deletion requires confirmation and also removes that Project's local recovery snapshots.
 - Confirm before discarding unsaved metadata when switching Project context.
 - Edit unit cost, quantity, and notes directly in the table. Unit Cost displays a dollar prefix and accepts a typed dollar sign or grouping commas.
-- Select a catalog item code to review it in Explorer with the line's Group, Unit Cost, Quantity, and Notes. Use **Update Item** to save those fields and the current evidence context to the same Project line. Previous/Next in Explorer opens a different catalog item and clears that editing context and the previous item's evidence filters.
+- Select a catalog item code to review it in Explorer with the line's Group, Unit Cost, Quantity, and Notes. Use **Update Item** to save those fields and the current evidence context to the same Project line. If those values change, **Add Duplicate** offers a separate line. Previous/Next in Explorer opens a different catalog item and clears that editing context and the previous item's evidence filters.
+- Use the green **+** control to add a custom Project item. It appears in an empty Project, below the last row of a short table, or near the bottom of the viewport while a long table is in view. Hover or focus expands its **Project Item** label.
 - Remove lines that should not remain in the project, then confirm the removal prompt.
 - Review the line count and total project cost.
 - Review the footer for `Saving…`, the last successful Project save time, or a save-failure message.
@@ -358,9 +359,9 @@ Matching Projects export:
 Project export:
 
 - Open the Project tab.
-- Open Project Actions and click Export CSV.
+- Open Project Actions and click **Download Project CSV**.
 - The export includes one row per saved project line.
-- Total item cost is calculated from quantity times unit cost.
+- Total item cost is calculated from fixed quantity and unit cost or from the selected fixed-cost percentage base and rate.
 - A short Project header contains name, state, location, and notes. The line table contains the visible Group, Cost Category, Item Code, Description, Unit Cost, Unit, Quantity, Total Item Cost, and Notes columns, followed by the visible cost summary. Internal IDs, import locators, and timestamps are omitted.
 - The Project CSV button is disabled when the Project has no line items.
 - CSV remains a reporting export and cannot restore a Project.
@@ -401,9 +402,9 @@ The **Planning** tab appears next to Explorer and Project when Colorado is selec
 6. **Import and download.** **Planning Actions > Import Planning Backup** imports a `.json` file as an independent copy. **Download Planning CSV** gives visible element and summary rows with the same rounding as the screen; pay item calculation detail is omitted. **Download Planning Backup** saves the whole planning project as `.json` for another person to import as a copy.
 7. **Hand off to design.** **Create engineer Project**, in the last panel of the left column, copies the selected alternative into a new Project and opens it. Pay items become catalog lines with their CDOT item codes; assemblies, entered amounts, allowances, engineering, right-of-way and utilities become lump-sum or custom lines. Planning contingency becomes a Project percentage item based on fixed Construction costs. Engineering, right-of-way, and utilities transfer as fixed amounts. The Project total matches the Planning total at handoff. The Project notes record where it came from. Later changes in Planning do not update the Project.
 
-Use **+Add Item** to add a custom line, then switch its Unit Cost control to percentage pricing when needed. Enter its description and rate, then choose a base through the summary below Description: all fixed items, Construction fixed costs, Other fixed costs, a current Group, or **Selected Items**. The Selected Items option opens a docked selector that accepts fixed items only. Choose **Contingency** in Cost Category when either a fixed or percentage item should contribute to the Contingencies summary. Construction and Other bases exclude contingency items; all fixed items includes fixed contingencies. Percentage items cannot use other percentage items as a base. If a selected fixed item is used by a percentage, reassign that base before removing the fixed item.
+Use the green **+** control to add a custom line, then switch its Unit Cost control to percentage pricing when needed. Enter its description and rate, then choose a base in the **Unit / Base** column: all fixed costs, Construction fixed costs, Other fixed costs, a current Group, or **Selected Items**. The Selected Items option opens a docked selector that accepts fixed items only. Choose **Contingency** in Cost Category when either a fixed or percentage item should contribute to the Contingencies summary. Construction and Other bases exclude contingency items; all fixed costs includes fixed contingencies. Percentage items cannot use other percentage items as a base. Removing a fixed item used in a Selected Items base warns which percentage lines depend on it, then removes that item from their bases and recalculates them. A valid base with no fixed items calculates to $0.
 
-Planning saves automatically in this browser. If the same planning project is changed in another tab, the screen says so and offers to reload the saved version. Amounts are planning-level: element and summary lines are rounded to $1,000 and totals to $10,000. Unit prices are CDOT awarded-bid medians, adjusted to 2026; see `docs/planning-v2-calibration.md`.
+Planning saves automatically in this browser. If the same planning project is changed in another tab, the screen says so and offers to reload the saved version. Amounts are planning-level: element and summary lines are rounded to $1,000 and totals to $10,000. Unit prices use CDOT awarded-bid medians adjusted to 2025 Q4 and the Planning escalation factor; see `docs/planning-v2-calibration.md`.
 
 ## Roadway Engineer Review Workflow
 
