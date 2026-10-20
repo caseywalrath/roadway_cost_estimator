@@ -92,8 +92,11 @@ export function renderAddToProjectPanel(
         <label class="add-project-group-field"><span>Group</span><input name="group" list="${escapeHtml(projectGroupListId(activeProject))}" autocomplete="off" value="${escapeHtml(sourceLine?.group ?? "")}" /></label>
         <label class="add-project-cost-field"><span>Unit cost</span><input name="preferredUnitCost" type="text" inputmode="decimal" value="${sourceLine?.preferredUnitCost ?? ""}" ${sourceLine ? "" : "required"} /></label>
         <label><span>Quantity</span><input name="quantity" type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" value="${sourceLine?.quantity ?? ""}" ${sourceLine ? "" : "required"} /></label>
-        <label class="add-project-notes-field"><span>Line notes</span><textarea name="notes" rows="2">${escapeHtml(sourceLine?.notes ?? "")}</textarea></label>
-        <button type="submit" class="primary-button add-project-submit">${sourceLine ? "Update Item" : "Add to Project"}</button>
+        <label class="add-project-notes-field"><span>Line notes</span><textarea name="notes" rows="1">${escapeHtml(sourceLine?.notes ?? "")}</textarea></label>
+        <div class="add-project-actions">
+          ${sourceLine ? `<button type="submit" class="add-project-duplicate-link" data-add-project-duplicate hidden>Add Duplicate</button>` : ""}
+          <button type="submit" class="primary-button add-project-submit">${sourceLine ? "Update Item" : "Add to Project"}</button>
+        </div>
       </form>
     </section>
   `;

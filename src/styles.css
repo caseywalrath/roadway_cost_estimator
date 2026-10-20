@@ -451,6 +451,44 @@ textarea {
   min-width: 0;
 }
 
+.add-project-actions {
+  display: flex;
+  grid-column: 5;
+  grid-row: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.add-project-duplicate-link {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-dark);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.add-project-duplicate-link:hover,
+.add-project-duplicate-link:focus-visible {
+  color: var(--accent);
+}
+
+.add-project-duplicate-link:focus-visible {
+  outline: 2px solid rgba(20, 112, 110, 0.35);
+  outline-offset: 2px;
+}
+
+.add-project-duplicate-link[hidden] {
+  display: none;
+}
+
 .add-project-submit {
   grid-column: 5;
   grid-row: 1;
@@ -2879,9 +2917,10 @@ tbody tr:last-child td {
     grid-column: 1 / -1;
   }
 
-  .add-project-submit {
+  .add-project-actions {
     grid-column: 1 / -1;
     grid-row: auto;
+    align-items: stretch;
   }
 }
 

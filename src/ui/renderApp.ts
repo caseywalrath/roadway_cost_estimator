@@ -664,7 +664,8 @@ export async function renderApp(
       includedStats,
       includedSummaryStats,
       inflationAdjustmentEnabled,
-      inflationAdjustedSummary
+      inflationAdjustedSummary,
+      sourceLine
     );
     bindDuplicateProjectActions(root);
     bindProjectMetadataEditor(root);
@@ -752,7 +753,8 @@ export async function renderApp(
     includedStats: EvidenceStats | null,
     includedSummaryStats: EvidenceSummaryStats,
     inflationAdjustmentEnabled: boolean,
-    inflationAdjustedSummary: InflationAdjustedSummary | null
+    inflationAdjustedSummary: InflationAdjustedSummary | null,
+    sourceLine: ProjectLineItem | null
   ): void {
     const addForm = rootElement.querySelector<HTMLFormElement>("#add-project-item-form");
 
@@ -762,8 +764,28 @@ export async function renderApp(
 
     const costInput = addForm.elements.namedItem("preferredUnitCost") as HTMLInputElement | null;
     const groupInput = addForm.elements.namedItem("group") as HTMLInputElement | null;
+    const quantityInput = addForm.elements.namedItem("quantity") as HTMLInputElement | null;
+    const notesInput = addForm.elements.namedItem("notes") as HTMLTextAreaElement | null;
     const costSourceInput = addForm.elements.namedItem("costSource") as HTMLInputElement | null;
+    const addDuplicateButton = addForm.querySelector<HTMLButtonElement>("[data-add-project-duplicate]");
 
+    const updateDuplicateButtonVisibility = (): void => {
+      if (!sourceLine || !addDuplicateButton) return;
+      const quantity = readNullableProjectNumber(quantityInput);
+      const preferredUnitCost = readNullableProjectCurrency(costInput);
+      const changed = (groupInput?.value.trim() ?? "") !== sourceLine.group.trim()
+        || !quantity.valid
+        || quantity.value !== sourceLine.quantity
+        || !preferredUnitCost.valid
+        || preferredUnitCost.value !== sourceLine.preferredUnitCost
+        || (notesInput?.value ?? "") !== sourceLine.notes;
+      addDuplicateButton.hidden = !changed;
+    };
+
+    for (const input of [groupInput, costInput, quantityInput, notesInput]) {
+      input?.addEventListener("input", updateDuplicateButtonVisibility);
+      input?.addEventListener("change", updateDuplicateButtonVisibility);
+    }
     costInput?.addEventListener("input", () => {
       if (costSourceInput) {
         costSourceInput.value = "manual";
@@ -782,11 +804,13 @@ export async function renderApp(
         if (costSourceInput) {
           costSourceInput.value = "quick_fill";
         }
+        updateDuplicateButtonVisibility();
       });
     });
 
     addForm.addEventListener("submit", (event) => {
       event.preventDefault();
+      const duplicateSubmission = (event.submitter as HTMLButtonElement | null)?.matches("[data-add-project-duplicate]") ?? false;
 
       const activeProject = getActiveProject(projectState, data.stateConfig.code);
 
@@ -801,9 +825,7 @@ export async function renderApp(
         return;
       }
 
-      const quantityInput = addForm.elements.namedItem("quantity") as HTMLInputElement | null;
-      const preferredUnitCostInput = addForm.elements.namedItem("preferredUnitCost") as HTMLInputElement | null;
-      const notesInput = addForm.elements.namedItem("notes") as HTMLTextAreaElement | null;
+      const preferredUnitCostInput = costInput;
       const originProject = projectOrigin?.projectId === activeProject.projectId ? activeProject : null;
       const originLine = originProject?.lineItems.find((line) => line.lineItemId === projectOrigin?.lineItemId && line.agencyItemId === result.query.agencyItemId) ?? null;
       if (projectOrigin && !originLine) {
@@ -848,7 +870,7 @@ export async function renderApp(
           costSource
         )
       });
-      if (originLine) {
+      if (originLine && !duplicateSubmission) {
         if (projectReadOnly || !editCoordinator.owns(activeProject.projectId) || activeProject.status !== "active") {
           projectStorageWarning = "This Project cannot be edited in this browser tab.";
           render();
@@ -864,6 +886,18 @@ export async function renderApp(
         };
         showProjectLineNotice(`${updated.itemCode} updated in Project.`);
         persistProjectState(replaceProjectLineItem(projectState, activeProject.projectId, originLine.lineItemId, updated), true);
+        return;
+      }
+      if (originLine && duplicateSubmission && (!editCoordinator.owns(activeProject.projectId) || activeProject.status !== "active")) {
+        projectStorageWarning = "This Project cannot be edited in this browser tab.";
+        render();
+        return;
+      }
+      if (originLine && duplicateSubmission) {
+        pendingDuplicateLine = null;
+        projectOrigin = { projectId: activeProject.projectId, lineItemId: lineItem.lineItemId, agencyItemId: lineItem.agencyItemId };
+        showProjectLineNotice(`${lineItem.itemCode} duplicated in Project.`);
+        persistProjectState(addProjectLineItem(projectState, activeProject.projectId, lineItem), true);
         return;
       }
       const matchingLineIds = findDuplicateCatalogLineItemIds(activeProject, lineItem.agencyItemId);
