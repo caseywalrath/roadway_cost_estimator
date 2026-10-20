@@ -133,7 +133,8 @@ describe("Project workspace v11", () => {
     const project = createUserProject("Empty", "CO");
     const html = renderProjectWorkspace(project, [project], testStates(), "CO", false, null);
     expect(html).not.toContain("0 lines");
-    expect(html).toContain(">+Add Item</button>");
+    expect(html).toContain('data-add-custom-project-line aria-label="Add item to Project"');
+    expect(html).toContain("project-add-item-dock--empty");
     expect(html).not.toContain("No project items have been added");
   });
 
@@ -159,7 +160,8 @@ describe("Project workspace v11", () => {
     expect(html).toContain('<option value="other" selected>Other</option>');
     expect(html).not.toContain("data-open-catalog-explorer");
     expect(html).toContain("$50.00");
-    expect(html.indexOf("SOFT")).toBeGreaterThan(html.indexOf("+Add Item"));
+    expect(html).toContain('data-add-custom-project-line aria-label="Add item to Project"');
+    expect(html.indexOf("SOFT")).toBeLessThan(html.indexOf('data-add-custom-project-line aria-label="Add item to Project"'));
 
     const catalog = createCatalogProjectLineItem({
       state: "CO",
