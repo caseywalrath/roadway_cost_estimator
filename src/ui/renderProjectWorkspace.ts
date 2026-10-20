@@ -367,7 +367,7 @@ function renderProjectLineRow(lineItem: ProjectLineItem, project: UserProject, c
     <td><span class="project-line-currency">${custom ? renderProjectPricingModeControl(lineItem, disabled) : `<span aria-hidden="true" data-currency-prefix>$</span>`}${renderProjectLineInput(lineItem, "preferredUnitCost", "Unit Cost", "project-line-number-input project-line-cost-input", disabled, "decimal")}</span></td>
     <td>${custom ? renderProjectLineInput(lineItem, "unit", "Unit", "project-line-unit-input", disabled) : escapeHtml(lineItem.unit)}</td>
     <td>${renderProjectLineInput(lineItem, "quantity", "Quantity", "project-line-number-input", disabled, "decimal")}</td>
-    <td data-project-line-total-id="${escapeHtml(lineItem.lineItemId)}">${formatCurrency(calculation.amountByLineId[lineItem.lineItemId] ?? 0)}</td>
+    ${renderProjectLineTotalCell(lineItem.lineItemId, calculation.amountByLineId[lineItem.lineItemId] ?? 0)}
     <td>${renderProjectLineInput(lineItem, "notes", "Notes", "project-line-notes-input", disabled)}</td>
     <td><button type="button" class="project-line-remove-button" data-remove-project-line-id="${escapeHtml(lineItem.lineItemId)}" aria-label="Remove ${escapeHtml(lineItem.itemCode || "custom item")} from project" title="Remove line" ${disabled}>${trashIcon()}</button></td>
   </tr>`;
@@ -385,7 +385,7 @@ function renderPercentageLineRow(line: ProjectLineItem, project: UserProject, ca
     <td><span class="project-line-currency">${renderProjectPricingModeControl(line, disabled)}</span></td>
     <td>${renderProjectPercentageBaseControl(project, line, disabled)}</td>
     <td><span class="project-percentage-rate-field"><input type="text" inputmode="decimal" class="project-line-number-input" data-project-percentage-rate="${escapeHtml(line.lineItemId)}" aria-label="Percentage rate" value="${escapeHtml(String(line.percentageRate ?? 0))}" ${disabled} /><span aria-hidden="true">%</span></span></td>
-    <td data-project-line-total-id="${escapeHtml(line.lineItemId)}">${formatCurrency(calculation.amountByLineId[line.lineItemId] ?? 0)}</td>
+    ${renderProjectLineTotalCell(line.lineItemId, calculation.amountByLineId[line.lineItemId] ?? 0)}
     <td>${renderProjectLineInput(line, "notes", "Notes", "project-line-notes-input", disabled)}</td>
     <td><button type="button" class="project-line-remove-button" data-remove-project-line-id="${escapeHtml(line.lineItemId)}" aria-label="Remove percentage item" title="Remove line" ${disabled}>${trashIcon()}</button></td>
   </tr>`;
@@ -492,6 +492,17 @@ function projectGroupListId(project: UserProject): string {
 function trashIcon(): string { return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Z" /><path d="M6 9h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Zm4 0v8h2v-8h-2Z" /></svg>`; }
 function editIcon(): string { return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Zm12.2-12.2 1.3-1.3a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5l-1.3 1.3-3.5-3.5Z" /></svg>`; }
 function projectLabel(project: UserProject): string { return project.name.trim() || "Unnamed Project"; }
+function renderProjectLineTotalCell(lineItemId: string, amount: number): string {
+  const formatted = formatProjectLineTotal(amount);
+  return `<td data-project-line-total-id="${escapeHtml(lineItemId)}" title="${escapeHtml(formatted.full)}" aria-label="Total item cost: ${escapeHtml(formatted.full)}">${escapeHtml(formatted.display)}</td>`;
+}
+export function formatProjectLineTotal(value: number): { display: string; full: string } {
+  const full = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
+  const display = Math.abs(value) >= 1_000
+    ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact", compactDisplay: "short", maximumFractionDigits: Math.abs(value) >= 100_000 ? 0 : 2 }).format(value)
+    : formatCurrency(value);
+  return { display, full };
+}
 function formatCurrency(value: number): string { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: value >= 100 ? 0 : 2 }).format(value); }
 function formatNumber(value: number): string { return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value); }
 function formatDateTime(value: string): string { const date = new Date(value); return Number.isNaN(date.valueOf()) ? "—" : date.toLocaleString([], { dateStyle: "short", timeStyle: "short" }); }

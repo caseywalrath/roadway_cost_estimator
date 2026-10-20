@@ -71,7 +71,8 @@ import {
   renderAddToProjectPanel,
   renderProjectManager,
   renderProjectWorkspace,
-  renderProjectFixedItemSelector
+  renderProjectFixedItemSelector,
+  formatProjectLineTotal
 } from "./renderProjectWorkspace";
 import type { PendingDuplicateProjectLine, ProjectManagerFilters, ProjectMetadataEditorView } from "./renderProjectWorkspace";
 import { readEvidenceFiltersFromForm, renderResults } from "./renderResults";
@@ -1263,7 +1264,12 @@ export async function renderApp(
       rootElement.querySelector<HTMLElement>("[data-project-total]")!.textContent = formatProjectCurrency(calculation.summary.totalProjectCost);
       for (const line of project.lineItems) {
         const total = rootElement.querySelector<HTMLElement>(`[data-project-line-total-id="${line.lineItemId}"]`);
-        if (total) total.textContent = formatProjectCurrency(calculation.amountByLineId[line.lineItemId] ?? 0);
+        if (total) {
+          const formatted = formatProjectLineTotal(calculation.amountByLineId[line.lineItemId] ?? 0);
+          total.textContent = formatted.display;
+          total.title = formatted.full;
+          total.setAttribute("aria-label", `Total item cost: ${formatted.full}`);
+        }
         const warning = rootElement.querySelector<HTMLElement>(`[data-project-percentage-warning="${line.lineItemId}"]`);
         if (warning) {
           warning.textContent = calculation.warningsByLineId[line.lineItemId] ?? "";
