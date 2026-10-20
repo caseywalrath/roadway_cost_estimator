@@ -62,8 +62,7 @@ describe("Project workspace v11", () => {
     const html = renderProjectWorkspace(project, [project], testStates(), "CO", false, null);
 
     expect(html).toContain("Project Actions");
-    expect(html).toContain("Export CSV");
-    expect(html).not.toContain("Export Project CSV");
+    expect(html).toContain('id="download-project-csv" disabled>Download Project CSV</button>');
     expect(html).toContain("Download Project Backup");
     expect(html).toContain("Import Project Backup");
     expect(html).not.toContain('name="state"');
@@ -851,7 +850,7 @@ describe("Project backup format", () => {
     const contingency = createPercentageProjectLineItem("IA", "construction", "Project contingency", 12.5, { kind: "all_fixed" }, "contingency");
     project.lineItems = [custom, contingency];
     const parsed = parseProjectBackup(JSON.parse(JSON.stringify(buildProjectBackup(project))) as unknown);
-    expect(parsed?.project).toEqual(project);
+    expect(parsed?.project).toEqual({ ...project, excelImportSources: [] });
     expect(parsed?.projectSchemaVersion).toBe(12);
     expect(parsed?.project.lineItems[0].importSource?.sourceRange).toBe("B11:H11");
     expect(parsed?.summary).toEqual({
@@ -1143,7 +1142,8 @@ describe.each(["IndexedDB", "memory"])("Atomic Project import (%s)", (storage) =
     const first = { ...createCustomProjectLineItem("CO"), description: "First", quantity: 2, preferredUnitCost: 10 };
     const second = { ...createCustomProjectLineItem("CO"), description: "Second", notes: "Retained" };
     project.lineItems = [first, second];
-    return repository.createProject(project);
+    await repository.createProject(project);
+    return (await repository.getProject(project.projectId))!;
   }
 
   it("updates in place and adds items together while preserving the exact stored snapshot", async () => {

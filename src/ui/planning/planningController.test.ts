@@ -95,6 +95,12 @@ function expectedTotal(templateId: string): number {
 
 const summaryTotal = (root: HTMLElement) => q(root, "aside [data-summary='total']").textContent;
 
+function confirmation() {
+  const dialog = q<HTMLElement>(document, '[role="alertdialog"]');
+  const buttons = dialog.querySelectorAll<HTMLButtonElement>("button");
+  return { dialog, cancel: buttons[0], accept: buttons[1] };
+}
+
 describe("opening", () => {
   it("shows a loading message, then the new-project panel when nothing is saved", async () => {
     const controller = makeController();
@@ -445,13 +451,14 @@ describe("alternatives", () => {
     q(root, "[data-planning-duplicate-alt]").click();
     expect(root.querySelectorAll("[data-planning-alt]").length).toBe(2);
     expect(q<HTMLInputElement>(root, "[data-planning-alt-name]").value).toBe("Preferred copy");
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     q(root, "[data-planning-delete-alt]").click();
-    expect(confirm).toHaveBeenCalledWith("Delete Preferred copy? This cannot be undone.");
+    expect(confirmation().dialog.textContent).toContain("Delete Preferred copy?");
+    confirmation().cancel.click();
+    await vi.waitFor(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull());
     expect(root.querySelectorAll("[data-planning-alt]").length).toBe(2);
-    confirm.mockReturnValue(true);
     q(root, "[data-planning-delete-alt]").click();
-    expect(root.querySelectorAll("[data-planning-alt]").length).toBe(1);
+    confirmation().accept.click();
+    await vi.waitFor(() => expect(root.querySelectorAll("[data-planning-alt]").length).toBe(1));
     expect(q<HTMLButtonElement>(root, "[data-planning-delete-alt]").disabled).toBe(true);
   });
 
@@ -475,20 +482,19 @@ describe("alternatives", () => {
     toggle.checked = false;
     toggle.dispatchEvent(new Event("change", { bubbles: true }));
     const before = summaryTotal(root);
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     setValue(q<HTMLSelectElement>(root, "[data-planning-template]"), "sidewalk_gap");
-    expect(confirm).toHaveBeenCalledTimes(1);
-    const message = String(confirm.mock.calls[0][0]);
+    const message = confirmation().dialog.textContent ?? "";
     expect(message).toContain("Switch Alternative A to Sidewalk gap?");
     expect(message).toContain("Landscaping / tree lawn (turned off)");
     expect(message).toContain("Other alternatives are not changed.");
+    confirmation().cancel.click();
+    await vi.waitFor(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull());
     expect(summaryTotal(root)).toBe(before);
     expect(q<HTMLSelectElement>(root, "[data-planning-template]").value).toBe("complete_street");
-    confirm.mockReturnValue(true);
     setValue(q<HTMLSelectElement>(root, "[data-planning-template]"), "sidewalk_gap");
-    expect(summaryTotal(root)).toBe(totalText(expectedTotal("sidewalk_gap")));
+    confirmation().accept.click();
+    await vi.waitFor(() => expect(summaryTotal(root)).toBe(totalText(expectedTotal("sidewalk_gap"))));
     expect(q<HTMLSelectElement>(root, "[data-planning-template]").value).toBe("sidewalk_gap");
-    confirm.mockRestore();
   });
 
   it("shows each alternative's own template and starts new alternatives from the selected one's", async () => {
@@ -667,12 +673,13 @@ describe("project management", () => {
     await controller.flush();
     expect([...root.querySelectorAll("[data-planning-open-project]")].map((b) => b.textContent)).toContain("Renamed");
 
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     q(root, "[data-planning-delete-project]").click();
+    expect(confirmation().dialog.textContent).toContain("Delete Renamed?");
+    confirmation().accept.click();
     await controller.flush();
-    expect(confirm).toHaveBeenCalledWith("Delete planning project Renamed? This cannot be undone.");
     expect(q(root, "[data-planning-project-name]").textContent).toBe("Second");
     q(root, "[data-planning-delete-project]").click();
+    confirmation().accept.click();
     await controller.flush();
     expect(root.querySelector("[data-planning-new]")).not.toBeNull();
   });
@@ -680,8 +687,9 @@ describe("project management", () => {
   it("cancels the delete when not confirmed", async () => {
     const { controller, root } = await open();
     await createStreet(root, controller);
-    vi.spyOn(window, "confirm").mockReturnValue(false);
     q(root, "[data-planning-delete-project]").click();
+    expect(confirmation().dialog.textContent).toContain("Delete Main Street?");
+    confirmation().cancel.click();
     await controller.flush();
     expect(q(root, "[data-planning-project-name]").textContent).toBe("Main Street");
   });
@@ -883,8 +891,8 @@ describe("failure handling", () => {
     const a = await open();
     await createStreet(a.root, a.controller, "mill_overlay", "Only");
     const b = await open();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     q(b.root, "[data-planning-delete-project]").click();
+    confirmation().accept.click();
     await b.controller.flush();
     expect(b.root.querySelector("[data-planning-new]")).not.toBeNull();
     setValue(q<HTMLInputElement>(a.root, "[data-planning-budget]"), "5000000");
@@ -902,9 +910,9 @@ describe("failure handling", () => {
   it("keeps the project displayed when deletion fails", async () => {
     const { controller, root } = await twoProjects(control);
     control.failDelete = true;
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     setValue(q<HTMLInputElement>(root, "[data-planning-budget]"), "5000000");
     q(root, "[data-planning-delete-project]").click();
+    confirmation().accept.click();
     await controller.flush();
     expect(q(root, "[data-planning-project-name]").textContent).toBe("Alpha");
     expect(q(root, "[data-planning-notice]").textContent).toBe("Could not delete Alpha: delete blocked");

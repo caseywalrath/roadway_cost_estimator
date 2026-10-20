@@ -245,38 +245,40 @@ Mapping defaults for 5a to confirm or revise:
 - Assembly elements become custom Construction lines (quantity and unit cost).
 - An overridden element becomes one custom line at the override amount, because its items no longer reconcile.
 - Minor items, traffic control, and mobilization become three custom Construction lines.
-- Contingency becomes the Project's native contingency percentage.
-- Engineering, right-of-way, and utility amounts become Other Costs lines.
+- Planning's own stage contingency and engineering calculations remain unchanged. At handoff, contingency becomes an explicit Project percentage line based on fixed Construction costs; it is not stored in the Project-wide `contingencyPercent` field.
+- Design and construction engineering transfer as fixed Other Costs lines at their full calculated amounts. Right-of-way and utility relocation transfer as fixed Other Costs lines at their full entered amounts.
 - The Project total equals the Planning total within $1.
-- No intents, decisions, frozen lines, or priced-subtotal mode.
+- The Planning and Project records remain independent after handoff. Project edits recalculate the contingency line against current fixed Construction costs; they do not sync back to Planning or reprice the fixed engineering, right-of-way, or utility amounts.
+- No intents, decisions, or priced-subtotal mode.
 
 **Exit:** a created Project opens in the normal item table, reconciles to Planning, and existing Projects, backups, and CSV exports behave as before.
 
 #### 5a. Mapping specification (decided)
 
-The engineer Project model differs from Planning in one way that matters: Project contingency applies to construction **and** other costs, while Planning contingency applies to construction only, and Planning design and construction engineering are rates of (construction + contingency). The mapping below keeps native Project contingency and still reconciles exactly.
+Planning contingency applies to Construction only, while Planning design and construction engineering are calculated from Construction plus contingency. Project percentage lines can use fixed Construction costs as their base, so the handoff represents the Planning contingency directly without applying it to Other Costs or netting down fixed amounts.
 
-Let C = Planning construction, k = stage contingency rate, d and e = design and construction engineering rates, R and U = right-of-way and utility amounts. Planning total T = C(1 + k)(1 + d + e) + R + U.
+Let C = Planning construction, k = the effective stage contingency rate (including any Planning override), d and e = design and construction engineering rates, and R and U = right-of-way and utility amounts. Planning total T = C(1 + k)(1 + d + e) + R + U.
 
 | Planning part | Project line(s) | Category | Group |
 |---|---|---|---|
-| Item component of an enabled, non-overridden element | Catalog line: exact `agencyItemId`, quantity rounded to 0.01, unit cost = price-table price | Construction | Element label |
+| Item component of an enabled, non-overridden element | Catalog line: exact `agencyItemId`, quantity rounded to 0.0001, unit cost = price-table price | Construction | Element label |
 | Item with no catalog record, or catalog unit different from the component unit | Custom line with the item code in `itemCode` and a note | Construction | Element label |
 | Assembly component | Custom line: "Element – component", assembly unit, quantity, unit cost; note = basis | Construction | Element label |
 | Overridden element | One custom line, 1 LS at the entered amount; note says it includes allowances | Construction | Element label |
 | Minor items, traffic control, mobilization | Three custom lines, 1 LS each, computed from D = sum of the non-overridden lines as created: D·m, D(1+m)·t, D(1+m)(1+t)·b. Mobilization absorbs the cent residual so construction lines sum to C | Construction | Allowances |
-| Contingency | Native `contingencyPercent` = k × 100 | — | — |
-| Design, construction engineering | Custom lines, 1 LS at d·C and e·C. Project contingency then makes them d·C(1+k) and e·C(1+k), equal to Planning | Other | Engineering and other costs |
-| Right-of-way, utility relocation (when > 0) | Custom lines, 1 LS at R/(1+k) and U/(1+k); the note states the entered amount and why it is shown net of contingency | Other | Engineering and other costs |
+| Contingency (when k > 0 and C > 0) | Percentage contingency line at k × 100%, based on fixed Construction costs | Contingency | Allowances |
+| Design, construction engineering | Custom fixed lines, 1 LS at Planning's full calculated amounts d·C(1+k) and e·C(1+k) | Other | Engineering and other costs |
+| Right-of-way, utility relocation (when > 0) | Custom fixed lines, 1 LS at full entered amounts R and U | Other | Engineering and other costs |
 
-Project total = (C + dC + eC + R/(1+k) + U/(1+k))(1 + k) = T. Unit costs are rounded to cents, so the difference is under $1.
+Project total = C + kC + dC(1+k) + eC(1+k) + R + U = T. The handoff rounds fixed unit costs to cents; the reconciled difference is under $1.
 
 Other rules:
 
 - Zero-quantity and zero-amount lines are skipped. Allowance lines are skipped when D = 0.
 - Project name: "<Planning name> – <alternative name>". Notes: where it came from, stage, price basis, Planning total, date. Notes are shown on the Project screen, so the origin is visible without new UI.
-- New optional field `UserProject.planningOrigin` {planningProjectId, planningProjectName, alternativeId, alternativeName, createdAt, planningTotal}. Absent on every other Project. Kept by the v10 parser, backups, duplicates; listed in the Project CSV summary. No schema version change.
-- No intents, decisions, frozen lines, or priced-subtotal mode. Later edits in either screen do not sync.
+- Optional `UserProject.planningOrigin` {planningProjectId, planningProjectName, alternativeId, alternativeName, createdAt, planningTotal} identifies the source Planning project and alternative. It is absent on other Projects and is retained by the current Project schema v12 parser, backups, duplicates, imported copies, and Project CSV summary.
+- Percentage contingency is recalculated when fixed Construction lines change in the Project. Engineering, right-of-way, and utility lines remain fixed handoff snapshots. Later edits in either screen do not sync.
+- No intents, decisions, or priced-subtotal mode.
 
 
 
@@ -315,7 +317,7 @@ Nebraska, Iowa and South Dakota Planning; shared accounts or server storage; an 
 | 2 | Done | Orchestrator (2a types/contract), Sonnet (2b core, 2c share file), Haiku (2d fixtures) | tsc clean; full vitest 257/257 (23 files); fixtures from independent Python match TS for 17 elements × 6 templates × 2 scenarios plus budget/override case; template totals equal the Phase 1 evaluator | STOP 1 accepted all values. Core 1,045 lines (target 1,200) |
 | 3 | Done; at STOP 2 | Opus (3a design), Sonnet (3b storage, 3c UI), orchestrator (tab wiring, screenshot pass) | tsc clean; vitest 325/325 (27 files); production build OK; Planning CSS has no hex/rgb literals; desktop 1440 px and narrow 390 px flow screenshots (create from template, budget, override, inputs disclosure, add alternative, reload keeps data); no console errors | Controller is 1,219 lines; Phase 6 adversarial review to cover it |
 | 4 | Done | Sonnet (4a print and export hooks, 4b CSV), Haiku (4d round-trip tests), orchestrator (review, print row-label style) | tsc clean; vitest 388/388; build OK; 36 round-trip tests: CSV and JSON match on-screen totals for all 6 templates with and without budget, override and second alternative; print PDF checked (2 pages) | STOP 2 accepted all current values. JSON share (4c) existed from Phase 2/3 |
-| 5 | Done | Orchestrator (5a mapping spec, 5c origin field, UI wiring), Sonnet (5b mapping) | 28 mapping tests: every template and a variant (stage, ROW, utilities, override, rates) reconcile within $1 (max observed $0.011); origin kept by parser, backup, copy, duplicate, CSV; browser handoff at 1440 and 390 px: Planning $12,180,000 (display) → Project $12,175,286 | 5a revises the default: contingency stays native; engineering lines are rate × construction; ROW/utilities shown net of contingency. 5d covered by the existing Project suites plus origin tests (orchestrator, not Haiku) |
+| 5 | Done | Orchestrator (5a mapping spec, 5c origin field, UI wiring), Sonnet (5b mapping) | Mapping tests cover every template and representative variants (stage, ROW, utilities, override, rates) and reconcile within $1; origin is retained by parser, backup, copy, duplicate, and CSV; browser handoff checked at 1440 and 390 px | Handoff uses an explicit Construction-based Project percentage line for Planning contingency. Engineering, ROW, and utility amounts are full fixed snapshots. 5d is covered by the Project suites and origin tests (orchestrator, not Haiku) |
 | 6 | Done; at STOP 3 | Opus (adversarial review), Sonnet (controller fixes), orchestrator (docs, other fixes, final checks) | tsc clean; vitest 437/437 (32 files); build OK; Python 70 OK (6 skipped; generator tests now in `npm test`); data validation PASS; desktop and narrow screenshots of full flow and handoff with no console errors; CO→NE→CO switch keeps saved edits | Review: 9 findings (5 confirmed), all fixed with tests: switch after failed save, stale reload, share-file input validation, Project quantity precision, re-render wiping typing, deleted-elsewhere conflict, delete failure, silent handoff failure, connection leak and Project CSV formula prefix. Controller now 1,389 lines |
 | Post-STOP 3 UI pass | Done | Orchestrator | tsc clean; vitest 457/457; Python 70 OK (6 skipped); data validation PASS; build OK; desktop and narrow screenshots; no console errors | Field alignment fix, Planning Actions menu, price-origin markers, editable assembly unit costs (generated `unitCost.<componentId>` inputs, no share-format change), and planner-facing wording: calibration references, pool/median statistics and the "minor-items factor" and FHU/contract-count notes no longer appear in element panels |
 | Post-STOP 3 create screen | Done | Orchestrator | tsc clean; vitest 464/464; build OK; desktop and narrow screenshots before and after Create; no console errors | New-project screen keeps the project page skeleton: header with Planning Actions (project-only actions disabled), corridor panel with the name, templates beside a live preview whose total equals the created project's total |
