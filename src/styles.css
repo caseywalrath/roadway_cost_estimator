@@ -451,6 +451,44 @@ textarea {
   min-width: 0;
 }
 
+.add-project-actions {
+  display: flex;
+  grid-column: 5;
+  grid-row: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.add-project-duplicate-link {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-dark);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.add-project-duplicate-link:hover,
+.add-project-duplicate-link:focus-visible {
+  color: var(--accent);
+}
+
+.add-project-duplicate-link:focus-visible {
+  outline: 2px solid rgba(20, 112, 110, 0.35);
+  outline-offset: 2px;
+}
+
+.add-project-duplicate-link[hidden] {
+  display: none;
+}
+
 .add-project-submit {
   grid-column: 5;
   grid-row: 1;
@@ -1995,6 +2033,13 @@ table {
   min-width: 124px;
 }
 
+.project-line-row--custom td:nth-child(3) .project-line-text-input,
+.project-line-row--custom td:nth-child(4) .project-line-text-input,
+.project-line-row--custom td:nth-child(6) .project-line-unit-input,
+.project-line-row--custom td:nth-child(6) .project-percentage-base-select {
+  padding-left: 0;
+}
+
 .project-catalog-explorer-link {
   color: var(--accent-dark);
   font-weight: 800;
@@ -2032,14 +2077,14 @@ table {
 .project-pricing-mode button:hover:not(:disabled) { background: #f7f9fb; }
 .project-pricing-mode button:focus-visible { outline: 2px solid rgba(20, 112, 110, 0.35); outline-offset: 1px; }
 .project-pricing-mode button:disabled { cursor: default; }
-.project-line-row--custom .project-line-cost-input { width: 65px; min-width: 65px; }
+.project-line-row--custom .project-line-cost-input { width: 85px; min-width: 85px; }
 .project-percentage-rate-field { display: inline-flex; align-items: center; gap: 2px; }
 .project-percentage-rate-field .project-line-number-input { width: 56px; min-width: 56px; }
 
 .project-line-table th:nth-child(5),
 .project-line-table td:nth-child(5) {
-  width: 122px;
-  min-width: 122px;
+  width: 144px;
+  min-width: 144px;
 }
 
 .project-line-currency {
@@ -2061,6 +2106,13 @@ table {
 .project-line-table td:nth-child(6) {
   width: 128px;
   min-width: 128px;
+}
+
+.project-line-table th:nth-child(8),
+.project-line-table td:nth-child(8) {
+  width: 92px;
+  min-width: 92px;
+  white-space: nowrap;
 }
 
 .project-line-table td:nth-child(9) {
@@ -2865,9 +2917,10 @@ tbody tr:last-child td {
     grid-column: 1 / -1;
   }
 
-  .add-project-submit {
+  .add-project-actions {
     grid-column: 1 / -1;
     grid-row: auto;
+    align-items: stretch;
   }
 }
 
