@@ -137,15 +137,15 @@ function updateAddItemDock(button: HTMLButtonElement | null, scroller: HTMLEleme
   const buttonWidth = 175;
   const buttonHeight = 40;
   const footerGap = 12;
-  let bottom = 16;
-  let dockTop = window.innerHeight - bottom - buttonHeight;
+  const tableGap = 8;
+  let dockTop = Math.min(rect.bottom + tableGap, window.innerHeight - 16 - buttonHeight);
   if (footerRect && footerRect.top < window.innerHeight && footerRect.bottom > 0) {
-    dockTop = footerRect.top - footerGap - buttonHeight;
-    bottom = window.innerHeight - footerRect.top + footerGap;
+    dockTop = Math.min(dockTop, footerRect.top - footerGap - buttonHeight);
   }
 
   const left = Math.max(8, Math.min(rect.left + scroller.clientLeft, window.innerWidth - buttonWidth - 8));
   button.style.left = `${left}px`;
-  button.style.bottom = `${bottom}px`;
+  button.style.top = `${dockTop}px`;
+  button.style.bottom = "auto";
   button.hidden = button.disabled || !visibleInViewport || dockTop < 8;
 }

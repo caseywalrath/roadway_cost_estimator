@@ -1,6 +1,6 @@
 # Excel Project Import Implementation Plan
 
-Status: implementation complete; Phase 6 complete.
+Status (2026-10-20): the initial Excel import release and Phases 1–6 are complete. This document preserves that release's original scope and implementation log; its v9/v10 references and “Excluded from this release” list are historical, not descriptions of the current Project workspace (schema v12). Subsequent active-Project item reconciliation in Step 4, the concise import status report, and Project Backup comparison are documented in [the file workflow plan](planning-engineering-qol-file-workflows-plan.md). The user has accepted Excel reimporting; no File-C acceptance gate remains. The newer percentage Project item model is documented in [the cost and Planning plan](planning-engineering-qol-cost-planning-plan.md).
 Prepared: 2026-09-09.
 Repository baseline inspected: `4c6a4da` on `main`.
 Intended executor: GPT-5.6 Luna.
