@@ -1,0 +1,19 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_626-00000,626-00000,Mobilization,L S,291,67,300000.00,120500.00,665632.20,291
+co_cdot_630-00012,630-00012,Traffic Control Management,DAY,288,65,1500.00,1200.00,1756.25,290
+co_cdot_630-00000,630-00000,Flagging,HOUR,270,57,46.38,39.25,53.99,273
+co_cdot_630-00007,630-00007,Traffic Control Inspection,DAY,270,64,350.50,230.37,454.36,273
+co_cdot_630-00003,630-00003,Uniformed Traffic Control,HOUR,81,25,176.00,158.00,212.71,81
+co_cdot_630-00015,630-00015,Uniformed Traffic Control Coordination,HOUR,36,16,56.00,29.25,92.50,36
+co_cdot_630-00006,630-00006,Uniformed Traffic Control (Vehicle),HOUR,26,7,52.25,43.42,120.23,26
+co_cdot_626-00100,626-00100,Mobilization (without Autopay),L S,15,7,6838234.36,2413681.60,10165740.34,23
+co_cdot_630-00017,630-00017,Traffic Control Management (Special),DAY,12,7,2156.91,1664.67,2587.50,14
+co_cdot_630-00004,630-00004,Traffic Control Vehicle,EACH,6,4,7531.07,3681.25,9740.54,6
+co_cdot_630-00040,630-00040,Traffic Incident Management Plan Development,L S,6,4,4156.80,3503.40,4668.19,6
+co_cdot_630-00041,630-00041,Traffic Incident Management Plan Implementation,MON,5,4,1985.05,1324.09,2140.00,5
+co_cdot_630-80305,630-80305,Flagging Station Light,EACH,5,0,7100.73,1550.00,16357.04,6
+co_cdot_630-00019,630-00019,Uniformed Traffic Control (Special),HOUR,3,1,250.00,214.74,279.14,3
+co_cdot_630-00016,630-00016,Traffic Control (Special) LS,L S,2,2,94775.00,85562.50,103987.50,2
+co_cdot_626-00007,626-00007,Mobilization,EACH,1,0,5000000.00,5000000.00,5000000.00,1
+co_cdot_630-00018,630-00018,Smart Work Zone Traffic Control Management,DAY,1,0,1048.78,1048.78,1048.78,1
+co_cdot_630-80311,630-80311,Automated Flagging Assistance Device,DAY,1,0,1352.52,1352.52,1352.52,1

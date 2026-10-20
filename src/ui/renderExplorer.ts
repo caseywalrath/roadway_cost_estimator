@@ -417,7 +417,7 @@ function renderItemResults(
       )
     )
     .filter((agencyItem) => itemMatchesCodeSeries(agencyItem.itemCode, selectedItemCodeSeries, itemCodeSeries))
-    .sort((left, right) => left.itemCode.localeCompare(right.itemCode));
+    .sort((left, right) => left.itemCode.localeCompare(right.itemCode, undefined, { numeric: true, sensitivity: "base" }) || left.agencyItemId.localeCompare(right.agencyItemId));
 
   const matchingItems = filteredItems.filter((agencyItem) => itemMatchesSearch(agencyItem, normalizedSearchText));
   const selectedItem = selectedAgencyItemId || selectedItemCode

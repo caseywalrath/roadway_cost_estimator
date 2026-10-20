@@ -1,0 +1,10 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_608-00010,608-00010,Concrete Curb Ramp,SY,72,33,205.00,167.71,279.62,74
+co_cdot_202-00206,202-00206,Removal of Concrete Curb Ramp,SY,47,25,40.00,33.23,50.00,49
+co_cdot_608-00015,608-00015,Detectable Warnings,SF,34,14,80.45,60.57,112.30,34
+co_cdot_608-00018,608-00018,Curb Ramp (Temporary Parallel) (Single),EACH,6,4,1827.50,825.00,2128.75,6
+co_cdot_608-00017,608-00017,Curb Ramp (Temporary Perpendicular),EACH,5,4,2500.00,2220.00,2965.00,5
+co_cdot_608-00011,608-00011,Curb Ramp (Fast Track),SY,1,0,680.68,680.68,680.68,1
+co_cdot_608-00012,608-00012,Curb Ramp (Special),SY,1,1,258.00,258.00,258.00,1
+co_cdot_608-00013,608-00013,Directional Indicator Strip,SF,1,0,17.10,17.10,17.10,1
+co_cdot_608-00014,608-00014,Detectable Guidance Directional Indicator,SF,1,1,221.00,221.00,221.00,1

@@ -226,7 +226,7 @@ function createBlankValues(category: ProjectCostCategory): ParsedImportValues {
 
 function parseCategory(value: string): ProjectCostCategory | null {
   const normalized = value.trim().toLowerCase();
-  return normalized === "construction" || normalized === "other" ? normalized : null;
+  return normalized === "construction" || normalized === "other" || normalized === "contingency" ? normalized : null;
 }
 
 function readCode(cell: ExcelCellSnapshot | null, display: string, issues: ImportIssue[]): string {

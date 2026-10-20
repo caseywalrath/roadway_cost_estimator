@@ -13,6 +13,7 @@ import {
   createEmptyProjectWorkspaceState,
   createCatalogProjectLineItem,
   createCustomProjectLineItem,
+  createPercentageProjectLineItem,
   createUserProject,
   duplicateUserProject,
   enableProjectLineDescriptionOverride,
@@ -34,7 +35,6 @@ import {
   projectTotal,
   setActiveProject,
   sortProjectLineItems,
-  updateProjectContingencyPercent,
   updateProjectLineItem,
   type ProjectEvidenceContext
 } from "./projectWorkspace";
@@ -56,7 +56,7 @@ afterEach(async () => {
   await deleteDatabase();
 });
 
-describe("Project workspace v10", () => {
+describe("Project workspace v11", () => {
   it("renders one Project Actions menu without a duplicate workspace state selector", () => {
     const project = createUserProject("Header test", "CO");
     const html = renderProjectWorkspace(project, [project], testStates(), "CO", false, null);
@@ -64,7 +64,7 @@ describe("Project workspace v10", () => {
     expect(html).toContain("Project Actions");
     expect(html).toContain("Export CSV");
     expect(html).not.toContain("Export Project CSV");
-    expect(html).toContain("Export Project Backup");
+    expect(html).toContain("Download Project Backup");
     expect(html).toContain("Import Project Backup");
     expect(html).not.toContain('name="state"');
     expect(html).not.toContain('id="project-name"');
@@ -468,34 +468,35 @@ describe("Project workspace v10", () => {
     custom.itemCode = "SOFT";
     custom.quantity = 1;
     custom.preferredUnitCost = 50;
-    project.lineItems = [catalog, custom];
-    project.contingencyPercent = 15;
+    const contingency = createPercentageProjectLineItem("CO", "construction", "Project contingency", 15, { kind: "all_fixed" }, "contingency");
+    project.lineItems = [catalog, custom, contingency];
 
     expect(projectConstructionCost(project)).toBe(200);
     expect(projectOtherCost(project)).toBe(50);
     expect(projectContingencyCost(project)).toBe(37.5);
     expect(projectTotal(project)).toBe(287.5);
 
-    const state = updateProjectContingencyPercent(
+    const state = updateProjectLineItem(
       addProject(createEmptyProjectWorkspaceState(), project),
       project.projectId,
-      20
+      contingency.lineItemId,
+      { percentageRate: 20 }
     );
     const updated = state.projects[0];
-    expect(updated.contingencyPercent).toBe(20);
+    expect(updated.contingencyPercent).toBe(0);
     expect(projectContingencyCost(updated)).toBe(50);
     expect(projectTotal(updated)).toBe(300);
 
     const html = renderProjectWorkspace(updated, [updated], testStates(), "CO", false, null);
     expect(html).toContain("Construction Costs");
     expect(html).toContain("Other costs");
-    expect(html).toContain('data-project-contingency-percent');
+    expect(html).toContain('data-project-percentage-rate');
     expect(html).toContain('value="20"');
     expect(html).toContain("$50.00");
     expect(html).toContain("$300");
     const readOnlyHtml = renderProjectWorkspace(updated, [updated], testStates(), "CO", true, null);
-    expect(readOnlyHtml).toContain('data-project-contingency-percent');
-    expect(readOnlyHtml).toContain('data-project-contingency-percent aria-label="Contingency percentage" value="20" disabled');
+    expect(readOnlyHtml).toContain('data-project-percentage-rate');
+    expect(readOnlyHtml).toContain('aria-label="Percentage rate" value="20" disabled');
   });
 
   it("migrates missing v5 Groups as blank and permits catalog Group edits", () => {
@@ -723,11 +724,10 @@ describe("Project workspace v10", () => {
 
   it("duplicates Project and line identities without changing evidence", () => {
     const project = createUserProject("Estimate", "CO");
-    project.contingencyPercent = 12.5;
-    project.lineItems = [{
+    const catalogLine = {
       lineItemId: "line_original",
-      lineItemType: "catalog",
-      costCategory: "construction",
+      lineItemType: "catalog" as const,
+      costCategory: "construction" as const,
       state: "CO",
       agencyId: "co_cdot",
       agencyItemId: "co_cdot_001",
@@ -753,18 +753,21 @@ describe("Project workspace v10", () => {
           inflationTargetPeriodLabel: null,
           valuesAreInflationAdjusted: false
         },
-        costSource: "manual"
+        costSource: "manual" as const
       },
       createdAt: project.createdAt,
       updatedAt: project.updatedAt
-    }];
+    };
+    const contingency = createPercentageProjectLineItem("CO", "construction", "Project contingency", 12.5, { kind: "all_fixed" }, "contingency");
+    project.lineItems = [catalogLine, contingency];
 
     const duplicate = duplicateUserProject(project);
     expect(duplicate.projectId).not.toBe(project.projectId);
-    expect(duplicate.contingencyPercent).toBe(12.5);
+    expect(duplicate.contingencyPercent).toBe(0);
     expect(duplicate.lineItems[0].lineItemId).not.toBe(project.lineItems[0].lineItemId);
     expect(duplicate.lineItems[0].group).toBe("Construction");
     expect(duplicate.lineItems[0].evidenceContext?.includedObservationIds).toEqual(["observation_1"]);
+    expect(duplicate.lineItems[1].percentageRate).toBe(12.5);
   });
 
   it("rejects a legacy Project rather than silently dropping an invalid line", () => {
@@ -821,8 +824,8 @@ describe("Project workspace v10", () => {
 });
 
 describe("Project backup format", () => {
-  it("round trips a v10 Project with custom lines and creates collision-safe copies", () => {
-    const project = { ...createUserProject("Backup test", "IA"), contingencyPercent: 12.5, revision: 7 };
+  it("round trips a v11 Project with custom lines and creates collision-safe copies", () => {
+    const project = { ...createUserProject("Backup test", "IA"), revision: 7 };
     const custom = createCustomProjectLineItem("IA");
     custom.itemCode = "SOFT";
     custom.description = "Soft costs";
@@ -845,15 +848,16 @@ describe("Project backup format", () => {
       },
       decisions: ["custom_no_catalog_match"]
     };
-    project.lineItems = [custom];
+    const contingency = createPercentageProjectLineItem("IA", "construction", "Project contingency", 12.5, { kind: "all_fixed" }, "contingency");
+    project.lineItems = [custom, contingency];
     const parsed = parseProjectBackup(JSON.parse(JSON.stringify(buildProjectBackup(project))) as unknown);
     expect(parsed?.project).toEqual(project);
-    expect(parsed?.projectSchemaVersion).toBe(10);
+    expect(parsed?.projectSchemaVersion).toBe(12);
     expect(parsed?.project.lineItems[0].importSource?.sourceRange).toBe("B11:H11");
     expect(parsed?.summary).toEqual({
       constructionCost: 0,
       otherCost: 50,
-      contingencyPercent: 12.5,
+      contingencyPercent: 0,
       contingencyCost: 6.25,
       totalProjectCost: 56.25
     });
@@ -864,12 +868,12 @@ describe("Project backup format", () => {
     expect(copy.revision).toBe(0);
   });
 
-  it("accepts v4 Project backups and normalizes them to v10", () => {
+  it("accepts v4 Project backups and normalizes them to v11", () => {
     const project = createUserProject("Legacy backup", "CO");
     const backup = buildProjectBackup(project);
     const legacyBackup = { ...backup, projectSchemaVersion: 4 };
     const parsed = parseProjectBackup(legacyBackup);
-    expect(parsed?.projectSchemaVersion).toBe(10);
+    expect(parsed?.projectSchemaVersion).toBe(12);
     expect(parsed?.project).toEqual(project);
     expect(parsed?.summary.totalProjectCost).toBe(0);
   });
@@ -886,7 +890,7 @@ describe("Project backup format", () => {
     };
     const parsed = parseProjectBackup({ ...backup, projectSchemaVersion: 5, project: legacyProject });
 
-    expect(parsed?.projectSchemaVersion).toBe(10);
+    expect(parsed?.projectSchemaVersion).toBe(12);
     expect(parsed?.project.lineItems[0].group).toBe("");
   });
 
@@ -901,17 +905,17 @@ describe("Project backup format", () => {
       project: legacyProject
     });
 
-    expect(parsed?.projectSchemaVersion).toBe(10);
+    expect(parsed?.projectSchemaVersion).toBe(12);
     expect(parsed?.project.contingencyPercent).toBe(0);
     expect(parsed?.summary.totalProjectCost).toBe(0);
   });
 
-  it.each([4, 5, 6, 7, 8, 9] as const)("accepts v%s Project backups and exports schema v10", (schemaVersion) => {
+  it.each([4, 5, 6, 7, 8, 9, 10, 11] as const)("accepts v%s Project backups and exports schema v12", (schemaVersion) => {
     const project = createUserProject(`Legacy v${schemaVersion}`, "CO");
     const backup = buildProjectBackup(project);
     const parsed = parseProjectBackup({ ...backup, projectSchemaVersion: schemaVersion });
 
-    expect(parsed?.projectSchemaVersion).toBe(10);
+    expect(parsed?.projectSchemaVersion).toBe(12);
     expect(parsed?.project.projectId).toBe(project.projectId);
   });
 
@@ -1029,11 +1033,11 @@ describe.sequential("IndexedDB Project repository", () => {
     const initialized = await openProjectRepository();
     repository = initialized.repository;
     const project = createUserProject("Custom persistence", "CO");
-    project.contingencyPercent = 12.5;
     const custom = createCustomProjectLineItem("CO");
     custom.group = "Construction";
     custom.itemCode = "SOFT";
-    project.lineItems = [custom];
+    const contingency = createPercentageProjectLineItem("CO", "construction", "Project contingency", 12.5, { kind: "all_fixed" }, "contingency");
+    project.lineItems = [custom, contingency];
     const saved = await repository.createProject(project);
 
     const loaded = await repository.getProject(saved.projectId);
@@ -1042,7 +1046,8 @@ describe.sequential("IndexedDB Project repository", () => {
     expect(loaded?.lineItems[0].itemCode).toBe("SOFT");
     expect(loaded?.lineItems[0].quantity).toBeNull();
     expect(loaded?.lineItems[0].evidenceContext).toBeNull();
-    expect(loaded?.contingencyPercent).toBe(12.5);
+    expect(loaded?.contingencyPercent).toBe(0);
+    expect(loaded?.lineItems[1].percentageRate).toBe(12.5);
   });
 
   it("persists a custom construction line through IndexedDB reloads", async () => {

@@ -1,0 +1,15 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_202-00203,202-00203,Removal of Curb and Gutter,LF,84,40,17.80,12.11,25.00,85
+co_cdot_609-21020,609-21020,Curb and Gutter Type 2 (Section II-B),LF,78,37,52.00,42.79,64.90,79
+co_cdot_609-21010,609-21010,Curb and Gutter Type 2 (Section I-B),LF,50,24,43.88,36.44,55.75,51
+co_cdot_202-00201,202-00201,Removal of Curb,LF,35,17,16.75,10.00,22.50,35
+co_cdot_202-00202,202-00202,Removal of Gutter,LF,15,7,29.90,14.00,39.30,15
+co_cdot_609-21011,609-21011,Curb and Gutter Type 2 (Section I-M),LF,13,5,46.00,43.00,65.20,13
+co_cdot_609-21021,609-21021,Curb and Gutter Type 2 (Section II-M),LF,12,6,50.06,38.54,56.98,13
+co_cdot_609-21013,609-21013,Curb and Gutter Type 2 (Section I-M) (Special),LF,7,2,63.00,38.17,70.41,7
+co_cdot_609-21023,609-21023,Curb and Gutter Type 2 (Section II-B) (Special),LF,7,3,52.68,38.92,73.75,7
+co_cdot_609-21900,609-21900,Curb and Gutter Type 2 (Special),LF,7,4,74.00,50.26,95.69,8
+co_cdot_609-21110,609-21110,Curb and Gutter Type 2 (Section I-B) (Special),LF,6,4,39.81,31.25,59.91,7
+co_cdot_202-00204,202-00204,"Removal of Curb, Gutter and Sidewalk",LF,2,1,113.52,83.66,143.38,2
+co_cdot_609-21009,609-21009,Curb and Gutter Type 2 (Section I-B) (Colored),LF,1,1,37.07,37.07,37.07,1
+co_cdot_609-21022,609-21022,Curb and Gutter Type 2 (Section II-B) (Colored),LF,1,1,40.43,40.43,40.43,1

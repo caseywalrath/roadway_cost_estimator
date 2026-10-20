@@ -178,7 +178,7 @@ Inflation adjustment affects optional display/summary calculations. Original sou
 
 `SearchQuery` includes `state`, `agencyId`, and `agencyItemId`. Evidence joins use `contractId` and `agencyItemId`. Compatibility aliases in `src/data/schema.ts` are temporary adapters for rendering modules migrated from schema v1; new logic must use normalized IDs.
 
-## Project Browser Storage v10
+## Project Browser Storage v12
 
 IndexedDB database: `roadway-cost-estimator`.
 
@@ -186,18 +186,51 @@ IndexedDB database: `roadway-cost-estimator`.
 - `settings`: active Project ID per state, migration status, and one-time legacy-placeholder cleanup version.
 - `revisions`: bounded restorable snapshots keyed by Project and revision.
 - `migrationBackups`: exact legacy storage values and migration reports.
-- Project: `projectId`, `state`, metadata, `status`, `archivedAt`, `revision`, backup metadata, `contingencyPercent`, timestamps, and line items.
-- Line item: `lineItemId`, `lineItemType`, independent `costCategory` (`construction` or `other`), `state`, `agencyId`, `agencyItemId`, optional Project-specific group, code, description, `descriptionOverrideEnabled`, unit, nullable quantity, nullable preferred cost, notes, optional evidence context, optional Excel `importSource`, and timestamps.
+- Project: `projectId`, `state`, metadata, `status`, `archivedAt`, `revision`, backup metadata, timestamps, line items, and optional legacy Excel workbook source records. Existing source records remain readable for backup and Project compatibility; the current import flow does not create or update them. The legacy `contingencyPercent` field is retained as zero for compatibility; its former value migrates to a contingency line.
+- Line item: `lineItemId`, `lineItemType`, `costCategory` (`construction`, `other`, or `contingency`), `state`, `agencyId`, `agencyItemId`, optional Project-specific group, code, description, `descriptionOverrideEnabled`, unit, nullable quantity, nullable preferred cost, notes, optional evidence context, optional Excel `importSource`, and timestamps. Legacy `costRole=contingency` values normalize to the Contingency category when read. If a legacy Construction/Other percentage base included a fixed contingency, that base becomes an explicit selected-item list with the same members to preserve the calculated amount.
 - `lineItemType=catalog` represents any catalog-identified item, whether it entered through Item Search or an exact-code Project match. It requires agency identity plus official code/unit and initially uses the official description. A catalog line can persist an explicit description-edit permission and then retain a Project-specific description without changing its catalog identity; code and unit remain locked. It may contain a complete pricing evidence context or `null`, and permits blank quantity/cost while the row is being completed. `lineItemType=custom` represents a manually entered or imported line that has no catalog identity; agency identity and evidence context are blank/null, and quantity/cost may remain blank. Entry path does not determine line identity.
-- Blank custom quantity or preferred cost contributes zero to Total Item Cost and Total Project Cost. Custom lines are included in Project CSV exports with blank agency/evidence fields.
-- Construction Costs are the sum of all line totals whose `costCategory` is `construction`, regardless of whether the line is catalog or custom. Other Costs are the sum of all line totals whose `costCategory` is `other`. A non-negative Project-level `contingencyPercent` applies to the combined Construction and Other Costs base; Total Project Cost adds the calculated contingency amount. This percentage and the derived summary amounts do not alter line totals or create group subtotals.
-- Project CSV exports append a separate two-column Project Cost Summary section after the line-item rows. Project JSON backups persist `contingencyPercent` and include derived `constructionCost`, `otherCost`, `contingencyCost`, and `totalProjectCost` summary values; import recalculates these values from the Project.
-- Group is a trimmed, optional Project-specific label used for Project-table sorting and current-Project datalist suggestions only; it does not affect totals or create subtotals.
+- Blank fixed-cost quantity or preferred cost contributes zero. Any fixed or percentage line categorized Contingency contributes to Contingencies.
+- Custom percentage lines have `pricingMode=percentage`, nonnegative `percentageRate`, and `percentageBase`. Bases are all fixed items, Construction fixed costs, Other fixed costs, current fixed members of one Group, or selected fixed line IDs. Construction and Other bases exclude contingency items; all fixed items includes fixed contingencies, and a selected-items base can include them explicitly. No percentage line can be part of another percentage base. A missing or empty base produces a warning and zero calculated cost. Rates above 100% are valid.
+- The Project calculation supplies every line amount and the Construction, Other, Contingencies, and Total summaries. Contingency-category lines are excluded from Construction and Other subtotals. Project CSV exports append the visible summary; JSON backups include a derived summary that is recalculated on import.
+- Group is a trimmed, optional Project-specific label used for sorting, suggestions, and live percentage bases. Changing fixed-line Group membership can change a percentage amount.
 - v4-v9 Project records and v1-v3 browser records normalize existing Projects with a zero contingency percentage where absent and existing lines as catalog or custom lines with a blank Group where absent. Catalog description overrides default to locked when their explicit permission is absent. Legacy Explorer lines become catalog lines while preserving their complete optional evidence context. Legacy browser keys remain preserved during migration.
 - v1/v2 records migrate to state `CO` and agency `co_cdot`; v3 state identities are retained. Legacy keys are not deleted during migration. Migration reports identify blank zero-line automatic placeholders removed from the usable Project list and reconcile those removals separately from invalid Projects.
-- `.rce-project.json` file format v1 stores one complete schema-v10 Project for round-trip recovery; v4-v9 backups are accepted and normalized during import.
-- Imported Excel line items retain file basename, worksheet, physical source row/range, original identity and numeric values, import timestamp, and applied decisions in `importSource`. This provenance is private browser Project data and is not written to public evidence datasets.
+- `.rce-project.json` file format v1 stores one complete schema-v12 Project for round-trip recovery; v4-v11 backups are accepted and normalized during import. The v10 global contingency percentage becomes an explicit line based on all fixed costs without changing its amount.
+- Project Backup import compares validated schema-v12 Project records. Exact line IDs pair automatically; unique item identity candidates can be paired explicitly. Changed line decisions may retain the destination line, use the backup line, or add a separate line; missing destination lines require an explicit delete decision. New Projects receive a complete copy with new Project and line IDs. Existing Project merges preserve its identity and state, validate percentage bases, and save a recovery snapshot with the merged record in one revision-checked transaction.
+- Imported Excel line items retain file basename, worksheet, physical source row/range, original identity and numeric values, import timestamp, and applied decisions in `importSource`. This per-line provenance is private browser Project data and is not written to public evidence datasets. Existing project-level Excel source records remain accepted when reading schema-v12 Projects and `.rce-project.json` backups for compatibility, but new imports do not perform previous-source matching, display source-linking UI, or create/update source records. Step 4 uses one review table with Project changed, Project unchanged, and Project needs target entries in the Issue type selector. A single checkbox and bulk-action workflow applies a shared Add, Update, or Skip action to selected filtered rows; unresolved rows are skipped at confirmation. Removed workbook rows do not delete Project lines.
 - Permanently deleting an archived Project removes its aggregate and associated revision snapshots in one IndexedDB transaction.
+- Optional `planningOrigin` on a Project created from Planning: `planningProjectId`, `planningProjectName`, `alternativeId`, `alternativeName`, `createdAt`, `planningTotal`. It is absent on other Projects; a malformed value is dropped without rejecting the Project. Planning contingency transfers as a percentage line based on fixed Construction lines; engineering, right-of-way, and utilities transfer as fixed snapshot amounts.
+
+## Planning (Colorado)
+
+Planning data is separate from the evidence tables and is not listed in `manifest.json`; the data validator does not read it.
+
+### `states/co/planning_prices.json`
+
+Generated by `scripts/build_planning_prices.py` from committed `item_observations.csv` awarded-bid rows. Do not edit by hand.
+
+- `schemaVersion` 1, `state` "CO".
+- `basis`: `indexSource` (FHWA NHCCI), `indexPeriod` (latest quarter used), `escalationFactor`, `label` (shown in the app).
+- `window`: `start` and `end` dates of the observation window (3 years ending at the latest letting).
+- `rules`: `method` (median of per-contract medians), `priceType`, `minContracts`, `urbanMinContracts`.
+- `items`, keyed by `agencyItemId`: `code`, `description`, `unit`, `price` (adjusted and escalated median), `p25`, `p75`, `contracts`, `urbanContracts`, `pool` (`urban` when at least `urbanMinContracts` urban contracts, else `statewide`), `observations`, `droppedOtherUnitRows`.
+- `summary`: `itemCount`, `rowsUsed`, `rowsAtLatestIndex`.
+
+### `data/planning/co_element_library.json`
+
+Hand-maintained and bundled at build time. Validated by `validateLibrary` in `src/planning/library.ts`.
+
+- `projectInputs` (length, roadway width, intersections), `stages` (contingency and range), `defaultStage`, `engineering` rates, `factors` by base type (`minor`, `trafficControl`, `mobilization`), `groups`.
+- `elements`: id, group, label, optional `baseType`, `inputs` (default, inherited, or derived from a project input; optional options, conditions, advanced flag), and `components` (price-table `item` or assembly `unitCost` with a quantity rule: area, volume, asphalt_tons, linear, miles, count). At load time every assembly component also gets a generated input `unitCost.<componentId>` whose default is its `unitCost`; the planner's edit is stored in the selection's `inputs` like any other input. Do not declare `unitCost.*` inputs in the JSON.
+- `templates`: element selections and optional project-input values.
+
+### Planning browser storage
+
+IndexedDB database `roadway-cost-estimator-planning-v2`, separate from Project storage. Store `projects` holds one `PlanningProject` per id (schema version 1: inputs, stage, engineering rates, budget, alternatives with element selections, selected alternative, revision, timestamps). Store `meta` holds the last opened project id. Saves check the stored revision and report a conflict instead of overwriting. The pre-v2 database `roadway-cost-estimator-planning` is deleted once on first open.
+
+### Planning share file
+
+JSON with `format` "roadway-cost-estimator/planning", `formatVersion` 2, `exportedAt`, `state`, `priceBasis`, and the full `project`. Import validates every field, drops unknown elements, and saves an independent copy with new ids.
 
 ## Validation Rules
 

@@ -13,6 +13,7 @@ import type {
 } from "../data/schema";
 import type { InflationAdjustedPriceSet, InflationAdjustedSummary } from "../matching/inflationAdjustment";
 import type { AnnualInflationAdjustedPriceSet } from "../matching/inflationAdjustment";
+import { periodLabelFromDate } from "../matching/inflationAdjustment";
 import type { ItemPriceHistoryResult } from "../matching/buildItemPriceHistoryResult";
 import {
   COLORADO_NON_CDOT_PROJECT,
@@ -39,7 +40,8 @@ export function renderResults(
   inflationAdjustedPriceSet: InflationAdjustedPriceSet | null,
   addToProjectPanelHtml: string,
   itemPriceHistoryResult: ItemPriceHistoryResult,
-  annualInflationAdjustedPriceSet: AnnualInflationAdjustedPriceSet | null
+  annualInflationAdjustedPriceSet: AnnualInflationAdjustedPriceSet | null,
+  adjacentItems: { previous: { id: string; code: string; description: string } | null; next: { id: string; code: string; description: string } | null } | null = null
 ): string {
   const displayedSummaryStats = inflationAdjustmentEnabled
     ? inflationAdjustedSummary?.summaryStats ?? includedSummaryStats
@@ -54,8 +56,8 @@ export function renderResults(
 
   return `
     <section class="results-panel">
-      ${renderItemPriceHistory(itemPriceHistoryResult, data.stateConfig, inflationAdjustmentEnabled, annualInflationAdjustedPriceSet, itemSearchCollapsed)}
-      ${hasProjectEvidence ? renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, inflationAdjustedPriceSet, data) : ""}
+      ${renderItemPriceHistory(itemPriceHistoryResult, data.stateConfig, inflationAdjustmentEnabled, annualInflationAdjustedPriceSet, itemSearchCollapsed, hasProjectEvidence ? null : adjacentItems)}
+      ${hasProjectEvidence ? renderEvidenceTable(result, filtersExpanded, itemSearchCollapsed, excludedSummaryRowIds, includedRowCount, visibleExcludedCount, inflationAdjustedPriceSet, data, adjacentItems) : ""}
       ${renderUnitPriceSummaryPanel(
         displayedStats,
         result.filteredRows.length,
@@ -85,7 +87,8 @@ function renderEvidenceTable(
   includedRowCount: number,
   visibleExcludedCount: number,
   inflationAdjustedPriceSet: InflationAdjustedPriceSet | null,
-  data: AppData
+  data: AppData,
+  adjacentItems: { previous: { id: string; code: string; description: string } | null; next: { id: string; code: string; description: string } | null } | null
 ): string {
   if (!result.query.itemCode) {
     return `
@@ -97,14 +100,14 @@ function renderEvidenceTable(
 
   return `
     <section class="panel-block panel-block--table">
-      ${renderMatchingProjectsHeader(result, itemSearchCollapsed, includedRowCount)}
+      ${renderMatchingProjectsHeader(result, itemSearchCollapsed, includedRowCount, adjacentItems)}
       ${renderEvidenceControls(result, filtersExpanded, visibleExcludedCount, data)}
       ${result.filteredRows.length === 0 ? renderEmptyTableMessage() : renderTable(result.filteredRows, result.sort, excludedSummaryRowIds, inflationAdjustedPriceSet, data)}
     </section>
   `;
 }
 
-function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: boolean, includedRowCount = result.filteredRows.length): string {
+function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: boolean, includedRowCount = result.filteredRows.length, adjacentItems: { previous: { id: string; code: string; description: string } | null; next: { id: string; code: string; description: string } | null } | null = null): string {
   const showExportButton = Boolean(result.query.itemCode);
 
   return `
@@ -116,6 +119,10 @@ function renderMatchingProjectsHeader(result: EvidenceResult, showEditButton: bo
           Item code: ${escapeHtml(result.query.itemCode || "Not selected")} |
           Unit: ${escapeHtml(result.query.unit || "Not selected")}
         </p>
+        ${adjacentItems ? `<div class="adjacent-item-controls" aria-label="Selected item ${escapeHtml(result.query.itemCode)}: ${escapeHtml(result.interpretedDescription)}. Adjacent catalog items" tabindex="-1">
+          <button type="button" data-adjacent-item-id="${escapeHtml(adjacentItems.previous?.id ?? "")}" aria-label="${escapeHtml(adjacentItems.previous ? `Previous item ${adjacentItems.previous.code}: ${adjacentItems.previous.description}` : "No previous item")}" ${adjacentItems.previous ? "" : "disabled"}>← Previous</button>
+          <button type="button" data-adjacent-item-id="${escapeHtml(adjacentItems.next?.id ?? "")}" aria-label="${escapeHtml(adjacentItems.next ? `Next item ${adjacentItems.next.code}: ${adjacentItems.next.description}` : "No next item")}" ${adjacentItems.next ? "" : "disabled"}>Next →</button>
+        </div>` : ""}
       </div>
       ${showExportButton || showEditButton
         ? `
@@ -299,7 +306,7 @@ function renderSortableHeader(column: EvidenceColumn, sort: EvidenceSort): strin
   const nextDirection = isActive && sort.direction === "asc" ? "descending" : "ascending";
   const columnClass = [
     column.key === "projectNumber" ? "evidence-project-header" : "",
-    ["district", "bidCount", "quantity"].includes(column.key) ? `evidence-column--${column.key}` : ""
+    ["district", "bidCount", "quantity", "awardedBidUnitPrice", "averageBidUnitPrice", "engineerEstimateUnitPrice"].includes(column.key) ? `evidence-column--${column.key}` : ""
   ].filter(Boolean).map((className) => ` ${className}`).join("");
   const ariaLabel = column.ariaLabel ?? column.label;
 
@@ -328,6 +335,8 @@ function renderEvidenceRow(
   const adjustedAwardedBidUnitPrice = inflationAdjustedPriceSet?.awardedBidUnitPriceByRowId.get(row.rowId) ?? null;
   const adjustedAverageBidUnitPrice = inflationAdjustedPriceSet?.averageBidUnitPriceByRowId.get(row.rowId) ?? null;
   const adjustedEngineerEstimateUnitPrice = inflationAdjustedPriceSet?.engineerEstimateUnitPriceByRowId.get(row.rowId) ?? null;
+  const inflationSourcePeriod = periodLabelFromDate(row.project?.estimateLetDate || row.dateBasis);
+  const inflationTargetPeriod = inflationAdjustedPriceSet?.targetPeriod?.periodLabel ?? null;
 
   return `
     <tr class="${isExcluded ? "evidence-row--excluded" : ""}">
@@ -351,9 +360,9 @@ function renderEvidenceRow(
         if (column.key === "quantity") return `<td class="${cellClass}">${formatNumber(row.quantity)}</td>`;
         if (column.key === "unit") return `<td class="${cellClass}">${escapeHtml(row.unit)}</td>`;
         if (column.key === "description") return `<td class="${cellClass}">${escapeHtml(row.descriptionRaw)}</td>`;
-        if (column.key === "awardedBidUnitPrice") return `<td class="${cellClass}">${renderUnitPrice(row.awardedBidUnitPrice, adjustedAwardedBidUnitPrice)}</td>`;
-        if (column.key === "averageBidUnitPrice") return `<td class="${cellClass}">${renderUnitPrice(row.averageBidUnitPrice, adjustedAverageBidUnitPrice)}</td>`;
-        if (column.key === "engineerEstimateUnitPrice") return `<td class="${cellClass}">${renderUnitPrice(row.engineerEstimateUnitPrice, adjustedEngineerEstimateUnitPrice)}</td>`;
+        if (column.key === "awardedBidUnitPrice") return `<td class="${cellClass}">${renderUnitPrice(row.awardedBidUnitPrice, adjustedAwardedBidUnitPrice, Boolean(inflationAdjustedPriceSet), inflationSourcePeriod, inflationTargetPeriod)}</td>`;
+        if (column.key === "averageBidUnitPrice") return `<td class="${cellClass}">${renderUnitPrice(row.averageBidUnitPrice, adjustedAverageBidUnitPrice, Boolean(inflationAdjustedPriceSet), inflationSourcePeriod, inflationTargetPeriod)}</td>`;
+        if (column.key === "engineerEstimateUnitPrice") return `<td class="${cellClass}">${renderUnitPrice(row.engineerEstimateUnitPrice, adjustedEngineerEstimateUnitPrice, Boolean(inflationAdjustedPriceSet), inflationSourcePeriod, inflationTargetPeriod)}</td>`;
         return `<td class="${cellClass}">${escapeHtml(row.source?.sourceLabel ?? "Unknown source")}</td>`;
       }).join("")}
     </tr>
@@ -448,7 +457,7 @@ function renderUnitPriceSummaryPanel(
               <th>Count</th>
               <th>Low</th>
               <th>P25</th>
-              <th>Median</th>
+              <th class="summary-table__median">Median</th>
               <th>Average</th>
               <th>P75</th>
               <th>High</th>
@@ -483,7 +492,7 @@ function renderSummaryRow(label: string, stats: EvidenceStats | null): string {
       <td>${formatNumber(stats.count)}</td>
       <td>${renderSummaryPriceControl(label, "Low", stats.low)}</td>
       <td>${renderSummaryPriceControl(label, "P25", stats.p25)}</td>
-      <td>${renderSummaryPriceControl(label, "Median", stats.median)}</td>
+      <td class="summary-table__median">${renderSummaryPriceControl(label, "Median", stats.median)}</td>
       <td>${renderSummaryPriceControl(label, "Average", stats.average)}</td>
       <td>${renderSummaryPriceControl(label, "P75", stats.p75)}</td>
       <td>${renderSummaryPriceControl(label, "High", stats.high)}</td>
@@ -544,23 +553,30 @@ function renderInflationAdjustmentNote(
   return `
     <p class="summary-adjustment-note">
       Inflation Adjustment is on. Awarded bid, average bid, and engineer estimate unit prices are adjusted with FHWA NHCCI to ${escapeHtml(summary.targetPeriod.periodLabel)}.
-      Original Matching Projects prices stay primary and CSV export is unchanged.${missingNote}
+      Adjusted prices replace the source prices in Matching Projects. Focus or hover on a value to see its source price and adjustment period. Some quarters decrease, and small changes can look equal after rounding. CSV export remains unchanged.${missingNote}
     </p>
   `;
 }
 
-function renderUnitPrice(value: number | null, adjustedValue: number | null): string {
+function renderUnitPrice(value: number | null, adjustedValue: number | null, adjustmentEnabled: boolean, sourcePeriod: string | null, targetPeriod: string | null): string {
   if (value === null) {
     return "Not listed";
   }
 
-  const roundedValue = Math.round(value);
-  const roundedAdjustedValue = adjustedValue === null ? null : Math.round(adjustedValue);
-  const adjustedLine = roundedAdjustedValue !== null && roundedAdjustedValue !== roundedValue
-    ? `<div class="adjusted-price-line">(${formatWholeCurrency(roundedAdjustedValue)})</div>`
-    : "";
+  if (adjustedValue === null) {
+    if (!adjustmentEnabled) return formatCurrency(value);
+    const reason = !targetPeriod
+      ? "No FHWA NHCCI target index is available. The source price is unchanged."
+      : !sourcePeriod
+        ? "A valid source quarter could not be determined. The source price is unchanged."
+        : `No FHWA NHCCI index is available for ${sourcePeriod}. Newer data may not yet be indexed. The source price is unchanged.`;
+    return `${formatCurrency(value)}<span class="adjusted-price-line adjusted-price-line--unavailable" tabindex="0" title="${escapeHtml(reason)}" aria-label="Not adjusted. ${escapeHtml(reason)}">Not adjusted</span>`;
+  }
 
-  return `${formatCurrency(value)}${adjustedLine}`;
+  if (!adjustmentEnabled) return formatCurrency(value);
+  const periodDetail = sourcePeriod && targetPeriod ? ` from ${sourcePeriod} to ${targetPeriod}` : "";
+  const originalDetail = `Original price ${formatCurrency(value)}. FHWA NHCCI adjustment${periodDetail} applied.`;
+  return `<span class="adjusted-price-value" tabindex="0" title="${escapeHtml(originalDetail)}" aria-label="Adjusted price ${formatCurrency(adjustedValue)}. ${escapeHtml(originalDetail)}">${formatCurrency(adjustedValue)}</span>`;
 }
 
 function renderEmptyTableMessage(): string {

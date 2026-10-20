@@ -1,62 +1,57 @@
 import type { ExcelImportReadyDraft } from "./excelImportController";
 import type { MatchedImportRow, ResolvedImportRow } from "../projects/excelImport/types";
-import { projectLineTotal } from "../projects/projectWorkspace";
 
-const REPORT_HEADERS = [
-  "file",
-  "sheet",
-  "original row",
-  "original range",
-  "snippet",
-  "outcome",
-  "reason codes/text",
-  "original item code",
-  "original description",
-  "original unit",
-  "original quantity",
-  "original unit cost",
-  "original source total",
-  "original group",
-  "original category",
-  "original notes",
-  "final item code",
-  "final description",
-  "final unit",
-  "final quantity",
-  "final unit cost",
-  "final identity",
-  "group",
-  "category",
-  "final notes",
-  "recalculated total",
-  "difference",
-  "resulting line id"
-] as const;
+const REPORT_HEADERS = ["Sheet", "Row", "Item Code", "Description", "Outcome", "Quantity", "Unit Cost", "Reason"] as const;
 
-export function buildExcelImportReportCsv(draft: ExcelImportReadyDraft): string {
-  const rowsById = new Map(draft.rows.map((row) => [row.rowId, row]));
-  const output = [REPORT_HEADERS.map(csvCell).join(",")];
-  for (const result of draft.resolvedRows) {
-    const row = rowsById.get(result.rowId);
-    if (!row) continue;
-    const match = draft.existingItemPlan?.matches.find((candidate) => candidate.rowId === result.rowId);
-    const update = match?.action === "update" ? draft.existingItemPlan?.updates.find((line) => line.lineItemId === match.targetLineItemId) : null;
-    const finalResult: ResolvedImportRow = match?.action === "skip"
-      ? { ...result, outcome: "excluded", lineItem: null, recalculatedTotal: null, sourceTotalDifference: null, issues: [...result.issues, { code: "existing-item-skipped", severity: "info", message: "Matched an existing Project item and was skipped." }] }
-      : update ? { ...result, lineItem: update, recalculatedTotal: projectLineTotal(update), sourceTotalDifference: row.values.sourceTotal === null ? null : projectLineTotal(update) - row.values.sourceTotal } : result;
-    const fields = reportRow(draft.fileName, row, finalResult);
-    if (update) fields[5] = "updated-existing";
-    output.push(fields.map(csvCell).join(","));
-  }
-  return `${output.join("\r\n")}\r\n`;
+interface ImportStatusRow {
+  sheet: string;
+  row: number;
+  itemCode: string;
+  description: string;
+  outcome: string;
+  quantity: number | null;
+  unitCost: number | null;
+  reason: string;
 }
 
-export function downloadExcelImportReport(draft: ExcelImportReadyDraft): void {
-  const blob = new Blob([buildExcelImportReportCsv(draft)], { type: "text/csv;charset=utf-8" });
+export function buildExcelImportReportCsv(draft: ExcelImportReadyDraft, committed = false): string {
+  const rowsById = new Map(draft.rows.map((row) => [row.rowId, row]));
+  const plan = draft.existingItemPlan;
+  const reportRows: ImportStatusRow[] = [];
+  for (const resolved of draft.resolvedRows) {
+    const source = rowsById.get(resolved.rowId);
+    if (!source || !isItemCandidate(source)) continue;
+    const match = plan?.matches.find((candidate) => candidate.rowId === resolved.rowId);
+    const skipped = match?.action === "skip" || Boolean(plan?.skippedRowIds.includes(resolved.rowId));
+    const update = match?.action === "update"
+      ? plan?.updates.find((line) => line.lineItemId === match.targetLineItemId) ?? null
+      : null;
+    const accepted = (resolved.outcome === "imported" || resolved.outcome === "imported-incomplete") && !skipped;
+    const line = update ?? (accepted ? resolved.lineItem : null);
+    reportRows.push({
+      sheet: source.locator.sheetName,
+      row: source.locator.rowNumber,
+      itemCode: line?.itemCode || source.values.itemCode || source.rawValues.itemCode || "",
+      description: line?.description || source.values.description || source.rawValues.description || "",
+      outcome: accepted
+        ? update ? committed ? "Updated" : "Will update" : committed ? "Imported" : "Will import"
+        : committed ? "Not imported" : "Will not import",
+      quantity: accepted ? line?.quantity ?? null : source.values.quantity,
+      unitCost: accepted ? line?.preferredUnitCost ?? null : source.values.unitCost,
+      reason: accepted ? "" : omissionReason(draft, source, resolved, skipped)
+    });
+  }
+  return `${[REPORT_HEADERS.join(","), ...reportRows.map((row) => [
+    row.sheet, row.row, row.itemCode, row.description, row.outcome, row.quantity, row.unitCost, row.reason
+  ].map(csvCell).join(","))].join("\r\n")}\r\n`;
+}
+
+export function downloadExcelImportReport(draft: ExcelImportReadyDraft, committed = false): void {
+  const blob = new Blob([buildExcelImportReportCsv(draft, committed)], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `${sanitizeFilename(draft.fileName)}-import-report.csv`;
+  link.download = `${sanitizeFilename(draft.fileName)}-${committed ? "import-status" : "review-preview"}.csv`;
   link.style.display = "none";
   document.body.appendChild(link);
   link.click();
@@ -64,53 +59,27 @@ export function downloadExcelImportReport(draft: ExcelImportReadyDraft): void {
   URL.revokeObjectURL(url);
 }
 
-function reportRow(fileName: string, row: MatchedImportRow, result: ResolvedImportRow): Array<string | number | null> {
-  const line = result.lineItem;
-  const original = row.values;
-  const reasons = result.issues.map((issue) => `${issue.code}: ${issue.message}`).join(" | ");
-  const snippet = original.description.trim()
-    || original.itemCode.trim()
-    || row.rawValues.description
-    || row.rawValues.itemCode
-    || Object.values(row.rawValues).find((value) => value?.trim())
-    || "";
-  return [
-    fileName,
-    row.locator.sheetName,
-    row.locator.rowNumber,
-    row.locator.sourceRange,
-    snippet,
-    result.outcome,
-    reasons,
-    original.itemCode,
-    original.description,
-    original.unit,
-    original.quantity,
-    original.unitCost,
-    original.sourceTotal,
-    original.group,
-    original.costCategory,
-    row.values.notes,
-    line?.itemCode ?? "",
-    line?.description ?? "",
-    line?.unit ?? "",
-    line?.quantity ?? null,
-    line?.preferredUnitCost ?? null,
-    line?.agencyItemId ?? "",
-    line?.group ?? original.group,
-    line?.costCategory ?? original.costCategory,
-    line?.notes ?? "",
-    result.recalculatedTotal,
-    result.sourceTotalDifference,
-    line?.lineItemId ?? ""
-  ];
+function isItemCandidate(row: MatchedImportRow): boolean {
+  if (row.classification === "item") return true;
+  return row.classification === "ambiguous"
+    && Boolean(row.values.itemCode.trim() || row.values.description.trim() || row.rawValues.itemCode?.trim() || row.rawValues.description?.trim());
+}
+
+function omissionReason(draft: ExcelImportReadyDraft, source: MatchedImportRow, resolved: ResolvedImportRow, skippedExisting: boolean): string {
+  if (skippedExisting) return "Kept the existing Project item";
+  if (draft.decisions[resolved.rowId]?.leftUnresolved) return "Needs review";
+  if (draft.decisions[resolved.rowId]?.action === "exclude") return "Skipped during review";
+  if (!source.selected) return "Outside selected data";
+  const issues = [...resolved.issues, ...source.matchIssues, ...source.issues];
+  const issue = issues.find((candidate) => candidate.severity === "error")
+    ?? issues.find((candidate) => candidate.severity === "warning");
+  return issue?.message ?? "Could not be imported";
 }
 
 function csvCell(value: string | number | null): string {
   if (value === null || value === undefined) return "";
   let text = String(value);
-  // Prefix formula-like text so opening the diagnostic report in Excel cannot execute it.
-  if (/^[=+\-@]/u.test(text) && !/^-[0-9]+(?:\.[0-9]+)?$/u.test(text)) text = `'${text}`;
+  if (typeof value === "string" && /^[=+\-@\t\r]/u.test(text) && !/^-[0-9]+(?:\.[0-9]+)?$/u.test(text)) text = `'${text}`;
   return /[",\r\n]/u.test(text) ? `"${text.replace(/"/gu, '""')}"` : text;
 }
 

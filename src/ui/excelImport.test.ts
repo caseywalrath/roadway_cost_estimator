@@ -179,8 +179,8 @@ describe("Excel import wizard", () => {
     root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")!.click();
     await new Promise((resolve) => window.setTimeout(resolve, 0));
     expect(committedDraft!.existingItemPlan!.updates[0]).toMatchObject({ lineItemId: official.lineItemId, quantity: 2, preferredUnitCost: 100, notes: "Keep these notes" });
-    expect(buildExcelImportReportCsv(committedDraft!)).toContain("updated-existing");
-    expect(buildExcelImportReportCsv(committedDraft!)).toContain("existing-item-skipped");
+    expect(buildExcelImportReportCsv(committedDraft!, true)).toContain("Updated");
+    expect(buildExcelImportReportCsv(committedDraft!, true)).toContain("Kept the existing Project item");
     expect(root.textContent).toContain("1 item was updated in Existing estimate");
     expect(project.lineItems[0].quantity).toBe(1);
   });
@@ -485,9 +485,9 @@ describe("Excel import wizard", () => {
     expect(controller.viewModel.reviewFilter).toBe("needs-review");
     expect(root.textContent).toContain("Description differs — choose which to use");
     expect(root.textContent).toContain("Spreadsheet");
-    expect(root.textContent).toContain("Official");
-    expect(root.textContent).toContain("Use official description");
-    expect(root.textContent).toContain("Keep spreadsheet description as custom item");
+    expect(root.textContent).toContain("Item Book description");
+    expect(root.textContent).toContain("Item Book");
+    expect(root.textContent).toContain("Spreadsheet");
     expect(root.textContent).toContain("Previous 50");
     expect(root.textContent).toContain("Next 50");
     expect(root.textContent).not.toContain("Classification");
@@ -576,7 +576,7 @@ describe("Excel import wizard", () => {
     root.querySelector<HTMLButtonElement>('[data-excel-import-next="review"]')?.click();
 
     expect(root.textContent).toContain("3 items need attention. Continue to skip them, or choose an action.");
-    expect(root.textContent).toContain("Select All / Clear");
+    expect(root.querySelector<HTMLInputElement>('[data-excel-import-select-visible]')?.getAttribute('aria-label')).toBe("Select all visible rows");
     expect(root.querySelectorAll("[data-excel-import-select-visible]")).toHaveLength(1);
     expect(root.querySelector("[data-excel-import-select-filtered]")).toBeNull();
     expect(root.querySelectorAll("[data-excel-import-review-filter]")).toHaveLength(3);
@@ -605,7 +605,7 @@ describe("Excel import wizard", () => {
     expect(root.textContent).toContain("2 items need attention. Continue to skip them, or choose an action.");
     expect(root.querySelector<HTMLButtonElement>("[data-excel-import-finish]")?.disabled).toBe(false);
 
-    root.querySelector<HTMLButtonElement>("[data-excel-import-select-visible]")?.click();
+    root.querySelector<HTMLInputElement>("[data-excel-import-select-visible]")?.click();
     expect(controller.viewModel.selectedReviewRowIds).toHaveLength(2);
     const remainingBulkAction = root.querySelector<HTMLSelectElement>("[data-excel-import-bulk-action]")!;
     remainingBulkAction.value = "use-catalog-description";
@@ -759,10 +759,10 @@ describe("Excel import wizard", () => {
     expect(root.textContent).not.toContain("No Project data is written during preview");
     expect(ready).toBe(1);
     expect(draft).not.toBeNull();
-    expect(buildExcelImportReportCsv(draft!)).toContain("file,sheet,original row");
+    expect(buildExcelImportReportCsv(draft!)).toContain("Sheet,Row,Item Code,Description,Outcome,Quantity,Unit Cost,Reason");
     expect(buildExcelImportReportCsv({
       ...draft!,
-      rows: draft!.rows.map((row, index) => index === 0 ? { ...row, values: { ...row.values, description: "=SUM(A1)" } } : row)
+      resolvedRows: draft!.resolvedRows.map((row, index) => index === 0 && row.lineItem ? { ...row, lineItem: { ...row.lineItem, description: "=SUM(A1)" } } : row)
     })).toContain("'=SUM(A1)");
     root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")?.click();
     root.querySelector<HTMLButtonElement>("[data-excel-import-commit]")?.click();
@@ -772,7 +772,7 @@ describe("Excel import wizard", () => {
     expect(controller.viewModel.commitStatus).toBe("committed");
     expect(root.textContent).toContain("2 items were added to Demo Project.");
     expect(root.querySelectorAll("[data-excel-import-cancel]")).toHaveLength(1);
-    expect(root.querySelector<HTMLButtonElement>("[data-excel-import-download-report]")?.textContent).toContain("Download skipped-row report");
+    expect(root.querySelector<HTMLButtonElement>("[data-excel-import-download-report]")?.textContent).toContain("Download import status report");
 
   });
 

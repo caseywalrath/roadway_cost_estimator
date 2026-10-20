@@ -1,0 +1,59 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_207-00700,207-00700,Topsoil (Onsite),CY,111,19,27.00,17.50,55.19,113
+co_cdot_213-00061,213-00061,Mulch Tackifier,LB,101,16,5.00,3.34,10.00,103
+co_cdot_212-00707,212-00707,Seeding (Native) Hydraulic,ACRE,90,12,2425.00,1518.75,4903.40,92
+co_cdot_212-00708,212-00708,Seeding (Native) Broadcast,ACRE,89,15,4150.00,2270.00,10000.00,89
+co_cdot_213-00012,213-00012,Spray-on Mulch Blanket,ACRE,76,16,5611.68,4500.00,8512.09,78
+co_cdot_212-00706,212-00706,Seeding (Native) Drill,ACRE,62,11,1355.00,927.50,2241.55,64
+co_cdot_213-00003,213-00003,Mulching (Weed Free),ACRE,43,8,2950.00,1975.00,4150.00,43
+co_cdot_213-00004,213-00004,Mulching (Weed Free Straw),ACRE,36,4,1191.00,973.16,1719.50,38
+co_cdot_207-00702,207-00702,Topsoil (Offsite),CY,25,4,112.00,76.00,154.60,25
+co_cdot_213-00002,213-00002,Mulching (Weed Free Hay),ACRE,21,4,3140.00,1460.00,7828.79,21
+co_cdot_212-00050,212-00050,Sod,SF,18,10,3.75,2.24,8.38,18
+co_cdot_212-00711,212-00711,Seeding (Wetland) Broadcast,ACRE,17,2,6930.00,4500.00,12000.00,19
+co_cdot_207-00703,207-00703,Topsoil (Wetland),CY,16,3,54.62,35.25,100.66,18
+co_cdot_213-00067,213-00067,Rock Mulch (Weed Free),SF,15,9,5.00,2.82,7.55,17
+co_cdot_207-00205,207-00205,Topsoil,CY,14,2,69.50,31.20,87.85,14
+co_cdot_207-00210,207-00210,Stockpile Topsoil,CY,14,3,15.00,11.05,28.68,15
+co_cdot_212-00710,212-00710,Seeding (Wetland) Hydraulic,ACRE,12,2,5150.00,3650.00,7221.35,12
+co_cdot_212-00009,212-00009,Seeding (Temporary),ACRE,8,4,404.22,353.76,1779.17,8
+co_cdot_213-00011,213-00011,Mulching (Hydraulic),ACRE,7,0,3500.00,2516.35,9700.00,7
+co_cdot_212-00006,212-00006,Seeding (Native),ACRE,6,0,2177.99,1543.33,9716.42,6
+co_cdot_214-00220,214-00220,Deciduous Tree (2 Inch Caliper),EACH,6,3,773.00,731.25,807.17,6
+co_cdot_207-00310,207-00310,Stockpile Wetland Topsoil,CY,5,1,50.00,44.23,61.00,5
+co_cdot_212-00709,212-00709,Seeding (Wetland) Drill,ACRE,5,1,3204.55,1678.00,5500.00,5
+co_cdot_213-00007,213-00007,Mulching (Wood Strand),ACRE,5,0,7056.00,6920.00,10385.23,5
+co_cdot_213-00008,213-00008,Mulching (Wood Chip),CF,5,1,14.26,11.00,14.97,5
+co_cdot_214-00350,214-00350,Deciduous Shrub (#5 Container),EACH,5,3,92.87,90.00,104.50,5
+co_cdot_214-00910,214-00910,Perennials (#1 Container),EACH,5,3,35.00,32.98,36.20,6
+co_cdot_207-00706,207-00706,Seeding Media,CY,4,0,88.72,51.83,162.50,4
+co_cdot_212-00007,212-00007,Seeding (Native) (Hydraulic),ACRE,4,0,2705.00,1722.50,13875.00,4
+co_cdot_214-00506,214-00506,Evergreen Tree (6 Foot) (Ball and Burlap),EACH,4,0,739.50,650.37,833.75,4
+co_cdot_623-00602,623-00602,2 Inch Plastic Pipe (Irrigation/Sleeve),LF,4,3,7.93,5.90,11.38,4
+co_cdot_623-00603,623-00603,3 Inch Plastic Pipe (Irrigation/Sleeve),LF,4,2,25.00,17.70,31.50,4
+co_cdot_623-00604,623-00604,4 Inch Plastic Pipe (Irrigation/Sleeve),LF,4,2,23.00,20.10,25.75,4
+co_cdot_207-00405,207-00405,Topsoil (Special),CY,3,0,51.26,45.13,53.13,3
+co_cdot_212-00022,212-00022,Seeding (Riparian),ACRE,3,0,2974.90,2356.62,3418.30,3
+co_cdot_212-00028,212-00028,Seeding (Wetlands),ACRE,3,0,48500.00,26455.00,61864.50,3
+co_cdot_214-00225,214-00225,Deciduous Tree (2.5 Inch Caliper),EACH,3,2,800.00,796.27,865.00,3
+co_cdot_207-00305,207-00305,Wetland Topsoil,CY,2,0,531.08,286.74,775.42,2
+co_cdot_207-00606,207-00606,Topsoil (Imported),CY,2,1,130.31,111.40,149.21,2
+co_cdot_212-00011,212-00011,Seeding (Lawn),ACRE,2,0,10323.23,6984.85,13661.61,2
+co_cdot_213-00005,213-00005,Mulching (Decorative),CF,2,0,9.80,9.30,10.31,2
+co_cdot_213-00013,213-00013,Spray-on Mulch Blanket,LB,2,0,1.73,1.61,1.84,2
+co_cdot_214-00205,214-00205,Deciduous Tree (#5 Container),EACH,2,1,93.44,91.71,95.16,2
+co_cdot_214-00310,214-00310,Deciduous Shrub (#1 Container),EACH,2,1,53.00,51.99,54.00,2
+co_cdot_214-00401,214-00401,Evergreen Tree (Tubeling),EACH,2,0,411.96,217.94,605.98,2
+co_cdot_214-00901,214-00901,Perennials (Tubeling),EACH,2,0,5.08,4.90,5.27,2
+co_cdot_212-00008,212-00008,Seeding (Temporary) Pneumatic,ACRE,1,0,10500.00,10500.00,10500.00,1
+co_cdot_213-00006,213-00006,Mulching (Weed Free),TON,1,0,1250.00,1250.00,1250.00,1
+co_cdot_213-00065,213-00065,Inorganic Mulch,CY,1,1,50.00,50.00,50.00,1
+co_cdot_214-00222,214-00222,Deciduous Tree (2 Inch Caliper) (Furnish Only),EACH,1,0,998.00,998.00,998.00,1
+co_cdot_214-00227,214-00227,Deciduous Tree (2.5 Inch Caliper) (Furnish Only),EACH,1,1,1017.28,1017.28,1017.28,1
+co_cdot_214-00260,214-00260,Deciduous Tree (6 Foot),EACH,1,1,829.32,829.32,829.32,1
+co_cdot_214-00280,214-00280,Deciduous Tree (8 Foot),EACH,1,0,1010.00,1010.00,1010.00,1
+co_cdot_214-00330,214-00330,Deciduous Shrub (#3 Container),EACH,1,1,54.00,54.00,54.00,1
+co_cdot_214-00450,214-00450,Evergreen Tree (#5 Container),EACH,1,0,96.88,96.88,96.88,1
+co_cdot_214-00504,214-00504,Evergreen Tree (4 Foot) (Ball and Burlap),EACH,1,0,507.59,507.59,507.59,1
+co_cdot_214-00510,214-00510,Evergreen Tree (10 Foot) (Ball and Burlap),EACH,1,0,2150.00,2150.00,2150.00,1
+co_cdot_623-00606,623-00606,6 Inch Plastic Pipe (Irrigation/Sleeve),LF,1,0,43.00,43.00,43.00,1

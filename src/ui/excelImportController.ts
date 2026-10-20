@@ -1,10 +1,11 @@
 import type { AgencyItemRecord, StateConfig } from "../data/schema";
-import { projectLineTotal, type ProjectWorkspaceState, type UserProject } from "../projects/projectWorkspace";
+import { calculateProject, projectLineTotal, type ProjectWorkspaceState, type UserProject } from "../projects/projectWorkspace";
 import { detectWorkbookLayouts } from "../projects/excelImport/detectLayout";
 import { matchRows } from "../projects/excelImport/matchRows";
 import { parseRows, validateMapping } from "../projects/excelImport/parseRows";
 import { resolveDraftRows } from "../projects/excelImport/resolveDraft";
 import { planExistingItems, type ExistingItemAction, type ExistingItemChoice, type ExistingItemPlan } from "../projects/excelImport/existingItems";
+import { existingMatchStatus } from "../projects/excelImport/projectMatchStatus";
 import type {
   ExcelImportMapping,
   ExcelImportSelection,
@@ -17,7 +18,7 @@ import type {
   MatchedImportRow,
   ResolvedImportRow
 } from "../projects/excelImport/types";
-import type { ExcelImportConfirmationSummary, ExcelImportReviewFilter, ExcelImportReviewIssueFilter, ExcelImportStage, ExcelImportViewModel } from "./renderExcelImport";
+import type { ExcelImportBulkAction, ExcelImportConfirmationSummary, ExcelImportReviewFilter, ExcelImportReviewIssueFilter, ExcelImportStage, ExcelImportViewModel } from "./renderExcelImport";
 import { isSkipOnlyReviewRow } from "./renderExcelImport";
 
 interface WorkerLike {
@@ -66,7 +67,7 @@ export interface ExcelImportControllerOptions {
   onReady?: (draft: ExcelImportReadyDraft) => void;
   onCommit?: (draft: ExcelImportReadyDraft) => Promise<string | void> | string | void;
   onCommitted?: (draft: ExcelImportReadyDraft) => void;
-  onDownloadReport?: (draft: ExcelImportReadyDraft) => void;
+  onDownloadReport?: (draft: ExcelImportReadyDraft, committed: boolean) => void;
   workerFactory?: () => WorkerLike;
 }
 
@@ -93,6 +94,8 @@ export class ExcelImportController {
   private existingItemAction: ExistingItemAction = "add";
   private existingItemsDetailsOpen = false;
   private existingItemChoices: Record<string, ExistingItemChoice> = {};
+  private reviewActionLockedUntil = 0;
+  private preparedReviewSignature: string | null = null;
 
   constructor(options: ExcelImportControllerOptions) {
     this.options = options;
@@ -102,10 +105,12 @@ export class ExcelImportController {
   }
 
   get isOpen(): boolean { return true; }
-  get viewModel(): ExcelImportViewModel { return this.view; }
+  get viewModel(): ExcelImportViewModel { return { ...this.view, existingItemMatches: this.previewExistingItemMatches(), existingItemChoices: { ...this.existingItemChoices } }; }
 
   open(): void {
     this.view = this.createInitialView();
+    this.reviewActionLockedUntil = 0;
+    this.preparedReviewSignature = null;
     this.selectedFile = null;
     this.readyDraft = null;
     this.terminateWorker();
@@ -207,14 +212,14 @@ export class ExcelImportController {
       control.addEventListener("click", () => {
         const filter = control.dataset.excelImportReviewFilter as ExcelImportReviewFilter | undefined;
         if (!filter) return;
-        this.view = { ...this.view, reviewFilter: filter, reviewPage: 0, selectedReviewRowIds: [] };
+        this.view = { ...this.view, reviewFilter: filter, reviewIssueFilter: "all", reviewPage: 0, selectedReviewRowIds: [] };
         this.options.onRender();
       });
     });
     wizard.querySelector<HTMLSelectElement>("[data-excel-import-review-issue-filter]")?.addEventListener("change", (event) => {
       const filter = (event.currentTarget as HTMLSelectElement).value as ExcelImportReviewIssueFilter;
       if (!isReviewIssueFilter(filter)) return;
-      this.view = { ...this.view, reviewFilter: "needs-review", reviewIssueFilter: filter, reviewPage: 0, selectedReviewRowIds: [] };
+      this.view = { ...this.view, reviewIssueFilter: filter, reviewPage: 0, selectedReviewRowIds: [] };
       this.options.onRender();
     });
     wizard.querySelector<HTMLSelectElement>("[data-excel-import-all-status]")?.addEventListener("change", (event) => {
@@ -232,7 +237,10 @@ export class ExcelImportController {
       });
     });
     wizard.querySelectorAll<HTMLButtonElement>("[data-excel-import-row-choice]").forEach((button) => {
-      button.addEventListener("click", () => this.setRowAction(button.dataset.excelImportRowChoice ?? "", button.dataset.excelImportAction as ImportResolutionAction));
+      button.addEventListener("click", () => {
+        if (Date.now() < this.reviewActionLockedUntil) return;
+        this.setRowAction(button.dataset.excelImportRowChoice ?? "", button.dataset.excelImportAction as ImportResolutionAction);
+      });
     });
     wizard.querySelectorAll<HTMLButtonElement>("[data-excel-import-bulk-action-button]").forEach((button) => {
       button.addEventListener("click", () => this.applyBulkReviewAction(button.dataset.excelImportBulkActionButton as ImportResolutionAction));
@@ -240,6 +248,7 @@ export class ExcelImportController {
     wizard.querySelector<HTMLButtonElement>("[data-excel-import-undo]")?.addEventListener("click", () => {
       const undo = this.view.reviewUndo;
       if (!undo || undo.rows !== this.view.rows) return;
+      this.existingItemChoices = { ...undo.existingChoices };
       this.view = { ...this.view, decisions: undo.decisions, reviewFilter: undo.filter, reviewIssueFilter: undo.issueFilter, reviewPage: undo.page, selectedReviewRowIds: [], reviewUndo: undefined };
       this.options.onRender();
     });
@@ -256,33 +265,48 @@ export class ExcelImportController {
     wizard.querySelectorAll<HTMLInputElement>("[data-excel-import-review-row]").forEach((input) => {
       input.addEventListener("click", () => this.toggleReviewRowSelection(input.dataset.excelImportReviewRow ?? "", input.checked));
     });
-    wizard.querySelector<HTMLButtonElement>("[data-excel-import-select-visible]")?.addEventListener("click", () => this.selectReviewRows());
+    wizard.querySelector<HTMLInputElement>("[data-excel-import-select-visible]")?.addEventListener("change", (event) => {
+      const visible = [...wizard.querySelectorAll<HTMLInputElement>("[data-excel-import-review-row]")].map((input) => input.dataset.excelImportReviewRow ?? "");
+      this.selectReviewRows(visible, (event.currentTarget as HTMLInputElement).checked);
+    });
     wizard.querySelector<HTMLSelectElement>("[data-excel-import-bulk-action]")?.addEventListener("change", (event) => {
-      const action = (event.currentTarget as HTMLSelectElement).value as ImportResolutionAction | "";
+      const action = (event.currentTarget as HTMLSelectElement).value as ExcelImportBulkAction | "";
       if (action) this.applyBulkReviewAction(action);
     });
     wizard.querySelector<HTMLButtonElement>("[data-excel-import-finish]")?.addEventListener("click", () => this.finish());
     wizard.querySelector<HTMLButtonElement>("[data-excel-import-commit]")?.addEventListener("click", () => void this.commit());
-    wizard.querySelector<HTMLSelectElement>("[data-excel-import-existing-default]")?.addEventListener("change", (event) => {
-      this.existingItemAction = (event.currentTarget as HTMLSelectElement).value as ExistingItemAction;
-      this.existingItemChoices = {};
-      this.existingItemsDetailsOpen = wizard.querySelector<HTMLDetailsElement>("[data-excel-import-existing-details]")?.open ?? false;
-      this.refreshExistingItemPlan();
-    });
-    wizard.querySelectorAll<HTMLSelectElement>("[data-excel-import-existing-action]").forEach((select) => select.addEventListener("change", () => {
-      const rowId = select.dataset.excelImportExistingAction!;
-      this.existingItemChoices[rowId] = { action: select.value as ExistingItemAction };
-      this.existingItemsDetailsOpen = wizard.querySelector<HTMLDetailsElement>("[data-excel-import-existing-details]")?.open ?? false;
-      this.refreshExistingItemPlan();
+    wizard.querySelectorAll<HTMLButtonElement>("[data-excel-import-match-choice]").forEach((button) => button.addEventListener("click", () => {
+      if (Date.now() < this.reviewActionLockedUntil) return;
+      const kind = button.dataset.excelImportMatchChoice;
+      const rowId = button.dataset.excelImportMatchRow;
+      const action = button.dataset.excelImportMatchAction as ExistingItemAction;
+      if (!rowId || (action !== "add" && action !== "update" && action !== "skip")) return;
+      if (kind === "regular") {
+        if (!this.previewExistingItemMatches().some((match) => match.rowId === rowId)) return;
+        const reviewUndo = this.reviewUndoSnapshot();
+        this.existingItemChoices[rowId] = { action };
+        this.view = { ...this.view, reviewUndo, selectedReviewRowIds: this.view.selectedReviewRowIds.filter((id) => id !== rowId) };
+        this.lockReviewActions();
+        this.options.onRender();
+      }
     }));
     wizard.querySelectorAll<HTMLSelectElement>("[data-excel-import-existing-target]").forEach((select) => select.addEventListener("change", () => {
+      if (Date.now() < this.reviewActionLockedUntil) return;
       const rowId = select.dataset.excelImportExistingTarget!;
-      this.existingItemChoices[rowId] = select.value ? { action: "update", targetLineItemId: select.value } : { action: "add" };
-      this.existingItemsDetailsOpen = wizard.querySelector<HTMLDetailsElement>("[data-excel-import-existing-details]")?.open ?? false;
-      this.refreshExistingItemPlan();
+      const reviewUndo = this.reviewUndoSnapshot();
+      this.existingItemChoices[rowId] = { action: "update", ...(select.value ? { targetLineItemId: select.value } : {}) };
+      this.view = { ...this.view, reviewUndo, selectedReviewRowIds: this.view.selectedReviewRowIds.filter((id) => id !== rowId) };
+      this.lockReviewActions();
+      this.options.onRender();
     }));
+    const selectVisible = wizard.querySelector<HTMLInputElement>("[data-excel-import-select-visible]");
+    if (selectVisible) {
+      const visible = [...wizard.querySelectorAll<HTMLInputElement>("[data-excel-import-review-row]")];
+      selectVisible.indeterminate = visible.some((input) => input.checked) && !visible.every((input) => input.checked);
+    }
+    this.applyReviewActionCooldown(wizard);
     wizard.querySelector<HTMLButtonElement>("[data-excel-import-download-report]")?.addEventListener("click", () => {
-      if (this.readyDraft) this.options.onDownloadReport?.(this.readyDraft);
+      if (this.readyDraft) this.options.onDownloadReport?.(this.readyDraft, this.view.commitStatus === "committed");
     });
   }
 
@@ -297,7 +321,7 @@ export class ExcelImportController {
       selection: null,
       mapping: null,
       advancedSettingsOpen: false,
-      rows: [], reviewUndo: undefined,
+      rows: [], existingItemMatches: [], existingItemChoices: {}, reviewUndo: undefined,
       decisions: {},
       reviewFilter: "all",
       reviewIssueFilter: "all",
@@ -420,7 +444,8 @@ export class ExcelImportController {
       this.worker = worker;
       worker.onmessage = (event) => this.receiveWorkerMessage(token, event.data);
       worker.onerror = () => this.failRead(token, "The workbook could not be read. Check that it is an unencrypted .xlsx file.");
-      worker.postMessage({ type: "read", requestId: this.requestId, fileName: file.name, data }, [data]);
+      const workerData = data.slice(0);
+      worker.postMessage({ type: "read", requestId: this.requestId, fileName: file.name, data: workerData }, [workerData]);
     } catch (error) {
       this.failRead(token, error instanceof Error ? error.message : "The workbook could not be read.");
     }
@@ -656,6 +681,8 @@ export class ExcelImportController {
       this.options.onRender();
       return false;
     }
+    const signature = this.reviewSignature(selection, mapping);
+    if (this.view.rows.length && this.preparedReviewSignature === signature) return true;
     const validation = validateMapping(mapping);
     if (validation.length) {
       this.view = { ...this.view, errorMessage: validation.map((issue) => issue.message).join(" ") };
@@ -670,12 +697,14 @@ export class ExcelImportController {
     }
     const sections = this.view.detections.find((candidate) => candidate.sheetName === selection.sheetName)?.regions.find((candidate) => candidate.regionId === this.view.selectedRegionId)?.sections ?? [];
     const parsed = parseRows(sheet, { selection, mapping, sections });
+    const activeProject = this.view.destinationProjectMode === "active" ? this.options.activeProject : null;
     const matched = matchRows(parsed, {
       state: this.view.destinationState,
       agencyId: this.view.destinationAgencyId,
       agencyItems,
-      existingProject: this.options.activeProject
+      existingProject: activeProject
     });
+    this.existingItemChoices = {};
     const decisions: Record<string, ImportRowDecision> = {};
     matched.filter(isSkipOnlyReviewRow).forEach((row) => {
       decisions[row.rowId] = { action: "exclude", automaticallySkipped: true };
@@ -684,6 +713,8 @@ export class ExcelImportController {
     this.view = {
       ...this.view,
       rows: matched,
+      existingItemMatches: [],
+      existingItemChoices: {},
       reviewUndo: undefined,
       decisions,
       reviewFilter: needsAttention ? "needs-review" : "all",
@@ -693,13 +724,40 @@ export class ExcelImportController {
       resultMessage: null,
       errorMessage: null
     };
+    this.applyUnchangedDefaults();
+    if (!needsAttention && this.previewExistingItemMatches().some((match) => !this.existingItemChoices[match.rowId])) this.view = { ...this.view, reviewFilter: "needs-review" };
+    else if (!needsAttention && Object.keys(this.existingItemChoices).length) this.view = { ...this.view, reviewFilter: "reviewed" };
+    this.preparedReviewSignature = signature;
     return true;
   }
 
+  private reviewSignature(selection: ExcelImportSelection, mapping: ExcelImportMapping): string {
+    return JSON.stringify({
+      requestId: this.requestId,
+      fileName: this.view.fileName,
+      sheetName: this.view.selectedSheetName,
+      regionId: this.view.selectedRegionId,
+      selection,
+      mapping,
+      destinationState: this.view.destinationState,
+      destinationAgencyId: this.view.destinationAgencyId,
+      destinationProjectMode: this.view.destinationProjectMode,
+      activeProjectId: this.options.activeProject?.projectId ?? null,
+      activeProjectRevision: this.options.activeProject?.revision ?? null
+    });
+  }
+
   private selectableReviewRows(): MatchedImportRow[] {
-    const unresolved = this.view.rows.filter((row) => requiresReviewDecision(row) && !this.decisions()[row.rowId]?.action);
     if (this.view.reviewFilter !== "needs-review") return [];
-    return unresolved.filter((row) => reviewIssueFilterMatches(row, this.view.reviewIssueFilter));
+    const matches = new Map(this.previewExistingItemMatches().map((match) => [match.rowId, match]));
+    return this.view.rows.filter((row) => {
+      if (isSkipOnlyReviewRow(row)) return false;
+      const catalogPending = requiresReviewDecision(row) && !this.decisions()[row.rowId]?.action;
+      const match = catalogPending ? undefined : matches.get(row.rowId);
+      const choice = this.existingItemChoices[row.rowId];
+      const projectPending = match && (!choice || (choice.action === "update" && !match.targetLineItemId));
+      return (catalogPending || projectPending) && reviewIssueFilterMatches(row, this.view.reviewIssueFilter, match, choice);
+    });
   }
 
   private toggleReviewRowSelection(rowId: string, selected: boolean): void {
@@ -711,28 +769,35 @@ export class ExcelImportController {
     this.options.onRender();
   }
 
-  private selectReviewRows(): void {
-    const rows = this.selectableReviewRows();
-    const pageStart = Math.min(this.view.reviewPage, Math.max(0, Math.ceil(rows.length / 50) - 1)) * 50;
-    const targetRows = rows.slice(pageStart, pageStart + 50);
-    const targetIds = new Set(targetRows.map((row) => row.rowId));
-    const selected = new Set(this.view.selectedReviewRowIds.filter((id) => rows.some((row) => row.rowId === id)));
-    const allSelected = targetRows.length > 0 && targetRows.every((row) => selected.has(row.rowId));
-    if (allSelected) targetIds.forEach((id) => selected.delete(id));
-    else targetIds.forEach((id) => selected.add(id));
+  private selectReviewRows(visibleRowIds: string[], checked: boolean): void {
+    const selectable = new Set(this.selectableReviewRows().map((row) => row.rowId));
+    const selected = new Set(this.view.selectedReviewRowIds.filter((id) => selectable.has(id)));
+    for (const rowId of visibleRowIds) {
+      if (!selectable.has(rowId)) continue;
+      if (checked) selected.add(rowId); else selected.delete(rowId);
+    }
     this.view = { ...this.view, selectedReviewRowIds: [...selected] };
     this.options.onRender();
   }
 
-  private applyBulkReviewAction(action: ImportResolutionAction): void {
+  private applyBulkReviewAction(action: ExcelImportBulkAction): void {
     const selected = new Set(this.view.selectedReviewRowIds);
     const rows = this.selectableReviewRows().filter((row) => selected.has(row.rowId));
-    if (!rows.length || !rows.every((row) => availableReviewActions(row).includes(action))) return;
+    const matches = new Map(this.previewExistingItemMatches().map((match) => [match.rowId, match]));
+    if (!rows.length || !rows.every((row) => {
+      const match = requiresReviewDecision(row) && !this.decisions()[row.rowId]?.action ? undefined : matches.get(row.rowId);
+      return match ? action === "exclude" || action === "project-add" || (action === "project-update" && !match.needsTarget)
+        : action !== "project-add" && action !== "project-update" && availableReviewActions(row).includes(action);
+    })) return;
     const decisions = { ...this.decisions() };
+    const reviewUndo = this.reviewUndoSnapshot();
     rows.forEach((row) => {
-      decisions[row.rowId] = { action, ...(row.selectedAgencyItemId ? { agencyItemId: row.selectedAgencyItemId } : {}) };
+      const match = requiresReviewDecision(row) && !this.decisions()[row.rowId]?.action ? undefined : matches.get(row.rowId);
+      if (match) this.existingItemChoices[row.rowId] = { action: action === "project-add" ? "add" : action === "project-update" ? "update" : "skip" };
+      else if (action !== "project-add" && action !== "project-update") decisions[row.rowId] = { action, ...(row.selectedAgencyItemId ? { agencyItemId: row.selectedAgencyItemId } : {}) };
     });
-    this.view = { ...this.view, resultMessage: null, decisions, selectedReviewRowIds: [], reviewUndo: this.reviewUndoSnapshot() };
+    this.view = { ...this.view, resultMessage: null, decisions, selectedReviewRowIds: [], reviewUndo };
+    this.applyUnchangedDefaults();
     this.options.onRender();
   }
 
@@ -747,16 +812,63 @@ export class ExcelImportController {
         ...(row?.selectedAgencyItemId ? { agencyItemId: row.selectedAgencyItemId } : {})
       };
     }
-    this.view = { ...this.view, resultMessage: null, decisions, selectedReviewRowIds: this.view.selectedReviewRowIds.filter((id) => id !== rowId), reviewUndo: this.reviewUndoSnapshot() };
+    const reviewUndo = this.reviewUndoSnapshot();
+    delete this.existingItemChoices[rowId];
+    this.view = { ...this.view, resultMessage: null, decisions, selectedReviewRowIds: [], reviewUndo };
+    this.applyUnchangedDefaults();
+    this.lockReviewActions();
     this.options.onRender();
   }
 
+  private lockReviewActions(): void {
+    this.reviewActionLockedUntil = Date.now() + 500;
+  }
+
+  private applyReviewActionCooldown(wizard: HTMLElement): void {
+    const remaining = this.reviewActionLockedUntil - Date.now();
+    if (remaining <= 0) return;
+    const buttons = wizard.querySelectorAll<HTMLButtonElement>("[data-excel-import-row-choice], [data-excel-import-match-choice]");
+    buttons.forEach((button) => {
+      button.classList.add("is-cooling-down");
+      button.setAttribute("aria-disabled", "true");
+    });
+    window.setTimeout(() => {
+      if (Date.now() >= this.reviewActionLockedUntil) buttons.forEach((button) => {
+        button.classList.remove("is-cooling-down");
+        button.removeAttribute("aria-disabled");
+      });
+    }, remaining + 10);
+  }
+
   private reviewUndoSnapshot(): NonNullable<ExcelImportViewModel["reviewUndo"]> {
-    return { decisions: { ...this.view.decisions }, rows: this.view.rows, filter: this.view.reviewFilter, issueFilter: this.view.reviewIssueFilter, page: this.view.reviewPage };
+    return { decisions: { ...this.view.decisions }, existingChoices: { ...this.existingItemChoices }, rows: this.view.rows, filter: this.view.reviewFilter, issueFilter: this.view.reviewIssueFilter, page: this.view.reviewPage };
   }
 
   private decisions(): Record<string, ImportRowDecision> {
     return this.view.decisions;
+  }
+
+  private applyUnchangedDefaults(): void {
+    for (const match of this.previewExistingItemMatches()) {
+      if (!this.existingItemChoices[match.rowId] && existingMatchStatus(match) === "unchanged") {
+        this.existingItemChoices[match.rowId] = { action: "skip", automaticallySkipped: true };
+      }
+    }
+  }
+
+  private previewExistingItemMatches(): ExistingItemPlan["matches"] {
+    if (this.view.destinationProjectMode !== "active" || !this.options.activeProject || !this.view.rows.length) return [];
+    const decisions = { ...this.view.decisions };
+    this.view.rows.filter((row) => requiresReviewDecision(row) && !decisions[row.rowId]?.action)
+      .forEach((row) => { decisions[row.rowId] = { action: "exclude" }; });
+    const resolved = resolveDraftRows(this.view.rows, {
+      importId: this.requestId,
+      fileName: this.selectedFile?.name ?? this.view.fileName ?? "workbook.xlsx",
+      importedAt: new Date().toISOString(),
+      state: this.view.destinationState,
+      decisions
+    });
+    return planExistingItems(resolved, this.options.activeProject, "add", this.existingItemChoices).matches;
   }
 
   private finish(): void {
@@ -770,15 +882,24 @@ export class ExcelImportController {
       this.options.onRender();
       return;
     }
+    const existingMatches = this.previewExistingItemMatches();
+    const undecidedMatches = existingMatches.filter((match) => !this.existingItemChoices[match.rowId]
+      || (this.existingItemChoices[match.rowId].action === "update" && !match.targetLineItemId));
+    if (undecidedMatches.length) {
+      this.view = { ...this.view, reviewFilter: "needs-review", reviewIssueFilter: "all", errorMessage: `Choose Duplicate, Update, or Skip for ${undecidedMatches.length} item${undecidedMatches.length === 1 ? "" : "s"} already in this Project.` };
+      this.options.onRender();
+      return;
+    }
     const decisions = { ...this.decisions() };
     const unresolvedRows = this.view.rows.filter((row) => requiresReviewDecision(row) && !decisions[row.rowId]?.action);
     unresolvedRows.forEach((row) => {
       decisions[row.rowId] = { action: "exclude", leftUnresolved: true };
     });
+    const importedAt = new Date().toISOString();
     const resolvedRows = resolveDraftRows(this.view.rows, {
       importId: this.requestId,
       fileName: this.selectedFile.name,
-      importedAt: new Date().toISOString(),
+      importedAt,
       state: this.view.destinationState,
       decisions
     });
@@ -797,7 +918,7 @@ export class ExcelImportController {
     const draft: ExcelImportReadyDraft = {
       importId: this.requestId,
       fileName: this.selectedFile.name,
-      importedAt: new Date().toISOString(),
+      importedAt,
       state: this.view.destinationState,
       agencyId: this.view.destinationAgencyId,
       destinationProjectMode: this.view.destinationProjectMode,
@@ -811,14 +932,18 @@ export class ExcelImportController {
       resolvedRows,
       summary
     };
+    const confirmation = this.buildConfirmationSummary(draft);
+    if (draft.existingItemPlan?.errors.length) {
+      this.view = { ...this.view, reviewFilter: "needs-review", reviewIssueFilter: "all", errorMessage: [...new Set(draft.existingItemPlan.errors)].join(" ") };
+      this.options.onRender();
+      return;
+    }
     this.readyDraft = draft;
-    this.existingItemAction = "add";
-    this.existingItemChoices = {};
     this.options.onReady?.(draft);
     this.view = {
       ...this.view,
       stage: "result",
-      confirmation: this.buildConfirmationSummary(draft),
+      confirmation,
       commitStatus: "idle",
       commitMessage: null,
       resultMessage: null
@@ -828,7 +953,7 @@ export class ExcelImportController {
 
   private buildConfirmationSummary(draft: ExcelImportReadyDraft): ExcelImportConfirmationSummary {
     const project = draft.destinationProjectMode === "active" ? this.options.activeProject : null;
-    const plan = planExistingItems(draft.resolvedRows, project, this.existingItemAction, this.existingItemChoices);
+    const plan = planExistingItems(draft.resolvedRows, project, "add", this.existingItemChoices);
     draft.existingItemPlan = plan;
     const importedRows = draft.resolvedRows.filter((row) => (row.outcome === "imported" || row.outcome === "imported-incomplete") && !plan.skippedRowIds.includes(row.rowId));
     const skippedRows = draft.resolvedRows.filter((row) => row.outcome === "excluded" || row.outcome === "failed");
@@ -865,18 +990,26 @@ export class ExcelImportController {
     const effectiveLines = [...plan.additions, ...plan.updates];
     const constructionCost = effectiveLines.filter((line) => line.costCategory === "construction").reduce((total, line) => total + projectLineTotal(line), 0);
     const otherCost = effectiveLines.filter((line) => line.costCategory === "other").reduce((total, line) => total + projectLineTotal(line), 0);
-    const currentConstruction = project?.lineItems.filter((line) => line.costCategory === "construction").reduce((total, line) => total + projectLineTotal(line), 0) ?? 0;
-    const currentOther = project?.lineItems.filter((line) => line.costCategory === "other").reduce((total, line) => total + projectLineTotal(line), 0) ?? 0;
+    const contingencyCost = effectiveLines.filter((line) => line.costCategory === "contingency").reduce((total, line) => total + projectLineTotal(line), 0);
+    const currentSummary = project ? calculateProject(project).summary : null;
+    const updateMap = new Map(plan.updates.map((line) => [line.lineItemId, line]));
+    const projectedProject = project ? { ...project, lineItems: [...project.lineItems.map((line) => updateMap.get(line.lineItemId) ?? line), ...plan.additions] } : null;
+    const projectedSummary = projectedProject ? calculateProject(projectedProject).summary : null;
+    const currentConstruction = currentSummary?.constructionCost ?? 0;
+    const currentOther = currentSummary?.otherCost ?? 0;
     return {
       existingItemsDetailsOpen: this.existingItemsDetailsOpen,
       existingItemPlan: plan,
       existingItemAction: this.existingItemAction,
       addedCount: plan.additions.length,
       updatedCount: plan.updates.length,
-      constructionDelta: plan.constructionDelta,
-      otherDelta: plan.otherDelta,
-      projectedConstructionCost: currentConstruction + plan.constructionDelta,
-      projectedOtherCost: currentOther + plan.otherDelta,
+      constructionDelta: projectedSummary ? projectedSummary.constructionCost - currentConstruction : plan.constructionDelta,
+      otherDelta: projectedSummary ? projectedSummary.otherCost - currentOther : plan.otherDelta,
+      projectedConstructionCost: projectedSummary?.constructionCost ?? currentConstruction + plan.constructionDelta,
+      projectedOtherCost: projectedSummary?.otherCost ?? currentOther + plan.otherDelta,
+      projectedContingencyCost: projectedSummary?.contingencyCost ?? contingencyCost,
+      projectedTotalCost: projectedSummary?.totalProjectCost ?? constructionCost + otherCost + contingencyCost,
+      totalDelta: projectedSummary ? projectedSummary.totalProjectCost - (currentSummary?.totalProjectCost ?? 0) : constructionCost + otherCost + contingencyCost,
       destinationLabel: draft.destinationProjectMode === "active"
         ? this.options.activeProject?.name ?? "the current Project"
         : draft.newProjectName,
@@ -887,6 +1020,7 @@ export class ExcelImportController {
       automaticallySkippedItemCount: skippedRows.filter((row) => draft.decisions[row.rowId]?.automaticallySkipped).length,
       failedItemCount: skippedRows.filter((row) => row.outcome === "failed").length,
       skippedReasons: [...skippedReasons.entries()].map(([label, count]) => ({ label, count })),
+      canCommit: effectiveLines.length > 0,
       constructionCost,
       otherCost,
       hasOtherCosts: otherCost !== 0,
@@ -901,6 +1035,8 @@ export class ExcelImportController {
 
   refreshDestinationProject(project: UserProject | null): void {
     this.options.activeProject = project;
+    if (!this.view.rows.length || this.view.destinationProjectMode !== "active") return;
+    this.existingItemChoices = {};
   }
 
   private refreshExistingItemPlan(): void {
@@ -912,7 +1048,7 @@ export class ExcelImportController {
 
   private async commit(): Promise<void> {
     if (!this.readyDraft || this.view.commitStatus === "committing" || this.view.commitStatus === "committed") return;
-    if (this.readyDraft.existingItemPlan?.errors.length || this.view.confirmation?.importedCount === 0) return;
+    if (this.readyDraft.existingItemPlan?.errors.length || !this.view.confirmation?.canCommit) return;
     if (!this.options.onCommit) {
       this.view = { ...this.view, commitStatus: "failed", commitMessage: "The application could not provide a Project commit handler." };
       this.options.onRender();
@@ -979,11 +1115,14 @@ function requiresReviewDecision(row: MatchedImportRow): boolean {
 }
 
 function isReviewIssueFilter(value: string): value is ExcelImportReviewIssueFilter {
-  return value === "all" || value === "description" || value === "unit" || value === "missing" || value === "allowance" || value === "other";
+  return value === "all" || value === "description" || value === "unit" || value === "missing" || value === "allowance" || value === "other"
+    || value === "project-changed" || value === "project-unchanged" || value === "project-needs-target";
 }
 
-function reviewIssueFilterMatches(row: MatchedImportRow, filter: ExcelImportReviewIssueFilter): boolean {
+function reviewIssueFilterMatches(row: MatchedImportRow, filter: ExcelImportReviewIssueFilter, match?: ExistingItemPlan["matches"][number], choice?: ExistingItemChoice): boolean {
   if (filter === "all") return true;
+  if (match) return filter === `project-${existingMatchStatus(match, choice)}`;
+  if (filter.startsWith("project-")) return false;
   if (row.classification === "summary" && row.values.sourceTotal !== null) return filter === "allowance";
   if ((!row.values.description.trim() && row.matchStatus !== "catalog-ready") || row.values.quantity === null || row.values.unitCost === null) return filter === "missing";
   if (row.descriptionComparison === "different") return filter === "description";

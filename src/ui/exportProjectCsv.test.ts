@@ -2,9 +2,13 @@ import { describe, expect, it } from "vitest";
 import { createCatalogProjectLineItem, createCustomProjectLineItem, createUserProject } from "../projects/projectWorkspace";
 import { buildProjectCsv } from "./exportProjectCsv";
 
+const rows = (csv: string) => csv.split("\r\n");
+
 describe("Project CSV export", () => {
-  it("exports custom lines with calculated totals and blank evidence identity", () => {
+  it("exports the approved context, visible line columns, and cost summary", () => {
     const project = createUserProject("Estimate", "CO");
+    project.location = "Main St";
+    project.notes = "Review this";
     const custom = createCustomProjectLineItem("CO");
     custom.itemCode = "SOFT";
     custom.group = "Construction";
@@ -14,146 +18,52 @@ describe("Project CSV export", () => {
     custom.preferredUnitCost = 25;
     project.lineItems = [custom];
 
-    const csv = buildProjectCsv(project);
-    const rows = csv.split("\r\n");
-    const headers = rows[0].split(",");
-    const values = rows[1].split(",");
-    expect(values[headers.indexOf("Added Via")]).toBe("Manual");
-    expect(headers).toContain("Group");
-    expect(headers.slice(0, 20)).toEqual([
-      "State", "Project Name", "Project Location", "Project Notes", "Line Number", "Added Via",
-      "Group", "Agency ID", "Agency Item ID", "Item Code", "Description", "Quantity", "Unit",
-      "Preferred Unit Cost", "Total Item Cost", "Line Notes", "Evidence Row Count", "Included Observation IDs",
-      "Created At", "Updated At"
+    const output = rows(buildProjectCsv(project));
+    expect(output.slice(0, 4)).toEqual(["Project,Estimate", "State,CO", "Location,Main St", "Notes,Review this"]);
+    expect(output[5]).toBe("Group,Cost Category,Item Code,Description,Unit Cost,Unit,Quantity,Total Item Cost,Notes");
+    expect(output[6]).toBe("Construction,Other,SOFT,Soft costs,25,LS,2,50,");
+    expect(output.some((row) => row.includes("Agency ID"))).toBe(false);
+    const summaryStart = output.indexOf("Project Cost Summary,Value");
+    expect(output.slice(summaryStart, summaryStart + 5)).toEqual([
+      "Project Cost Summary,Value", "Construction Costs,0", "Other costs,50",
+      "Contingencies,0", "Total Project Cost,50"
     ]);
-    expect(headers.slice(20)).toEqual(["Item Type", "Cost Category", "Import File", "Import Sheet", "Import Row"]);
-    expect(values[headers.indexOf("Group")]).toBe("Construction");
-    expect(values[headers.indexOf("Agency ID")]).toBe("");
-    expect(values[headers.indexOf("Agency Item ID")]).toBe("");
-    expect(values[headers.indexOf("Total Item Cost")]).toBe("50");
-    expect(values[headers.indexOf("Item Type")]).toBe("Custom");
-    expect(values[headers.indexOf("Cost Category")]).toBe("Other");
-    const summaryStart = rows.indexOf("Project Cost Summary,Value");
-    expect(rows[summaryStart + 1]).toBe("Construction Costs,0");
-    expect(rows[summaryStart + 2]).toBe("Other costs,50");
-    expect(rows[summaryStart + 3]).toBe("Contingency percentage,0");
-    expect(rows[summaryStart + 4]).toBe("Contingencies,0");
-    expect(rows[summaryStart + 5]).toBe("Total Project Cost,50");
   });
 
-  it("exports catalog lines with optional evidence fields", () => {
+  it("omits evidence and import provenance from the human-facing CSV", () => {
     const project = createUserProject("Catalog export", "CO");
-    const withoutEvidence = createCatalogProjectLineItem({
-      state: "CO",
-      agencyId: "co_cdot",
-      agencyItemId: "co_cdot_001",
-      group: "Construction",
-      itemCode: "001",
-      description: "Catalog item",
-      unit: "EACH",
-      quantity: null,
-      preferredUnitCost: null,
-      notes: "",
-      evidenceContext: null
-    });
-    const withEvidence = createCatalogProjectLineItem({
-      ...withoutEvidence,
-      state: "CO",
-      agencyId: "co_cdot",
-      agencyItemId: "co_cdot_002",
-      group: "Construction",
-      itemCode: "002",
-      description: "Evidence item",
-      unit: "LS",
-      quantity: 1,
-      preferredUnitCost: 25,
-      notes: "",
-      evidenceContext: {
-        query: {} as never,
-        filters: {} as never,
-        sort: {} as never,
-        includedRowCount: 2,
+    const line = createCatalogProjectLineItem({
+      state: "CO", agencyId: "co_cdot", agencyItemId: "co_cdot_002", group: "Construction",
+      itemCode: "002", description: "Evidence item", unit: "LS", quantity: 1,
+      preferredUnitCost: 25, notes: "", evidenceContext: {
+        query: {} as never, filters: {} as never, sort: {} as never, includedRowCount: 2,
         includedObservationIds: ["observation_1", "observation_2"],
-        summarySnapshot: {
-          awarded: null,
-          average: null,
-          engineer: null,
-          inflationAdjustmentEnabled: false,
-          inflationTargetPeriodLabel: null,
-          valuesAreInflationAdjusted: false
-        },
-        costSource: "manual"
+        summarySnapshot: { awarded: null, average: null, engineer: null, inflationAdjustmentEnabled: false,
+          inflationTargetPeriodLabel: null, valuesAreInflationAdjusted: false }, costSource: "manual"
       }
     });
-    project.lineItems = [withoutEvidence, withEvidence];
-
-    const rows = buildProjectCsv(project).split("\r\n");
-    const headers = rows[0].split(",");
-    const evidenceCountColumn = headers.indexOf("Evidence Row Count");
-    const observationIdsColumn = headers.indexOf("Included Observation IDs");
-    const addedViaColumn = headers.indexOf("Added Via");
-
-    expect(rows[1].split(",")[addedViaColumn]).toBe("Roadway Costing Tool");
-    expect(rows[2].split(",")[addedViaColumn]).toBe("Roadway Costing Tool");
-    expect(rows[1].split(",")[evidenceCountColumn]).toBe("0");
-    expect(rows[1].split(",")[observationIdsColumn]).toBe("");
-    expect(rows[2].split(",")[evidenceCountColumn]).toBe("2");
-    expect(rows[2].split(",")[observationIdsColumn]).toBe("observation_1;observation_2");
-  });
-
-  it("exports imported provenance after the existing fixed columns", () => {
-    const project = createUserProject("Imported export", "CO");
-    const imported = createCustomProjectLineItem("CO", "construction");
-    imported.description = "Imported item";
-    imported.importSource = {
-      importId: "import_test",
-      fileName: "estimate.xlsx",
-      sheetName: "Estimate",
-      rowNumber: 11,
-      sourceRange: "B11:H11",
-      importedAt: "2026-09-09T00:00:00.000Z",
-      original: { itemCode: "", description: "Imported item", unit: "LS", quantity: 1, unitCost: 25, total: 25 },
-      decisions: []
-    };
-    project.lineItems = [imported];
-
-    const rows = buildProjectCsv(project).split("\r\n");
-    const headers = rows[0].split(",");
-    const values = rows[1].split(",");
-
-    expect(values[headers.indexOf("Added Via")]).toBe("Excel Import");
-    expect(values[headers.indexOf("Item Type")]).toBe("Custom");
-    expect(values[headers.indexOf("Cost Category")]).toBe("Construction");
-    expect(values[headers.indexOf("Import File")]).toBe("estimate.xlsx");
-    expect(values[headers.indexOf("Import Sheet")]).toBe("Estimate");
-    expect(values[headers.indexOf("Import Row")]).toBe("11");
+    line.importSource = { importId: "import", fileName: "estimate.xlsx", sheetName: "Estimate", rowNumber: 11,
+      sourceRange: "B11:H11", importedAt: "2026-09-09T00:00:00.000Z", original: {}, decisions: [] } as never;
+    project.lineItems = [line];
+    const header = rows(buildProjectCsv(project))[5];
+    expect(header).toBe("Group,Cost Category,Item Code,Description,Unit Cost,Unit,Quantity,Total Item Cost,Notes");
+    expect(header).not.toMatch(/Agency|Observation|Import|Added Via|Created At|Updated At/u);
   });
 
   it("exports the active Project sort without changing stored line order", () => {
     const project = createUserProject("Sortable export", "CO");
-    const later = createCustomProjectLineItem("CO");
-    later.itemCode = "20";
-    const earlier = createCustomProjectLineItem("CO");
-    earlier.itemCode = "3";
+    const later = createCustomProjectLineItem("CO"); later.itemCode = "20";
+    const earlier = createCustomProjectLineItem("CO"); earlier.itemCode = "3";
     project.lineItems = [later, earlier];
-
-    const csv = buildProjectCsv(project, { key: "itemCode", direction: "asc" });
-    const rows = csv.split("\r\n");
-    const itemCodeColumn = rows[0].split(",").indexOf("Item Code");
-
-    expect(rows.slice(1, 1 + project.lineItems.length).map((row) => row.split(",")[itemCodeColumn])).toEqual(["3", "20"]);
+    const output = rows(buildProjectCsv(project, { key: "itemCode", direction: "asc" }));
+    expect(output.slice(6, 8).map((row) => row.split(",")[2])).toEqual(["3", "20"]);
     expect(project.lineItems.map((lineItem) => lineItem.itemCode)).toEqual(["20", "3"]);
   });
 
   it("exports blank Group values for legacy lines", () => {
     const project = createUserProject("Legacy export", "CO");
-    const custom = createCustomProjectLineItem("CO");
-    custom.itemCode = "LEGACY";
+    const custom = createCustomProjectLineItem("CO"); custom.itemCode = "LEGACY"; custom.group = "";
     project.lineItems = [custom];
-
-    const rows = buildProjectCsv(project).split("\r\n");
-    const headers = rows[0].split(",");
-    const values = rows[1].split(",");
-    expect(values[headers.indexOf("Group")]).toBe("");
+    expect(rows(buildProjectCsv(project))[6].split(",")[0]).toBe("");
   });
 });

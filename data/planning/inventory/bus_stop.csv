@@ -1,0 +1,10 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_608-00000,608-00000,Concrete Sidewalk,SY,46,18,125.12,107.25,155.75,46
+co_cdot_608-00006,608-00006,Concrete Sidewalk (6 Inch),SY,33,19,91.00,75.00,145.00,34
+co_cdot_622-00100,622-00100,Shade Shelter,EACH,5,2,43890.42,38574.09,89028.08,7
+co_cdot_622-00250,622-00250,Bench,EACH,4,2,2370.12,2112.85,2859.65,4
+co_cdot_608-00005,608-00005,Concrete Sidewalk (Special),SY,3,2,120.00,108.50,139.36,3
+co_cdot_608-00350,608-00350,Concrete Sidewalk (Colored),SY,3,1,132.74,108.77,308.87,3
+co_cdot_622-00096,622-00096,Shelter (Install Only),EACH,1,1,7000.00,7000.00,7000.00,1
+co_cdot_622-00252,622-00252,Precast Concrete Bench,EACH,1,0,7752.33,7752.33,7752.33,1
+co_cdot_608-00008,608-00008,CONCRETE SIDEWALK (8 INCH),SY,0,0,,,,0

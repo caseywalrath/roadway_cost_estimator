@@ -1,0 +1,16 @@
+Project,Main Street Reconstruction
+State,CO
+Location,Main St from 1st Ave to 5th Ave
+Notes,"'=Review this synthetic sample"
+
+Group,Cost Category,Item Code,Description,Unit Cost,Unit,Quantity,Total Item Cost,Notes
+Pavement,Construction,401-001,"Hot mix asphalt",118.5,TON,250,29625,
+Traffic,Construction,630-001,"Traffic control",4500,LS,1,4500,"Night work"
+Design,Other,SOFT,"Design and permitting",12500,LS,1,12500,"Manual line"
+
+Project Cost Summary,Value
+Construction Costs,34125
+Other costs,12500
+Contingency percentage,10
+Contingencies,3412.5
+Total Project Cost,50037.5

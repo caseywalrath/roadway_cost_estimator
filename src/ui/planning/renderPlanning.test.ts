@@ -1,0 +1,316 @@
+// @vitest-environment jsdom
+import { describe, expect, it } from "vitest";
+import rawLibrary from "../../../data/planning/co_element_library.json";
+import prices from "../../../public/data/states/co/planning_prices.json";
+import { calculateAlternative } from "../../planning/calculate";
+import { setBudget, setElementInput, setElementOverride } from "../../planning/edit";
+import { resolveLibrary, validateLibrary } from "../../planning/library";
+import { createProject } from "../../planning/templates";
+import type { PlanningProject, PriceTable } from "../../planning/types";
+import { formatElementAmount, formatTotalAmount } from "./format";
+import { renderLoadError, renderNewProjectPanel, renderPlanningView, type PlanningViewModel } from "./renderPlanning";
+
+const validated = validateLibrary(rawLibrary);
+if (!validated.ok) throw new Error("library invalid");
+const { library } = resolveLibrary(validated.value, prices as unknown as PriceTable);
+
+function makeVm(project: PlanningProject, extra: Partial<PlanningViewModel> = {}): PlanningViewModel {
+  const result = calculateAlternative(library, project);
+  return {
+    library,
+    project,
+    projects: [{ id: project.id, name: project.name, updatedAt: project.updatedAt, revision: 0 }],
+    result,
+    altTotals: { [project.selectedAlternativeId]: result.summary.total },
+    basePreview: {},
+    openDetails: new Set(),
+    addAltOpen: false,
+    addAltName: "Alternative B",
+    renaming: false,
+    saveStatus: { kind: "saved", at: "2026-01-01T12:00:00.000Z" },
+    notice: null,
+    canCreateProject: false,
+    ...extra
+  };
+}
+
+const complete = createProject(library, { id: "p1", name: "Main Street", now: "2026-01-01T00:00:00.000Z", templateId: "complete_street", alternativeId: "a1" });
+
+function render(vm: PlanningViewModel): HTMLElement {
+  const div = document.createElement("div");
+  div.innerHTML = renderPlanningView(vm);
+  return div;
+}
+
+describe("renderPlanningView", () => {
+  const vm = makeVm(complete);
+  const root = render(vm);
+
+  it("renders the header, corridor strip, groups and summary", () => {
+    expect(root.querySelector("[data-planning-root]")).not.toBeNull();
+    expect(root.querySelector("[data-planning-project-name]")?.textContent).toBe("Main Street");
+    expect(root.querySelector(".planning-header .eyebrow")?.textContent).toBe("Planning estimate");
+    expect(root.textContent).toContain("Started from Complete street");
+    expect(root.querySelectorAll("[data-planning-project-input]").length).toBe(3);
+    expect(root.querySelectorAll("fieldset.planning-group").length).toBe(4);
+    expect(root.querySelector("[data-planning-group='base'] .planning-group-heading")?.textContent).toContain("Choose one");
+    expect(root.querySelector(".planning-summary")?.getAttribute("id")).toBe("planning-summary");
+    expect(root.querySelector(".planning-total-bar")).not.toBeNull();
+    expect(root.textContent).toContain(`Prices: ${library.priceBasisLabel}`);
+  });
+
+  it("offers CSV and backup downloads in that order without a print action", () => {
+    const kinds = [...root.querySelectorAll<HTMLElement>("[data-planning-export]")].map((b) => b.dataset.planningExport);
+    expect(kinds).toEqual(["csv", "json"]);
+  });
+
+  it("marks bid-database elements as filled, allowance elements as hollow, and leaves other rows unmarked", () => {
+    const marker = (id: string) => root.querySelector(`[data-element-row="${id}"] .planning-origin`);
+    expect(marker("sidewalk")?.className).toContain("planning-origin--database");
+    expect(marker("reconstruction")?.className).toContain("planning-origin--database");
+    expect(marker("lighting")?.className).toContain("planning-origin--external");
+    expect(marker("signal")?.className).toContain("planning-origin--external");
+    expect(marker("lighting")?.getAttribute("aria-label")).toBe("External allowance");
+    expect(marker("lighting")?.getAttribute("title")).toBe("External planning estimate, not from bid history.");
+    expect(marker("sidewalk")?.getAttribute("title")).toBe("Bid database price, from CDOT contract history.");
+    expect(marker("base_none")).toBeNull();
+    expect(marker("right_of_way")).toBeNull();
+    expect(root.querySelector(".planning-origin-legend")).not.toBeNull();
+  });
+
+  it("uses radios for the base group and checkboxes for corridor elements", () => {
+    const radios = root.querySelectorAll<HTMLInputElement>("[data-planning-group='base'] input[type='radio']");
+    expect(radios.length).toBe(4);
+    expect([...radios].filter((r) => r.checked).map((r) => r.value)).toEqual(["reconstruction"]);
+    expect(root.querySelectorAll("[data-planning-group='corridor'] input[type='checkbox']").length).toBeGreaterThan(3);
+    expect(root.querySelector("[data-element-row='base_none'] .muted")?.textContent).toBe("Elements only");
+    expect(root.querySelector("[data-element-row='base_none'] [data-element-amount]")).toBeNull();
+  });
+
+  it("shows calculated amounts rounded to $1,000 and totals to $10,000", () => {
+    const result = vm.result;
+    const recon = result.elements.find((e) => e.elementId === "reconstruction")!;
+    const box = root.querySelector<HTMLInputElement>("[data-element-amount='reconstruction']")!;
+    expect(box.value).toBe(formatElementAmount(recon.calculated).replace("$", ""));
+    expect(box.value).toMatch(/^\d{1,3}(,\d{3})*$/);
+    expect(box.value.endsWith(",000")).toBe(true);
+    expect(root.querySelector("[data-summary='total']")?.textContent).toBe(formatTotalAmount(result.summary.total));
+    expect(root.querySelector("[data-summary='construction']")?.textContent).toBe(formatElementAmount(result.summary.construction));
+    expect(root.querySelector("[data-summary='rightOfWay']")?.textContent).toBe("Not included");
+  });
+
+  it("marks unselected rows with the off class and keeps selected rows plain", () => {
+    expect(root.querySelector("[data-element-row='reconstruction']")?.classList.contains("planning-row--off")).toBe(false);
+    expect(root.querySelector("[data-element-row='signal']")?.classList.contains("planning-row--off")).toBe(true);
+    expect(root.querySelector<HTMLInputElement>("[data-element-amount='signal']")?.getAttribute("aria-label")).toBe("New or rebuilt signal amount in dollars, not included");
+  });
+
+  it("renders row details, components with sources, and the allowance line", () => {
+    const row = root.querySelector("[data-element-row='curb_gutter']")!;
+    expect(row.querySelector("details.planning-row-details")).not.toBeNull();
+    expect(row.querySelector("[data-element-brief]")?.textContent).toContain("0.50 mi");
+    expect(row.querySelector("[data-element-components]")?.textContent).toContain("allowance for minor items, traffic control and mobilization");
+    expect(row.querySelector("[data-element-components] small[title]")).not.toBeNull();
+    expect(row.querySelector("[data-element-inputs] [data-input-key='lengthMiles']")).not.toBeNull();
+  });
+
+  it("groups assembly elements into Quantities and Unit costs, and leaves bid-database elements ungrouped", () => {
+    const lighting = root.querySelector("[data-element-inputs='lighting']")!;
+    expect(lighting.textContent).toContain("Quantities");
+    expect(lighting.querySelector(".planning-unit-costs")?.textContent).toContain("Unit costs");
+    const box = lighting.querySelector<HTMLInputElement>("[data-input-key='unitCost.assembly']")!;
+    expect(box.value).toBe("1,120,000");
+    expect(box.getAttribute("aria-label")).toBe("Street lighting, both sides at 200 ft, dollars per mi");
+    expect(lighting.querySelector(".planning-unit-cost-box")?.textContent).toContain("per mi");
+    expect(lighting.querySelector("[data-element-input-reset]")).toBeNull();
+    const reconstruction = root.querySelector("[data-element-inputs='reconstruction']")!;
+    expect(reconstruction.querySelector(".planning-unit-costs")).toBeNull();
+    expect(reconstruction.textContent).not.toContain("Quantities");
+  });
+
+  it("shows Edited and a reset to the default once a unit cost is changed", () => {
+    const edited = render(makeVm(setElementInput(complete, "a1", "lighting", "unitCost.assembly", 1300000)));
+    const region = edited.querySelector("[data-element-inputs='lighting']")!;
+    expect(region.querySelector<HTMLInputElement>("[data-input-key='unitCost.assembly']")?.value).toBe("1,300,000");
+    expect(region.querySelector("[data-element-input-reset='lighting']")?.textContent).toBe("Use default ($1,120,000)");
+    expect(region.textContent).toContain("Edited");
+    expect(edited.querySelector("[data-planning-edited-costs]")?.textContent).toBe("Includes 1 edited unit cost.");
+    expect(edited.querySelector("[data-planning-edited-costs]")?.hasAttribute("hidden")).toBe(false);
+    expect(root.querySelector("[data-planning-edited-costs]")?.hasAttribute("hidden")).toBe(true);
+  });
+
+  it("keeps internal data decisions out of the element panels", () => {
+    const text = root.querySelector(".planning-groups")!.textContent ?? "";
+    for (const jargon of ["Calibration report", "calibration report", "FHU", "minor-items factor", "median of", "Assembly cost"]) {
+      expect(text).not.toContain(jargon);
+    }
+  });
+
+  it("shows no reset link until an amount is overridden, then shows the calculated amount", () => {
+    expect(root.querySelector("[data-element-reset]")).toBeNull();
+    const calculated = vm.result.elements.find((e) => e.elementId === "curb_gutter")!.calculated;
+    const overridden = render(makeVm(setElementOverride(complete, "a1", "curb_gutter", 0)));
+    expect(overridden.querySelector<HTMLInputElement>("[data-element-amount='curb_gutter']")?.value).toBe("0");
+    expect(overridden.querySelector("[data-element-reset='curb_gutter']")?.textContent).toBe(`Reset to calculated ${formatElementAmount(calculated)}`);
+  });
+
+  it("renders other costs as plain dollar boxes with a placeholder", () => {
+    const box = root.querySelector<HTMLInputElement>("[data-element-amount='right_of_way']")!;
+    expect(box.placeholder).toBe("Not included");
+    expect(box.value).toBe("");
+    const withRow = render(makeVm(setElementOverride(complete, "a1", "right_of_way", 250000)));
+    expect(withRow.querySelector<HTMLInputElement>("[data-element-amount='right_of_way']")?.value).toBe("250,000");
+    expect(withRow.querySelector("[data-summary='rightOfWay']")?.textContent).toBe("$250,000");
+  });
+
+  it("shows the budget line with an under or over class", () => {
+    expect(root.querySelector("[data-summary='budgetLine']")?.hasAttribute("hidden")).toBe(true);
+    const total = vm.result.summary.total;
+    const under = render(makeVm(setBudget(complete, total + 500000)));
+    expect(under.querySelector("[data-summary='budgetRemaining']")?.className).toBe("planning-budget--under");
+    expect(under.querySelector("[data-summary='budgetRemaining']")?.textContent).toContain("remaining");
+    expect(under.querySelector("[data-summary='budgetShort']")?.textContent).toContain("under budget");
+    const over = render(makeVm(setBudget(complete, total - 500000)));
+    expect(over.querySelector("[data-summary='budgetRemaining']")?.className).toBe("planning-budget--over");
+    expect(over.querySelector("[data-summary='budgetRemaining']")?.textContent).toContain("over budget");
+  });
+
+  it("offers a template choice left of the stage, with the stages in order", () => {
+    const labels = (selector: string) => [...root.querySelectorAll(`${selector} option`)].map((o) => o.textContent);
+    expect(labels("[data-planning-template]")).toEqual(["Mill and overlay", "Full reconstruction", "Complete street", "Sidewalk gap", "Multi-use path", "Intersection safety", "Blank (no elements)"]);
+    expect(root.querySelector<HTMLSelectElement>("[data-planning-template]")?.value).toBe("complete_street");
+    expect(labels("[data-planning-stage]")).toEqual(["Planning Study", "Early Design", "Final Design"]);
+    const fields = [...root.querySelectorAll(".planning-corridor-fields > label")];
+    const indexOf = (selector: string) => fields.findIndex((f) => f.querySelector(selector));
+    expect(indexOf("[data-planning-template]")).toBe(indexOf("[data-planning-stage]") - 1);
+    expect(root.querySelector("[data-planning-template]")?.closest("label")?.textContent).toContain("Applies to Alternative A");
+  });
+
+  it("keeps alternative inputs in the left column and only the tabs and outputs in the summary", () => {
+    const main = root.querySelector(".planning-main")!;
+    for (const selector of ["[data-planning-alt-name]", "[data-planning-alt-description]", "[data-planning-add-alt]", "[data-planning-add-alt-form]", "[data-planning-duplicate-alt]", "[data-planning-delete-alt]"]) {
+      expect(main.querySelector(selector), selector).not.toBeNull();
+      expect(root.querySelector(`.planning-summary ${selector}`), selector).toBeNull();
+    }
+    expect(root.querySelectorAll(".planning-summary [data-planning-alt]").length).toBe(1);
+    expect(main.querySelector("[data-planning-alt]")).toBeNull();
+    const order = [...main.children].map((c) => c.getAttribute("aria-label") ?? c.querySelector("h3")?.textContent);
+    expect(order.slice(0, 3)).toEqual(["Corridor", "Selected alternative", "Elements"]);
+    const boxes = [...main.querySelectorAll(".planning-groups > .panel-block")].map((b) => b.querySelector("h3")?.textContent);
+    expect(boxes).toEqual(["Base treatment", "Corridor elements", "Spot elements", "Other costs"]);
+    expect(main.querySelector(".planning-groups > .planning-origin-legend")).not.toBeNull();
+  });
+
+  it("puts Create engineer Project last in the left column and omits it when the host cannot create one", () => {
+    expect(root.querySelector("[data-planning-create-project]")).toBeNull();
+    const withHandoff = render(makeVm(complete, { canCreateProject: true }));
+    const main = withHandoff.querySelector(".planning-main")!;
+    expect(main.lastElementChild?.getAttribute("aria-label")).toBe("Hand off to design");
+    expect(main.lastElementChild?.querySelector("[data-planning-create-project]")?.textContent).toBe("Create engineer Project");
+    expect(withHandoff.querySelector(".planning-summary [data-planning-create-project]")).toBeNull();
+  });
+
+  it("marks the selected alternative with aria-pressed and disables Delete for one alternative", () => {
+    const button = root.querySelector("[data-planning-alt='a1']")!;
+    expect(button.getAttribute("aria-pressed")).toBe("true");
+    expect(button.classList.contains("app-view-tab--active")).toBe(true);
+    expect(root.querySelector<HTMLButtonElement>("[data-planning-delete-alt]")?.disabled).toBe(true);
+  });
+
+  it("escapes project and alternative names", () => {
+    const hostile = { ...complete, name: '<img src=x onerror="1">' };
+    const out = render(makeVm(hostile));
+    expect(out.querySelector("img")).toBeNull();
+    expect(out.querySelector("[data-planning-project-name]")?.textContent).toBe('<img src=x onerror="1">');
+  });
+
+  it("shows the conflict message with a reload button", () => {
+    const out = render(makeVm(complete, { saveStatus: { kind: "conflict" } }));
+    expect(out.querySelector("[data-planning-save-status]")?.textContent).toContain("changed in another tab");
+    expect(out.querySelector("[data-planning-reload]")?.textContent).toBe("Reload saved version");
+  });
+
+  it("carries no hard-coded color style anywhere in the output", () => {
+    const html = [renderPlanningView(makeVm(setBudget(complete, 1))), renderNewProjectPanel(library, { name: "", templateId: null, inputs: complete.inputs, error: "" }, complete, vm.projects), renderLoadError("x")].join("");
+    const holder = document.createElement("div");
+    holder.innerHTML = html;
+    for (const el of holder.querySelectorAll("[style]")) {
+      expect(el.getAttribute("style") ?? "").not.toMatch(/#[0-9a-f]{3,6}\b|rgb|color/i);
+    }
+    expect(html).not.toMatch(/style="[^"]*(#[0-9a-f]{3,6}|rgb)/i);
+    expect(html).not.toMatch(/<style/i);
+  });
+});
+
+describe("renderNewProjectPanel", () => {
+  const draft = { name: "", templateId: "mill_overlay" as string | null, inputs: complete.inputs, error: "" };
+  const panelFor = (d = draft, project: PlanningProject | null = null) => {
+    const panel = document.createElement("div");
+    panel.innerHTML = renderNewProjectPanel(library, d, project, [{ id: "p1", name: "Main Street", updatedAt: "2026-01-01T00:00:00.000Z", revision: 1 }]);
+    return panel;
+  };
+
+  it("lists each template plus Blank and prefills the corridor fields", () => {
+    const panel = panelFor();
+    const radios = panel.querySelectorAll<HTMLInputElement>("input[name='planning-template']");
+    expect(radios.length).toBe(library.templates.length + 1);
+    expect([...radios].find((r) => r.checked)?.value).toBe("mill_overlay");
+    expect(panel.querySelector<HTMLInputElement>(".planning-header [data-planning-new-name]")?.value).toBe("");
+    expect(panel.querySelector<HTMLInputElement>("[data-planning-new-name]")?.placeholder).toBe("Mill and overlay estimate");
+    expect(panel.querySelector("[data-corridor-field='roadwayWidthFt']")?.classList.contains("planning-corridor-field--unused")).toBe(false);
+    expect(panel.querySelectorAll("[data-planning-new-input]").length).toBe(3);
+    expect(panel.querySelector("[data-planning-new-cancel]")).toBeNull();
+    expect(panel.querySelector("[data-planning-create]")?.textContent).toBe("Create project");
+  });
+
+  it("shows Cancel when a project already exists and checks Blank for a null template", () => {
+    const panel = panelFor({ ...draft, templateId: null }, complete);
+    expect(panel.querySelector("[data-planning-new-cancel]")).not.toBeNull();
+    expect(panel.querySelector<HTMLInputElement>("input[name='planning-template'][value='']")?.checked).toBe(true);
+  });
+
+  it("keeps the header and two-column layout of the finished project", () => {
+    const panel = panelFor();
+    expect(panel.querySelector(".planning-header [data-planning-menu='actions']")).not.toBeNull();
+    expect(panel.querySelector(".planning-layout > .planning-main > section[aria-label='Starting template'] + section [data-planning-new-input]")).not.toBeNull();
+    expect(panel.querySelector(".planning-main [data-planning-create]")).not.toBeNull();
+    expect(panel.querySelector("aside.planning-summary [data-planning-create]")).toBeNull();
+    expect(panel.querySelector(".planning-layout > aside.planning-summary")).not.toBeNull();
+  });
+
+  it("disables actions that need an open project, keeps Import and project switching, and has no current project", () => {
+    const panel = panelFor();
+    for (const selector of ["[data-planning-new-project]", "[data-planning-rename-project]", "[data-planning-export='csv']", "[data-planning-export='json']", "[data-planning-delete-project]"]) {
+      expect(panel.querySelector<HTMLButtonElement>(selector)?.disabled).toBe(true);
+    }
+    expect(panel.querySelector<HTMLButtonElement>("[data-planning-import]")?.disabled).toBe(false);
+    expect(panel.querySelector<HTMLButtonElement>("[data-planning-open-project='p1']")?.disabled).toBe(false);
+    expect(panel.querySelector("[data-planning-import-input]")).not.toBeNull();
+    expect(panel.querySelectorAll("[data-planning-import-input]").length).toBe(1);
+  });
+
+  it("previews the same total the created project will have", () => {
+    const panel = panelFor({ ...draft, templateId: "complete_street" });
+    const expected = formatTotalAmount(calculateAlternative(library, createProject(library, { id: "x", name: "x", now: "2026-01-01T00:00:00.000Z", templateId: "complete_street", alternativeId: "a" })).summary.total);
+    expect(panel.querySelector("[data-planning-new-preview] .planning-total strong")?.textContent).toBe(expected);
+    expect(panel.querySelector("[data-planning-new-preview] h3")?.textContent).toBe("Complete street");
+    expect(panel.querySelectorAll("[data-planning-new-details] .planning-components li").length).toBeGreaterThan(3);
+  });
+
+  it("previews a blank project as $0 with no elements", () => {
+    const panel = panelFor({ ...draft, templateId: null });
+    expect(panel.querySelector("[data-planning-new-preview] h3")?.textContent).toBe("Blank");
+    expect(panel.querySelector("[data-planning-new-preview] .planning-total strong")?.textContent).toBe("$0");
+    expect(panel.querySelector("[data-planning-new-details]")?.textContent).toContain("No elements selected.");
+  });
+});
+
+describe("renderLoadError", () => {
+  it("shows the plain message and the error text", () => {
+    const out = document.createElement("div");
+    out.innerHTML = renderLoadError("HTTP 500 <b>");
+    expect(out.textContent).toContain("Planning prices could not be loaded. Reload the page to try again.");
+    expect(out.textContent).toContain("HTTP 500 <b>");
+    expect(out.querySelector("b")).toBeNull();
+  });
+});

@@ -10,7 +10,7 @@ export function captureResultsTableScroll(root: ParentNode): ResultsTableScrollP
   if (!scrollContainer) return null;
 
   return {
-    top: scrollContainer.scrollTop,
+    top: document.scrollingElement?.scrollTop ?? window.scrollY,
     left: scrollContainer.scrollLeft
   };
 }
@@ -24,6 +24,13 @@ export function restoreResultsTableScroll(
   const scrollContainer = root.querySelector<HTMLElement>(resultsTableScrollSelector);
   if (!scrollContainer) return;
 
-  scrollContainer.scrollTop = position.top;
+  const pageScroller = document.scrollingElement;
+  if (pageScroller) {
+    pageScroller.scrollTop = position.top;
+  } else {
+    document.documentElement.scrollTop = position.top;
+    document.body.scrollTop = position.top;
+  }
+  scrollContainer.scrollTop = 0;
   scrollContainer.scrollLeft = position.left;
 }

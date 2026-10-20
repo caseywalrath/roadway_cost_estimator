@@ -29,7 +29,9 @@ import type {
 import {
   addProject,
   addProjectLineItem,
+  calculateProject,
   createDefaultProjectSort,
+  createId,
   createUserProject,
   createCatalogProjectLineItem,
   createCustomProjectLineItem,
@@ -42,7 +44,6 @@ import {
   projectConstructionCost,
   projectContingencyCost,
   projectGroupSuggestions,
-  projectLineTotal,
   projectOtherCost,
   projectTotal,
   removeProjectLineItem,
@@ -50,10 +51,10 @@ import {
   replaceProject,
   replaceProjectLineItem,
   setActiveProject,
-  updateProjectContingencyPercent,
+  setProjectLinePricingMode,
   updateProjectLineItem
 } from "../projects/projectWorkspace";
-import { createImportedCopy, downloadProjectBackup, readProjectBackupFile } from "../projects/projectBackup";
+import { downloadProjectBackup } from "../projects/projectBackup";
 import { openProjectRepository, ProjectConflictError, type ProjectRepository } from "../projects/projectRepository";
 import { ProjectEditCoordinator } from "../projects/projectEditCoordinator";
 import { ExcelImportController, ExcelImportNeedsReviewError, type ExcelImportReadyDraft } from "./excelImportController";
@@ -69,20 +70,31 @@ import {
 import {
   renderAddToProjectPanel,
   renderProjectManager,
-  renderProjectWorkspace
+  renderProjectWorkspace,
+  renderProjectFixedItemSelector
 } from "./renderProjectWorkspace";
 import type { PendingDuplicateProjectLine, ProjectManagerFilters, ProjectMetadataEditorView } from "./renderProjectWorkspace";
 import { readEvidenceFiltersFromForm, renderResults } from "./renderResults";
 import { readItemPriceHistoryFiltersFromForm } from "./renderItemPriceHistory";
 import { renderSourceReview } from "./renderSourceReview";
+import { mountPageStickyTableHeaders } from "./pageStickyTableHeaders";
+import { requestActionConfirmation } from "./actionConfirmation";
 import {
   captureResultsTableScroll,
   restoreResultsTableScroll
 } from "./resultsScroll";
 import type { ResultsTableScrollPosition } from "./resultsScroll";
 import { renderExcelImportWizard } from "./renderExcelImport";
+import { ProjectBackupImportController } from "./projectBackupImportController";
+import { renderProjectBackupImportWizard } from "./renderProjectBackupImport";
+import { createPlanningController, type PlanningController } from "./planning/planningController";
+import { loadPlanningLibrary } from "../planning/library";
+import { openPlanningStore } from "../planning/storage";
+import { planningAlternativeToProject, type CatalogEntry } from "../planning/toProject";
 
-type AppView = "explorer" | "project" | "sourceReview";
+type AppView = "explorer" | "project" | "planning" | "sourceReview";
+
+const PLANNING_STATES = new Set(["CO"]);
 type ProjectSubview = "workspace" | "manager";
 type SaveStatus = "idle" | "saving" | "saved" | "failed";
 type PendingFocus =
@@ -157,6 +169,7 @@ export async function renderApp(
   let selectedBidderDetailKey: string | null = null;
   let selectedSourceProjectId: string | null = null;
   let activeView: AppView = initialView;
+  let planningController: PlanningController | null = null;
   let projectSubview: ProjectSubview = "workspace";
   let projectManagerFilters: ProjectManagerFilters = { query: "", state: "all", status: "active" };
   let projectReadOnly = false;
@@ -174,11 +187,15 @@ export async function renderApp(
   let pendingResultsTableScroll: ResultsTableScrollPosition | null = null;
   let evidenceFilterDebounceTimer: number | null = null;
   let pendingDuplicateLine: PendingDuplicateProjectLine | null = null;
+  let projectOrigin: { projectId: string; lineItemId: string; agencyItemId: string } | null = null;
+  const sortedAgencyItems = [...data.agencyItems]
+    .sort((left, right) => left.itemCode.localeCompare(right.itemCode, undefined, { numeric: true, sensitivity: "base" }) || left.agencyItemId.localeCompare(right.agencyItemId));
   let projectLineNotice: string | null = null;
   let projectLineNoticeToken = 0;
   const dismissedCatalogMatchByLineId = new Map<string, string>();
   let projectMetadataDraft: ProjectMetadataDraft | null = null;
   let excelImportController: ExcelImportController | null = null;
+  let backupImportController: ProjectBackupImportController | null = null;
   let excelImportReadyDraft: ExcelImportReadyDraft | null = null;
   let excelImportProjectToOpenAfterCommit: { projectId: string; state: string } | null = null;
   const editCoordinator = new ProjectEditCoordinator();
@@ -215,11 +232,26 @@ export async function renderApp(
       : null;
     const visibleExcludedCount = result.filteredRows.length - includedRows.length;
     const activeProject = getActiveProject(projectState, data.stateConfig.code);
+    if (projectOrigin && projectOrigin.projectId !== activeProject?.projectId) projectOrigin = null;
+    const sourceLine = activeProject && projectOrigin?.projectId === activeProject.projectId
+      ? activeProject.lineItems.find((line) => line.lineItemId === projectOrigin?.lineItemId && line.agencyItemId === result.query.agencyItemId) ?? null
+      : null;
+    const orderedAgencyItems = sortedAgencyItems.filter((item) => item.agencyId === result.query.agencyId);
+    const selectedItemIndex = orderedAgencyItems.findIndex((item) => item.agencyItemId === result.query.agencyItemId);
+    const adjacentItem = (index: number) => {
+      const item = orderedAgencyItems[index];
+      return item ? { id: item.agencyItemId, code: item.itemCode, description: item.officialDescription } : null;
+    };
+    const adjacentItems = selectedItemIndex < 0 ? null : {
+      previous: adjacentItem(selectedItemIndex - 1),
+      next: adjacentItem(selectedItemIndex + 1)
+    };
     const addToProjectPanelHtml = renderAddToProjectPanel(
       result,
       activeProject,
       pendingDuplicateLine,
-      projectLineNotice
+      projectLineNotice,
+      sourceLine
     );
 
     root.innerHTML = `
@@ -241,6 +273,7 @@ export async function renderApp(
             <nav class="app-view-tabs" aria-label="Primary views">
               ${renderViewTab("explorer", "Explorer", activeView)}
               ${renderViewTab("project", "Project", activeView)}
+              ${PLANNING_STATES.has(data.stateConfig.code) ? renderViewTab("planning", "Planning", activeView) : ""}
             </nav>
           </div>
         </header>
@@ -266,11 +299,16 @@ export async function renderApp(
                 inflationAdjustedPriceSet,
                 addToProjectPanelHtml,
                 itemPriceHistoryResult,
-                annualInflationAdjustedPriceSet
+                annualInflationAdjustedPriceSet,
+                adjacentItems
               )}
             </section>
-          ` : activeView === "project"
-            ? excelImportController
+          ` : activeView === "planning"
+            ? `<section class="planning-host" data-planning-mount></section>`
+            : activeView === "project"
+            ? backupImportController
+              ? renderProjectBackupImportWizard(backupImportController.viewModel)
+              : excelImportController
               ? renderExcelImportWizard(excelImportController.viewModel, data.manifest.states, activeProject ? (activeProject.name.trim() || "Untitled Project") : null)
               : projectSubview === "manager"
                 ? renderProjectManager(projectState.projects, data.manifest.states, data.stateConfig.code, projectManagerFilters, activeProject, projectReadOnly, projectMetadataDraft)
@@ -295,19 +333,48 @@ export async function renderApp(
     pendingEvidenceFilterFocus = null;
     restoreResultsTableScroll(root, pendingResultsTableScroll);
     pendingResultsTableScroll = null;
+    mountPageStickyTableHeaders(root);
+
+    const planningMount = root.querySelector<HTMLElement>("[data-planning-mount]");
+    if (planningMount) {
+      planningController ??= createPlanningController({
+        loadLibrary: () => loadPlanningLibrary(),
+        openStore: () => openPlanningStore(),
+        now: () => new Date().toISOString(),
+        newId: () => crypto.randomUUID(),
+        createEngineerProject: async (library, planning, alternativeId) => {
+          const created = planningAlternativeToProject(library, planning, alternativeId, {
+            now: new Date().toISOString(),
+            newId: (prefix) => createId(prefix),
+            catalog: planningCatalogEntry
+          });
+          if (!(await openNewProject(created.project))) {
+            throw new Error("the open engineer Project has unsaved changes that could not be saved. Open the Project tab, resolve them, and try again.");
+          }
+        }
+      });
+      planningController.mount(planningMount);
+    } else {
+      planningController?.unmount();
+    }
 
     root.querySelectorAll<HTMLButtonElement>("[data-app-view]").forEach((button) => {
-      button.addEventListener("click", () => {
+      button.addEventListener("click", async () => {
         const nextView = button.dataset.appView;
 
-        if (nextView !== "explorer" && nextView !== "project") {
+        if (nextView !== "explorer" && nextView !== "project" && nextView !== "planning") {
           return;
         }
-        if (excelImportController?.viewModel.commitStatus === "committing") return;
-        if (!confirmDiscardProjectMetadataDraft()) return;
+        if (activeView === "planning" && nextView !== "planning") void planningController?.flush();
+        if (excelImportController?.viewModel.commitStatus === "committing" || backupImportController?.isCommitting) return;
+        if (!(await confirmDiscardProjectMetadataDraft(button))) return;
 
         if (excelImportController && nextView !== "project") {
           excelImportController.cancel();
+          return;
+        }
+        if (backupImportController && nextView !== "project") {
+          backupImportController.cancel();
           return;
         }
 
@@ -322,11 +389,11 @@ export async function renderApp(
     root.querySelector<HTMLSelectElement>("#state-selector")?.addEventListener("change", (event) => {
       const nextStateCode = (event.currentTarget as HTMLSelectElement).value;
       void (async () => {
-        if (excelImportController?.viewModel.commitStatus === "committing") {
+        if (excelImportController?.viewModel.commitStatus === "committing" || backupImportController?.isCommitting) {
           render();
           return;
         }
-        if (!confirmDiscardProjectMetadataDraft()) {
+        if (!(await confirmDiscardProjectMetadataDraft(event.currentTarget as HTMLElement))) {
           render();
           return;
         }
@@ -334,6 +401,10 @@ export async function renderApp(
           render();
           return;
         }
+        await planningController?.flush();
+        // Release the Planning store and listeners; a new controller is created if Planning is opened again.
+        planningController?.dispose();
+        planningController = null;
         cleanupProjectSession();
         onStateChange(nextStateCode, "explorer");
       })();
@@ -346,7 +417,10 @@ export async function renderApp(
 
     form?.addEventListener("submit", (event) => {
       event.preventDefault();
-      query = readQueryFromForm(form, query);
+      cancelEvidenceFilterUpdate();
+      const nextQuery = readQueryFromForm(form, query);
+      if (nextQuery.agencyItemId !== query.agencyItemId) projectOrigin = null;
+      query = nextQuery;
       evidenceFilters = createDefaultEvidenceFilters(query);
       evidenceSort = createDefaultEvidenceSort();
       itemPriceHistoryFilters = createDefaultItemPriceHistoryFilters();
@@ -357,6 +431,35 @@ export async function renderApp(
       evidenceFiltersExpanded = true;
       itemSearchCollapsed = Boolean(query.itemCode);
       render();
+    });
+
+    root.querySelectorAll<HTMLButtonElement>("[data-adjacent-item-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const item = orderedAgencyItems.find((candidate) => candidate.agencyItemId === button.dataset.adjacentItemId);
+        if (!item) return;
+        cancelEvidenceFilterUpdate();
+        projectOrigin = null;
+        pendingDuplicateLine = null;
+        query = {
+          ...emptyQuery,
+          agencyId: item.agencyId,
+          agencyItemId: item.agencyItemId,
+          itemCode: item.itemCode,
+          description: item.officialDescription,
+          unit: item.officialUnit
+        };
+        evidenceFilters = createDefaultEvidenceFilters(query);
+        evidenceSort = createDefaultEvidenceSort();
+        itemPriceHistoryFilters = createDefaultItemPriceHistoryFilters();
+        itemPriceHistorySort = createDefaultItemPriceHistorySort();
+        excludedSummaryRowIds = new Set<string>();
+        selectedBidderDetailKey = null;
+        selectedSourceProjectId = null;
+        evidenceFiltersExpanded = true;
+        itemSearchCollapsed = true;
+        render();
+        root.querySelector<HTMLElement>(".adjacent-item-controls")?.focus();
+      });
     });
 
     root.querySelector<HTMLButtonElement>("#toggle-evidence-filters")?.addEventListener("click", () => {
@@ -372,7 +475,8 @@ export async function renderApp(
       }
 
       if (control instanceof HTMLInputElement) {
-        control.addEventListener("input", () => scheduleEvidenceFilterUpdate(evidenceFiltersForm, 300));
+        const manuallyTypedRange = ["quantityMin", "quantityMax", "priceMin", "priceMax"].includes(control.name);
+        control.addEventListener("input", () => scheduleEvidenceFilterUpdate(evidenceFiltersForm, manuallyTypedRange ? 700 : 300));
         control.addEventListener("blur", () => applyEvidenceFiltersFromForm(evidenceFiltersForm, false));
       } else {
         control.addEventListener("change", () => applyEvidenceFiltersFromForm(evidenceFiltersForm));
@@ -422,6 +526,8 @@ export async function renderApp(
     });
 
     root.querySelector<HTMLButtonElement>("#clear-query")?.addEventListener("click", () => {
+      cancelEvidenceFilterUpdate();
+      projectOrigin = null;
       query = { ...emptyQuery };
       evidenceFilters = createDefaultEvidenceFilters(query);
       evidenceSort = createDefaultEvidenceSort();
@@ -565,6 +671,7 @@ export async function renderApp(
     bindProjectManager(root);
     bindImportControls(root);
     excelImportController?.bind(root);
+    backupImportController?.bind(root);
   }
 
   function persistProjectState(nextState: ProjectWorkspaceState, renderAfterSave: boolean): void {
@@ -696,12 +803,27 @@ export async function renderApp(
       const quantityInput = addForm.elements.namedItem("quantity") as HTMLInputElement | null;
       const preferredUnitCostInput = addForm.elements.namedItem("preferredUnitCost") as HTMLInputElement | null;
       const notesInput = addForm.elements.namedItem("notes") as HTMLTextAreaElement | null;
-      const quantity = readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero.");
-      const preferredUnitCost = readRequiredPositiveNumber(preferredUnitCostInput, "Enter a unit cost greater than zero.");
-
-      if (quantity === null || preferredUnitCost === null || !result.query.itemCode) {
+      const originProject = projectOrigin?.projectId === activeProject.projectId ? activeProject : null;
+      const originLine = originProject?.lineItems.find((line) => line.lineItemId === projectOrigin?.lineItemId && line.agencyItemId === result.query.agencyItemId) ?? null;
+      if (projectOrigin && !originLine) {
+        projectStorageWarning = "The source Project line changed or was removed. Reopen it from the Project table.";
+        projectOrigin = null;
+        render();
         return;
       }
+      const quantity = originLine
+        ? readNullableProjectNumber(quantityInput)
+        : { value: readRequiredPositiveNumber(quantityInput, "Enter a quantity greater than zero."), valid: true };
+      const preferredUnitCost = originLine
+        ? readNullableProjectCurrency(preferredUnitCostInput)
+        : { value: readRequiredPositiveCurrency(preferredUnitCostInput, "Enter a unit cost greater than zero."), valid: true };
+      if (!quantity.valid || !preferredUnitCost.valid) {
+        const invalidInput = !quantity.valid ? quantityInput : preferredUnitCostInput;
+        invalidInput?.setCustomValidity("Enter a non-negative number or leave this field blank.");
+        invalidInput?.reportValidity();
+        return;
+      }
+      if (!result.query.itemCode || (!originLine && (quantity.value === null || preferredUnitCost.value === null))) return;
 
       const costSource = costSourceInput?.value === "quick_fill" ? "quick_fill" : "manual";
       const lineItem = createCatalogProjectLineItem({
@@ -712,8 +834,8 @@ export async function renderApp(
         description: result.interpretedDescription,
         unit: result.query.unit,
         group: groupInput?.value ?? "",
-        quantity,
-        preferredUnitCost,
+        quantity: quantity.value,
+        preferredUnitCost: preferredUnitCost.value,
         notes: notesInput?.value ?? "",
         evidenceContext: buildProjectEvidenceContext(
           result,
@@ -725,6 +847,24 @@ export async function renderApp(
           costSource
         )
       });
+      if (originLine) {
+        if (projectReadOnly || !editCoordinator.owns(activeProject.projectId) || activeProject.status !== "active") {
+          projectStorageWarning = "This Project cannot be edited in this browser tab.";
+          render();
+          return;
+        }
+        const updated: ProjectLineItem = {
+          ...originLine,
+          group: lineItem.group,
+          quantity: lineItem.quantity,
+          preferredUnitCost: lineItem.preferredUnitCost,
+          notes: lineItem.notes,
+          evidenceContext: lineItem.evidenceContext
+        };
+        showProjectLineNotice(`${updated.itemCode} updated in Project.`);
+        persistProjectState(replaceProjectLineItem(projectState, activeProject.projectId, originLine.lineItemId, updated), true);
+        return;
+      }
       const matchingLineIds = findDuplicateCatalogLineItemIds(activeProject, lineItem.agencyItemId);
 
       if (matchingLineIds.length > 0) {
@@ -797,7 +937,13 @@ export async function renderApp(
     }, delay);
   }
 
+  function cancelEvidenceFilterUpdate(): void {
+    if (evidenceFilterDebounceTimer !== null) window.clearTimeout(evidenceFilterDebounceTimer);
+    evidenceFilterDebounceTimer = null;
+  }
+
   function applyEvidenceFiltersFromForm(form: HTMLFormElement, preserveFocus = true): void {
+    cancelEvidenceFilterUpdate();
     const validationMessage = validateEvidenceFilterRanges(form);
     const validationElement = form.querySelector<HTMLElement>("#evidence-filter-validation");
     if (validationMessage) {
@@ -936,9 +1082,15 @@ export async function renderApp(
     ));
   }
 
-  function confirmDiscardProjectMetadataDraft(): boolean {
+  async function confirmDiscardProjectMetadataDraft(trigger?: HTMLElement | null): Promise<boolean> {
     if (!projectMetadataDraft) return true;
-    if (isProjectMetadataDraftDirty() && !window.confirm("Discard unsaved Project changes?")) return false;
+    if (isProjectMetadataDraftDirty() && !(await requestActionConfirmation(trigger ?? document.activeElement as HTMLElement | null, {
+      title: "Discard unsaved Project changes?",
+      message: "Your unsaved Project changes will be discarded.",
+      confirmLabel: "Discard changes",
+      tone: "destructive",
+      placement: "modal"
+    }))) return false;
     projectMetadataDraft = null;
     return true;
   }
@@ -1007,6 +1159,94 @@ export async function renderApp(
   }
 
   function bindProjectWorkspace(rootElement: HTMLElement): void {
+    let fixedItemsPanel: HTMLElement | null = null;
+    let fixedItemsReturnFocus: HTMLElement | null = null;
+    let fixedItemsOnCancel: (() => void) | null = null;
+    const closeFixedItemsPanel = (cancelled = false): void => {
+      fixedItemsPanel?.remove();
+      fixedItemsPanel = null;
+      if (cancelled) fixedItemsOnCancel?.();
+      fixedItemsOnCancel = null;
+      fixedItemsReturnFocus?.focus();
+      fixedItemsReturnFocus = null;
+    };
+    const openFixedItemsPanel = (lineItemId: string, trigger: HTMLElement, onCancel?: () => void): void => {
+      const project = getActiveProject(projectState, data.stateConfig.code);
+      const line = project?.lineItems.find((item) => item.lineItemId === lineItemId);
+      if (!project || !line || line.pricingMode !== "percentage" || projectReadOnly) return;
+      if (fixedItemsPanel) closeFixedItemsPanel();
+      fixedItemsReturnFocus = trigger;
+      fixedItemsOnCancel = onCancel ?? null;
+      const host = rootElement.querySelector<HTMLElement>(".project-workspace");
+      if (!host) return;
+      host.insertAdjacentHTML("beforeend", renderProjectFixedItemSelector(project, line));
+      fixedItemsPanel = host.querySelector<HTMLElement>(".project-fixed-items-panel");
+      if (!fixedItemsPanel) return;
+      const panel = fixedItemsPanel;
+      const search = panel.querySelector<HTMLInputElement>("[data-project-fixed-items-search]")!;
+      const group = panel.querySelector<HTMLSelectElement>("[data-project-fixed-items-group]")!;
+      const category = panel.querySelector<HTMLSelectElement>("[data-project-fixed-items-category]")!;
+      const choices = [...panel.querySelectorAll<HTMLInputElement>("[data-project-fixed-item-choice]")];
+      const calculation = calculateProject(project);
+      const refresh = (): void => {
+        const query = search.value.trim().toLocaleLowerCase();
+        const selectedGroup = group.value.toLocaleLowerCase();
+        let visible = 0;
+        for (const row of panel.querySelectorAll<HTMLElement>("[data-project-fixed-item-row]")) {
+          row.hidden = !((row.dataset.search ?? "").includes(query)
+            && (!selectedGroup || row.dataset.group === selectedGroup)
+            && (!category.value || row.dataset.category === category.value));
+          if (!row.hidden) visible += 1;
+        }
+        panel.querySelector<HTMLElement>("[data-project-fixed-items-empty]")!.hidden = visible !== 0 || choices.length === 0;
+        const chosen = choices.filter((input) => input.checked);
+        const total = chosen.reduce((sum, input) => sum + (calculation.amountByLineId[input.value] ?? 0), 0);
+        panel.querySelector<HTMLElement>("[data-project-fixed-items-summary]")!.textContent = `${chosen.length} selected · Base ${formatProjectCurrency(total)}`;
+      };
+      search.addEventListener("input", refresh);
+      group.addEventListener("change", refresh);
+      category.addEventListener("change", refresh);
+      choices.forEach((choice) => choice.addEventListener("change", refresh));
+      panel.querySelectorAll<HTMLButtonElement>("[data-project-fixed-items-cancel]").forEach((button) => button.addEventListener("click", () => closeFixedItemsPanel(true)));
+      panel.querySelector<HTMLButtonElement>("[data-project-fixed-items-apply]")!.addEventListener("click", () => {
+        const current = getActiveProject(projectState, data.stateConfig.code);
+        if (!current || projectReadOnly || !current.lineItems.some((item) => item.lineItemId === lineItemId)) return;
+        const selected = choices.filter((choice) => choice.checked).map((choice) => choice.value);
+        fixedItemsPanel?.remove();
+        fixedItemsPanel = null;
+        fixedItemsOnCancel = null;
+        fixedItemsReturnFocus = null;
+        persistProjectState(updateProjectLineItem(projectState, current.projectId, lineItemId, {
+          percentageBase: { kind: "selected_lines", lineItemIds: selected }
+        }), true);
+      });
+      panel.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") { event.preventDefault(); closeFixedItemsPanel(true); }
+      });
+      refresh();
+      search.focus();
+    };
+
+    rootElement.querySelectorAll<HTMLSelectElement>("[data-project-percentage-base]").forEach((select) => {
+      select.addEventListener("change", () => {
+        const lineId = select.dataset.projectPercentageBase ?? "";
+        const project = getActiveProject(projectState, data.stateConfig.code);
+        const line = project?.lineItems.find((item) => item.lineItemId === lineId);
+        if (!project || !line || projectReadOnly) return;
+        const currentBase = line.percentageBase ?? { kind: "construction_fixed" as const };
+        const currentValue = currentBase.kind === "group" ? `group:${currentBase.group}` : currentBase.kind === "selected_lines" ? "selected_lines-current" : currentBase.kind;
+        const value = select.value;
+        if (value === "selected_lines") {
+          openFixedItemsPanel(lineId, select, () => { select.value = currentValue; });
+          return;
+        }
+        const base = value.startsWith("group:")
+          ? { kind: "group" as const, group: value.slice(6) }
+          : { kind: value as "all_fixed" | "construction_fixed" | "other_fixed" };
+        persistProjectState(updateProjectLineItem(projectState, project.projectId, lineId, { percentageBase: base }), true);
+      });
+    });
+
     rootElement.querySelector<HTMLButtonElement>("#download-project-csv")?.addEventListener("click", () => {
       const activeProject = getActiveProject(projectState, data.stateConfig.code);
 
@@ -1016,17 +1256,26 @@ export async function renderApp(
     });
 
     const updateProjectCostSummaryInDom = (project: UserProject): void => {
-      rootElement.querySelector<HTMLElement>("[data-project-construction-cost]")!.textContent = formatProjectCurrency(projectConstructionCost(project));
-      rootElement.querySelector<HTMLElement>("[data-project-other-cost]")!.textContent = formatProjectCurrency(projectOtherCost(project));
-      rootElement.querySelector<HTMLElement>("[data-project-contingency-cost]")!.textContent = formatProjectCurrency(projectContingencyCost(project));
-      rootElement.querySelector<HTMLElement>("[data-project-total]")!.textContent = formatProjectCurrency(projectTotal(project));
+      const calculation = calculateProject(project);
+      rootElement.querySelector<HTMLElement>("[data-project-construction-cost]")!.textContent = formatProjectCurrency(calculation.summary.constructionCost);
+      rootElement.querySelector<HTMLElement>("[data-project-other-cost]")!.textContent = formatProjectCurrency(calculation.summary.otherCost);
+      rootElement.querySelector<HTMLElement>("[data-project-contingency-cost]")!.textContent = formatProjectCurrency(calculation.summary.contingencyCost);
+      rootElement.querySelector<HTMLElement>("[data-project-total]")!.textContent = formatProjectCurrency(calculation.summary.totalProjectCost);
+      for (const line of project.lineItems) {
+        const total = rootElement.querySelector<HTMLElement>(`[data-project-line-total-id="${line.lineItemId}"]`);
+        if (total) total.textContent = formatProjectCurrency(calculation.amountByLineId[line.lineItemId] ?? 0);
+        const warning = rootElement.querySelector<HTMLElement>(`[data-project-percentage-warning="${line.lineItemId}"]`);
+        if (warning) {
+          warning.textContent = calculation.warningsByLineId[line.lineItemId] ?? "";
+          warning.hidden = !calculation.warningsByLineId[line.lineItemId];
+        }
+      }
     };
 
     const updateProjectTotalsInDom = (row: HTMLTableRowElement, lineItemId: string): void => {
       const activeProject = getActiveProject(projectState, data.stateConfig.code);
       const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId);
       if (!activeProject || !lineItem) return;
-      row.querySelector<HTMLElement>(`[data-project-line-total-id="${lineItemId}"]`)!.textContent = formatProjectCurrency(projectLineTotal(lineItem));
       updateProjectCostSummaryInDom(activeProject);
     };
 
@@ -1048,6 +1297,8 @@ export async function renderApp(
         const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId) ?? null;
         if (!lineItem || lineItem.lineItemType !== "catalog") return;
 
+        cancelEvidenceFilterUpdate();
+        projectOrigin = { projectId: activeProject!.projectId, lineItemId, agencyItemId: lineItem.agencyItemId };
         query = createFreshCatalogExplorerQuery(emptyQuery, lineItem);
         evidenceFilters = createDefaultEvidenceFilters(query);
         evidenceSort = createDefaultEvidenceSort();
@@ -1065,12 +1316,16 @@ export async function renderApp(
     });
 
     rootElement.querySelectorAll<HTMLButtonElement>("[data-enable-project-line-description]").forEach((button) => {
-      button.addEventListener("click", () => {
+      button.addEventListener("click", async () => {
         const activeProject = getActiveProject(projectState, data.stateConfig.code);
         const lineItemId = button.dataset.enableProjectLineDescription ?? "";
         const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId) ?? null;
         if (!activeProject || !lineItem || lineItem.lineItemType !== "catalog" || projectReadOnly) return;
-        if (!window.confirm("Allow editing this item description?")) return;
+        if (!(await requestActionConfirmation(button, {
+          title: "Edit item description?",
+          message: "This lets you replace the catalog description for this Project line.",
+          confirmLabel: "Edit description"
+        }))) return;
 
         pendingFocus = { projectLineId: lineItemId, field: "description" };
         persistProjectState(enableProjectLineDescriptionOverride(projectState, activeProject.projectId, lineItemId), true);
@@ -1116,7 +1371,7 @@ export async function renderApp(
         const costCategoryInput = row.querySelector<HTMLSelectElement>('[data-project-line-field="costCategory"]');
 
         const quantityResult = readNullableProjectNumber(quantityInput);
-        const preferredUnitCostResult = readNullableProjectNumber(preferredUnitCostInput);
+        const preferredUnitCostResult = readNullableProjectCurrency(preferredUnitCostInput);
         if (!quantityResult.valid || !preferredUnitCostResult.valid) {
           if (validate) {
             const invalidInput = !quantityResult.valid ? quantityInput : preferredUnitCostInput;
@@ -1158,6 +1413,10 @@ export async function renderApp(
         updateProjectTotalsInDom(row, lineItemId);
       };
       input.addEventListener("input", () => {
+        if (input.dataset.projectLineField === "preferredUnitCost" && input instanceof HTMLInputElement) {
+          const prefix = input.closest(".project-line-currency")?.querySelector<HTMLElement>("[data-currency-prefix]");
+          if (prefix) prefix.hidden = input.value.trimStart().startsWith("$");
+        }
         if (input.dataset.projectLineField === "itemCode") {
           dismissedCatalogMatchByLineId.delete(input.dataset.projectLineId ?? "");
         }
@@ -1166,7 +1425,7 @@ export async function renderApp(
       input.addEventListener("blur", () => {
         updateLine(true);
         if (input.dataset.projectLineField === "itemCode") {
-          confirmExactProjectCatalogMatch(input.dataset.projectLineId ?? "");
+          void confirmExactProjectCatalogMatch(input.dataset.projectLineId ?? "", input);
         }
         void queueProjectSave();
       });
@@ -1177,39 +1436,59 @@ export async function renderApp(
       });
     });
 
-    const contingencyInput = rootElement.querySelector<HTMLInputElement>("[data-project-contingency-percent]");
-    if (contingencyInput) {
-      const updateContingency = (validate: boolean): void => {
-        const activeProject = getActiveProject(projectState, data.stateConfig.code);
-        if (!activeProject || projectReadOnly) return;
-
-        const rawValue = contingencyInput.value.trim();
-        const value = readOptionalFormNumber(rawValue);
-        if (rawValue && value === null) {
-          if (validate) {
-            contingencyInput.setCustomValidity("Enter a non-negative percentage.");
-            contingencyInput.reportValidity();
-          }
+    rootElement.querySelectorAll<HTMLInputElement>("[data-project-percentage-rate]").forEach((input) => {
+      const update = (validate: boolean) => {
+        const project = getActiveProject(projectState, data.stateConfig.code);
+        if (!project || projectReadOnly) return;
+        const rate = readOptionalFormNumber(input.value.trim());
+        if (rate === null) {
+          if (validate) { input.setCustomValidity("Enter a nonnegative percentage."); input.reportValidity(); }
           return;
         }
-
-        contingencyInput.setCustomValidity("");
-        const nextState = updateProjectContingencyPercent(projectState, activeProject.projectId, value ?? 0);
-        persistProjectState(nextState, false);
-        const nextProject = getActiveProject(projectState, data.stateConfig.code);
-        if (nextProject) updateProjectCostSummaryInDom(nextProject);
+        input.setCustomValidity("");
+        persistProjectState(updateProjectLineItem(projectState, project.projectId, input.dataset.projectPercentageRate ?? "", { percentageRate: rate }), false);
+        const updated = getActiveProject(projectState, data.stateConfig.code);
+        if (updated) updateProjectCostSummaryInDom(updated);
       };
-
-      contingencyInput.addEventListener("input", () => updateContingency(false));
-      contingencyInput.addEventListener("blur", () => {
-        updateContingency(true);
-        const activeProject = getActiveProject(projectState, data.stateConfig.code);
-        if (activeProject) {
-          contingencyInput.value = formatDecimalInput(activeProject.contingencyPercent);
-        }
+      input.addEventListener("input", () => update(false));
+      input.addEventListener("blur", () => {
+        update(true);
+        const project = getActiveProject(projectState, data.stateConfig.code);
+        const savedLine = project?.lineItems.find((line) => line.lineItemId === input.dataset.projectPercentageRate);
+        if (savedLine?.pricingMode === "percentage") input.value = String(savedLine.percentageRate ?? 0);
         void queueProjectSave();
       });
-    }
+    });
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-project-pricing-mode]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const project = getActiveProject(projectState, data.stateConfig.code);
+        if (!project || projectReadOnly) return;
+        const id = button.dataset.projectLineId ?? "";
+        const line = project.lineItems.find((item) => item.lineItemId === id);
+        const mode = button.dataset.projectPricingMode === "percentage" ? "percentage" : "fixed";
+        if (!line || (line.pricingMode ?? "fixed") === mode) return;
+        if (mode === "percentage") {
+          const dependent = project.lineItems.find((item) => item.pricingMode === "percentage" && item.percentageBase?.kind === "selected_lines" && item.percentageBase.lineItemIds.includes(id));
+          if (dependent) {
+            window.alert(`Reassign the percentage base for ${dependent.description || "the percentage item"} before changing this item to a percentage.`);
+            return;
+          }
+          if ((line.quantity !== null || line.preferredUnitCost !== null || line.unit.trim()) && !(await requestActionConfirmation(button, {
+            title: "Switch to percentage pricing?",
+            message: "This clears the item's quantity, unit cost, and unit.",
+            confirmLabel: "Switch to %",
+            tone: "destructive"
+          }))) return;
+        } else if ((line.percentageRate ?? 0) > 0 && !(await requestActionConfirmation(button, {
+          title: "Switch to fixed pricing?",
+          message: "This clears the item's percentage rate and base.",
+          confirmLabel: "Switch to $",
+          tone: "destructive"
+        }))) return;
+        const nextState = setProjectLinePricingMode(projectState, project.projectId, id, mode);
+        if (nextState !== projectState) persistProjectState(nextState, true);
+      });
+    });
 
     rootElement.querySelectorAll<HTMLButtonElement>("[data-remove-project-line-id]").forEach((button) => {
       button.addEventListener("click", async () => {
@@ -1220,7 +1499,20 @@ export async function renderApp(
           return;
         }
 
-        if (!window.confirm("Remove this project line? This cannot be undone.")) {
+        const removedLine = activeProject.lineItems.find((line) => line.lineItemId === lineItemId);
+        if (!removedLine) return;
+        const dependents = activeProject.lineItems.filter((line) => line.pricingMode === "percentage" && line.percentageBase?.kind === "selected_lines" && line.percentageBase.lineItemIds.includes(lineItemId));
+        const dependentLabels = dependents.map((line) => `"${line.description.trim() || line.itemCode.trim() || "Percentage item"}" (${line.percentageRate ?? 0}%)`);
+        const removedLabel = removedLine.description.trim() || removedLine.itemCode.trim() || "this item";
+        const confirmationMessage = dependents.length
+          ? `"${removedLabel}" is included in the Selected Items base for ${dependentLabels.join(", ")}. Removing it will recalculate the percentage line.`
+          : "This Project line will be removed. A revision will be saved before removal.";
+        if (!(await requestActionConfirmation(button, {
+          title: dependents.length ? "Remove item from percentage base?" : "Remove this item?",
+          message: confirmationMessage,
+          confirmLabel: "Remove item",
+          tone: "destructive"
+        }))) {
           return;
         }
 
@@ -1233,8 +1525,8 @@ export async function renderApp(
     });
 
     rootElement.querySelectorAll<HTMLButtonElement>("[data-open-project-manager], [data-project-manager-shortcut]").forEach((button) => {
-      button.addEventListener("click", () => {
-        if (!confirmDiscardProjectMetadataDraft()) return;
+      button.addEventListener("click", async () => {
+        if (!(await confirmDiscardProjectMetadataDraft(button))) return;
         activeView = "project";
         projectSubview = "manager";
         render();
@@ -1258,7 +1550,7 @@ export async function renderApp(
     });
   }
 
-  function confirmExactProjectCatalogMatch(lineItemId: string): void {
+  async function confirmExactProjectCatalogMatch(lineItemId: string, trigger: HTMLElement): Promise<void> {
     const activeProject = getActiveProject(projectState, data.stateConfig.code);
     const lineItem = activeProject?.lineItems.find((candidate) => candidate.lineItemId === lineItemId) ?? null;
     if (!activeProject || !lineItem || lineItem.lineItemType !== "custom") return;
@@ -1277,11 +1569,11 @@ export async function renderApp(
     const duplicateExists = activeProject.lineItems.some((candidate) =>
       candidate.lineItemId !== lineItemId && candidate.agencyItemId === agencyItem.agencyItemId
     );
-    const statusLabel = agencyItem.itemStatus === "historical" ? " [Historical item]" : "";
-    const duplicateWarning = duplicateExists ? "\n\nThis item is already in the Project. Add another line?" : "";
-    const accepted = window.confirm(
-      `Add item ${agencyItem.itemCode} — ${agencyItem.officialDescription} (${agencyItem.officialUnit})?${statusLabel}${duplicateWarning}`
-    );
+    const accepted = await requestActionConfirmation(trigger, {
+      title: duplicateExists ? "Add another matching item?" : "Use the catalog item?",
+      message: `Use ${agencyItem.itemCode} — ${agencyItem.officialDescription} (${agencyItem.officialUnit})${agencyItem.itemStatus === "historical" ? " [Historical item]" : ""} for this Project line?`,
+      confirmLabel: duplicateExists ? "Add matching item" : "Use catalog item"
+    });
     if (!accepted) {
       dismissedCatalogMatchByLineId.set(lineItemId, normalizedCode);
       return;
@@ -1300,8 +1592,8 @@ export async function renderApp(
   }
 
   function bindProjectManager(rootElement: HTMLElement): void {
-    rootElement.querySelector<HTMLButtonElement>("[data-close-project-manager]")?.addEventListener("click", () => {
-      if (!confirmDiscardProjectMetadataDraft()) return;
+    rootElement.querySelector<HTMLButtonElement>("[data-close-project-manager]")?.addEventListener("click", async (event) => {
+      if (!(await confirmDiscardProjectMetadataDraft(event.currentTarget as HTMLElement))) return;
       projectSubview = "workspace";
       render();
     });
@@ -1323,13 +1615,13 @@ export async function renderApp(
     rootElement.querySelectorAll<HTMLButtonElement>("[data-edit-project]").forEach((button) => button.addEventListener("click", () => void startProjectMetadataEdit("manager", button.dataset.editProject ?? "")));
     rootElement.querySelectorAll<HTMLButtonElement>("[data-duplicate-project]").forEach((button) => button.addEventListener("click", () => void duplicateProject(button.dataset.duplicateProject ?? "")));
     rootElement.querySelectorAll<HTMLButtonElement>("[data-backup-project]").forEach((button) => button.addEventListener("click", () => void backupProject(button.dataset.backupProject ?? "")));
-    rootElement.querySelectorAll<HTMLButtonElement>("[data-archive-project]").forEach((button) => button.addEventListener("click", () => void archiveProject(button.dataset.archiveProject ?? "")));
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-archive-project]").forEach((button) => button.addEventListener("click", () => void archiveProject(button.dataset.archiveProject ?? "", button)));
     rootElement.querySelectorAll<HTMLButtonElement>("[data-restore-project]").forEach((button) => button.addEventListener("click", () => void restoreArchivedProject(button.dataset.restoreProject ?? "")));
-    rootElement.querySelectorAll<HTMLButtonElement>("[data-delete-project]").forEach((button) => button.addEventListener("click", () => void deleteArchivedProject(button.dataset.deleteProject ?? "")));
+    rootElement.querySelectorAll<HTMLButtonElement>("[data-delete-project]").forEach((button) => button.addEventListener("click", () => void deleteArchivedProject(button.dataset.deleteProject ?? "", button)));
   }
 
   async function startNewProject(): Promise<void> {
-    if (!confirmDiscardProjectMetadataDraft()) return;
+    if (!(await confirmDiscardProjectMetadataDraft())) return;
     if (!(await flushPendingProjectSave())) return;
     projectMetadataDraft = createProjectMetadataDraft("workspace", "create");
     activeView = "project";
@@ -1338,7 +1630,7 @@ export async function renderApp(
   }
 
   async function startProjectMetadataEdit(context: "workspace" | "manager", projectId: string): Promise<void> {
-    if (!projectId || !confirmDiscardProjectMetadataDraft()) return;
+    if (!projectId || !(await confirmDiscardProjectMetadataDraft())) return;
     if (!(await flushPendingProjectSave())) return;
     const project = projectState.projects.find((candidate) => candidate.projectId === projectId);
     if (!project) return;
@@ -1352,8 +1644,29 @@ export async function renderApp(
   }
 
   async function createAndOpenProject(name: string, stateCode: string, location = "", notes = ""): Promise<void> {
-    if (!(await flushPendingProjectSave())) return;
-    const project = await projectRepository.createProject(createUserProject(name, stateCode, location, notes));
+    await openNewProject(createUserProject(name, stateCode, location, notes));
+  }
+
+  let planningCatalog: Map<string, CatalogEntry> | null = null;
+
+  /** Catalog record for a Planning price-table item id, used when a Planning alternative becomes a Project. */
+  function planningCatalogEntry(agencyItemId: string): CatalogEntry | null {
+    planningCatalog ??= new Map(data.agencyItems.map((item) => [item.agencyItemId, {
+      agencyId: item.agencyId,
+      agencyItemId: item.agencyItemId,
+      itemCode: item.itemCode,
+      description: item.officialDescription,
+      unit: item.officialUnit
+    }]));
+    return planningCatalog.get(agencyItemId) ?? null;
+  }
+
+  /** Saves a new Project and opens it in the Project workspace. */
+  /** Returns false when pending edits to the active Project could not be saved first; nothing is created then. */
+  async function openNewProject(draft: UserProject): Promise<boolean> {
+    if (!(await flushPendingProjectSave())) return false;
+    const stateCode = draft.state;
+    const project = await projectRepository.createProject(draft);
     projectState = addProject(projectState, project);
     await projectRepository.setActiveProjectId(stateCode, project.projectId);
     ensurePersistentStorageRequested();
@@ -1361,20 +1674,23 @@ export async function renderApp(
     if (stateCode !== data.stateConfig.code) {
       cleanupProjectSession();
       onStateChange(stateCode, "project");
-      return;
+      return true;
     }
     projectReadOnly = !(await editCoordinator.claim(project.projectId));
+    activeView = "project";
     projectSubview = "workspace";
     lastSavedAt = project.updatedAt;
     saveStatus = "saved";
     render();
+    return true;
   }
 
   async function activateProject(projectId: string): Promise<void> {
-    if (!confirmDiscardProjectMetadataDraft()) return;
+    if (!(await confirmDiscardProjectMetadataDraft())) return;
     if (!(await flushPendingProjectSave())) return;
     const project = projectState.projects.find((candidate) => candidate.projectId === projectId && candidate.status === "active");
     if (!project) return;
+    projectOrigin = null;
     projectState = setActiveProject(projectState, project.projectId, project.state);
     await projectRepository.setActiveProjectId(project.state, project.projectId);
     if (project.state !== data.stateConfig.code) {
@@ -1390,7 +1706,7 @@ export async function renderApp(
   }
 
   async function duplicateProject(projectId: string): Promise<void> {
-    if (!confirmDiscardProjectMetadataDraft()) return;
+    if (!(await confirmDiscardProjectMetadataDraft())) return;
     if (!(await flushPendingProjectSave())) return;
     const source = projectState.projects.find((project) => project.projectId === projectId);
     if (!source) return;
@@ -1400,11 +1716,16 @@ export async function renderApp(
     await activateProject(duplicate.projectId);
   }
 
-  async function archiveProject(projectId: string): Promise<void> {
-    if (!confirmDiscardProjectMetadataDraft()) return;
+  async function archiveProject(projectId: string, trigger?: HTMLElement): Promise<void> {
+    if (!(await confirmDiscardProjectMetadataDraft())) return;
     if (!(await flushPendingProjectSave())) return;
     const project = projectState.projects.find((candidate) => candidate.projectId === projectId);
-    if (!project || !window.confirm(`Archive ${project.name || "this Project"}?`)) return;
+    if (!project || !(await requestActionConfirmation(trigger ?? document.activeElement as HTMLElement | null, {
+      title: `Archive ${project.name || "this Project"}?`,
+      message: "The Project will move to Archived Projects. You can restore it later.",
+      confirmLabel: "Archive Project",
+      placement: "modal"
+    }))) return;
     await projectRepository.createRevision(project, "Before archive");
     const saved = await projectRepository.saveProject({ ...project, status: "archived", archivedAt: new Date().toISOString() }, project.revision);
     projectState = replaceProject(projectState, saved);
@@ -1420,7 +1741,7 @@ export async function renderApp(
   }
 
   async function restoreArchivedProject(projectId: string): Promise<void> {
-    if (!confirmDiscardProjectMetadataDraft()) return;
+    if (!(await confirmDiscardProjectMetadataDraft())) return;
     const project = projectState.projects.find((candidate) => candidate.projectId === projectId);
     if (!project) return;
     const saved = await projectRepository.saveProject({ ...project, status: "active", archivedAt: null }, project.revision);
@@ -1429,11 +1750,17 @@ export async function renderApp(
     render();
   }
 
-  async function deleteArchivedProject(projectId: string): Promise<void> {
-    if (!confirmDiscardProjectMetadataDraft()) return;
+  async function deleteArchivedProject(projectId: string, trigger?: HTMLElement): Promise<void> {
+    if (!(await confirmDiscardProjectMetadataDraft())) return;
     if (!(await flushPendingProjectSave())) return;
     const project = projectState.projects.find((candidate) => candidate.projectId === projectId && candidate.status === "archived");
-    if (!project || !window.confirm(`Permanently delete ${project.name || "this Project"}? This cannot be undone.`)) return;
+    if (!project || !(await requestActionConfirmation(trigger ?? document.activeElement as HTMLElement | null, {
+      title: `Permanently delete ${project.name || "this Project"}?`,
+      message: "This archived Project and its saved revisions will be permanently deleted.",
+      confirmLabel: "Delete Project",
+      tone: "destructive",
+      placement: "modal"
+    }))) return;
     try {
       await projectRepository.deleteProject(projectId);
       projectState = removeProjectFromState(projectState, projectId);
@@ -1456,7 +1783,7 @@ export async function renderApp(
   }
 
   async function openExcelImportWizard(): Promise<void> {
-    if (!confirmDiscardProjectMetadataDraft()) return;
+    if (!(await confirmDiscardProjectMetadataDraft())) return;
     if (!(await flushPendingProjectSave())) return;
     excelImportReadyDraft = null;
     excelImportProjectToOpenAfterCommit = null;
@@ -1491,12 +1818,45 @@ export async function renderApp(
         cleanupProjectSession();
         onStateChange(project.state, "project");
       },
-      onDownloadReport: (draft) => downloadExcelImportReport(draft)
+      onDownloadReport: (draft, committed) => downloadExcelImportReport(draft, committed)
     });
     excelImportController = controller;
     activeView = "project";
     projectSubview = "workspace";
     controller.open();
+  }
+
+  async function openBackupImportWizard(): Promise<void> {
+    if (!(await confirmDiscardProjectMetadataDraft())) return;
+    if (!(await flushPendingProjectSave())) return;
+    excelImportController?.dispose();
+    excelImportController = null;
+    let importedProjectId: string | null = null;
+    backupImportController = new ProjectBackupImportController({
+      projects: projectState.projects,
+      activeProjectId: getActiveProject(projectState, data.stateConfig.code)?.projectId ?? null,
+      currentState: data.stateConfig.code,
+      onRender: render,
+      onClose: () => {
+        backupImportController = null;
+        if (importedProjectId) void activateProject(importedProjectId);
+        else render();
+      },
+      onCommit: async (project, expectedRevision) => {
+        if (!projectRepository.isPersistent) throw new Error("Browser storage is unavailable, so the Project backup cannot be saved.");
+        const saved = expectedRevision === null
+          ? await projectRepository.createProject(project)
+          : await projectRepository.applyBackupMerge(project, expectedRevision);
+        projectState = expectedRevision === null ? addProject(projectState, saved) : replaceProject(projectState, saved);
+        importedProjectId = saved.projectId;
+        return expectedRevision === null
+          ? `${saved.lineItems.length} items imported into ${saved.name}.`
+          : `Selected backup changes saved to ${saved.name}.`;
+      }
+    });
+    activeView = "project";
+    projectSubview = "workspace";
+    render();
   }
 
   async function commitExcelImport(controller: ExcelImportController, draft: ExcelImportReadyDraft): Promise<string> {
@@ -1510,7 +1870,9 @@ export async function renderApp(
       .map((row) => row.lineItem!)
       .map((lineItem) => structuredClone(lineItem));
     const updatedLines = draft.existingItemPlan?.updates.map((line) => structuredClone(line)) ?? [];
-    if (!acceptedLines.length && !updatedLines.length) throw new Error("No rows are ready to import. Resolve or exclude every failed row first.");
+    if (!acceptedLines.length && !updatedLines.length) {
+      throw new Error("No rows are ready to import. Resolve or exclude every failed row first.");
+    }
 
     if (draft.destinationProjectMode === "active") {
       if (!draft.baseProjectId || draft.baseProjectRevision === null) {
@@ -1589,53 +1951,8 @@ export async function renderApp(
       button.addEventListener("click", () => openExcelImportWizard());
     });
     rootElement.querySelectorAll<HTMLButtonElement>("[data-import-project]").forEach((button) => {
-      button.addEventListener("click", () => {
-        if (!confirmDiscardProjectMetadataDraft()) return;
-        button.parentElement?.querySelector<HTMLInputElement>("[data-project-import-input]")?.click();
-      });
+      button.addEventListener("click", () => { void openBackupImportWizard(); });
     });
-    rootElement.querySelectorAll<HTMLInputElement>("[data-project-import-input]").forEach((input) => {
-      input.addEventListener("change", () => {
-        const file = input.files?.[0];
-        if (file) void importProjectFile(file);
-        input.value = "";
-      });
-    });
-  }
-
-  async function importProjectFile(file: File): Promise<void> {
-    try {
-      if (!confirmDiscardProjectMetadataDraft()) return;
-      if (!(await flushPendingProjectSave())) return;
-      const backup = await readProjectBackupFile(file);
-      const existing = projectState.projects.find((project) => project.projectId === backup.project.projectId);
-      let imported: UserProject = { ...structuredClone(backup.project), status: "active", archivedAt: null };
-      if (existing) {
-        const choice = window.prompt("A Project with this ID already exists. Enter COPY to import a copy, REPLACE to replace it, or Cancel.", "COPY")?.trim().toUpperCase();
-        if (!choice) return;
-        if (choice === "COPY") {
-          imported = createImportedCopy(imported);
-        } else if (choice === "REPLACE") {
-          await projectRepository.createRevision(existing, "Before import replacement");
-          imported = await projectRepository.saveProject({ ...imported, projectId: existing.projectId, revision: existing.revision }, existing.revision);
-          projectState = replaceProject(projectState, imported);
-          await activateProject(imported.projectId);
-          return;
-        } else {
-          window.alert("Import canceled. Enter COPY or REPLACE.");
-          return;
-        }
-      } else {
-        imported = { ...imported, revision: 0, lastBackupAt: null, lastBackupRevision: null };
-      }
-      const saved = await projectRepository.createProject(imported);
-      projectState = addProject(projectState, saved);
-      await projectRepository.setActiveProjectId(saved.state, saved.projectId);
-      await activateProject(saved.projectId);
-    } catch (error) {
-      projectStorageWarning = error instanceof Error ? error.message : "Project backup could not be imported.";
-      render();
-    }
   }
 
   async function requestPersistentStorage(): Promise<void> {
@@ -1653,6 +1970,7 @@ export async function renderApp(
     saveTimer = null;
     excelImportController?.dispose();
     excelImportController = null;
+    backupImportController = null;
     excelImportReadyDraft = null;
     editCoordinator.close();
     projectRepository.close();
@@ -1784,6 +2102,18 @@ function readRequiredPositiveNumber(input: HTMLInputElement | null, message: str
   return value;
 }
 
+function readRequiredPositiveCurrency(input: HTMLInputElement | null, message: string): number | null {
+  if (!input) return null;
+  input.setCustomValidity("");
+  const value = parseProjectCurrency(input.value);
+  if (value === null || value <= 0) {
+    input.setCustomValidity(message);
+    input.reportValidity();
+    return null;
+  }
+  return value;
+}
+
 function validateEvidenceFilterRanges(form: HTMLFormElement): string | null {
   const minimumDateInput = form.elements.namedItem("letDateMin") as HTMLInputElement | null;
   const maximumDateInput = form.elements.namedItem("letDateMax") as HTMLInputElement | null;
@@ -1845,6 +2175,21 @@ function readNullableProjectNumber(input: HTMLInputElement | null): { value: num
   const rawValue = input?.value.trim() ?? "";
   if (!rawValue) return { value: null, valid: true };
   const value = readOptionalFormNumber(rawValue);
+  return { value, valid: value !== null };
+}
+
+function parseProjectCurrency(raw: string): number | null {
+  const value = raw.trim();
+  if (!value) return null;
+  if (!/^\$?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/.test(value)) return null;
+  const parsed = Number(value.replace(/[$,]/g, ""));
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function readNullableProjectCurrency(input: HTMLInputElement | null): { value: number | null; valid: boolean } {
+  const raw = input?.value.trim() ?? "";
+  if (!raw) return { value: null, valid: true };
+  const value = parseProjectCurrency(raw);
   return { value, valid: value !== null };
 }
 

@@ -1,0 +1,8 @@
+agency_item_id,item_code,description,unit,contracts_in_window,urban_contracts_in_window,median_unit_price,p25,p75,total_observations
+co_cdot_614-72863,614-72863,Pedestrian Push Button Post Assembly,EACH,40,27,1946.19,1461.25,3225.00,40
+co_cdot_614-72860,614-72860,Pedestrian Push Button,EACH,32,17,867.50,571.75,1678.56,32
+co_cdot_202-00860,202-00860,Removal of Pedestrian Push Button,EACH,16,9,215.00,126.25,327.50,16
+co_cdot_614-80000,614-80000,Flashing Beacon,EACH,13,4,5000.00,2585.00,7000.00,13
+co_cdot_614-80003,614-80003,Rectangular Rapid Flashing Beacon,EACH,9,4,12000.00,9800.00,14400.00,9
+co_cdot_614-80001,614-80001,Flashing Beacon (Solar Powered),EACH,7,3,8843.25,7145.00,10821.94,7
+co_cdot_614-80004,614-80004,Flashing Beacon (Special),EACH,4,1,7810.00,4965.00,11708.47,4

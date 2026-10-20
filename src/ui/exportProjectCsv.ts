@@ -1,66 +1,61 @@
 import {
   DEFAULT_PROJECT_SORT,
-  projectCostSummary,
-  projectLineTotal,
+  calculateProject,
   sortProjectLineItems,
   type ProjectLineItem,
+  type ProjectCalculation,
   type ProjectSort,
   type UserProject
 } from "../projects/projectWorkspace";
 
 interface ProjectCsvColumn {
   header: string;
-  value: (project: UserProject, lineItem: ProjectLineItem, lineNumber: number) => string | number | null;
+  value: (project: UserProject, lineItem: ProjectLineItem, lineNumber: number, calculation: ProjectCalculation) => string | number | null;
 }
 
 const projectCsvColumns: ProjectCsvColumn[] = [
-  { header: "State", value: (project) => project.state },
-  { header: "Project Name", value: (project) => project.name },
-  { header: "Project Location", value: (project) => project.location },
-  { header: "Project Notes", value: (project) => project.notes },
-  { header: "Line Number", value: (_project, _lineItem, lineNumber) => lineNumber },
-  { header: "Added Via", value: (_project, lineItem) => lineItem.importSource ? "Excel Import" : lineItem.lineItemType === "custom" ? "Manual" : "Roadway Costing Tool" },
   { header: "Group", value: (_project, lineItem) => lineItem.group },
-  { header: "Agency ID", value: (_project, lineItem) => lineItem.agencyId },
-  { header: "Agency Item ID", value: (_project, lineItem) => lineItem.agencyItemId },
+  { header: "Cost Category", value: (_project, lineItem) => lineItem.costCategory === "contingency" || lineItem.costRole === "contingency" ? "Contingency" : lineItem.costCategory === "construction" ? "Construction" : "Other" },
   { header: "Item Code", value: (_project, lineItem) => lineItem.itemCode },
   { header: "Description", value: (_project, lineItem) => lineItem.description },
-  { header: "Quantity", value: (_project, lineItem) => lineItem.quantity },
+  { header: "Unit Cost", value: (_project, lineItem) => lineItem.pricingMode === "percentage" ? null : lineItem.preferredUnitCost },
   { header: "Unit", value: (_project, lineItem) => lineItem.unit },
-  { header: "Preferred Unit Cost", value: (_project, lineItem) => lineItem.preferredUnitCost },
-  { header: "Total Item Cost", value: (_project, lineItem) => projectLineTotal(lineItem) },
-  { header: "Line Notes", value: (_project, lineItem) => lineItem.notes },
-  { header: "Evidence Row Count", value: (_project, lineItem) => lineItem.evidenceContext?.includedRowCount ?? 0 },
-  {
-    header: "Included Observation IDs",
-    value: (_project, lineItem) => lineItem.evidenceContext?.includedObservationIds.join(";") ?? ""
-  },
-  { header: "Created At", value: (_project, lineItem) => lineItem.createdAt },
-  { header: "Updated At", value: (_project, lineItem) => lineItem.updatedAt },
-  { header: "Item Type", value: (_project, lineItem) => lineItem.lineItemType === "custom" ? "Custom" : "Catalog" },
-  { header: "Cost Category", value: (_project, lineItem) => (lineItem.costCategory ?? (lineItem.lineItemType === "custom" ? "other" : "construction")) === "construction" ? "Construction" : "Other" },
-  { header: "Import File", value: (_project, lineItem) => lineItem.importSource?.fileName ?? "" },
-  { header: "Import Sheet", value: (_project, lineItem) => lineItem.importSource?.sheetName ?? "" },
-  { header: "Import Row", value: (_project, lineItem) => lineItem.importSource?.rowNumber ?? null }
+  { header: "Quantity", value: (_project, lineItem) => lineItem.pricingMode === "percentage" ? lineItem.percentageRate ?? null : lineItem.quantity },
+  { header: "Total Item Cost", value: (_project, lineItem, _number, calculation) => calculation.amountByLineId[lineItem.lineItemId] ?? 0 },
+  { header: "Notes", value: (_project, lineItem) => lineItem.pricingMode === "percentage"
+    ? `${lineItem.percentageBase?.kind === "group" ? `Base: Group ${lineItem.percentageBase.group}` : lineItem.percentageBase?.kind === "selected_lines" ? `Base: ${lineItem.percentageBase.lineItemIds.length} selected fixed items` : `Base: ${lineItem.percentageBase?.kind.replace(/_/g, " ") ?? "unspecified"}`}${lineItem.notes ? `; ${lineItem.notes}` : ""}`
+    : lineItem.notes }
 ];
 
 export function buildProjectCsv(project: UserProject, sort: ProjectSort = DEFAULT_PROJECT_SORT): string {
-  const lineItems = sortProjectLineItems(project.lineItems, sort);
-  const summary = projectCostSummary(project);
+  const lineItems = sortProjectLineItems(project.lineItems, sort, project);
+  const calculation = calculateProject(project);
+  const summary = calculation.summary;
   const lines = [
+    ["Project", project.name].map(escapeCsvValue).join(","),
+    ["State", project.state].map(escapeCsvValue).join(","),
+    ["Location", project.location].map(escapeCsvValue).join(","),
+    ["Notes", project.notes].map(escapeCsvValue).join(","),
+    "",
     projectCsvColumns.map((column) => escapeCsvValue(column.header)).join(","),
     ...lineItems.map((lineItem, index) =>
       projectCsvColumns
-        .map((column) => escapeCsvValue(column.value(project, lineItem, index + 1)))
+        .map((column) => escapeCsvValue(column.value(project, lineItem, index + 1, calculation)))
         .join(",")
     ),
     "",
     ["Project Cost Summary", "Value"].map(escapeCsvValue).join(","),
     ["Construction Costs", summary.constructionCost].map(escapeCsvValue).join(","),
     ["Other costs", summary.otherCost].map(escapeCsvValue).join(","),
-    ["Contingency percentage", summary.contingencyPercent].map(escapeCsvValue).join(","),
     ["Contingencies", summary.contingencyCost].map(escapeCsvValue).join(","),
-    ["Total Project Cost", summary.totalProjectCost].map(escapeCsvValue).join(",")
+    ["Total Project Cost", summary.totalProjectCost].map(escapeCsvValue).join(","),
+    ...(project.planningOrigin
+      ? [
+          ["Created from Planning", `${project.planningOrigin.planningProjectName} - ${project.planningOrigin.alternativeName}`].map(escapeCsvValue).join(","),
+          ["Planning total at creation", project.planningOrigin.planningTotal].map(escapeCsvValue).join(","),
+          ["Created from Planning at", project.planningOrigin.createdAt].map(escapeCsvValue).join(",")
+        ]
+      : [])
   ];
 
   return lines.join("\r\n");
@@ -106,7 +101,9 @@ function escapeCsvValue(value: string | number | null): string {
     return "";
   }
 
-  const text = String(value);
+  let text = String(value);
+  // Text that a spreadsheet would run as a formula gets a leading apostrophe; numbers are written as-is.
+  if (typeof value === "string" && /^[=+\-@\t\r]/.test(text) && !/^-[0-9]+(?:\.[0-9]+)?$/.test(text)) text = `'${text}`;
 
   if (/[",\r\n]/.test(text)) {
     return `"${text.replace(/"/g, '""')}"`;
